@@ -28,7 +28,8 @@ cache: apt
 
 deploy:
   provider: pypi
-  username: "__token__"
+  username: __token__
+  password:
     secure: FOxe9oZ6aGEYQ+HtJKhv7RiVFu8+Ykw7l2Iq5LoMZQhRAOPxcU7HxXFvEXbJyRES4cVKvfiioLNdIVvH4kJOlQfiJkGdqr/jTFk4DMyWtocgzOdWjA9kgsNp3qcZFkZzwoh+2vOVxjXyKET47RxeZ7lQVIXjHRWB1We07TRjscHEO+Uo3szqiz7iilGPOdGRXLysCkSgVAF2CLpOVAxLCZLHb7Y6mVbRbCLb9O6L2qtoRfWF2A4WpBwU7dTPvqfC6ghi/F1g/Xu8H93dR9zRmuN4LFAFCqqskBLt2sGEUaw/gdsIf71hXNOLktj5/OCmDDRY8QhbLdZGyEl2AH2ZB/33/SRzLpHpbV2aOcrS/KQU+EY3vMTjIV43aHL1DrT+WyGmgQHcH8/ErVqnbrVVZreKpXtk0+/aqJd++NirgtYJangA346Cx4Spppua7EBiinVvjrLA3AAUFk9W3OV7L0eKoTlTLgol/NWZo1fR2L+bd51h8ijcBFW0Bq4lpneRhvJd2erdJZs0GxOV/Joyp2CXaHP6P2St02mIOJWfRVnINOgJZA/mDBbSgb/WBEcwxxJYhVpzX0PZcRxCwQpy6ZWXsd0hAUzWyee0WbGZq6dBqRVZcc5+HZTlBAIZ/ym3tf9Jln6y1PZR5cbDGcHl7MN6SywitalbBopEu7N3Z2A=
   on:
     tags: true
