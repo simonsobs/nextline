@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import versioneer
 
 from pathlib import Path
 
@@ -7,6 +8,8 @@ long_description = here.joinpath('README.md').read_text()
 
 setup(
     name='nextline',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description='A Python library for controlling Python scripts execution',
     long_description=long_description,
     long_description_content_type='text/markdown',
