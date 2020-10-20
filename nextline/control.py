@@ -15,6 +15,5 @@ async def control_pdb(commands, queue_in, queue_out):
             break
         print(command)
         await queue_in.put(command)
-        print(queue_in.put)
 
 ##__________________________________________________________________||
