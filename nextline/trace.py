@@ -1,24 +1,22 @@
 import threading
-
+import asyncio
 
 ##__________________________________________________________________||
 class LocalTrace:
-    def __init__(self, jqueue_in, jqueue_out, thread_id, task_id):
-        self.jqueue_in = jqueue_in
-        self.jqueue_out = jqueue_out
-        self.thread_id = thread_id
-        self.task_id = task_id
+    def __init__(self, local_queues, thread_task_id):
+        self.q_in, self.q_out = local_queues
+        self.thread_task_id = thread_task_id
 
     def __call__(self, frame, event, arg):
-        self.jqueue_out.sync_q.put((self.thread_id, self.task_id))
-        print(self.jqueue_in.sync_q.get())
-        self.jqueue_out.sync_q.put((frame, event, arg))
-        print(self.jqueue_in.sync_q.get())
+        self.q_out.sync_q.put(self.thread_task_id)
+        print(self.q_in.sync_q.get())
+        self.q_out.sync_q.put((frame, event, arg))
+        print(self.q_in.sync_q.get())
         return self
 
 class Trace:
-    def __init__(self, jqueue, local_queue_dict, condition, breaks):
-        self.jqueue = jqueue
+    def __init__(self, global_queue, local_queue_dict, condition, breaks):
+        self.global_queue = global_queue
         self.local_queue_dict = local_queue_dict
         self.condition = condition
         self.breaks = breaks
@@ -42,35 +40,28 @@ class Trace:
 
         print('{}.{}()'.format(module_name, func_name))
 
-        thread_id = threading.get_ident()
+        thread_task_id = create_thread_task_id()
+        print(*thread_task_id)
 
-        task_id = None
-        try:
-            task_id = id(asyncio.current_task())
-        except:
-            pass
-
-        local_queues = self._find_local_queues(thread_id, task_id)
+        local_queues = self._find_local_queues(thread_task_id)
         if not local_queues:
-            warnings.warn('could not find queues for {!r}'.format((thread_id, task_id)))
+            warnings.warn('could not find queues for {!r}'.format(thread_task_id))
             return
 
-        trace_local = LocalTrace(*local_queues, thread_id, task_id)
+        trace_local = LocalTrace(local_queues, thread_task_id)
 
         trace_local(frame, event, arg)
         return trace_local
 
-    def _find_local_queues(self, thread_id, task_id):
-
-        key = (thread_id, task_id)
+    def _find_local_queues(self, thread_task_id):
 
         with self.condition:
-            ret = self.local_queue_dict.get(key)
+            ret = self.local_queue_dict.get(thread_task_id)
 
         if ret is None:
-            q = self.jqueue.sync_q
+            q = self.global_queue.sync_q
             try:
-                q.put(key)
+                q.put(thread_task_id)
             except RuntimeError:
                 # this happens, for example, in concurrent/futures/thread.py
                 warnings.warn("could not put an item in the queue: {!r}".format(q))
@@ -78,8 +69,22 @@ class Trace:
 
             while not ret:
                 with self.condition:
-                    ret = self.local_queue_dict.get(key)
+                    ret = self.local_queue_dict.get(thread_task_id)
 
         return ret
+
+##__________________________________________________________________||
+def create_thread_task_id():
+
+    thread_id = threading.get_ident()
+
+    task_id = None
+    try:
+        task_id = id(asyncio.current_task())
+    except RuntimeError:
+        # no running event loop
+        pass
+
+    return (thread_id, task_id)
 
 ##__________________________________________________________________||
