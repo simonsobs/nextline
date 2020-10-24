@@ -67,6 +67,7 @@ class Trace:
                 warnings.warn("could not put an item in the queue: {!r}".format(q))
                 return None
 
+            # TODO: Add timeout
             while not ret:
                 with self.condition:
                     ret = self.local_queue_dict.get(thread_task_id)
