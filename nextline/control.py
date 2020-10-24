@@ -25,21 +25,21 @@ class Control:
 
     async def _start_local_controls(self):
         while True:
-            key = await self.global_queue.async_q.get()
-            if key is None: # end
+            thread_task_id = await self.global_queue.async_q.get()
+            if thread_task_id is None: # end
                 break
-            if key not in self.local_controls:
-                local_control = self._create_local_control(key)
-                self.local_controls[key] = asyncio.create_task(local_control.run())
+            if thread_task_id not in self.local_controls:
+                local_control = self._create_local_control(thread_task_id)
+                self.local_controls[thread_task_id] = asyncio.create_task(local_control.run())
 
-    def _create_local_control(self, key):
+    def _create_local_control(self, thread_task_id):
         with self.condition:
-            local_queues = self.local_queue_dict.get(key)
+            local_queues = self.local_queue_dict.get(thread_task_id)
             if local_queues:
-                warnings.warn('local queues for {} already exist'.format(key))
+                warnings.warn('local queues for {} already exist'.format(thread_task_id))
             else:
                 local_queues = (janus.Queue(), janus.Queue())
-                self.local_queue_dict[key] = local_queues
+                self.local_queue_dict[thread_task_id] = local_queues
         return LocalControl(local_queues)
 
     async def _end(self):
