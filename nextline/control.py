@@ -27,6 +27,11 @@ class Control:
     async def _start_local_controls(self):
         while True:
             thread_task_id = await self.global_queue.async_q.get()
+            # queue_task = asyncio.create_task(self.global_queue.async_q.get())
+            # done, pending = await asyncio.wait( {queue_task} | self.local_control_tasks, return_when=asyncio.FIRST_COMPLETED)
+            # if queue_task in done:
+            #     thread_task_id = queue_task.result()
+            # # TODO: Add else-clause
             if thread_task_id is None: # end
                 break
             if thread_task_id not in self.thread_task_ids:
