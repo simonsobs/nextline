@@ -1,6 +1,8 @@
 
 ##__________________________________________________________________||
-__all__ = ['run_pdb', 'control_pdb']
+__all__ = ['Nextline', 'run_pdb', 'control_pdb']
+
+from .main import Nextline
 
 from .run import run_pdb
 from .control import control_pdb
