@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from nextline import Nextline
@@ -17,6 +19,12 @@ breaks = {
 async def test_simple():
     nextline = Nextline(statement, breaks)
     nextline.run()
+    while True:
+        with nextline.condition:
+            if nextline.control.local_queue_dict:
+                break
+        await asyncio.sleep(0.01)
+    print(nextline.control.local_queue_dict)
     await nextline.wait()
 
 ##__________________________________________________________________||
