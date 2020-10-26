@@ -31,13 +31,14 @@ class Nextline:
         else:
             cmd = self.statement
         trace = Trace(self.global_queue, self.local_queue_dict, self.condition, self.breaks)
+        trace_org = sys.gettrace()
         threading.settrace(trace)
         sys.settrace(trace)
         try:
             exec(cmd)
         finally:
-            sys.settrace(None)
-            threading.settrace(None)
+            sys.settrace(trace_org)
+            threading.settrace(trace_org)
             self.global_queue.sync_q.put(None)
 
     async def wait(self):
