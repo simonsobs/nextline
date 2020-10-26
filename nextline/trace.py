@@ -50,8 +50,7 @@ class Trace:
 
         trace_local = LocalTrace(local_queues, thread_task_id)
 
-        trace_local(frame, event, arg)
-        return trace_local
+        return trace_local(frame, event, arg)
 
     def _find_local_queues(self, thread_task_id):
 
