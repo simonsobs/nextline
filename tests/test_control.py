@@ -22,7 +22,7 @@ async def test_simple():
     control = Control(global_queue, local_queue_dict, condition)
     run = control.run()
     com = communicate(global_queue)
-    await asyncio.wait([run, com])
+    await asyncio.gather(run, com)
     assert {'key'} == control.thread_task_ids
     assert 1 == len(control.local_control_tasks)
 
