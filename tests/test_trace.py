@@ -34,9 +34,10 @@ async def test_simple():
     breaks = { __name__: ['subject'] }
     trace = Trace(global_queue, local_queue_dict, condition, breaks)
 
+    trace_org = sys.gettrace()
     sys.settrace(trace)
     subject()
-    sys.settrace(None)
+    sys.settrace(trace_org)
     print(q_out.sync_q.put.call_args_list)
 
 ##__________________________________________________________________||
