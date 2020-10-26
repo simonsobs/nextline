@@ -10,7 +10,7 @@ class LocalControl:
             m = await self.q_out.async_q.get()
             if m is None: # end
                 break
-            await self.q_in.async_q.put(m)
+            await self.q_in.async_q.put('next')
 
 class Control:
     def __init__(self, global_queue, local_queue_dict, condition):
