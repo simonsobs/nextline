@@ -2,26 +2,10 @@ import sys
 import asyncio
 import threading
 
-from functools import partial
-
 import janus
 
 from .trace import Trace
 from .control import Control
-
-##__________________________________________________________________||
-def exec_statement(cmd, breaks, jqueue, local_queue_dict, condition):
-    if isinstance(cmd, str):
-        cmd = compile(cmd, '<string>', 'exec')
-    trace_func = Trace(jqueue, local_queue_dict, condition, breaks)
-    threading.settrace(trace_func)
-    sys.settrace(trace_func)
-    try:
-        exec(cmd)
-    finally:
-        sys.settrace(None)
-        threading.settrace(None)
-        jqueue.sync_q.put(None)
 
 ##__________________________________________________________________||
 class Nextline:
@@ -31,15 +15,30 @@ class Nextline:
         self.futures = set()
         self.condition = threading.Condition()
         self.control = None
+        self.global_queue = None # create in run(), where a loop is running.
+        self.local_queue_dict = {}
 
     def run(self):
-        global_queue = janus.Queue()
-        local_queue_dict = {}
-        exec_ = partial(exec_statement, self.statement, self.breaks, global_queue, local_queue_dict, self.condition)
+        self.global_queue = janus.Queue()
         loop = asyncio.get_running_loop()
-        self.futures.add(loop.run_in_executor(None, exec_))
-        self.control = Control(global_queue, local_queue_dict, self.condition)
+        self.futures.add(loop.run_in_executor(None, self._execute_statement_with_trace))
+        self.control = Control(self.global_queue, self.local_queue_dict, self.condition)
         self.futures.add(asyncio.create_task(self.control.run()))
+
+    def _execute_statement_with_trace(self):
+        if isinstance(self.statement, str):
+            cmd = compile(self.statement, '<string>', 'exec')
+        else:
+            cmd = self.statement
+        trace = Trace(self.global_queue, self.local_queue_dict, self.condition, self.breaks)
+        threading.settrace(trace)
+        sys.settrace(trace)
+        try:
+            exec(cmd)
+        finally:
+            sys.settrace(None)
+            threading.settrace(None)
+            self.global_queue.sync_q.put(None)
 
     async def wait(self):
         await asyncio.gather(*self.futures)
