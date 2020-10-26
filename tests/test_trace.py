@@ -4,13 +4,10 @@ import asyncio
 import janus
 from functools import partial
 
-
 from nextline.trace import Trace, LocalTrace, create_thread_task_id
 
 import pytest
 from unittest.mock import Mock
-
-
 
 ##__________________________________________________________________||
 def subject():
@@ -52,9 +49,10 @@ def call_with_trace(func, trace):
             return None
         return trace(frame, event, arg)
 
+    trace_org = sys.gettrace()
     sys.settrace(trace_)
     func()
-    sys.settrace(None)
+    sys.settrace(trace_org)
 
 @pytest.mark.asyncio
 async def test_local():
