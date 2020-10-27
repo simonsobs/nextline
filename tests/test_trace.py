@@ -26,10 +26,11 @@ async def test_simple():
     q_in.sync_q.get.return_value = 'next'
 
     queue_trace_to_control = janus.Queue()
+    queue_control_to_trace = janus.Queue()
     local_queue_dict = { thread_task_id: local_queues }
     condition = threading.Condition()
     breaks = { __name__: ['subject'] }
-    trace = Trace(queue_trace_to_control, local_queue_dict, condition, breaks)
+    trace = Trace(queue_trace_to_control, queue_control_to_trace, local_queue_dict, condition, breaks)
 
     trace_org = sys.gettrace()
     sys.settrace(trace)

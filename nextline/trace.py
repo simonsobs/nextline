@@ -23,8 +23,9 @@ class LocalTrace:
         return self
 
 class Trace:
-    def __init__(self, queue_trace_to_control, local_queue_dict, condition, breaks):
+    def __init__(self, queue_trace_to_control, queue_control_to_trace, local_queue_dict, condition, breaks):
         self.queue_trace_to_control = queue_trace_to_control
+        self.queue_control_to_trace = queue_control_to_trace
         self.local_queue_dict = local_queue_dict
         self.condition = condition
         self.breaks = breaks
