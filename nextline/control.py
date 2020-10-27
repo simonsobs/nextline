@@ -1,68 +1,56 @@
-import asyncio
-import janus
+import threading
+import queue
+import warnings
 
 ##__________________________________________________________________||
 class LocalControl:
-    def __init__(self, local_queues):
-        self.q_to_local_trace, self.q_from_local_trace = local_queues
-    async def run(self):
-        while True:
-            m = await self.q_from_local_trace.async_q.get()
-            if m is None: # end
-                break
-            await self.q_to_local_trace.async_q.put('next')
+    def __init__(self, thread_task_id, control):
+        self.thread_task_id = thread_task_id
+        self.control = control
+        self.queue = queue.Queue()
+
+    def __call__(self, message):
+        self.message = message
+        self.control.prompt(self)
+        m = self.queue.get()
+        self.control.received(self)
+        return m
+
+    def do(self, command):
+        self.queue.put(command)
 
 class Control:
-    def __init__(self, queue_from_trace, local_queue_dict, condition):
-        self.queue_from_trace = queue_from_trace
-        self.local_queue_dict = local_queue_dict # shared
-        self.condition = condition # used to lock for local_queue_dict
+    def __init__(self):
         self.thread_task_ids = set()
-        self.local_control_tasks = set()
-        self.task = None
+        self.local_controls = {}
+        self.condition = threading.Condition()
+        self.waiting = {}
 
-    def run(self):
-        self.task = asyncio.create_task(self.run_())
-
-    async def wait(self):
-        await self.task
-        self.task = None
-
-    async def run_(self):
-        await self._start_local_controls()
-        await self._end()
-
-    async def _start_local_controls(self):
-        while True:
-            thread_task_id = await self.queue_from_trace.async_q.get()
-            # queue_task = asyncio.create_task(self.queue_from_trace.async_q.get())
-            # done, pending = await asyncio.wait( {queue_task} | self.local_control_tasks, return_when=asyncio.FIRST_COMPLETED)
-            # if queue_task in done:
-            #     thread_task_id = queue_task.result()
-            # # TODO: Add else-clause
-            if thread_task_id is None: # end
-                break
-            if thread_task_id not in self.thread_task_ids:
-                local_control = self._create_local_control(thread_task_id)
-                self.thread_task_ids.add(thread_task_id)
-                task = asyncio.create_task(local_control.run())
-                self.local_control_tasks.add(task)
-
-    def _create_local_control(self, thread_task_id):
+    def local_control(self, thread_task_id):
         with self.condition:
-            local_queues = self.local_queue_dict.get(thread_task_id)
-            if local_queues:
-                warnings.warn('local queues for {} already exist'.format(thread_task_id))
-            else:
-                local_queues = (janus.Queue(), janus.Queue())
-                self.local_queue_dict[thread_task_id] = local_queues
-        return LocalControl(local_queues)
+            ret = self.local_controls.get(thread_task_id)
+            if ret:
+                return ret
+            ret = LocalControl(thread_task_id=thread_task_id, control=self)
+            self.thread_task_ids.add(thread_task_id)
+            self.local_controls[thread_task_id] = ret
+            return ret
 
-    async def _end(self):
-        for _, q_out in self.local_queue_dict.values():
-            q_out.sync_q.put(None)
-        await asyncio.gather(*self.local_control_tasks)
-        self.queue_from_trace.close()
-        await self.queue_from_trace.wait_closed()
+    def prompt(self, local_control):
+        with self.condition:
+            self.waiting[local_control.thread_task_id] = local_control
+        print(local_control.message)
+        local_control.do('next')
+
+    def received(self, local_control):
+        thread_task_id = local_control.thread_task_id
+        try:
+            with self.condition:
+                self.waiting.pop(thread_task_id)
+        except KeyError:
+            warnings.warn("the command for {} wasn't waited for.".format(thread_task_id))
+
+    def nthreads(self):
+        return len({i for i, _ in self.thread_task_ids})
 
 ##__________________________________________________________________||

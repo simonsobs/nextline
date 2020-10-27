@@ -3,31 +3,22 @@ import asyncio
 
 ##__________________________________________________________________||
 class LocalTrace:
-    def __init__(self, local_queues, thread_task_id):
-        self.q_from_local_control, self.q_to_local_control = local_queues
-        self.thread_task_id = thread_task_id
+    def __init__(self, local_control):
+        self.local_control = local_control
 
     def __call__(self, frame, event, arg):
-        # self.q_to_local_control.sync_q.put(self.thread_task_id)
-        # print(self.q_from_local_control.sync_q.get())
-
         message = {'called': {'frame': frame, 'event': event, 'arg': arg}}
-        self.q_to_local_control.sync_q.put(message)
         while True:
-            cmd = self.q_from_local_control.sync_q.get()
+            cmd = self.local_control(message)
             if cmd == 'next':
                 return self
             else:
                 message = {'message': 'unrecognized command {!r}'.format(cmd)}
-                self.q_to_local_control.sync_q.put(message)
         return self
 
 class Trace:
-    def __init__(self, queue_to_control, queue_from_control, local_queue_dict, condition, breaks):
-        self.queue_to_control = queue_to_control
-        self.queue_from_control = queue_from_control
-        self.local_queue_dict = local_queue_dict
-        self.condition = condition
+    def __init__(self, control, breaks):
+        self.control = control
         self.breaks = breaks
 
     def __call__(self, frame, event, arg):
@@ -52,35 +43,11 @@ class Trace:
         thread_task_id = create_thread_task_id()
         print(*thread_task_id)
 
-        local_queues = self._find_local_queues(thread_task_id)
-        if not local_queues:
-            warnings.warn('could not find queues for {!r}'.format(thread_task_id))
-            return
+        local_control = self.control.local_control(thread_task_id)
 
-        trace_local = LocalTrace(local_queues, thread_task_id)
+        trace_local = LocalTrace(local_control)
 
         return trace_local(frame, event, arg)
-
-    def _find_local_queues(self, thread_task_id):
-
-        with self.condition:
-            ret = self.local_queue_dict.get(thread_task_id)
-
-        if ret is None:
-            q = self.queue_to_control.sync_q
-            try:
-                q.put(thread_task_id)
-            except RuntimeError:
-                # this happens, for example, in concurrent/futures/thread.py
-                warnings.warn("could not put an item in the queue: {!r}".format(q))
-                return None
-
-            # TODO: Add timeout
-            while not ret:
-                with self.condition:
-                    ret = self.local_queue_dict.get(thread_task_id)
-
-        return ret
 
 ##__________________________________________________________________||
 def create_thread_task_id():
