@@ -23,8 +23,8 @@ class LocalTrace:
         return self
 
 class Trace:
-    def __init__(self, global_queue, local_queue_dict, condition, breaks):
-        self.global_queue = global_queue
+    def __init__(self, queue_trace_to_control, local_queue_dict, condition, breaks):
+        self.queue_trace_to_control = queue_trace_to_control
         self.local_queue_dict = local_queue_dict
         self.condition = condition
         self.breaks = breaks
@@ -66,7 +66,7 @@ class Trace:
             ret = self.local_queue_dict.get(thread_task_id)
 
         if ret is None:
-            q = self.global_queue.sync_q
+            q = self.queue_trace_to_control.sync_q
             try:
                 q.put(thread_task_id)
             except RuntimeError:
