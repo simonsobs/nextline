@@ -19,8 +19,16 @@ class Control:
         self.condition = condition # used to lock for local_queue_dict
         self.thread_task_ids = set()
         self.local_control_tasks = set()
+        self.task = None
 
-    async def run(self):
+    def run(self):
+        self.task = asyncio.create_task(self.run_())
+
+    async def wait(self):
+        await self.task
+        self.task = None
+
+    async def run_(self):
         await self._start_local_controls()
         await self._end()
 

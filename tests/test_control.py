@@ -20,9 +20,9 @@ async def test_simple():
     local_queue_dict = { }
     condition = threading.Condition()
     control = Control(global_queue, local_queue_dict, condition)
-    run = control.run()
+    control.run()
     com = communicate(global_queue)
-    await asyncio.gather(run, com)
+    await asyncio.gather(control.wait(), com)
     assert {'key'} == control.thread_task_ids
     assert 1 == len(control.local_control_tasks)
 

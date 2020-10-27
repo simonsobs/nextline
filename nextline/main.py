@@ -16,6 +16,7 @@ class Nextline:
         self.condition = threading.Condition()
         self.control = None
         self.queue_trace_to_control = None # create in run(), where a loop is running.
+        self.queue_control_to_trace = None # create in run(), where a loop is running.
         self.local_queue_dict = {}
 
     def run(self):
@@ -23,14 +24,14 @@ class Nextline:
         loop = asyncio.get_running_loop()
         self.futures.add(loop.run_in_executor(None, self._execute_statement_with_trace))
         self.control = Control(self.queue_trace_to_control, self.local_queue_dict, self.condition)
-        self.futures.add(asyncio.create_task(self.control.run()))
+        self.control.run()
 
     def _execute_statement_with_trace(self):
         if isinstance(self.statement, str):
             cmd = compile(self.statement, '<string>', 'exec')
         else:
             cmd = self.statement
-        trace = Trace(self.queue_trace_to_control, self.local_queue_dict, self.condition, self.breaks)
+        trace = Trace(self.queue_trace_to_control, self.queue_control_to_trace, self.local_queue_dict, self.condition, self.breaks)
         trace_org = sys.gettrace()
         threading.settrace(trace)
         sys.settrace(trace)
@@ -42,6 +43,7 @@ class Nextline:
             self.queue_trace_to_control.sync_q.put(None) # end
 
     async def wait(self):
+        await self.control.wait()
         await asyncio.gather(*self.futures)
         self.futures.clear()
 
