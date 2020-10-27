@@ -4,22 +4,22 @@ import asyncio
 ##__________________________________________________________________||
 class LocalTrace:
     def __init__(self, local_queues, thread_task_id):
-        self.q_in, self.q_out = local_queues
+        self.q_from_local_control, self.q_to_local_control = local_queues
         self.thread_task_id = thread_task_id
 
     def __call__(self, frame, event, arg):
-        # self.q_out.sync_q.put(self.thread_task_id)
-        # print(self.q_in.sync_q.get())
+        # self.q_to_local_control.sync_q.put(self.thread_task_id)
+        # print(self.q_from_local_control.sync_q.get())
 
         message = {'called': {'frame': frame, 'event': event, 'arg': arg}}
-        self.q_out.sync_q.put(message)
+        self.q_to_local_control.sync_q.put(message)
         while True:
-            cmd = self.q_in.sync_q.get()
+            cmd = self.q_from_local_control.sync_q.get()
             if cmd == 'next':
                 return self
             else:
                 message = {'message': 'unrecognized command {!r}'.format(cmd)}
-                self.q_out.sync_q.put(message)
+                self.q_to_local_control.sync_q.put(message)
         return self
 
 class Trace:

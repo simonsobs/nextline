@@ -4,17 +4,17 @@ import janus
 ##__________________________________________________________________||
 class LocalControl:
     def __init__(self, local_queues):
-        self.q_in, self.q_out = local_queues
+        self.q_to_local_trace, self.q_from_local_trace = local_queues
     async def run(self):
         while True:
-            m = await self.q_out.async_q.get()
+            m = await self.q_from_local_trace.async_q.get()
             if m is None: # end
                 break
-            await self.q_in.async_q.put('next')
+            await self.q_to_local_trace.async_q.put('next')
 
 class Control:
-    def __init__(self, global_queue, local_queue_dict, condition):
-        self.global_queue = global_queue
+    def __init__(self, queue_from_trace, local_queue_dict, condition):
+        self.queue_from_trace = queue_from_trace
         self.local_queue_dict = local_queue_dict # shared
         self.condition = condition # used to lock for local_queue_dict
         self.thread_task_ids = set()
@@ -26,8 +26,8 @@ class Control:
 
     async def _start_local_controls(self):
         while True:
-            thread_task_id = await self.global_queue.async_q.get()
-            # queue_task = asyncio.create_task(self.global_queue.async_q.get())
+            thread_task_id = await self.queue_from_trace.async_q.get()
+            # queue_task = asyncio.create_task(self.queue_from_trace.async_q.get())
             # done, pending = await asyncio.wait( {queue_task} | self.local_control_tasks, return_when=asyncio.FIRST_COMPLETED)
             # if queue_task in done:
             #     thread_task_id = queue_task.result()
@@ -54,7 +54,7 @@ class Control:
         for _, q_out in self.local_queue_dict.values():
             q_out.sync_q.put(None)
         await asyncio.gather(*self.local_control_tasks)
-        self.global_queue.close()
-        await self.global_queue.wait_closed()
+        self.queue_from_trace.close()
+        await self.queue_from_trace.wait_closed()
 
 ##__________________________________________________________________||
