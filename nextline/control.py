@@ -39,8 +39,8 @@ class Control:
     def prompt(self, local_control):
         with self.condition:
             self.waiting[local_control.thread_task_id] = local_control
-        print(local_control.message)
-        local_control.do('next')
+        # print(local_control.message)
+        # local_control.do('next')
 
     def received(self, local_control):
         thread_task_id = local_control.thread_task_id
@@ -52,5 +52,12 @@ class Control:
 
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})
+
+    def send_command(self, thread_task_ids, command):
+        local_control = self.local_controls.get(thread_task_ids)
+        if local_control is None:
+            warnings.warn("cannot find a local control for {}.".format(thread_task_id))
+            return
+        local_control.do(command)
 
 ##__________________________________________________________________||
