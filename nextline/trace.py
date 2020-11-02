@@ -45,9 +45,11 @@ class Trace:
 
         local_control = self.control.local_control(thread_task_id)
 
-        trace_local = LocalTrace(local_control)
+        return local_control.pdb.trace_dispatch
 
-        return trace_local(frame, event, arg)
+        # trace_local = LocalTrace(local_control)
+        # 
+        # return trace_local(frame, event, arg)
 
 ##__________________________________________________________________||
 def create_thread_task_id():

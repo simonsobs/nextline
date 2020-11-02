@@ -28,6 +28,9 @@ class LocalControl:
         self.queue_in = queue.Queue()
         self.queue_out = queue.Queue()
         self.pdb = pdb.Pdb(stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out))
+        self.pdb.quitting = True
+        self.pdb.botframe = None
+        self.pdb._set_stopinfo(None, None)
 
     def __call__(self, message):
         self.message = message
@@ -52,7 +55,11 @@ class LocalControl:
             m = self.queue_out.get()
             if m is None:
                 break
-            print(m)
+            print(m, end='')
+            if self.pdb.prompt == m:
+                command = 'next'
+                print(command)
+                self.queue_in.put(command)
 
 class Control:
     def __init__(self):
