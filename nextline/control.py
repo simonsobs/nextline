@@ -66,10 +66,11 @@ class LocalControl:
     def _listen(self):
         while True:
             out, end = self._get_until_prompt(self.queue_out, self.pdb.prompt)
-            print(out, end='')
             if end:
                 break
-            command = 'next'
+            self.control.prompt(self, out)
+            command = self.queue.get()
+            self.control.received(self)
             print(command)
             self.queue_in.put(command)
 
@@ -97,7 +98,8 @@ class Control:
             self.local_controls[thread_task_id] = ret
             return ret
 
-    def prompt(self, local_control):
+    def prompt(self, local_control, out):
+        print(out, end='')
         with self.condition:
             self.waiting[local_control.thread_task_id] = local_control
         # print(local_control.message)
