@@ -7,14 +7,7 @@ class LocalTrace:
         self.local_control = local_control
 
     def __call__(self, frame, event, arg):
-        message = {'called': {'frame': frame, 'event': event, 'arg': arg}}
-        while True:
-            cmd = self.local_control(message)
-            if cmd == 'next':
-                return self
-            else:
-                message = {'message': 'unrecognized command {!r}'.format(cmd)}
-        return self
+        return self.local_control.pdb.trace_dispatch(frame, event, arg)
 
 class Trace:
     def __init__(self, control, breaks):
@@ -45,11 +38,9 @@ class Trace:
 
         local_control = self.control.local_control(thread_task_id)
 
-        return local_control.pdb.trace_dispatch(frame, event, arg)
+        trace_local = LocalTrace(local_control)
 
-        # trace_local = LocalTrace(local_control)
-        # 
-        # return trace_local(frame, event, arg)
+        return trace_local(frame, event, arg)
 
 ##__________________________________________________________________||
 def create_thread_task_id():
