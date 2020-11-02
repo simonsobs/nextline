@@ -50,16 +50,28 @@ class LocalControl:
         self.queue_out.put(None)
         self.t.join()
 
+    def _get_until_prompt(self, queue, prompt):
+        out = ''
+        end = False
+        while True:
+            m = queue.get()
+            if m is None: # end
+                end = True
+                break
+            out += m
+            if prompt == m:
+                break
+        return out, end
+
     def _listen(self):
         while True:
-            m = self.queue_out.get()
-            if m is None:
+            out, end = self._get_until_prompt(self.queue_out, self.pdb.prompt)
+            print(out, end='')
+            if end:
                 break
-            print(m, end='')
-            if self.pdb.prompt == m:
-                command = 'next'
-                print(command)
-                self.queue_in.put(command)
+            command = 'next'
+            print(command)
+            self.queue_in.put(command)
 
 class Control:
     def __init__(self):
