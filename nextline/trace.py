@@ -45,7 +45,7 @@ class Trace:
 
         local_control = self.control.local_control(thread_task_id)
 
-        return local_control.pdb.trace_dispatch
+        return local_control.pdb.trace_dispatch(frame, event, arg)
 
         # trace_local = LocalTrace(local_control)
         # 
