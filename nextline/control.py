@@ -1,6 +1,22 @@
 import threading
 import queue
 import warnings
+import pdb
+
+##__________________________________________________________________||
+class StreamOut:
+    def __init__(self, queue):
+        self.queue = queue
+    def write(self, s):
+        self.queue.put(s)
+    def flush(self):
+        pass
+
+class StreamIn:
+    def __init__(self, queue):
+        self.queue = queue
+    def readline(self):
+        return self.queue.get()
 
 ##__________________________________________________________________||
 class LocalControl:
@@ -8,6 +24,10 @@ class LocalControl:
         self.thread_task_id = thread_task_id
         self.control = control
         self.queue = queue.Queue()
+
+        self.queue_in = queue.Queue()
+        self.queue_out = queue.Queue()
+        self.pdb = pdb.Pdb(stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out))
 
     def __call__(self, message):
         self.message = message
@@ -19,12 +39,33 @@ class LocalControl:
     def do(self, command):
         self.queue.put(command)
 
+    def start(self):
+        self.t = threading.Thread(target=self._listen)
+        self.t.start()
+
+    def end(self):
+        self.queue_out.put(None)
+        self.t.join()
+
+    def _listen(self):
+        while True:
+            m = self.queue_out.get()
+            if m is None:
+                break
+            print(m)
+
 class Control:
     def __init__(self):
         self.thread_task_ids = set()
         self.local_controls = {}
         self.condition = threading.Condition()
         self.waiting = {}
+        self.local_pdbs = {}
+
+    def end(self):
+        with self.condition:
+            for local_control in self.local_controls.values():
+                local_control.end()
 
     def local_control(self, thread_task_id):
         with self.condition:
@@ -32,6 +73,7 @@ class Control:
             if ret:
                 return ret
             ret = LocalControl(thread_task_id=thread_task_id, control=self)
+            ret.start()
             self.thread_task_ids.add(thread_task_id)
             self.local_controls[thread_task_id] = ret
             return ret

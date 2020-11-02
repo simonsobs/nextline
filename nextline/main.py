@@ -40,6 +40,7 @@ class Nextline:
         self.finished = True
 
     async def wait(self):
+        self.control.end()
         await asyncio.to_thread(self.t.join)
 
     def nthreads(self):
