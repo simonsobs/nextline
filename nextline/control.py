@@ -116,8 +116,8 @@ class Control:
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})
 
-    def send_command(self, thread_task_ids, command):
-        local_control = self.local_controls.get(thread_task_ids)
+    def send_command(self, thread_task_id, command):
+        local_control = self.local_controls.get(thread_task_id)
         if local_control is None:
             warnings.warn("cannot find a local control for {}.".format(thread_task_id))
             return
