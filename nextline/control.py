@@ -27,7 +27,7 @@ class LocalControl:
 
         self.queue_in = queue.Queue()
         self.queue_out = queue.Queue()
-        self.pdb = pdb.Pdb(stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out))
+        self.pdb = pdb.Pdb(stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
         self.pdb.quitting = True
         self.pdb.botframe = None
         self.pdb._set_stopinfo(None, None)
