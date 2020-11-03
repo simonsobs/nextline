@@ -5,9 +5,12 @@ import asyncio
 class LocalTrace:
     def __init__(self, local_control):
         self.local_control = local_control
+        self.trace_dispatch = self.local_control.pdb.trace_dispatch
 
     def __call__(self, frame, event, arg):
-        return self.local_control.pdb.trace_dispatch(frame, event, arg)
+        if self.trace_dispatch:
+            self.trace_dispatch = self.trace_dispatch(frame, event, arg)
+        return self
 
 class Trace:
     def __init__(self, control, breaks):
