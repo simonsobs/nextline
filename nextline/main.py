@@ -15,7 +15,7 @@ class Nextline:
         self.breaks = breaks
         self.condition = threading.Condition()
         self.control = None
-        self.finished = False
+        self.status = "initialized"
 
     def run(self):
         self.control = Control()
@@ -28,7 +28,7 @@ class Nextline:
             cmd = compile(self.statement, '<string>', 'exec')
         else:
             cmd = self.statement
-        self.finished = False
+        self.status = "running"
         trace_org = sys.gettrace()
         threading.settrace(self.trace)
         sys.settrace(self.trace)
@@ -37,7 +37,7 @@ class Nextline:
         finally:
             sys.settrace(trace_org)
             threading.settrace(trace_org)
-        self.finished = True
+        self.status = "finished"
 
     async def wait(self):
         self.control.end()
