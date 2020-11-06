@@ -58,13 +58,15 @@ class LocalControl:
 
         This method runs in its own thread during pdb._cmdloop()
         """
-        while out := self._get_until_prompt(self.queue_out, self.pdb.prompt):
+        while out := self._read_pdb_stdout(self.queue_out, self.pdb.prompt):
             self.control.prompt(self, out)
             command = self.queue.get()
             self.control.received(self)
             self.queue_in.put(command)
 
-    def _get_until_prompt(self, queue, prompt):
+    def _read_pdb_stdout(self, queue, prompt):
+        """read stdout from pdb up to the prompt
+        """
         out = ''
         while True:
             m = queue.get()
