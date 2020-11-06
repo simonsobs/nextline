@@ -86,8 +86,8 @@ class Control:
         self.thread_task_ids = set()
         self.local_controls = {}
         self.condition = threading.Condition()
-        self.waiting = {}
         self.local_pdbs = {}
+        self.prompts = {}
 
     def end(self):
         with self.condition:
@@ -108,15 +108,14 @@ class Control:
     def prompt(self, local_control, out):
         print(out, end='')
         with self.condition:
-            self.waiting[local_control.thread_task_id] = local_control
-        # print(local_control.message)
-        # local_control.do('next')
+            self.prompts[local_control.thread_task_id] = dict(
+                stdout=out, local_control=local_control)
 
     def received(self, local_control):
         thread_task_id = local_control.thread_task_id
         try:
             with self.condition:
-                self.waiting.pop(thread_task_id)
+                self.prompts.pop(thread_task_id)
         except KeyError:
             warnings.warn("the command for {} wasn't waited for.".format(thread_task_id))
 
