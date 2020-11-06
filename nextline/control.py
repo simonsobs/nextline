@@ -21,6 +21,11 @@ class StreamIn:
 
 ##__________________________________________________________________||
 class LocalControl:
+    '''A local hub of communications to the pdb
+
+    An instance is created for each asyncio task.
+    '''
+
     def __init__(self, thread_task_id, control):
         self.thread_task_id = thread_task_id
         self.control = control
@@ -41,12 +46,27 @@ class LocalControl:
         self.queue.put(command)
 
     def start(self):
-        self.t = threading.Thread(target=self._listen)
-        self.t.start()
+        self.thread = threading.Thread(target=self._run)
+        self.thread.start()
 
     def end(self):
         self.queue_out.put(None)
-        self.t.join()
+        self.thread.join()
+
+    def _run(self):
+        """The main method of this class
+
+        This method runs in its own thread.
+        """
+        while True:
+            out, end = self._get_until_prompt(self.queue_out, self.pdb.prompt)
+            if end:
+                break
+            self.control.prompt(self, out)
+            command = self.queue.get()
+            self.control.received(self)
+            print(command)
+            self.queue_in.put(command)
 
     def _get_until_prompt(self, queue, prompt):
         out = ''
@@ -60,17 +80,6 @@ class LocalControl:
             if prompt == m:
                 break
         return out, end
-
-    def _listen(self):
-        while True:
-            out, end = self._get_until_prompt(self.queue_out, self.pdb.prompt)
-            if end:
-                break
-            self.control.prompt(self, out)
-            command = self.queue.get()
-            self.control.received(self)
-            print(command)
-            self.queue_in.put(command)
 
 class Control:
     def __init__(self):
