@@ -1,7 +1,8 @@
 import threading
 import queue
 import warnings
-import pdb
+
+from .trace import PdbWrapper
 
 ##__________________________________________________________________||
 class StreamOut:
@@ -27,10 +28,7 @@ class LocalControl:
 
         self.queue_in = queue.Queue()
         self.queue_out = queue.Queue()
-        self.pdb = pdb.Pdb(stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
-        self.pdb.quitting = True
-        self.pdb.botframe = None
-        self.pdb._set_stopinfo(None, None)
+        self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
     def __call__(self, message):
         self.message = message

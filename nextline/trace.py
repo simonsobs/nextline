@@ -1,16 +1,27 @@
 import threading
 import asyncio
+from pdb import Pdb
 
 ##__________________________________________________________________||
-class LocalTrace:
-    def __init__(self, local_control):
+class PdbWrapper(Pdb):
+    def __init__(self, local_control, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.local_control = local_control
-        self.trace_dispatch = self.local_control.pdb.trace_dispatch
 
-    def __call__(self, frame, event, arg):
-        if self.trace_dispatch:
-            self.trace_dispatch = self.trace_dispatch(frame, event, arg)
-        return self
+        # self.quitting = True # not sure if necessary
+
+        # stop at the first line
+        self.botframe = None
+        self._set_stopinfo(None, None)
+
+        self.super_trace_dispatch = super().trace_dispatch
+        print(self.super_trace_dispatch)
+
+    def trace_dispatch_wrapper(self, frame, event, arg):
+        if self.super_trace_dispatch:
+            self.super_trace_dispatch = self.super_trace_dispatch(frame, event, arg)
+            print(self.super_trace_dispatch)
+        return self.trace_dispatch_wrapper
 
 class Trace:
     def __init__(self, control, breaks):
@@ -41,9 +52,7 @@ class Trace:
 
         local_control = self.control.local_control(thread_task_id)
 
-        trace_local = LocalTrace(local_control)
-
-        return trace_local(frame, event, arg)
+        return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
 
 ##__________________________________________________________________||
 def create_thread_task_id():
