@@ -65,7 +65,6 @@ class LocalControl:
             self.control.prompt(self, out)
             command = self.queue.get()
             self.control.received(self)
-            print(command)
             self.queue_in.put(command)
 
     def _get_until_prompt(self, queue, prompt):
@@ -106,7 +105,6 @@ class Control:
             return ret
 
     def prompt(self, local_control, out):
-        print(out, end='')
         with self.condition:
             self.prompts[local_control.thread_task_id] = dict(
                 stdout=out, local_control=local_control)
