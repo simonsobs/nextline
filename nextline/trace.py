@@ -33,13 +33,17 @@ class PdbWrapper(Pdb):
         self._set_stopinfo(None, None)
 
         self.super_trace_dispatch = super().trace_dispatch
-        print(self.super_trace_dispatch)
 
     def trace_dispatch_wrapper(self, frame, event, arg):
         if self.super_trace_dispatch:
             self.super_trace_dispatch = self.super_trace_dispatch(frame, event, arg)
-            print(self.super_trace_dispatch)
         return self.trace_dispatch_wrapper
+
+    def _cmdloop(self):
+        self.local_control.enter_cmdloop()
+        super()._cmdloop()
+        self.local_control.exit_cmdloop()
+
 
 class Trace:
     def __init__(self, control, breaks):

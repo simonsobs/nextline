@@ -45,23 +45,20 @@ class LocalControl:
     def do(self, command):
         self.queue.put(command)
 
-    def start(self):
-        self.thread = threading.Thread(target=self._run)
+    def enter_cmdloop(self):
+        self.thread = threading.Thread(target=self._handle_cmds)
         self.thread.start()
 
-    def end(self):
+    def exit_cmdloop(self):
         self.queue_out.put(None)
         self.thread.join()
 
-    def _run(self):
-        """The main method of this class
+    def _handle_cmds(self):
+        """handle pdb commands
 
-        This method runs in its own thread.
+        This method runs in its own thread during pdb._cmdloop()
         """
-        while True:
-            out, end = self._get_until_prompt(self.queue_out, self.pdb.prompt)
-            if end:
-                break
+        while out := self._get_until_prompt(self.queue_out, self.pdb.prompt):
             self.control.prompt(self, out)
             command = self.queue.get()
             self.control.received(self)
@@ -69,16 +66,14 @@ class LocalControl:
 
     def _get_until_prompt(self, queue, prompt):
         out = ''
-        end = False
         while True:
             m = queue.get()
             if m is None: # end
-                end = True
-                break
+                return None
             out += m
             if prompt == m:
                 break
-        return out, end
+        return out
 
 class Control:
     def __init__(self):
@@ -89,9 +84,7 @@ class Control:
         self.prompts = {}
 
     def end(self):
-        with self.condition:
-            for local_control in self.local_controls.values():
-                local_control.end()
+        pass
 
     def local_control(self, thread_task_id):
         with self.condition:
@@ -99,7 +92,6 @@ class Control:
             if ret:
                 return ret
             ret = LocalControl(thread_task_id=thread_task_id, control=self)
-            ret.start()
             self.thread_task_ids.add(thread_task_id)
             self.local_controls[thread_task_id] = ret
             return ret
