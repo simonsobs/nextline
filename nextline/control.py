@@ -31,8 +31,8 @@ class LocalControl:
         self.control = control
         self.queue = queue.Queue()
 
-        self.queue_in = queue.Queue()
-        self.queue_out = queue.Queue()
+        self.queue_in = queue.Queue() # pdb stdin
+        self.queue_out = queue.Queue() # pdb stdout
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
     def __call__(self, message):
