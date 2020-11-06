@@ -3,7 +3,25 @@ import asyncio
 from pdb import Pdb
 
 ##__________________________________________________________________||
+class Trace0:
+    # created for the entry block of each asyncio task
+    # used to trigger the end of the task
+
+    def __init__(self, pdb_wrapper):
+        self.pdb_wrapper = pdb_wrapper
+        self.trace_dispatch = self.pdb_wrapper.trace_dispatch_wrapper
+
+    def __call__(self, frame, event, arg):
+        if self.trace_dispatch:
+            self.trace_dispatch = self.trace_dispatch(frame, event, arg)
+        if event == 'return':
+            # the end of the task
+            pass
+        return self
+
 class PdbWrapper(Pdb):
+    # created for each asyncio task
+
     def __init__(self, local_control, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.local_control = local_control
@@ -27,6 +45,7 @@ class Trace:
     def __init__(self, control, breaks):
         self.control = control
         self.breaks = breaks
+        self.thread_task_ids = set()
 
     def __call__(self, frame, event, arg):
 
@@ -52,7 +71,14 @@ class Trace:
 
         local_control = self.control.local_control(thread_task_id)
 
-        return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
+        if thread_task_id in self.thread_task_ids:
+            return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
+
+        self.thread_task_ids.add(thread_task_id)
+
+        trace0 = Trace0(local_control.pdb)
+        return trace0(frame, event, arg)
+        # return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
 
 ##__________________________________________________________________||
 def create_thread_task_id():
