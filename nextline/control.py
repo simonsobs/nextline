@@ -48,8 +48,12 @@ class LocalControl:
     def enter_cmdloop(self):
         self.thread = threading.Thread(target=self._handle_cmds)
         self.thread.start()
+        self.cmdloop_info = { "local_control": self, "exit": False, "nprompts": 0 }
+        self.control.enter_cmdloop(self.cmdloop_info)
 
     def exit_cmdloop(self):
+        self.cmdloop_info["exit"] = True
+        self.control.exit_cmdloop(self.cmdloop_info)
         self.queue_out.put(None)
         self.thread.join()
 
@@ -59,8 +63,11 @@ class LocalControl:
         This method runs in its own thread during pdb._cmdloop()
         """
         while out := self._read_pdb_stdout(self.queue_out, self.pdb.prompt):
+            self.cmdloop_info["nprompts"] +=1
+            self.cmdloop_info["stdout"] = out
             self.control.prompt(self, out)
             command = self.queue.get()
+            self.cmdloop_info["command"] = command
             self.control.received(self)
             self.queue_in.put(command)
 
@@ -84,6 +91,7 @@ class Control:
         self.condition = threading.Condition()
         self.local_pdbs = {}
         self.prompts = {}
+        self.cmdloop_info_list = []
 
     def end(self):
         pass
@@ -97,6 +105,12 @@ class Control:
             self.thread_task_ids.add(thread_task_id)
             self.local_controls[thread_task_id] = ret
             return ret
+
+    def enter_cmdloop(self, cmdloop_info):
+        self.cmdloop_info_list.append(cmdloop_info)
+
+    def exit_cmdloop(self, cmdloop_info):
+        self.cmdloop_info_list.remove(cmdloop_info)
 
     def prompt(self, local_control, out):
         with self.condition:
