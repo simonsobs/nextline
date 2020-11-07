@@ -21,10 +21,20 @@ class StreamIn:
 
 ##__________________________________________________________________||
 class CmdLoop:
-    '''
+    """Communicate with pdb while pdb is running cmdloop()
 
     An instance is created for each execution of pdb._cmdloop()
-    '''
+
+    Parameters
+    ----------
+    pdb : Pdb
+        The Pdb instance executing cmdloop()
+    queue_in : queue
+        The queue connected to stdin in pdb
+    queue_out : queue
+        The queue connected to stdout in pdb
+
+    """
     def __init__(self, pdb, queue_in, queue_out):
         self.pdb = pdb
         self.queue_in = queue_in
@@ -72,7 +82,7 @@ class CmdLoop:
 class LocalControl:
     '''A local hub of communications to the pdb
 
-    An instance is created for each asyncio task.
+    An instance is created for each thread and asyncio task.
     '''
 
     def __init__(self, thread_task_id, control):
