@@ -14,12 +14,12 @@ class Nextline:
         self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
-        self.control = None
+        self.thread_asynctask_regsitry = None
         self.status = "initialized"
 
     def run(self):
-        self.control = ThreadAsyncTaskRegistry()
-        self.trace = Trace(self.control, self.breaks)
+        self.thread_asynctask_regsitry = ThreadAsyncTaskRegistry()
+        self.trace = Trace(self.thread_asynctask_regsitry, self.breaks)
         self.t = threading.Thread(target=self._execute_statement_with_trace)
         self.t.start()
 
@@ -40,10 +40,9 @@ class Nextline:
         self.status = "finished"
 
     async def wait(self):
-        self.control.end()
         await asyncio.to_thread(self.t.join)
 
     def nthreads(self):
-        return self.control.nthreads()
+        return self.thread_asynctask_regsitry.nthreads()
 
 ##__________________________________________________________________||

@@ -122,10 +122,7 @@ class ThreadAsyncTaskRegistry:
         self.thread_task_ids = set()
         self.pdb_cmdloop_registries = {}
         self.condition = threading.Condition()
-        self.pdb_proxys = []
-
-    def end(self):
-        pass
+        self.pdb_proxies = []
 
     def local_control(self, thread_task_id):
         with self.condition:
@@ -139,11 +136,11 @@ class ThreadAsyncTaskRegistry:
 
     def enter_cmdloop(self, cmdloop):
         with self.condition:
-            self.pdb_proxys.append(cmdloop)
+            self.pdb_proxies.append(cmdloop)
 
     def exit_cmdloop(self, cmdloop):
         with self.condition:
-            self.pdb_proxys.remove(cmdloop)
+            self.pdb_proxies.remove(cmdloop)
 
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})

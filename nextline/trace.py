@@ -46,12 +46,23 @@ class PdbWrapper(Pdb):
 
 
 class Trace:
-    def __init__(self, control, breaks):
-        self.control = control
+    """A trace function which starts pdb in a new thread or async task
+
+    An callable instance of this class should be set as the trace function by
+    sys.settrace() and threading.settrace().
+
+    """
+    def __init__(self, thread_asynctask_regsitry, breaks):
+        self.thread_asynctask_regsitry = thread_asynctask_regsitry
         self.breaks = breaks
-        self.thread_task_ids = set()
+        self.thread_asynctask_ids = set()
 
     def __call__(self, frame, event, arg):
+        """Called by the Python interpreter when a new local scope is entered.
+
+        https://docs.python.org/3/library/sys.html#sys.settrace
+
+        """
 
         module_name = frame.f_globals.get('__name__')
         # e.g., 'threading', '__main__', 'concurrent.futures.thread', 'asyncio.events'
@@ -70,32 +81,41 @@ class Trace:
 
         print('{}.{}()'.format(module_name, func_name))
 
-        thread_task_id = create_thread_task_id()
-        print(*thread_task_id)
+        thread_asynctask_id = create_thread_asynctask_id()
+        print(*thread_asynctask_id)
 
-        local_control = self.control.local_control(thread_task_id)
+        local_control = self.thread_asynctask_regsitry.local_control(thread_asynctask_id)
 
-        if thread_task_id in self.thread_task_ids:
+        if thread_asynctask_id in self.thread_asynctask_ids:
             return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
 
-        self.thread_task_ids.add(thread_task_id)
+        self.thread_asynctask_ids.add(thread_asynctask_id)
 
         trace0 = Trace0(local_control.pdb)
         return trace0(frame, event, arg)
         # return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
 
 ##__________________________________________________________________||
-def create_thread_task_id():
+def create_thread_asynctask_id():
+    """Return the pair of the current thread ID and async task ID
+
+    Returns
+    -------
+    tuple
+        The pair of the current thread ID and async task ID. If not in an
+        async task, the async task ID will be None.
+
+    """
 
     thread_id = threading.get_ident()
 
-    task_id = None
+    asynctask_id = None
     try:
-        task_id = id(asyncio.current_task())
+        asynctask_id = id(asyncio.current_task())
     except RuntimeError:
         # no running event loop
         pass
 
-    return (thread_id, task_id)
+    return (thread_id, asynctask_id)
 
 ##__________________________________________________________________||
