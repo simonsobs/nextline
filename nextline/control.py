@@ -65,10 +65,8 @@ class LocalControl:
         while out := self._read_pdb_stdout(self.queue_out, self.pdb.prompt):
             self.cmdloop_info["nprompts"] +=1
             self.cmdloop_info["stdout"] = out
-            self.control.prompt(self, out)
             command = self.queue.get()
             self.cmdloop_info["command"] = command
-            self.control.received(self)
             self.queue_in.put(command)
 
     def _read_pdb_stdout(self, queue, prompt):
@@ -89,8 +87,6 @@ class Control:
         self.thread_task_ids = set()
         self.local_controls = {}
         self.condition = threading.Condition()
-        self.local_pdbs = {}
-        self.prompts = {}
         self.cmdloop_info_list = []
 
     def end(self):
@@ -112,27 +108,7 @@ class Control:
     def exit_cmdloop(self, cmdloop_info):
         self.cmdloop_info_list.remove(cmdloop_info)
 
-    def prompt(self, local_control, out):
-        with self.condition:
-            self.prompts[local_control.thread_task_id] = dict(
-                stdout=out, local_control=local_control)
-
-    def received(self, local_control):
-        thread_task_id = local_control.thread_task_id
-        try:
-            with self.condition:
-                self.prompts.pop(thread_task_id)
-        except KeyError:
-            warnings.warn("the command for {} wasn't waited for.".format(thread_task_id))
-
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})
-
-    def send_command(self, thread_task_id, command):
-        local_control = self.local_controls.get(thread_task_id)
-        if local_control is None:
-            warnings.warn("cannot find a local control for {}.".format(thread_task_id))
-            return
-        local_control.do(command)
 
 ##__________________________________________________________________||
