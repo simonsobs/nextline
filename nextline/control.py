@@ -103,10 +103,12 @@ class Control:
             return ret
 
     def enter_cmdloop(self, cmdloop_info):
-        self.cmdloop_info_list.append(cmdloop_info)
+        with self.condition:
+            self.cmdloop_info_list.append(cmdloop_info)
 
     def exit_cmdloop(self, cmdloop_info):
-        self.cmdloop_info_list.remove(cmdloop_info)
+        with self.condition:
+            self.cmdloop_info_list.remove(cmdloop_info)
 
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})
