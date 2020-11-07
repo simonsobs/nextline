@@ -35,13 +35,6 @@ class LocalControl:
         self.queue_out = queue.Queue() # pdb stdout
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
-    def __call__(self, message):
-        self.message = message
-        self.control.prompt(self)
-        m = self.queue.get()
-        self.control.received(self)
-        return m
-
     def do(self, command):
         self.queue.put(command)
 
