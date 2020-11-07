@@ -20,8 +20,8 @@ class StreamIn:
         return self.queue.get()
 
 ##__________________________________________________________________||
-class CmdLoop:
-    """Communicate with pdb while pdb is running cmdloop()
+class PdbProxyInCmdLoop:
+    """Send commands to pdb while pdb is in the command loop
 
     An instance is created for each execution of pdb._cmdloop()
 
@@ -48,11 +48,19 @@ class CmdLoop:
         self.command = command
         self.queue_in.put(command)
 
-    def enter(self):
+    def entering_cmdloop(self):
+        """notify the pdb is entering the command loop
+
+        This class starts waiting for the output of the pdb
+        """
         self.thread = threading.Thread(target=self._receive_pdb_stdout)
         self.thread.start()
 
-    def exit(self):
+    def exited_cmdloop(self):
+        """notify the pdb has exited from the command loop
+
+        This class stops waiting for the output of the pdb
+        """
         self.exited = True
         self.queue_out.put(None) # end the thread
         self.thread.join()
@@ -79,10 +87,14 @@ class CmdLoop:
                 break
         return out
 
-class LocalControl:
-    '''A local hub of communications to the pdb
+class PdbCmdLoopRegistry:
+    '''Be notified when the pdb enters and exits from the command loop
 
-    An instance is created for each thread and asyncio task.
+    An instance is created for each thread and asyncio task. When the
+    pdb enters the command loop, the instance starts a proxy, which
+    receives the output of the pdb and sends commands to the pdb. When
+    the pdb exits from the command loop, the instance stops the proxy.
+
     '''
 
     def __init__(self, thread_task_id, control):
@@ -94,41 +106,44 @@ class LocalControl:
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
     def enter_cmdloop(self):
-        self.cmdloop = CmdLoop(self.pdb, self.queue_in, self.queue_out)
-        self.cmdloop.enter()
-        self.control.enter_cmdloop(self.cmdloop)
+        self.pdb_proxy = PdbProxyInCmdLoop(self.pdb, self.queue_in, self.queue_out)
+        self.pdb_proxy.entering_cmdloop()
+        self.control.enter_cmdloop(self.pdb_proxy)
 
     def exit_cmdloop(self):
-        self.cmdloop.exit()
-        self.control.exit_cmdloop(self.cmdloop)
+        self.pdb_proxy.exited_cmdloop()
+        self.control.exit_cmdloop(self.pdb_proxy)
 
-class Control:
+class ThreadAsyncTaskRegistry:
+    '''Be notified when the trace function is called in a new thread or async task
+
+    '''
     def __init__(self):
         self.thread_task_ids = set()
-        self.local_controls = {}
+        self.pdb_cmdloop_registries = {}
         self.condition = threading.Condition()
-        self.cmdloops = []
+        self.pdb_proxys = []
 
     def end(self):
         pass
 
     def local_control(self, thread_task_id):
         with self.condition:
-            ret = self.local_controls.get(thread_task_id)
+            ret = self.pdb_cmdloop_registries.get(thread_task_id)
             if ret:
                 return ret
-            ret = LocalControl(thread_task_id=thread_task_id, control=self)
+            ret = PdbCmdLoopRegistry(thread_task_id=thread_task_id, control=self)
             self.thread_task_ids.add(thread_task_id)
-            self.local_controls[thread_task_id] = ret
+            self.pdb_cmdloop_registries[thread_task_id] = ret
             return ret
 
     def enter_cmdloop(self, cmdloop):
         with self.condition:
-            self.cmdloops.append(cmdloop)
+            self.pdb_proxys.append(cmdloop)
 
     def exit_cmdloop(self, cmdloop):
         with self.condition:
-            self.cmdloops.remove(cmdloop)
+            self.pdb_proxys.remove(cmdloop)
 
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})

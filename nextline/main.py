@@ -6,7 +6,7 @@ import queue
 import janus
 
 from .trace import Trace
-from .control import Control
+from .control import ThreadAsyncTaskRegistry
 
 ##__________________________________________________________________||
 class Nextline:
@@ -18,7 +18,7 @@ class Nextline:
         self.status = "initialized"
 
     def run(self):
-        self.control = Control()
+        self.control = ThreadAsyncTaskRegistry()
         self.trace = Trace(self.control, self.breaks)
         self.t = threading.Thread(target=self._execute_statement_with_trace)
         self.t.start()
