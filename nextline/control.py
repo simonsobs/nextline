@@ -21,15 +21,20 @@ class StreamIn:
 
 ##__________________________________________________________________||
 class CmdLoop:
-    def __init__(self, local_control, queue_in, queue_out):
-        self.local_control = local_control
-        self.pdb = self.local_control.pdb
+    '''
+
+    An instance is created for each execution of pdb._cmdloop()
+    '''
+    def __init__(self, pdb, queue_in, queue_out):
+        self.pdb = pdb
         self.queue_in = queue_in
         self.queue_out = queue_out
         self.exited = False
         self.nprompts = 0
 
-    def send_pdb_stdin(self, command):
+    def send_pdb_command(self, command):
+        """send a command to pdb
+        """
         self.command = command
         self.queue_in.put(command)
 
@@ -43,7 +48,7 @@ class CmdLoop:
         self.thread.join()
 
     def _receive_pdb_stdout(self):
-        """handle pdb commands
+        """receive stdout fomr pdb
 
         This method runs in its own thread during pdb._cmdloop()
         """
@@ -79,7 +84,7 @@ class LocalControl:
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
     def enter_cmdloop(self):
-        self.cmdloop = CmdLoop(self, self.queue_in, self.queue_out)
+        self.cmdloop = CmdLoop(self.pdb, self.queue_in, self.queue_out)
         self.cmdloop.enter()
         self.control.enter_cmdloop(self.cmdloop)
 
