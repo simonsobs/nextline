@@ -29,17 +29,17 @@ class LocalControl:
     def __init__(self, thread_task_id, control):
         self.thread_task_id = thread_task_id
         self.control = control
-        self.queue = queue.Queue()
 
         self.queue_in = queue.Queue() # pdb stdin
         self.queue_out = queue.Queue() # pdb stdout
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
-    def do(self, command):
-        self.queue.put(command)
+    def send_pdb_command(self, command):
+        self.cmdloop_info["command"] = command
+        self.queue_in.put(command)
 
     def enter_cmdloop(self):
-        self.thread = threading.Thread(target=self._handle_cmds)
+        self.thread = threading.Thread(target=self._receive_pdb_stdout)
         self.thread.start()
         self.cmdloop_info = { "local_control": self, "exit": False, "nprompts": 0 }
         self.control.enter_cmdloop(self.cmdloop_info)
@@ -50,20 +50,17 @@ class LocalControl:
         self.queue_out.put(None)
         self.thread.join()
 
-    def _handle_cmds(self):
+    def _receive_pdb_stdout(self):
         """handle pdb commands
 
         This method runs in its own thread during pdb._cmdloop()
         """
-        while out := self._read_pdb_stdout(self.queue_out, self.pdb.prompt):
+        while out := self._read_uptp_prompt(self.queue_out, self.pdb.prompt):
             self.cmdloop_info["nprompts"] +=1
             self.cmdloop_info["stdout"] = out
-            command = self.queue.get()
-            self.cmdloop_info["command"] = command
-            self.queue_in.put(command)
 
-    def _read_pdb_stdout(self, queue, prompt):
-        """read stdout from pdb up to the prompt
+    def _read_uptp_prompt(self, queue, prompt):
+        """read the queue up to the prompt
         """
         out = ''
         while True:
