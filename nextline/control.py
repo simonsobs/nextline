@@ -20,6 +20,13 @@ class StreamIn:
         return self.queue.get()
 
 ##__________________________________________________________________||
+class CmdLoop:
+    def __init__(self, local_control):
+        self.local_control = local_control
+        self.exit = False
+        self.nprompts = 0
+
+
 class LocalControl:
     '''A local hub of communications to the pdb
 
@@ -35,19 +42,19 @@ class LocalControl:
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
     def send_pdb_command(self, command):
-        self.cmdloop_info["command"] = command
+        self.cmdloop.command = command
         self.queue_in.put(command)
 
     def enter_cmdloop(self):
         self.thread = threading.Thread(target=self._receive_pdb_stdout)
         self.thread.start()
-        self.cmdloop_info = { "local_control": self, "exit": False, "nprompts": 0 }
-        self.control.enter_cmdloop(self.cmdloop_info)
+        self.cmdloop = CmdLoop(self)
+        self.control.enter_cmdloop(self.cmdloop)
 
     def exit_cmdloop(self):
-        self.cmdloop_info["exit"] = True
-        self.control.exit_cmdloop(self.cmdloop_info)
         self.queue_out.put(None)
+        self.cmdloop.exit = True
+        self.control.exit_cmdloop(self.cmdloop)
         self.thread.join()
 
     def _receive_pdb_stdout(self):
@@ -56,8 +63,8 @@ class LocalControl:
         This method runs in its own thread during pdb._cmdloop()
         """
         while out := self._read_uptp_prompt(self.queue_out, self.pdb.prompt):
-            self.cmdloop_info["nprompts"] +=1
-            self.cmdloop_info["stdout"] = out
+            self.cmdloop.nprompts += 1
+            self.cmdloop.stdout = out
 
     def _read_uptp_prompt(self, queue, prompt):
         """read the queue up to the prompt
@@ -77,7 +84,7 @@ class Control:
         self.thread_task_ids = set()
         self.local_controls = {}
         self.condition = threading.Condition()
-        self.cmdloop_info_list = []
+        self.cmdloops = []
 
     def end(self):
         pass
@@ -92,13 +99,13 @@ class Control:
             self.local_controls[thread_task_id] = ret
             return ret
 
-    def enter_cmdloop(self, cmdloop_info):
+    def enter_cmdloop(self, cmdloop):
         with self.condition:
-            self.cmdloop_info_list.append(cmdloop_info)
+            self.cmdloops.append(cmdloop)
 
-    def exit_cmdloop(self, cmdloop_info):
+    def exit_cmdloop(self, cmdloop):
         with self.condition:
-            self.cmdloop_info_list.remove(cmdloop_info)
+            self.cmdloops.remove(cmdloop)
 
     def nthreads(self):
         return len({i for i, _ in self.thread_task_ids})
