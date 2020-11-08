@@ -29,9 +29,8 @@ class Trace:
     """
     def __init__(self, breaks):
         self.breaks = breaks
-        self.thread_asynctask_ids = set()
         self.condition = threading.Condition()
-        self.pdb_cmdloop_registries = {}
+        self.cmdloop_registries = {}
         self.pdb_proxies = []
 
     def __call__(self, frame, event, arg):
@@ -58,29 +57,19 @@ class Trace:
 
         print('{}.{}()'.format(module_name, func_name))
 
-        thread_asynctask_id = create_thread_asynctask_id()
+        thread_asynctask_id = compose_thread_asynctask_id()
         print(*thread_asynctask_id)
 
-        local_control = self.local_control(thread_asynctask_id)
+        if thread_asynctask_id in self.cmdloop_registries:
+            cmdloop_registry = self.cmdloop_registries[thread_asynctask_id]
+            return cmdloop_registry.pdb.trace_dispatch_wrapper(frame, event, arg)
 
-        if thread_asynctask_id in self.thread_asynctask_ids:
-            return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
+        cmdloop_registry = PdbCmdLoopRegistry(thread_asynctask_id=thread_asynctask_id, control=self)
+        self.cmdloop_registries[thread_asynctask_id] = cmdloop_registry
 
-        self.thread_asynctask_ids.add(thread_asynctask_id)
-
-        trace0 = Trace0(local_control.pdb)
+        trace0 = Trace0(cmdloop_registry.pdb)
         return trace0(frame, event, arg)
-        # return local_control.pdb.trace_dispatch_wrapper(frame, event, arg)
-
-    def local_control(self, thread_asynctask_id):
-        with self.condition:
-            ret = self.pdb_cmdloop_registries.get(thread_asynctask_id)
-            if ret:
-                return ret
-            ret = PdbCmdLoopRegistry(thread_asynctask_id=thread_asynctask_id, control=self)
-            self.thread_asynctask_ids.add(thread_asynctask_id)
-            self.pdb_cmdloop_registries[thread_asynctask_id] = ret
-            return ret
+        # return cmdloop_registry.pdb.trace_dispatch_wrapper(frame, event, arg)
 
     def enter_cmdloop(self, cmdloop):
         with self.condition:
@@ -91,10 +80,11 @@ class Trace:
             self.pdb_proxies.remove(cmdloop)
 
     def nthreads(self):
-        return len({i for i, _ in self.thread_asynctask_ids})
+        with self.condition:
+            return len({i for i, _ in self.cmdloop_registries.keys()})
 
 ##__________________________________________________________________||
-def create_thread_asynctask_id():
+def compose_thread_asynctask_id():
     """Return the pair of the current thread ID and async task ID
 
     Returns
