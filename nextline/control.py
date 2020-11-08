@@ -51,7 +51,7 @@ class PdbCommandInterface:
         self.thread.join()
 
     def _receive_pdb_stdout(self):
-        """receive stdout fomr pdb
+        """receive stdout from pdb
 
         This method runs in its own thread during pdb._cmdloop()
         """
