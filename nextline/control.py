@@ -3,15 +3,16 @@ import queue
 from pdb import Pdb
 
 ##__________________________________________________________________||
-class PdbProxyInCmdLoop:
-    """Send commands to pdb while pdb is in the command loop
+class PdbCommandInterface:
+    """Relay pdb command prompts and commands
 
-    An instance is created for each execution of pdb._cmdloop()
+    An instance of this class is created for each execution of the pdb
+    command loop, pdb._cmdloop().
 
     Parameters
     ----------
     pdb : Pdb
-        The Pdb instance executing cmdloop()
+        The Pdb instance executing _cmdloop()
     queue_in : queue
         The queue connected to stdin in pdb
     queue_out : queue
@@ -130,12 +131,12 @@ class PdbCmdLoopRegistry:
         self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
 
     def enter_cmdloop(self):
-        self.pdb_proxy = PdbProxyInCmdLoop(self.pdb, self.queue_in, self.queue_out)
-        self.pdb_proxy.entering_cmdloop()
-        self.trace.enter_cmdloop(self.pdb_proxy)
+        self.pdb_ci = PdbCommandInterface(self.pdb, self.queue_in, self.queue_out)
+        self.pdb_ci.entering_cmdloop()
+        self.trace.enter_cmdloop(self.pdb_ci)
 
     def exit_cmdloop(self):
-        self.pdb_proxy.exited_cmdloop()
-        self.trace.exit_cmdloop(self.pdb_proxy)
+        self.pdb_ci.exited_cmdloop()
+        self.trace.exit_cmdloop(self.pdb_ci)
 
 ##__________________________________________________________________||

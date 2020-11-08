@@ -31,7 +31,7 @@ class Trace:
         self.breaks = breaks
         self.condition = threading.Condition()
         self.cmdloop_registries = {}
-        self.pdb_proxies = []
+        self.pdb_cis = []
 
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.
@@ -71,13 +71,13 @@ class Trace:
         return trace0(frame, event, arg)
         # return cmdloop_registry.pdb.trace_dispatch_wrapper(frame, event, arg)
 
-    def enter_cmdloop(self, cmdloop):
+    def enter_cmdloop(self, pdb_ci):
         with self.condition:
-            self.pdb_proxies.append(cmdloop)
+            self.pdb_cis.append(pdb_ci)
 
-    def exit_cmdloop(self, cmdloop):
+    def exit_cmdloop(self, pdb_ci):
         with self.condition:
-            self.pdb_proxies.remove(cmdloop)
+            self.pdb_cis.remove(pdb_ci)
 
     def nthreads(self):
         with self.condition:
