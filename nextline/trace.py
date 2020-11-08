@@ -11,7 +11,8 @@ class Trace:
     sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, breaks):
+    def __init__(self, statement, breaks):
+        self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
         self.pdb_proxies = {}

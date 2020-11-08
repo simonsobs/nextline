@@ -1,5 +1,6 @@
 import threading
 import queue
+from functools import partial
 from pdb import Pdb
 
 ##__________________________________________________________________||
@@ -72,6 +73,12 @@ class PdbCommandInterface:
         return out
 
 ##__________________________________________________________________||
+def getlines(func_org, statement, filename, module_globals=None):
+    if filename == '<string>':
+        return statement.split('\n')
+    return func_org(filename, module_globals)
+
+##__________________________________________________________________||
 class CustomizedPdb(Pdb):
     """A customized Pdb
 
@@ -93,6 +100,16 @@ class CustomizedPdb(Pdb):
         self.pdb_proxy.enter_cmdloop()
         super()._cmdloop()
         self.pdb_proxy.exit_cmdloop()
+
+    def do_list(self, arg):
+        statement = self.pdb_proxy.trace.statement
+        import linecache
+        getlines_org = linecache.getlines
+        linecache.getlines = partial(getlines, getlines_org, statement)
+        try:
+            return super().do_list(arg)
+        finally:
+            linecache.getlines = getlines_org
 
 class StreamOut:
     def __init__(self, queue):
