@@ -6,7 +6,6 @@ import queue
 import janus
 
 from .trace import Trace
-from .control import ThreadAsyncTaskRegistry
 
 ##__________________________________________________________________||
 class Nextline:
@@ -14,12 +13,11 @@ class Nextline:
         self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
-        self.thread_asynctask_regsitry = None
+        # self.thread_asynctask_regsitry = None
         self.status = "initialized"
 
     def run(self):
-        self.thread_asynctask_regsitry = ThreadAsyncTaskRegistry()
-        self.trace = Trace(self.thread_asynctask_regsitry, self.breaks)
+        self.trace = Trace(self.breaks)
         self.t = threading.Thread(target=self._execute_statement_with_trace)
         self.t.start()
 
@@ -43,6 +41,6 @@ class Nextline:
         await asyncio.to_thread(self.t.join)
 
     def nthreads(self):
-        return self.thread_asynctask_regsitry.nthreads()
+        return self.trace.nthreads()
 
 ##__________________________________________________________________||

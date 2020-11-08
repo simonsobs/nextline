@@ -122,8 +122,8 @@ class PdbCmdLoopRegistry:
 
     '''
 
-    def __init__(self, thread_task_id, control):
-        self.thread_task_id = thread_task_id
+    def __init__(self, thread_asynctask_id, control):
+        self.thread_asynctask_id = thread_asynctask_id
         self.control = control
 
         self.queue_in = queue.Queue() # pdb stdin
@@ -138,36 +138,5 @@ class PdbCmdLoopRegistry:
     def exit_cmdloop(self):
         self.pdb_proxy.exited_cmdloop()
         self.control.exit_cmdloop(self.pdb_proxy)
-
-class ThreadAsyncTaskRegistry:
-    '''Be notified when the trace function is called in a new thread or async task
-
-    '''
-    def __init__(self):
-        self.thread_task_ids = set()
-        self.pdb_cmdloop_registries = {}
-        self.condition = threading.Condition()
-        self.pdb_proxies = []
-
-    def local_control(self, thread_task_id):
-        with self.condition:
-            ret = self.pdb_cmdloop_registries.get(thread_task_id)
-            if ret:
-                return ret
-            ret = PdbCmdLoopRegistry(thread_task_id=thread_task_id, control=self)
-            self.thread_task_ids.add(thread_task_id)
-            self.pdb_cmdloop_registries[thread_task_id] = ret
-            return ret
-
-    def enter_cmdloop(self, cmdloop):
-        with self.condition:
-            self.pdb_proxies.append(cmdloop)
-
-    def exit_cmdloop(self, cmdloop):
-        with self.condition:
-            self.pdb_proxies.remove(cmdloop)
-
-    def nthreads(self):
-        return len({i for i, _ in self.thread_task_ids})
 
 ##__________________________________________________________________||
