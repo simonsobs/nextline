@@ -64,7 +64,7 @@ class Trace:
             cmdloop_registry = self.cmdloop_registries[thread_asynctask_id]
             return cmdloop_registry.pdb.trace_dispatch_wrapper(frame, event, arg)
 
-        cmdloop_registry = PdbCmdLoopRegistry(thread_asynctask_id=thread_asynctask_id, control=self)
+        cmdloop_registry = PdbCmdLoopRegistry(thread_asynctask_id=thread_asynctask_id, trace=self)
         self.cmdloop_registries[thread_asynctask_id] = cmdloop_registry
 
         trace0 = Trace0(cmdloop_registry.pdb)

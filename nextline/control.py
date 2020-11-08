@@ -121,9 +121,9 @@ class PdbCmdLoopRegistry:
 
     '''
 
-    def __init__(self, thread_asynctask_id, control):
+    def __init__(self, thread_asynctask_id, trace):
         self.thread_asynctask_id = thread_asynctask_id
-        self.control = control
+        self.trace = trace
 
         self.queue_in = queue.Queue() # pdb stdin
         self.queue_out = queue.Queue() # pdb stdout
@@ -132,10 +132,10 @@ class PdbCmdLoopRegistry:
     def enter_cmdloop(self):
         self.pdb_proxy = PdbProxyInCmdLoop(self.pdb, self.queue_in, self.queue_out)
         self.pdb_proxy.entering_cmdloop()
-        self.control.enter_cmdloop(self.pdb_proxy)
+        self.trace.enter_cmdloop(self.pdb_proxy)
 
     def exit_cmdloop(self):
         self.pdb_proxy.exited_cmdloop()
-        self.control.exit_cmdloop(self.pdb_proxy)
+        self.trace.exit_cmdloop(self.pdb_proxy)
 
 ##__________________________________________________________________||
