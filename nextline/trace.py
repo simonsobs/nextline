@@ -1,25 +1,9 @@
 import threading
 import asyncio
 
-from .control import PdbCmdLoopRegistry
+from .control import PdbProxy
 
 ##__________________________________________________________________||
-class Trace0:
-    # created for the entry block of each asyncio task
-    # used to trigger the end of the task
-
-    def __init__(self, pdb_wrapper):
-        self.pdb_wrapper = pdb_wrapper
-        self.trace_dispatch = self.pdb_wrapper.trace_dispatch_wrapper
-
-    def __call__(self, frame, event, arg):
-        if self.trace_dispatch:
-            self.trace_dispatch = self.trace_dispatch(frame, event, arg)
-        if event == 'return':
-            # the end of the task
-            pass
-        return self
-
 class Trace:
     """A trace function which starts pdb in a new thread or async task
 
@@ -30,7 +14,7 @@ class Trace:
     def __init__(self, breaks):
         self.breaks = breaks
         self.condition = threading.Condition()
-        self.cmdloop_registries = {}
+        self.pdb_proxies = {}
         self.pdb_cis = []
 
     def __call__(self, frame, event, arg):
@@ -47,6 +31,7 @@ class Trace:
         # '<module>' for the code produced by compile()
 
         if not func_name in self.breaks.get(module_name, []):
+            # print('{}.{}()'.format(module_name, func_name))
             return
 
         # print('Event: {}'.format(event))
@@ -60,16 +45,12 @@ class Trace:
         thread_asynctask_id = compose_thread_asynctask_id()
         print(*thread_asynctask_id)
 
-        if thread_asynctask_id in self.cmdloop_registries:
-            cmdloop_registry = self.cmdloop_registries[thread_asynctask_id]
-            return cmdloop_registry.pdb.trace_dispatch_wrapper(frame, event, arg)
+        if pdb_proxy := self.pdb_proxies.get(thread_asynctask_id):
+            return pdb_proxy.trace_func(frame, event, arg)
 
-        cmdloop_registry = PdbCmdLoopRegistry(thread_asynctask_id=thread_asynctask_id, trace=self)
-        self.cmdloop_registries[thread_asynctask_id] = cmdloop_registry
-
-        trace0 = Trace0(cmdloop_registry.pdb)
-        return trace0(frame, event, arg)
-        # return cmdloop_registry.pdb.trace_dispatch_wrapper(frame, event, arg)
+        pdb_proxy = PdbProxy(thread_asynctask_id=thread_asynctask_id, trace=self)
+        self.pdb_proxies[thread_asynctask_id] = pdb_proxy
+        return pdb_proxy.trace_func_init(frame, event, arg)
 
     def enter_cmdloop(self, pdb_ci):
         with self.condition:
@@ -81,7 +62,7 @@ class Trace:
 
     def nthreads(self):
         with self.condition:
-            return len({i for i, _ in self.cmdloop_registries.keys()})
+            return len({i for i, _ in self.pdb_proxies.keys()})
 
 ##__________________________________________________________________||
 def compose_thread_asynctask_id():

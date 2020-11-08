@@ -17,6 +17,10 @@ class Nextline:
         self.status = "initialized"
 
     def run(self):
+        if __name__ in self.breaks:
+            self.breaks[__name__].append('<module>')
+        else:
+            self.breaks[__name__] = ['<module>']
         self.trace = Trace(self.breaks)
         self.t = threading.Thread(target=self._execute_statement_with_trace)
         self.t.start()

@@ -72,12 +72,16 @@ class PdbCommandInterface:
         return out
 
 ##__________________________________________________________________||
-class PdbWrapper(Pdb):
-    # created for each asyncio task
+class CustomizedPdb(Pdb):
+    """A customized Pdb
 
-    def __init__(self, local_control, *args, **kwargs):
+    An instance of this class will be created for each thread and async task
+
+    """
+
+    def __init__(self, pdb_proxy, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.local_control = local_control
+        self.pdb_proxy = pdb_proxy
 
         # self.quitting = True # not sure if necessary
 
@@ -85,18 +89,10 @@ class PdbWrapper(Pdb):
         self.botframe = None
         self._set_stopinfo(None, None)
 
-        self.super_trace_dispatch = super().trace_dispatch
-
-    def trace_dispatch_wrapper(self, frame, event, arg):
-        if self.super_trace_dispatch:
-            self.super_trace_dispatch = self.super_trace_dispatch(frame, event, arg)
-        return self.trace_dispatch_wrapper
-
     def _cmdloop(self):
-        self.local_control.enter_cmdloop()
+        self.pdb_proxy.enter_cmdloop()
         super()._cmdloop()
-        self.local_control.exit_cmdloop()
-
+        self.pdb_proxy.exit_cmdloop()
 
 class StreamOut:
     def __init__(self, queue):
@@ -112,13 +108,10 @@ class StreamIn:
     def readline(self):
         return self.queue.get()
 
-class PdbCmdLoopRegistry:
-    '''Be notified when the pdb enters and exits from the command loop
+class PdbProxy:
+    '''A proxy of Pdb
 
-    An instance is created for each thread and asyncio task. When the
-    pdb enters the command loop, the instance starts a proxy, which
-    receives the output of the pdb and sends commands to the pdb. When
-    the pdb exits from the command loop, the instance stops the proxy.
+    An instance of this class is created for each thread or async task.
 
     '''
 
@@ -128,7 +121,34 @@ class PdbCmdLoopRegistry:
 
         self.queue_in = queue.Queue() # pdb stdin
         self.queue_out = queue.Queue() # pdb stdout
-        self.pdb = PdbWrapper(self, stdin=StreamIn(self.queue_in), stdout=StreamOut(self.queue_out), readrc=False)
+        stdin = StreamIn(self.queue_in)
+        stdout = StreamOut(self.queue_out)
+        self.pdb = CustomizedPdb(self, stdin=stdin, stdout=stdout, readrc=False)
+        self._pdb_trace_dispatch = self.pdb.trace_dispatch
+        self._trace_func = self.trace_func
+
+    def trace_func_init(self, frame, event, arg):
+        """A trace function of the outermost scope in the thread or async task
+
+        This method is used as a trace function of the outermost scope
+        of the thread or async task. It is used to detect the end of
+        the thread or async task.
+
+        """
+        if self._trace_func:
+            self._trace_func = self._trace_func(frame, event, arg)
+        if event == 'return':
+            # the end of the thread or async task
+            pass
+        return self.trace_func_init
+
+    def trace_func(self, frame, event, arg):
+        """A trace function
+
+        """
+        if self._pdb_trace_dispatch:
+            self._pdb_trace_dispatch = self._pdb_trace_dispatch(frame, event, arg)
+        return self.trace_func
 
     def enter_cmdloop(self):
         self.pdb_ci = PdbCommandInterface(self.pdb, self.queue_in, self.queue_out)
