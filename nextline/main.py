@@ -13,7 +13,6 @@ class Nextline:
         self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
-        # self.thread_asynctask_regsitry = None
         self.status = "initialized"
 
     def run(self):
