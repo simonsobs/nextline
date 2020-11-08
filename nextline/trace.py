@@ -1,6 +1,6 @@
 import threading
 import asyncio
-from pdb import Pdb
+
 
 ##__________________________________________________________________||
 class Trace0:
@@ -18,32 +18,6 @@ class Trace0:
             # the end of the task
             pass
         return self
-
-class PdbWrapper(Pdb):
-    # created for each asyncio task
-
-    def __init__(self, local_control, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.local_control = local_control
-
-        # self.quitting = True # not sure if necessary
-
-        # stop at the first line
-        self.botframe = None
-        self._set_stopinfo(None, None)
-
-        self.super_trace_dispatch = super().trace_dispatch
-
-    def trace_dispatch_wrapper(self, frame, event, arg):
-        if self.super_trace_dispatch:
-            self.super_trace_dispatch = self.super_trace_dispatch(frame, event, arg)
-        return self.trace_dispatch_wrapper
-
-    def _cmdloop(self):
-        self.local_control.enter_cmdloop()
-        super()._cmdloop()
-        self.local_control.exit_cmdloop()
-
 
 class Trace:
     """A trace function which starts pdb in a new thread or async task

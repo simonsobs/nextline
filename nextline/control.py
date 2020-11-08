@@ -1,8 +1,7 @@
 import threading
 import queue
 import warnings
-
-from .trace import PdbWrapper
+from pdb import Pdb
 
 ##__________________________________________________________________||
 class StreamOut:
@@ -20,6 +19,32 @@ class StreamIn:
         return self.queue.get()
 
 ##__________________________________________________________________||
+class PdbWrapper(Pdb):
+    # created for each asyncio task
+
+    def __init__(self, local_control, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.local_control = local_control
+
+        # self.quitting = True # not sure if necessary
+
+        # stop at the first line
+        self.botframe = None
+        self._set_stopinfo(None, None)
+
+        self.super_trace_dispatch = super().trace_dispatch
+
+    def trace_dispatch_wrapper(self, frame, event, arg):
+        if self.super_trace_dispatch:
+            self.super_trace_dispatch = self.super_trace_dispatch(frame, event, arg)
+        return self.trace_dispatch_wrapper
+
+    def _cmdloop(self):
+        self.local_control.enter_cmdloop()
+        super()._cmdloop()
+        self.local_control.exit_cmdloop()
+
+
 class PdbProxyInCmdLoop:
     """Send commands to pdb while pdb is in the command loop
 
