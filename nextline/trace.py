@@ -1,7 +1,7 @@
 import threading
 import asyncio
 
-from .control import PdbProxy
+from .pdb.proxy import PdbProxy
 
 ##__________________________________________________________________||
 class Trace:
