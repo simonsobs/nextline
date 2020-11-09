@@ -43,6 +43,19 @@ class PdbProxy:
         """A trace function
 
         """
+
+        module_name = frame.f_globals.get('__name__')
+        # e.g., 'threading', '__main__', 'concurrent.futures.thread', 'asyncio.events'
+
+        func_name = frame.f_code.co_name
+        # a function name
+        # Note: '<module>' for the code produced by compile()
+
+        if not func_name in self.trace.breaks.get(module_name, []):
+            return
+
+        # print('{}.{}()'.format(module_name, func_name))
+
         if self._pdb_trace_dispatch:
             self._pdb_trace_dispatch = self._pdb_trace_dispatch(frame, event, arg)
         return self.trace_func

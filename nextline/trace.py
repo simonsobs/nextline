@@ -5,10 +5,10 @@ from .pdb.proxy import PdbProxy
 
 ##__________________________________________________________________||
 class Trace:
-    """A trace function which starts pdb in a new thread or async task
+    """The main trace function
 
-    An callable instance of this class should be set as the trace function by
-    sys.settrace() and threading.settrace().
+    An instance of this class is callable and should be set as the trace
+    function by sys.settrace() and threading.settrace().
 
     """
     def __init__(self, statement, breaks):
@@ -25,26 +25,8 @@ class Trace:
 
         """
 
-        module_name = frame.f_globals.get('__name__')
-        # e.g., 'threading', '__main__', 'concurrent.futures.thread', 'asyncio.events'
-
-        func_name = frame.f_code.co_name
-        # '<module>' for the code produced by compile()
-
-        if not func_name in self.breaks.get(module_name, []):
-            # print('{}.{}()'.format(module_name, func_name))
-            return
-
-        # print('Event: {}'.format(event))
-        # print('Module name: {!r}'.format(module_name))
-        # print('File name: {}'.format(frame.f_code.co_filename))
-        # print('Line number: {}'.format(frame.f_lineno))
-        # print('Function name: {!r}'.format(func_name))
-
-        print('{}.{}()'.format(module_name, func_name))
-
         thread_asynctask_id = compose_thread_asynctask_id()
-        print(*thread_asynctask_id)
+        # print(*thread_asynctask_id)
 
         if pdb_proxy := self.pdb_proxies.get(thread_asynctask_id):
             return pdb_proxy.trace_func(frame, event, arg)
