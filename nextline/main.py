@@ -21,7 +21,7 @@ class Nextline:
         else:
             self.breaks[__name__] = ['<module>']
         self.trace = Trace(self.statement, self.breaks)
-        self.t = threading.Thread(target=self._execute_statement_with_trace)
+        self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)
         self.t.start()
 
     def _execute_statement_with_trace(self):
