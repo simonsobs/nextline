@@ -12,9 +12,10 @@ class PdbProxy:
 
     '''
 
-    def __init__(self, thread_asynctask_id, trace):
+    def __init__(self, thread_asynctask_id, trace, state):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
+        self.state = state
 
         self.queue_in = queue.Queue() # pdb stdin
         self.queue_out = queue.Queue() # pdb stdout
@@ -63,10 +64,10 @@ class PdbProxy:
     def enter_cmdloop(self):
         self.pdb_ci = PdbCommandInterface(self.pdb, self.queue_in, self.queue_out)
         self.pdb_ci.entering_cmdloop()
-        self.trace.enter_cmdloop(self.pdb_ci)
+        self.state.enter_cmdloop(self.pdb_ci)
 
     def exit_cmdloop(self):
         self.pdb_ci.exited_cmdloop()
-        self.trace.exit_cmdloop(self.pdb_ci)
+        self.state.exit_cmdloop(self.pdb_ci)
 
 ##__________________________________________________________________||

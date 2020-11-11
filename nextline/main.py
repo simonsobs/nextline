@@ -14,6 +14,7 @@ class Nextline:
         self.breaks = breaks
         self.condition = threading.Condition()
         self.trace = None
+        self.state = None
         self.status = "initialized"
 
     def run(self):
@@ -22,6 +23,7 @@ class Nextline:
         else:
             self.breaks[__name__] = ['<module>']
         self.trace = Trace(self.statement, self.breaks)
+        self.state = self.trace.state
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)
         self.t.start()
 
@@ -45,8 +47,8 @@ class Nextline:
         await asyncio.to_thread(self.t.join)
 
     def nthreads(self):
-        if self.trace is None:
+        if self.state is None:
             return 0
-        return self.trace.nthreads()
+        return self.state.nthreads()
 
 ##__________________________________________________________________||
