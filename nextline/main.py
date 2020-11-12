@@ -22,7 +22,7 @@ class Nextline:
             self.breaks[__name__].append('<module>')
         else:
             self.breaks[__name__] = ['<module>']
-        self.trace = Trace(self.statement, self.breaks)
+        self.trace = Trace(breaks=self.breaks, statement=self.statement)
         self.state = self.trace.state
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)
         self.t.start()

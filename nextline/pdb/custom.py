@@ -31,7 +31,7 @@ class CustomizedPdb(Pdb):
         self.proxy.exited_cmdloop()
 
     def do_list(self, arg):
-        statement = self.proxy.trace.statement
+        statement = self.proxy.statement
         import linecache
         getlines_org = linecache.getlines
         linecache.getlines = partial(getlines, getlines_org, statement)

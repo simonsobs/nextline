@@ -13,11 +13,12 @@ class PdbProxy:
 
     '''
 
-    def __init__(self, thread_asynctask_id, trace, state, ci_registry):
+    def __init__(self, thread_asynctask_id, breaks, state, ci_registry, statement):
         self.thread_asynctask_id = thread_asynctask_id
-        self.trace = trace
+        self.breaks = breaks
         self.state = state
         self.ci_registry = ci_registry
+        self.statement = statement
 
         self.q_stdin = queue.Queue()
         self.q_stdout = queue.Queue()
@@ -60,7 +61,7 @@ class PdbProxy:
         # a function name
         # Note: '<module>' for the code produced by compile()
 
-        if not func_name in self.trace.breaks.get(module_name, []):
+        if not func_name in self.breaks.get(module_name, []):
             return
 
         # print('{}.{}()'.format(module_name, func_name))

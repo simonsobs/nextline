@@ -49,7 +49,7 @@ class Trace:
     function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, statement=None, breaks=None):
+    def __init__(self, breaks=None, statement=None):
 
         if statement is None:
             statement = ""
@@ -80,9 +80,10 @@ class Trace:
 
         pdb_proxy = PdbProxy(
             thread_asynctask_id=thread_asynctask_id,
-            trace=self,
+            breaks=self.breaks,
             state=self.state,
-            ci_registry=self.pdb_ci_registry
+            ci_registry=self.pdb_ci_registry,
+            statement=self.statement
         )
         self.pdb_proxies[thread_asynctask_id] = pdb_proxy
         return pdb_proxy.trace_func_init(frame, event, arg)
