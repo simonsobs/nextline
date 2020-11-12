@@ -9,9 +9,10 @@ from nextline.pdb.proxy import PdbProxy
 ##__________________________________________________________________||
 @pytest.fixture()
 def MockPdbProxy(monkeypatch):
-    y = Mock(spec=PdbProxy)
-    monkeypatch.setattr('nextline.trace.PdbProxy', y)
-    yield y
+    mock_instance = Mock(spec=PdbProxy)
+    mock_class = Mock(return_value=mock_instance)
+    monkeypatch.setattr('nextline.trace.PdbProxy', mock_class)
+    yield mock_class
 
 ##__________________________________________________________________||
 def f():
@@ -33,7 +34,7 @@ def test_sys_settrace(MockPdbProxy, snapshot):
 
     id_ = compose_thread_asynctask_id()
 
-    assert [call(thread_asynctask_id=id_, trace=trace, state=trace.state)] == MockPdbProxy.call_args_list
+    assert 1 == MockPdbProxy.call_count
     assert 1 == MockPdbProxy().trace_func_init.call_count
     assert 1 == MockPdbProxy().trace_func.call_count
 
