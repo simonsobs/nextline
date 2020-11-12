@@ -16,11 +16,11 @@ class State:
         with self.condition:
             self.thread_asynctask_ids.add(thread_asynctask_id)
 
-    def enter_cmdloop(self, pdb_ci):
+    def entering_cmdloop(self, pdb_ci):
         with self.condition:
             self.pdb_cis.append(pdb_ci)
 
-    def exit_cmdloop(self, pdb_ci):
+    def exited_cmdloop(self, pdb_ci):
         with self.condition:
             self.pdb_cis.remove(pdb_ci)
 

@@ -17,13 +17,17 @@ class PdbProxy:
         self.trace = trace
         self.state = state
 
-        self.queue_in = queue.Queue() # pdb stdin
-        self.queue_out = queue.Queue() # pdb stdout
-        stdin = StreamIn(self.queue_in)
-        stdout = StreamOut(self.queue_out)
-        self.pdb = CustomizedPdb(self, stdin=stdin, stdout=stdout, readrc=False)
-        self._pdb_trace_dispatch = self.pdb.trace_dispatch
+        self.q_stdin = queue.Queue()
+        self.q_stdout = queue.Queue()
+
+        self.pdb = CustomizedPdb(
+            proxy=self,
+            stdin=StreamIn(self.q_stdin),
+            stdout=StreamOut(self.q_stdout),
+            readrc=False)
+
         self._trace_func = self.trace_func
+        self._pdb_trace_dispatch = self.pdb.trace_dispatch
 
     def trace_func_init(self, frame, event, arg):
         """A trace function of the outermost scope in the thread or async task
@@ -61,13 +65,17 @@ class PdbProxy:
             self._pdb_trace_dispatch = self._pdb_trace_dispatch(frame, event, arg)
         return self.trace_func
 
-    def enter_cmdloop(self):
-        self.pdb_ci = PdbCommandInterface(self.pdb, self.queue_in, self.queue_out)
+    def entering_cmdloop(self):
+        """called by the customized pdb before it is entering the command loop
+        """
+        self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.entering_cmdloop()
-        self.state.enter_cmdloop(self.pdb_ci)
+        self.state.entering_cmdloop(self.pdb_ci)
 
-    def exit_cmdloop(self):
+    def exited_cmdloop(self):
+        """called by the customized pdb after it has exited from the command loop
+        """
         self.pdb_ci.exited_cmdloop()
-        self.state.exit_cmdloop(self.pdb_ci)
+        self.state.exited_cmdloop(self.pdb_ci)
 
 ##__________________________________________________________________||

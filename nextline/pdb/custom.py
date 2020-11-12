@@ -15,9 +15,9 @@ class CustomizedPdb(Pdb):
 
     """
 
-    def __init__(self, pdb_proxy, *args, **kwargs):
+    def __init__(self, proxy, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pdb_proxy = pdb_proxy
+        self.proxy = proxy
 
         # self.quitting = True # not sure if necessary
 
@@ -26,12 +26,12 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)
 
     def _cmdloop(self):
-        self.pdb_proxy.enter_cmdloop()
+        self.proxy.entering_cmdloop()
         super()._cmdloop()
-        self.pdb_proxy.exit_cmdloop()
+        self.proxy.exited_cmdloop()
 
     def do_list(self, arg):
-        statement = self.pdb_proxy.trace.statement
+        statement = self.proxy.trace.statement
         import linecache
         getlines_org = linecache.getlines
         linecache.getlines = partial(getlines, getlines_org, statement)
