@@ -30,18 +30,16 @@ class PdbCommandInterface:
         self.command = command
         self.queue_in.put(command)
 
-    def entering_cmdloop(self):
-        """notify the pdb is entering the command loop
+    def start(self):
+        """start interfacing the pdb
 
-        This class starts waiting for the output of the pdb
         """
         self.thread = threading.Thread(target=self._receive_pdb_stdout)
         self.thread.start()
 
-    def exited_cmdloop(self):
-        """notify the pdb has exited from the command loop
+    def end(self):
+        """end interfacing the pdb
 
-        This class stops waiting for the output of the pdb
         """
         self.exited = True
         self.queue_out.put(None) # end the thread

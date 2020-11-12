@@ -24,11 +24,11 @@ class State:
             except KeyError as e:
                 warnings.warn("thread_asynctask_id {} wasn't in the set".format(e))
 
-    def entering_cmdloop(self, pdb_ci):
+    def started_pdb_ci(self, pdb_ci):
         with self.condition:
             self.pdb_cis.append(pdb_ci)
 
-    def exited_cmdloop(self, pdb_ci):
+    def ending_pdb_ci(self, pdb_ci):
         with self.condition:
             self.pdb_cis.remove(pdb_ci)
 
