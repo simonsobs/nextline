@@ -46,6 +46,10 @@ class Nextline:
     async def wait(self):
         await asyncio.to_thread(self.t.join)
 
+    @property
+    def pdb_cis(self):
+        return self.trace.pdb_ci_registry.pdb_cis
+
     def nthreads(self):
         if self.state is None:
             return 0
