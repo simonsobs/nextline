@@ -10,7 +10,6 @@ class State:
     """
     def __init__(self, condition):
         self.condition = condition
-        self.pdb_cis = []
         self.thread_asynctask_ids = set()
 
     def start_thread_asynctask(self, thread_asynctask_id):
@@ -24,17 +23,24 @@ class State:
             except KeyError as e:
                 warnings.warn("thread_asynctask_id {} wasn't in the set".format(e))
 
-    def started_pdb_ci(self, pdb_ci):
-        with self.condition:
-            self.pdb_cis.append(pdb_ci)
-
-    def ending_pdb_ci(self, pdb_ci):
-        with self.condition:
-            self.pdb_cis.remove(pdb_ci)
-
     def nthreads(self):
         with self.condition:
             return len({i for i, _ in self.thread_asynctask_ids})
+
+class PdbCIRegistry:
+    """Hold the list of active pdb command interfaces
+    """
+    def __init__(self):
+        self.pdb_cis = []
+        self.condition = threading.Condition()
+
+    def add(self, pdb_ci):
+        with self.condition:
+            self.pdb_cis.append(pdb_ci)
+
+    def remove(self, pdb_ci):
+        with self.condition:
+            self.pdb_cis.remove(pdb_ci)
 
 class Trace:
     """The main trace function
@@ -55,6 +61,7 @@ class Trace:
         self.breaks = breaks
         self.condition = threading.Condition()
         self.pdb_proxies = {}
+        self.pdb_ci_registry = PdbCIRegistry()
         self.state = State(self.condition)
 
     def __call__(self, frame, event, arg):
@@ -71,7 +78,12 @@ class Trace:
             if pdb_proxy := self.pdb_proxies.get(thread_asynctask_id):
                 return pdb_proxy.trace_func(frame, event, arg)
 
-        pdb_proxy = PdbProxy(thread_asynctask_id=thread_asynctask_id, trace=self, state=self.state)
+        pdb_proxy = PdbProxy(
+            thread_asynctask_id=thread_asynctask_id,
+            trace=self,
+            state=self.state,
+            ci_registry=self.pdb_ci_registry
+        )
         self.pdb_proxies[thread_asynctask_id] = pdb_proxy
         return pdb_proxy.trace_func_init(frame, event, arg)
 

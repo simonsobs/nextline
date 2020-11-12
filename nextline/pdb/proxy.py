@@ -13,10 +13,11 @@ class PdbProxy:
 
     '''
 
-    def __init__(self, thread_asynctask_id, trace, state):
+    def __init__(self, thread_asynctask_id, trace, state, ci_registry):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
         self.state = state
+        self.ci_registry = ci_registry
 
         self.q_stdin = queue.Queue()
         self.q_stdout = queue.Queue()
@@ -73,12 +74,12 @@ class PdbProxy:
         """
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
-        self.state.started_pdb_ci(self.pdb_ci)
+        self.ci_registry.add(self.pdb_ci)
 
     def exited_cmdloop(self):
         """called by the customized pdb after it has exited from the command loop
         """
-        self.state.ending_pdb_ci(self.pdb_ci)
+        self.ci_registry.remove(self.pdb_ci)
         self.pdb_ci.end()
 
 ##__________________________________________________________________||
