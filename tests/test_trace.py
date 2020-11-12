@@ -1,80 +1,56 @@
 import sys
-import threading
-import asyncio
-import janus
-from functools import partial
-
-from nextline.trace import Trace, LocalTrace, create_thread_task_id
 
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, call, sentinel
+
+from nextline.trace import Trace, compose_thread_asynctask_id
+from nextline.pdb.proxy import PdbProxy
 
 ##__________________________________________________________________||
-def subject():
-    return
+@pytest.fixture()
+def MockPdbProxy(monkeypatch):
+    y = Mock(spec=PdbProxy)
+    monkeypatch.setattr('nextline.trace.PdbProxy', y)
+    yield y
 
-def control():
+##__________________________________________________________________||
+def f():
     pass
 
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_simple():
+def subject():
+    f()
+    return
 
-    thread_task_id = create_thread_task_id()
-    local_queues = (Mock(), Mock())
-    q_in, q_out = local_queues
-    q_in.sync_q.get.return_value = 'next'
-
-    queue_to_control = janus.Queue()
-    queue_from_control = janus.Queue()
-    local_queue_dict = { thread_task_id: local_queues }
-    condition = threading.Condition()
-    breaks = { __name__: ['subject'] }
-    trace = Trace(queue_to_control, queue_from_control, local_queue_dict, condition, breaks)
+def test_sys_settrace(MockPdbProxy, snapshot):
+    """test with actual sys.settrace()
+    """
+    trace = Trace()
 
     trace_org = sys.gettrace()
     sys.settrace(trace)
     subject()
     sys.settrace(trace_org)
-    print(q_out.sync_q.put.call_args_list)
+
+    id_ = compose_thread_asynctask_id()
+
+    assert [call(thread_asynctask_id=id_, trace=trace, state=trace.state)] == MockPdbProxy.call_args_list
+    assert 1 == MockPdbProxy().trace_func_init.call_count
+    assert 1 == MockPdbProxy().trace_func.call_count
 
 ##__________________________________________________________________||
-def call_with_trace(func, trace):
-    module_name = func.__module__
-    func_name = func.__name__
+def test_return(MockPdbProxy):
+    """test if correct trace functions are returned
+    """
+    trace = Trace()
+    assert trace(sentinel.frame, 'call', None) is MockPdbProxy().trace_func_init()
+    assert trace(sentinel.frame, 'line', None) is MockPdbProxy().trace_func()
 
-    def trace_(frame, event, arg):
-        if module_name != frame.f_globals.get('__name__'):
-            return None
-        if func_name != frame.f_code.co_name:
-            return None
-        return trace(frame, event, arg)
-
-    trace_org = sys.gettrace()
-    sys.settrace(trace_)
-    func()
-    sys.settrace(trace_org)
-
-@pytest.mark.asyncio
-async def test_local():
-    local_queues = (janus.Queue(), janus.Queue())
-    thread_task_id = create_thread_task_id()
-    q_in, q_out = local_queues
-    localtrace = LocalTrace(local_queues, thread_task_id)
-    t = threading.Thread(target=call_with_trace, args=(subject, localtrace))
-    t.start()
-
-    print()
-    print(await q_out.async_q.get())
-    await q_in.async_q.put('next')
-    print(await q_out.async_q.get())
-    await q_in.async_q.put('next')
-    print(await q_out.async_q.get())
-    await q_in.async_q.put('next')
-
-    t.join()
-    q_in.close()
-    q_out.close()
-    await asyncio.gather(q_in.wait_closed(), q_out.wait_closed())
+def test_args(MockPdbProxy, snapshot):
+    """test if arguments are properly propagated to the proxy
+    """
+    trace = Trace()
+    trace(sentinel.frame, 'call', None)
+    trace(sentinel.frame, 'line', None)
+    snapshot.assert_match(MockPdbProxy().method_calls)
 
 ##__________________________________________________________________||

@@ -1,99 +1,95 @@
 import threading
 import asyncio
 
+from .pdb.proxy import PdbProxy
+
 ##__________________________________________________________________||
-class LocalTrace:
-    def __init__(self, local_queues, thread_task_id):
-        self.q_from_local_control, self.q_to_local_control = local_queues
-        self.thread_task_id = thread_task_id
+class State:
+    """
+    """
+    def __init__(self, condition):
+        self.condition = condition
+        self.pdb_cis = []
+        self.thread_asynctask_ids = set()
 
-    def __call__(self, frame, event, arg):
-        # self.q_to_local_control.sync_q.put(self.thread_task_id)
-        # print(self.q_from_local_control.sync_q.get())
+    def start_thread_asynctask(self, thread_asynctask_id):
+        with self.condition:
+            self.thread_asynctask_ids.add(thread_asynctask_id)
 
-        message = {'called': {'frame': frame, 'event': event, 'arg': arg}}
-        self.q_to_local_control.sync_q.put(message)
-        while True:
-            cmd = self.q_from_local_control.sync_q.get()
-            if cmd == 'next':
-                return self
-            else:
-                message = {'message': 'unrecognized command {!r}'.format(cmd)}
-                self.q_to_local_control.sync_q.put(message)
-        return self
+    def entering_cmdloop(self, pdb_ci):
+        with self.condition:
+            self.pdb_cis.append(pdb_ci)
+
+    def exited_cmdloop(self, pdb_ci):
+        with self.condition:
+            self.pdb_cis.remove(pdb_ci)
+
+    def nthreads(self):
+        with self.condition:
+            return len({i for i, _ in self.thread_asynctask_ids})
 
 class Trace:
-    def __init__(self, queue_to_control, queue_from_control, local_queue_dict, condition, breaks):
-        self.queue_to_control = queue_to_control
-        self.queue_from_control = queue_from_control
-        self.local_queue_dict = local_queue_dict
-        self.condition = condition
+    """The main trace function
+
+    An instance of this class is callable and should be set as the trace
+    function by sys.settrace() and threading.settrace().
+
+    """
+    def __init__(self, statement=None, breaks=None):
+
+        if statement is None:
+            statement = ""
+
+        if breaks is None:
+            breaks = {}
+
+        self.statement = statement
         self.breaks = breaks
+        self.condition = threading.Condition()
+        self.pdb_proxies = {}
+        self.state = State(self.condition)
 
     def __call__(self, frame, event, arg):
+        """Called by the Python interpreter when a new local scope is entered.
 
-        module_name = frame.f_globals.get('__name__')
-        # e.g., 'threading', '__main__', 'concurrent.futures.thread', 'asyncio.events'
+        https://docs.python.org/3/library/sys.html#sys.settrace
 
-        func_name = frame.f_code.co_name
-        # '<module>' for the code produced by compile()
+        """
 
-        if not func_name in self.breaks.get(module_name, []):
-            return
-
-        # print('Event: {}'.format(event))
-        # print('Module name: {!r}'.format(module_name))
-        # print('File name: {}'.format(frame.f_code.co_filename))
-        # print('Line number: {}'.format(frame.f_lineno))
-        # print('Function name: {!r}'.format(func_name))
-
-        print('{}.{}()'.format(module_name, func_name))
-
-        thread_task_id = create_thread_task_id()
-        print(*thread_task_id)
-
-        local_queues = self._find_local_queues(thread_task_id)
-        if not local_queues:
-            warnings.warn('could not find queues for {!r}'.format(thread_task_id))
-            return
-
-        trace_local = LocalTrace(local_queues, thread_task_id)
-
-        return trace_local(frame, event, arg)
-
-    def _find_local_queues(self, thread_task_id):
+        thread_asynctask_id = compose_thread_asynctask_id()
+        # print(*thread_asynctask_id)
 
         with self.condition:
-            ret = self.local_queue_dict.get(thread_task_id)
+            if pdb_proxy := self.pdb_proxies.get(thread_asynctask_id):
+                return pdb_proxy.trace_func(frame, event, arg)
 
-        if ret is None:
-            q = self.queue_to_control.sync_q
-            try:
-                q.put(thread_task_id)
-            except RuntimeError:
-                # this happens, for example, in concurrent/futures/thread.py
-                warnings.warn("could not put an item in the queue: {!r}".format(q))
-                return None
+        self.state.start_thread_asynctask(thread_asynctask_id)
 
-            # TODO: Add timeout
-            while not ret:
-                with self.condition:
-                    ret = self.local_queue_dict.get(thread_task_id)
-
-        return ret
+        pdb_proxy = PdbProxy(thread_asynctask_id=thread_asynctask_id, trace=self, state=self.state)
+        self.pdb_proxies[thread_asynctask_id] = pdb_proxy
+        return pdb_proxy.trace_func_init(frame, event, arg)
 
 ##__________________________________________________________________||
-def create_thread_task_id():
+def compose_thread_asynctask_id():
+    """Return the pair of the current thread ID and async task ID
+
+    Returns
+    -------
+    tuple
+        The pair of the current thread ID and async task ID. If not in an
+        async task, the async task ID will be None.
+
+    """
 
     thread_id = threading.get_ident()
 
-    task_id = None
+    asynctask_id = None
     try:
-        task_id = id(asyncio.current_task())
+        asynctask_id = id(asyncio.current_task())
     except RuntimeError:
         # no running event loop
         pass
 
-    return (thread_id, task_id)
+    return (thread_id, asynctask_id)
 
 ##__________________________________________________________________||
