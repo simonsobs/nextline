@@ -35,7 +35,14 @@ class Trace:
     function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, statement, breaks):
+    def __init__(self, statement=None, breaks=None):
+
+        if statement is None:
+            statement = ""
+
+        if breaks is None:
+            breaks = {}
+
         self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
