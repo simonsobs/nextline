@@ -1,4 +1,5 @@
 import queue
+import asyncio
 
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
@@ -42,8 +43,8 @@ class PdbProxy:
         if self._trace_func:
             self._trace_func = self._trace_func(frame, event, arg)
         if event == 'return':
-            # the end of the thread or async task
-            pass
+            if not isinstance(arg, asyncio.tasks._GatheringFuture):
+                self.state.end_thread_asynctask(self.thread_asynctask_id)
         return self.trace_func_init
 
     def trace_func(self, frame, event, arg):

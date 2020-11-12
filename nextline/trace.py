@@ -1,5 +1,6 @@
 import threading
 import asyncio
+import warnings
 
 from .pdb.proxy import PdbProxy
 
@@ -15,6 +16,13 @@ class State:
     def start_thread_asynctask(self, thread_asynctask_id):
         with self.condition:
             self.thread_asynctask_ids.add(thread_asynctask_id)
+
+    def end_thread_asynctask(self, thread_asynctask_id):
+        with self.condition:
+            try:
+                self.thread_asynctask_ids.remove(thread_asynctask_id)
+            except KeyError as e:
+                warnings.warn("thread_asynctask_id {} wasn't in the set".format(e))
 
     def entering_cmdloop(self, pdb_ci):
         with self.condition:
