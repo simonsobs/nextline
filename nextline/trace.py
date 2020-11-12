@@ -45,8 +45,8 @@ class PdbCIRegistry:
 class Trace:
     """The main trace function
 
-    An instance of this class is callable and should be set as the trace
-    function by sys.settrace() and threading.settrace().
+    An instance of this class, which is callable, should be set as the
+    trace function by sys.settrace() and threading.settrace().
 
     """
     def __init__(self, breaks=None, statement=None):
@@ -57,12 +57,16 @@ class Trace:
         if breaks is None:
             breaks = {}
 
-        self.statement = statement
-        self.breaks = breaks
-        self.condition = threading.Condition()
-        self.pdb_proxies = {}
-        self.pdb_ci_registry = PdbCIRegistry()
+        # public
         self.state = State()
+        self.pdb_ci_registry = PdbCIRegistry()
+
+        self.pdb_proxies = {}
+        self.condition = threading.Condition()
+
+        # these are simply passed to pdb proxies
+        self.breaks = breaks
+        self.statement = statement
 
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.

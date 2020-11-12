@@ -24,6 +24,8 @@ class Nextline:
             self.breaks[__name__] = ['<module>']
         self.trace = Trace(breaks=self.breaks, statement=self.statement)
         self.state = self.trace.state
+        self.pdb_ci_registry = self.trace.pdb_ci_registry
+
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)
         self.t.start()
 
@@ -48,7 +50,7 @@ class Nextline:
 
     @property
     def pdb_cis(self):
-        return self.trace.pdb_ci_registry.pdb_cis
+        return self.pdb_ci_registry.pdb_cis
 
     def nthreads(self):
         if self.state is None:
