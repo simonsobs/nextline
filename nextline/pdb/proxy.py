@@ -37,6 +37,8 @@ class PdbProxy:
         the thread or async task.
 
         """
+        if event == 'call':
+            self.state.start_thread_asynctask(self.thread_asynctask_id)
         if self._trace_func:
             self._trace_func = self._trace_func(frame, event, arg)
         if event == 'return':

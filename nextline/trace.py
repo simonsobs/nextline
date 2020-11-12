@@ -63,8 +63,6 @@ class Trace:
             if pdb_proxy := self.pdb_proxies.get(thread_asynctask_id):
                 return pdb_proxy.trace_func(frame, event, arg)
 
-        self.state.start_thread_asynctask(thread_asynctask_id)
-
         pdb_proxy = PdbProxy(thread_asynctask_id=thread_asynctask_id, trace=self, state=self.state)
         self.pdb_proxies[thread_asynctask_id] = pdb_proxy
         return pdb_proxy.trace_func_init(frame, event, arg)
