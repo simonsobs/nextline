@@ -8,9 +8,9 @@ from .pdb.proxy import PdbProxy
 class State:
     """
     """
-    def __init__(self, condition):
-        self.condition = condition
+    def __init__(self):
         self.thread_asynctask_ids = set()
+        self.condition = threading.Condition()
 
     def start_thread_asynctask(self, thread_asynctask_id):
         with self.condition:
@@ -62,7 +62,7 @@ class Trace:
         self.condition = threading.Condition()
         self.pdb_proxies = {}
         self.pdb_ci_registry = PdbCIRegistry()
-        self.state = State(self.condition)
+        self.state = State()
 
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.
