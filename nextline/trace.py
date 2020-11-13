@@ -60,9 +60,14 @@ class State:
             except KeyError as e:
                 warnings.warn("thread_asynctask_id {} wasn't in the set".format(e))
 
+    @property
     def nthreads(self):
         with self.condition:
-            return len({i for i, _ in self.thread_asynctask_ids})
+            running_thread_ids = [
+                thid for thid, thda in self._data.items()
+                if any([not tada['finished'] for tada in thda.values()])
+            ]
+        return len(running_thread_ids)
 
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
