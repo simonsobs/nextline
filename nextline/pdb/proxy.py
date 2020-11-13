@@ -29,11 +29,23 @@ class PdbProxy:
             stdout=StreamOut(self.q_stdout),
             readrc=False)
 
-        self._trace_func = self.trace_func
+        self._trace_func_all = self.trace_func_all
         self._pdb_trace_dispatch = self.pdb.trace_dispatch
 
-    def trace_func_init(self, frame, event, arg):
-        """A trace function of the outermost scope in the thread or async task
+        self._first = True
+
+    def trace_func(self, frame, event, arg):
+        """The main trace function
+
+        This method will be called by the instance of Trace.
+        """
+        if self._first:
+            self._first = False
+            return self.trace_func_outermost(frame, event, arg)
+        return self.trace_func_all(frame, event, arg)
+
+    def trace_func_outermost(self, frame, event, arg):
+        """The trace function of the outermost scope in the thread or async task
 
         This method is used as a trace function of the outermost scope
         of the thread or async task. It is used to detect the end of
@@ -42,15 +54,15 @@ class PdbProxy:
         """
         if event == 'call':
             self.state.start_thread_asynctask(self.thread_asynctask_id)
-        if self._trace_func:
-            self._trace_func = self._trace_func(frame, event, arg)
+        if self._trace_func_all:
+            self._trace_func_all = self._trace_func_all(frame, event, arg)
         if event == 'return':
             if not isinstance(arg, asyncio.tasks._GatheringFuture):
                 self.state.end_thread_asynctask(self.thread_asynctask_id)
-        return self.trace_func_init
+        return self.trace_func_outermost
 
-    def trace_func(self, frame, event, arg):
-        """A trace function
+    def trace_func_all(self, frame, event, arg):
+        """The trace function that calls the trace function of pdb
 
         """
 
@@ -68,7 +80,7 @@ class PdbProxy:
 
         if self._pdb_trace_dispatch:
             self._pdb_trace_dispatch = self._pdb_trace_dispatch(frame, event, arg)
-        return self.trace_func
+        return self.trace_func_all
 
     def entering_cmdloop(self):
         """called by the customized pdb before it is entering the command loop
