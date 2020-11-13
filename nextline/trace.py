@@ -1,5 +1,8 @@
 import threading
 import asyncio
+import copy
+from collections import defaultdict
+from functools import partial
 import warnings
 
 from .pdb.proxy import PdbProxy
@@ -11,6 +14,40 @@ class State:
     def __init__(self):
         self.thread_asynctask_ids = set()
         self.condition = threading.Condition()
+
+        self._data = defaultdict(
+            partial(defaultdict, partial(dict, finished=False, prompting=False))
+        )
+        # e.g.,
+        # { thread_id : {
+        #     task_id: {'finished': False, 'prompting': False}
+        # }}
+
+    @property
+    def data(self):
+        return copy.deepcopy(self._data)
+
+    def update_started(self, thread_asynctask_id):
+        thread_id, task_id = thread_asynctask_id
+        with self.condition:
+            self._data[thread_id][task_id].update({'finished': False, 'prompting': False})
+
+    def update_finishing(self, thread_asynctask_id):
+        thread_id, task_id = thread_asynctask_id
+        with self.condition:
+            if self._data[thread_id][task_id]['finished']:
+                warnings.warn("already finished: thread_asynctask_id = {}".format(thread_asynctask_id))
+            self._data[thread_id][task_id]['finished'] = True
+
+    def update_prompting(self, thread_asynctask_id):
+        thread_id, task_id = thread_asynctask_id
+        with self.condition:
+            self._data[thread_id][task_id]['prompting'] = True
+
+    def update_not_prompting(self, thread_asynctask_id):
+        thread_id, task_id = thread_asynctask_id
+        with self.condition:
+            self._data[thread_id][task_id]['prompting'] = False
 
     def start_thread_asynctask(self, thread_asynctask_id):
         with self.condition:
