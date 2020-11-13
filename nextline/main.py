@@ -55,6 +55,6 @@ class Nextline:
     def nthreads(self):
         if self.state is None:
             return 0
-        return self.state.nthreads()
+        return self.state.nthreads
 
 ##__________________________________________________________________||
