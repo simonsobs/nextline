@@ -35,16 +35,18 @@ def test_sys_settrace(MockPdbProxy, snapshot):
     id_ = compose_thread_asynctask_id()
 
     assert 1 == MockPdbProxy.call_count
-    assert 1 == MockPdbProxy().trace_func_init.call_count
-    assert 1 == MockPdbProxy().trace_func.call_count
+    assert 2 == MockPdbProxy().trace_func.call_count
 
 ##__________________________________________________________________||
 def test_return(MockPdbProxy):
-    """test if correct trace functions are returned
+    """test if correct trace function is returned
     """
     trace = Trace()
-    assert trace(sentinel.frame, 'call', None) is MockPdbProxy().trace_func_init()
+    assert trace(sentinel.frame, 'call', None) is MockPdbProxy().trace_func()
     assert trace(sentinel.frame, 'line', None) is MockPdbProxy().trace_func()
+
+    assert 1 + 2 == MockPdbProxy.call_count
+    # once in trace(), twice in the above lines in the test
 
 def test_args(MockPdbProxy, snapshot):
     """test if arguments are properly propagated to the proxy

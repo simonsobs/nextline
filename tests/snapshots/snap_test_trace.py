@@ -9,7 +9,7 @@ snapshots = Snapshot()
 
 snapshots['test_args 1'] = [
     (
-        'trace_func_init',
+        'trace_func',
         (
             GenericRepr('sentinel.frame'),
             'call',
