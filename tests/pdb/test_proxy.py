@@ -52,8 +52,8 @@ def test_sys_settrace(MockCustomizedPdb, mock_state):
     subject()
     sys.settrace(trace_org)
 
-    assert 1 == mock_state.start_thread_asynctask.call_count
-    assert 1 == mock_state.end_thread_asynctask.call_count
+    assert 1 == mock_state.update_started.call_count
+    assert 1 == mock_state.update_finishing.call_count
     assert 13 == MockCustomizedPdb().trace_dispatch.call_count
     # print(MockCustomizedPdb().trace_dispatch.call_args_list)
 
