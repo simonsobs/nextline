@@ -12,7 +12,6 @@ class State:
     """
     """
     def __init__(self):
-        self.thread_asynctask_ids = set()
         self.condition = threading.Condition()
 
         self._data = defaultdict(
@@ -48,17 +47,6 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = False
-
-    def start_thread_asynctask(self, thread_asynctask_id):
-        with self.condition:
-            self.thread_asynctask_ids.add(thread_asynctask_id)
-
-    def end_thread_asynctask(self, thread_asynctask_id):
-        with self.condition:
-            try:
-                self.thread_asynctask_ids.remove(thread_asynctask_id)
-            except KeyError as e:
-                warnings.warn("thread_asynctask_id {} wasn't in the set".format(e))
 
     @property
     def nthreads(self):
