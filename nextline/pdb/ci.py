@@ -21,7 +21,7 @@ class PdbCommandInterface:
         self.pdb = pdb
         self.queue_in = queue_in
         self.queue_out = queue_out
-        self.exited = False
+        self.ended = False
         self.nprompts = 0
 
     def send_pdb_command(self, command):
@@ -41,7 +41,7 @@ class PdbCommandInterface:
         """end interfacing the pdb
 
         """
-        self.exited = True
+        self.ended = True
         self.queue_out.put(None) # end the thread
         self.thread.join()
 
