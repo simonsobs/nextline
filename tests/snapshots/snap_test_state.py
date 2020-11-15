@@ -15,7 +15,7 @@ snapshots['test_state 1'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -23,7 +23,7 @@ snapshots['test_state 1'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -36,7 +36,7 @@ snapshots['test_state 2'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': True
+            'prompting': 1
         },
         123: {
             'file_lines': [
@@ -44,7 +44,7 @@ snapshots['test_state 2'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -57,7 +57,7 @@ snapshots['test_state 3'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -65,7 +65,7 @@ snapshots['test_state 3'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -78,7 +78,7 @@ snapshots['test_state 4'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -86,7 +86,7 @@ snapshots['test_state 4'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': True
+            'prompting': 2
         }
     }
 }
@@ -99,7 +99,7 @@ snapshots['test_state 5'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -107,7 +107,7 @@ snapshots['test_state 5'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -120,7 +120,7 @@ snapshots['test_state 6'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': True
+            'prompting': 3
         },
         123: {
             'file_lines': [
@@ -128,7 +128,7 @@ snapshots['test_state 6'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     },
     2222222: {
@@ -138,7 +138,7 @@ snapshots['test_state 6'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': True
+            'prompting': 4
         },
         124: {
             'file_lines': [
@@ -146,7 +146,7 @@ snapshots['test_state 6'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -159,7 +159,7 @@ snapshots['test_state 7'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -167,7 +167,7 @@ snapshots['test_state 7'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     },
     2222222: {
@@ -177,7 +177,7 @@ snapshots['test_state 7'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': True
+            'prompting': 4
         },
         124: {
             'file_lines': [
@@ -185,7 +185,7 @@ snapshots['test_state 7'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -198,7 +198,7 @@ snapshots['test_state 8'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -206,7 +206,7 @@ snapshots['test_state 8'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     },
     2222222: {
@@ -216,7 +216,7 @@ snapshots['test_state 8'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         124: {
             'file_lines': [
@@ -224,7 +224,7 @@ snapshots['test_state 8'] = {
             'file_name': None,
             'finished': False,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
@@ -237,7 +237,7 @@ snapshots['test_state 9'] = {
             'file_name': None,
             'finished': True,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         123: {
             'file_lines': [
@@ -245,7 +245,7 @@ snapshots['test_state 9'] = {
             'file_name': None,
             'finished': True,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     },
     2222222: {
@@ -255,7 +255,7 @@ snapshots['test_state 9'] = {
             'file_name': None,
             'finished': True,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         },
         124: {
             'file_lines': [
@@ -263,7 +263,7 @@ snapshots['test_state 9'] = {
             'file_name': None,
             'finished': True,
             'line_no': None,
-            'prompting': False
+            'prompting': 0
         }
     }
 }
