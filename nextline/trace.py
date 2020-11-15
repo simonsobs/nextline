@@ -186,6 +186,10 @@ class Trace:
 def compose_thread_asynctask_id():
     """Return the pair of the current thread ID and async task ID
 
+    The IDs are unique among exiting threads and async tasks. However,
+    they might be reused after threads or async tasks exit.
+
+
     Returns
     -------
     tuple
