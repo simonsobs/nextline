@@ -12,7 +12,8 @@ from .pdb.proxy import PdbProxy
 class State:
     """
     """
-    def __init__(self):
+    def __init__(self, event=None):
+        self.event = event
         self.condition = threading.Condition()
 
         self._data = defaultdict(
@@ -43,6 +44,8 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'finished': False, 'prompting': 0})
+        if self.event:
+            self.event.set()
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -50,12 +53,16 @@ class State:
             if self._data[thread_id][task_id]['finished']:
                 warnings.warn("already finished: thread_asynctask_id = {}".format(thread_asynctask_id))
             self._data[thread_id][task_id]['finished'] = True
+        if self.event:
+            self.event.set()
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._prompting_count += 1
             self._data[thread_id][task_id]['prompting'] = self._prompting_count
+        if self.event:
+            self.event.set()
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -66,11 +73,15 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
+        if self.event:
+            self.event.set()
 
     def update_file_lines(self, thread_asynctask_id, file_lines):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['file_lines'][:] = file_lines
+        if self.event:
+            self.event.set()
 
     @property
     def prompting(self):
@@ -128,7 +139,7 @@ class Trace:
     trace function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, breaks=None, statement=None):
+    def __init__(self, breaks=None, statement=None, event=None):
 
         if statement is None:
             statement = ""
@@ -137,7 +148,7 @@ class Trace:
             breaks = {}
 
         # public
-        self.state = State()
+        self.state = State(event=event)
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}

@@ -9,12 +9,13 @@ from .trace import Trace
 
 ##__________________________________________________________________||
 class Nextline:
-    def __init__(self, statement, breaks):
+    def __init__(self, statement, breaks, event=None):
         self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
         self.trace = None
         self.state = None
+        self.event = event
         self.status = "initialized"
 
     def run(self):
@@ -22,7 +23,7 @@ class Nextline:
             self.breaks[__name__].append('<module>')
         else:
             self.breaks[__name__] = ['<module>']
-        self.trace = Trace(breaks=self.breaks, statement=self.statement)
+        self.trace = Trace(breaks=self.breaks, statement=self.statement, event=self.event)
         self.state = self.trace.state
         self.pdb_ci_registry = self.trace.pdb_ci_registry
 
