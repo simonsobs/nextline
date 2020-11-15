@@ -32,6 +32,7 @@ class PdbProxy:
 
         self._trace_func_all = self.trace_func_all
         self._pdb_trace_dispatch = self.pdb.trace_dispatch
+        self._traces = []
 
         self._first = True
 
@@ -78,21 +79,16 @@ class PdbProxy:
             return
 
         # print('{}.{}()'.format(module_name, func_name))
+        # self.pdb.set_next(frame)
 
-        file_name = self.pdb.canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
-        # print('{}:{}'.format(file_name, line_no))
-        self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no)
-
-        if file_name == '<string>':
-            file_lines = self.statement.split('\n')
-        else:
-            file_lines = [l.rstrip() for l in linecache.getlines(file_name, frame.f_globals)]
-        self.state.update_file_lines(self.thread_asynctask_id, file_lines)
-
-        if self._pdb_trace_dispatch:
-            self._pdb_trace_dispatch = self._pdb_trace_dispatch(frame, event, arg)
-        return self.trace_func_all
+        trace = TraceBlock(
+            thread_asynctask_id=self.thread_asynctask_id,
+            pdb=self.pdb,
+            state=self.state,
+            statement=self.statement
+        )
+        self._traces.append(trace)
+        return trace(frame, event, arg)
 
     def entering_cmdloop(self):
         """called by the customized pdb before it is entering the command loop
