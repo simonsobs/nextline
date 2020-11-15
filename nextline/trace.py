@@ -80,7 +80,7 @@ class State:
     def update_file_lines(self, thread_asynctask_id, file_lines):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id]['file_lines'][:] = file_lines
+            self._data[thread_id][task_id]['file_lines'] = file_lines
         if self.event:
             self.event.set()
 
