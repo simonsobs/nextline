@@ -15,11 +15,21 @@ class State:
         self.condition = threading.Condition()
 
         self._data = defaultdict(
-            partial(defaultdict, partial(dict, finished=False, prompting=False))
+            partial(
+                defaultdict,
+                partial(
+                    dict,
+                    finished=False,
+                    prompting=False,
+                    file_name=None,
+                    line_no=None,
+                    file_lines=[],
+                )
+            )
         )
         # e.g.,
         # { thread_id : {
-        #     task_id: {'finished': False, 'prompting': False}
+        #     task_id: {'finished': False, 'prompting': False, ...}
         # }}
 
     @property
@@ -47,6 +57,16 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = False
+
+    def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
+        thread_id, task_id = thread_asynctask_id
+        with self.condition:
+            self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
+
+    def update_file_lines(self, thread_asynctask_id, file_lines):
+        thread_id, task_id = thread_asynctask_id
+        with self.condition:
+            self._data[thread_id][task_id]['file_lines'][:] = file_lines
 
     @property
     def nthreads(self):

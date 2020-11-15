@@ -1,5 +1,6 @@
 import queue
 import asyncio
+import linecache
 
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
@@ -77,6 +78,17 @@ class PdbProxy:
             return
 
         # print('{}.{}()'.format(module_name, func_name))
+
+        file_name = self.pdb.canonic(frame.f_code.co_filename)
+        line_no = frame.f_lineno
+        # print('{}:{}'.format(file_name, line_no))
+        self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no)
+
+        if file_name == '<string>':
+            file_lines = self.statement.split('\n')
+        else:
+            file_lines = [l.rstrip() for l in linecache.getlines(file_name, frame.f_globals)]
+        self.state.update_file_lines(self.thread_asynctask_id, file_lines)
 
         if self._pdb_trace_dispatch:
             self._pdb_trace_dispatch = self._pdb_trace_dispatch(frame, event, arg)
