@@ -3,6 +3,7 @@ import asyncio
 import copy
 from collections import defaultdict
 from functools import partial
+from operator import itemgetter
 import warnings
 
 from .pdb.proxy import PdbProxy
@@ -20,7 +21,7 @@ class State:
                 partial(
                     dict,
                     finished=False,
-                    prompting=False,
+                    prompting=0,
                     file_name=None,
                     line_no=None,
                     file_lines=[],
@@ -32,6 +33,8 @@ class State:
         #     task_id: {'finished': False, 'prompting': False, ...}
         # }}
 
+        self._prompting_count = 0
+
     @property
     def data(self):
         return copy.deepcopy(self._data)
@@ -39,7 +42,7 @@ class State:
     def update_started(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id].update({'finished': False, 'prompting': False})
+            self._data[thread_id][task_id].update({'finished': False, 'prompting': 0})
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -51,12 +54,13 @@ class State:
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id]['prompting'] = True
+            self._prompting_count += 1
+            self._data[thread_id][task_id]['prompting'] = self._prompting_count
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id]['prompting'] = False
+            self._data[thread_id][task_id]['prompting'] = 0
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
         thread_id, task_id = thread_asynctask_id
@@ -69,7 +73,25 @@ class State:
             self._data[thread_id][task_id]['file_lines'][:] = file_lines
 
     @property
+    def prompting(self):
+        '''list of thread_asynctask_id for which pdb is prompting in the order of started prompting
+
+        '''
+        with self.condition:
+            ret = [
+                (thid, taid, tada['prompting'])
+                for thid, thda in self._data.items()
+                for taid, tada in thda.items() if tada['prompting'] > 0
+            ]
+            # (thread_id, task_id, prompting)
+        ret = sorted(ret, key=itemgetter(2)) # sort by prompting
+        ret = [e[0:2] for e in ret] # (thread_id, task_id)
+        return ret
+
+    @property
     def nthreads(self):
+        '''number of running threads
+        '''
         with self.condition:
             running_thread_ids = [
                 thid for thid, thda in self._data.items()
