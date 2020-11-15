@@ -1,5 +1,6 @@
 import queue
 import asyncio
+import warnings
 import linecache
 
 from .ci import PdbCommandInterface
@@ -40,7 +41,11 @@ class PdbProxy:
         """The main trace function
 
         This method will be called by the instance of Trace.
+        The event should be always "call."
         """
+
+        if not event == 'call':
+            warnings.warn('The event is not "call": ({}, {}, {})'.format(frame, event, arg))
         if self._first:
             self._first = False
             return self.trace_func_outermost(frame, event, arg)
