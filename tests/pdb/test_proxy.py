@@ -52,6 +52,15 @@ def unpack_trace_dispatch_call(trace_dispatch):
             for c in trace_dispatch.call_args_list
         ])
         trace_dispatch = trace_dispatch.return_value
+
+    # e.g.,
+    # trace_results = [
+    #     [('run_a', 'call', False), ('<lambda>', 'call', False), ('a', 'call', False), ('a', 'call', False)],
+    #     [('run_a', 'line', False), ('<lambda>', 'line', False), ('a', 'line', False), ('a', 'exception', False)],
+    #     [('<lambda>', 'return', False), ('a', 'return', True), ('a', 'line', False), ('run_a', 'return', False)],
+    #     [('a', 'return', False)]
+    # ]
+
     return trace_results
 
 ##__________________________________________________________________||
@@ -81,16 +90,6 @@ def test_proxy(proxy, mock_trace, mock_state, snapshot, subject):
     assert 1 == mock_trace.returning.call_count
 
     trace_results = unpack_trace_dispatch_call(proxy.pdb.trace_dispatch)
-    # e.g.,
-    # [
-    #     [('run_a', 'call', False), ('<lambda>', 'call', False), ('a', 'call', False), ('a', 'call', False)],
-    #     [('run_a', 'line', False), ('<lambda>', 'line', False), ('a', 'line', False), ('a', 'exception', False)],
-    #     [('<lambda>', 'return', False), ('a', 'return', True), ('a', 'line', False), ('run_a', 'return', False)],
-    #     [('a', 'return', False)]
-    # ]
-
-    # from pprint import pprint
-    # pprint(trace_results)
     snapshot.assert_match(trace_results)
 
 ##__________________________________________________________________||
