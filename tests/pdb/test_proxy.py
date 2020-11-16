@@ -1,4 +1,5 @@
 import sys
+import asyncio
 
 import pytest
 from unittest.mock import Mock, MagicMock
@@ -10,15 +11,6 @@ from nextline.pdb.custom import CustomizedPdb
 from . import subject
 
 ##__________________________________________________________________||
-@pytest.fixture()
-def MockCustomizedPdb(monkeypatch):
-    mock_instance = Mock(spec=CustomizedPdb)
-    mock_instance.is_skipped_module.return_value = False
-    # mock_instance.trace_dispatch.return_value = None
-    mock_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr('nextline.pdb.proxy.CustomizedPdb', mock_class)
-    yield mock_class
-
 @pytest.fixture()
 def mock_state():
     y = Mock(spec=State)
@@ -32,14 +24,17 @@ params = [
 ]
 
 @pytest.mark.parametrize('subject', params)
-def test_sys_settrace(MockCustomizedPdb, mock_state, snapshot, subject):
+def test_sys_settrace(mock_state, snapshot, subject):
     """test with actual sys.settrace()
     """
 
     thread_asynctask_id = compose_thread_asynctask_id()
+
+    # unused
     breaks = {
         __name__: ['subject', 'f']
     }
+
     mock_trace = Mock()
 
     proxy = PdbProxy(
@@ -51,12 +46,12 @@ def test_sys_settrace(MockCustomizedPdb, mock_state, snapshot, subject):
         statement=""
         )
 
+    proxy.pdb.trace_dispatch = Mock()
+
     trace_org = sys.gettrace()
     sys.settrace(proxy.trace_func)
     subject()
     sys.settrace(trace_org)
-
-    assert 1 == MockCustomizedPdb.call_count
 
     assert 1 == mock_state.update_started.call_count
     assert 1 == mock_state.update_finishing.call_count
@@ -65,10 +60,10 @@ def test_sys_settrace(MockCustomizedPdb, mock_state, snapshot, subject):
 
     # unpack trace call results
     trace_results = []
-    trace_dispatch = MockCustomizedPdb.return_value.trace_dispatch
+    trace_dispatch = proxy.pdb.trace_dispatch
     while trace_dispatch.call_count:
         trace_results.append([
-            (c.args[0].f_code.co_name, *c.args[1:])
+            (c.args[0].f_code.co_name, c.args[1], asyncio.isfuture(c.args[2]))
             for c in trace_dispatch.call_args_list
         ])
         trace_dispatch = trace_dispatch.return_value
@@ -82,6 +77,8 @@ def test_sys_settrace(MockCustomizedPdb, mock_state, snapshot, subject):
     #     [('subject', 'return', None)]
     # ]
 
+    # from pprint import pprint
+    # pprint(trace_results)
     snapshot.assert_match(trace_results)
 
 ##__________________________________________________________________||

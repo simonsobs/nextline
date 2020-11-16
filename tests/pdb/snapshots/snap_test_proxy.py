@@ -2,85 +2,192 @@
 # snapshottest: v1 - https://goo.gl/zC4yUc
 from __future__ import unicode_literals
 
-from snapshottest import Snapshot
+from snapshottest import GenericRepr, Snapshot
 
 
 snapshots = Snapshot()
 
-snapshots['test_sys_settrace 1'] = [
+snapshots['test_sys_settrace[asyncio] 1'] = [
+    [
+        (
+            'run_a',
+            'call',
+            False
+        ),
+        (
+            '<lambda>',
+            'call',
+            False
+        ),
+        (
+            'a',
+            'call',
+            False
+        ),
+        (
+            'a',
+            'call',
+            False
+        )
+    ],
+    [
+        (
+            'run_a',
+            'line',
+            False
+        ),
+        (
+            '<lambda>',
+            'line',
+            False
+        ),
+        (
+            'a',
+            'line',
+            False
+        ),
+        (
+            'a',
+            'exception',
+            False
+        )
+    ],
+    [
+        (
+            '<lambda>',
+            'return',
+            False
+        ),
+        (
+            'a',
+            'return',
+            True
+        ),
+        (
+            'a',
+            'line',
+            False
+        ),
+        (
+            'run_a',
+            'return',
+            False
+        )
+    ],
+    [
+        (
+            'a',
+            'return',
+            False
+        )
+    ]
+]
+
+snapshots['test_sys_settrace[nested-func] 1'] = [
     [
         (
             'subject',
             'call',
-            None
+            False
         ),
         (
             'f',
             'call',
-            None
+            False
         ),
         (
             'f',
             'call',
-            None
+            False
         )
     ],
     [
         (
             'subject',
             'line',
-            None
+            False
         ),
         (
             'f',
             'line',
-            None
+            False
         ),
         (
             'f',
             'line',
-            None
+            False
         )
     ],
     [
         (
             'f',
             'line',
-            None
+            False
         ),
         (
             'subject',
             'line',
-            None
+            False
         ),
         (
             'f',
             'line',
-            None
+            False
         )
     ],
     [
         (
             'f',
             'return',
-            0
+            False
         ),
         (
             'f',
             'return',
-            0
+            False
         ),
         (
             'subject',
             'line',
-            None
+            False
         )
     ],
     [
         (
             'subject',
             'return',
-            None
+            False
+        )
+    ]
+]
+
+snapshots['test_sys_settrace[simple] 1'] = [
+    [
+        (
+            'f',
+            'call',
+            False
+        )
+    ],
+    [
+        (
+            'f',
+            'line',
+            False
+        )
+    ],
+    [
+        (
+            'f',
+            'line',
+            False
+        )
+    ],
+    [
+        (
+            'f',
+            'return',
+            False
         )
     ]
 ]
