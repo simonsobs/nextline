@@ -30,6 +30,13 @@ class CustomizedPdb(Pdb):
         super()._cmdloop()
         self.proxy.exited_cmdloop()
 
+    def set_continue(self):
+        """override bdb.set_continue()
+
+        To avoid sys.settrace(None) called in bdb.set_continue()
+
+        """
+        self._set_stopinfo(self.botframe, None, -1)
     def do_list(self, arg):
         statement = self.proxy.statement
         import linecache
