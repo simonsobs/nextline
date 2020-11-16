@@ -137,8 +137,8 @@ class TraceBlock:
         self.state.update_file_lines(self.thread_asynctask_id, file_lines)
 
         if self.trace_func:
-            self.pdb.botframe = None
-            self.pdb._set_stopinfo(None, None)
+            # self.pdb.botframe = None
+            # self.pdb._set_stopinfo(None, None)
             self.trace_func = self.trace_func(frame, event, arg)
         return self
 
