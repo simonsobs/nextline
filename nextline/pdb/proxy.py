@@ -22,6 +22,7 @@ class PdbProxy:
         self.state = state
         self.ci_registry = ci_registry
         self.statement = statement
+        self.skip = ["threading", "queue", "importlib", "nextline.pdb.*"]
 
         self.q_stdin = queue.Queue()
         self.q_stdout = queue.Queue()
@@ -30,6 +31,7 @@ class PdbProxy:
             proxy=self,
             stdin=StreamIn(self.q_stdin),
             stdout=StreamOut(self.q_stdout),
+            skip=self.skip,
             readrc=False)
 
         self._trace_func_all = self.trace_func_all
@@ -44,6 +46,11 @@ class PdbProxy:
         This method will be called by the instance of Trace.
         The event should be always "call."
         """
+
+        module_name = frame.f_globals.get('__name__')
+        if self.pdb.is_skipped_module(module_name):
+            return
+        # print(module_name)
 
         if not event == 'call':
             warnings.warn('The event is not "call": ({}, {}, {})'.format(frame, event, arg))
@@ -84,7 +91,11 @@ class PdbProxy:
         # a function name
         # Note: '<module>' for the code produced by compile()
 
-        if not func_name in self.breaks.get(module_name, []):
+        # if not func_name in self.breaks.get(module_name, []):
+        #     return
+
+        if self.pdb.is_skipped_module(module_name):
+            # print(module_name)
             return
 
         # print('{}.{}()'.format(module_name, func_name))
