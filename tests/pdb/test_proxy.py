@@ -7,6 +7,8 @@ from nextline.trace import State, compose_thread_asynctask_id
 from nextline.pdb.proxy import PdbProxy
 from nextline.pdb.custom import CustomizedPdb
 
+from . import subject
+
 ##__________________________________________________________________||
 @pytest.fixture()
 def MockCustomizedPdb(monkeypatch):
@@ -23,16 +25,14 @@ def mock_state():
     yield y
 
 ##__________________________________________________________________||
-def f():
-    r = 0
-    return r
+params = [
+    pytest.param(subject.f, id="simple"),
+    pytest.param(subject.subject, id="nested-func"),
+    pytest.param(subject.run_a, id="asyncio")
+]
 
-def subject():
-    f()
-    f()
-    return
-
-def test_sys_settrace(MockCustomizedPdb, mock_state, snapshot):
+@pytest.mark.parametrize('subject', params)
+def test_sys_settrace(MockCustomizedPdb, mock_state, snapshot, subject):
     """test with actual sys.settrace()
     """
 
