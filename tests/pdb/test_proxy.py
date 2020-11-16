@@ -20,6 +20,7 @@ def mock_state():
 params = [
     pytest.param(subject.f, id="simple"),
     pytest.param(subject.subject, id="nested-func"),
+    pytest.param(subject.call_gen, id="yield"),
     pytest.param(subject.run_a, id="asyncio")
 ]
 
