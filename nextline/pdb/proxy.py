@@ -65,8 +65,11 @@ class PdbProxy:
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
         if event == 'return':
-            self.trace.returning(self.thread_asynctask_id)
-            self.state.update_finishing(self.thread_asynctask_id)
+            if asyncio.isfuture(arg):
+                self._first = True
+            else:
+                self.trace.returning(self.thread_asynctask_id)
+                self.state.update_finishing(self.thread_asynctask_id)
         return self.trace_func_outermost
 
     def trace_func_all(self, frame, event, arg):
