@@ -7,7 +7,7 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_sys_settrace[asyncio] 1'] = [
+snapshots['test_proxy[asyncio] 1'] = [
     [
         (
             'run_a',
@@ -83,7 +83,7 @@ snapshots['test_sys_settrace[asyncio] 1'] = [
     ]
 ]
 
-snapshots['test_sys_settrace[nested-func] 1'] = [
+snapshots['test_proxy[nested-func] 1'] = [
     [
         (
             'subject',
@@ -161,7 +161,7 @@ snapshots['test_sys_settrace[nested-func] 1'] = [
     ]
 ]
 
-snapshots['test_sys_settrace[simple] 1'] = [
+snapshots['test_proxy[simple] 1'] = [
     [
         (
             'f',
@@ -192,7 +192,7 @@ snapshots['test_sys_settrace[simple] 1'] = [
     ]
 ]
 
-snapshots['test_sys_settrace[yield] 1'] = [
+snapshots['test_proxy[yield] 1'] = [
     [
         (
             'call_gen',
