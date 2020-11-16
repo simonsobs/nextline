@@ -35,7 +35,6 @@ class PdbProxy:
             readrc=False)
 
         self._trace_func_all = self.trace_func_all
-        self._pdb_trace_dispatch = self.pdb.trace_dispatch
         self._traces = []
 
         self._first = True
