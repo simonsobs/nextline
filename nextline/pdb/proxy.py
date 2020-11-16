@@ -73,6 +73,7 @@ class PdbProxy:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
         if event == 'return':
             if asyncio.isfuture(arg):
+                # awaiting. will be called again
                 self._first = True
             else:
                 self.trace.returning(self.thread_asynctask_id)
