@@ -22,7 +22,13 @@ class PdbProxy:
         self.state = state
         self.ci_registry = ci_registry
         self.statement = statement
-        self.skip = ["threading", "queue", "importlib", "nextline.pdb.*"]
+        self.skip = [
+            "threading", "queue", "importlib",
+            "asyncio.*",
+            "selectors", "weakref", "_weakrefset", "socket", "logging", "os",
+            "collections.*",
+            "nextline.pdb.*"
+        ]
 
         self.q_stdin = queue.Queue()
         self.q_stdout = queue.Queue()
