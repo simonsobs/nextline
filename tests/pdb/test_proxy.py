@@ -4,7 +4,7 @@ import asyncio
 import pytest
 from unittest.mock import Mock, MagicMock
 
-from nextline.trace import State, compose_thread_asynctask_id
+from nextline.trace import Trace, State, compose_thread_asynctask_id
 from nextline.pdb.proxy import PdbProxy
 from nextline.pdb.custom import CustomizedPdb
 
@@ -12,8 +12,35 @@ from . import subject
 
 ##__________________________________________________________________||
 @pytest.fixture()
+def mock_trace():
+    y = Mock(spec=Trace)
+    yield y
+
+@pytest.fixture()
 def mock_state():
     y = Mock(spec=State)
+    yield y
+
+@pytest.fixture()
+def proxy(mock_trace, mock_state):
+    thread_asynctask_id = compose_thread_asynctask_id()
+
+    # unused
+    breaks = {
+        __name__: ['subject', 'f']
+    }
+
+    y = PdbProxy(
+        thread_asynctask_id=thread_asynctask_id,
+        trace=mock_trace,
+        breaks=breaks,
+        state=mock_state,
+        ci_registry=Mock(),
+        statement=""
+        )
+
+    y.pdb.trace_dispatch = Mock()
+
     yield y
 
 ##__________________________________________________________________||
@@ -25,29 +52,12 @@ params = [
 ]
 
 @pytest.mark.parametrize('subject', params)
-def test_sys_settrace(mock_state, snapshot, subject):
-    """test with actual sys.settrace()
+def test_proxy(proxy, mock_trace, mock_state, snapshot, subject):
+    """test PdbProxy
+
     """
-
-    thread_asynctask_id = compose_thread_asynctask_id()
-
-    # unused
-    breaks = {
-        __name__: ['subject', 'f']
-    }
-
-    mock_trace = Mock()
-
-    proxy = PdbProxy(
-        thread_asynctask_id=thread_asynctask_id,
-        trace=mock_trace,
-        breaks=breaks,
-        state=mock_state,
-        ci_registry=Mock(),
-        statement=""
-        )
-
-    proxy.pdb.trace_dispatch = Mock()
+    # TODO: the test needs to be restructured so that, for example, a
+    # coroutine or a generator can be the outermost scope.
 
     trace_org = sys.gettrace()
     sys.settrace(proxy.trace_func)
@@ -71,11 +81,10 @@ def test_sys_settrace(mock_state, snapshot, subject):
 
     # e.g.,
     # [
-    #     [('subject', 'call', None), ('f', 'call', None), ('f', 'call', None)],
-    #     [('subject', 'line', None), ('f', 'line', None), ('f', 'line', None)],
-    #     [('f', 'line', None), ('subject', 'line', None), ('f', 'line', None)],
-    #     [('f', 'return', 0), ('f', 'return', 0), ('subject', 'line', None)],
-    #     [('subject', 'return', None)]
+    #     [('run_a', 'call', False), ('<lambda>', 'call', False), ('a', 'call', False), ('a', 'call', False)],
+    #     [('run_a', 'line', False), ('<lambda>', 'line', False), ('a', 'line', False), ('a', 'exception', False)],
+    #     [('<lambda>', 'return', False), ('a', 'return', True), ('a', 'line', False), ('run_a', 'return', False)],
+    #     [('a', 'return', False)]
     # ]
 
     # from pprint import pprint
