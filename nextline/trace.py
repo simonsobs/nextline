@@ -21,7 +21,6 @@ class State:
                 defaultdict,
                 partial(
                     dict,
-                    finished=False,
                     prompting=0,
                     file_name=None,
                     line_no=None,
@@ -31,7 +30,7 @@ class State:
         )
         # e.g.,
         # { thread_id : {
-        #     task_id: {'finished': False, 'prompting': False, ...}
+        #     task_id: {'prompting': False, ...}
         # }}
 
         self._prompting_count = 0
@@ -44,16 +43,22 @@ class State:
     def update_started(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id].update({'finished': False, 'prompting': 0})
+            self._data[thread_id][task_id].update({'prompting': 0})
         if self.event:
             self.event.set()
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            if self._data[thread_id][task_id]['finished']:
-                warnings.warn("already finished: thread_asynctask_id = {}".format(thread_asynctask_id))
-            self._data[thread_id][task_id]['finished'] = True
+            try:
+                del self._data[thread_id][task_id]
+            except KeyError:
+                warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
+            if not self._data[thread_id]:
+                try:
+                    del self._data[thread_id]
+                except KeyError:
+                    warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
         if self.event:
             self.event.set()
 
@@ -69,6 +74,8 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = 0
+        if self.event:
+            self.event.set()
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
         thread_id, task_id = thread_asynctask_id
@@ -107,7 +114,6 @@ class State:
         with self.condition:
             running_thread_ids = [
                 thid for thid, thda in self._data.items()
-                if any([not tada['finished'] for tada in thda.values()])
             ]
         return len(running_thread_ids)
 
@@ -172,6 +178,7 @@ class Trace:
         with self.condition:
             if not (pdb_proxy := self.pdb_proxies.get(thread_asynctask_id)):
                 pdb_proxy = PdbProxy(
+                    trace=self,
                     thread_asynctask_id=thread_asynctask_id,
                     breaks=self.breaks,
                     state=self.state,
@@ -181,6 +188,10 @@ class Trace:
                 self.pdb_proxies[thread_asynctask_id] = pdb_proxy
 
         return pdb_proxy.trace_func(frame, event, arg)
+
+    def returning(self, thread_asynctask_id):
+        with self.condition:
+            del self.pdb_proxies[thread_asynctask_id]
 
 ##__________________________________________________________________||
 def compose_thread_asynctask_id():
