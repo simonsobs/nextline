@@ -81,15 +81,15 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
-        if self.event:
-            self.event.set()
+        # if self.event:
+        #     self.event.set()
 
     def update_file_lines(self, thread_asynctask_id, file_lines):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['file_lines'] = file_lines
-        if self.event:
-            self.event.set()
+        # if self.event:
+        #     self.event.set()
 
     @property
     def prompting(self):
