@@ -24,7 +24,8 @@ class PdbProxy:
         self.statement = statement
         self.skip = [
             "threading", "queue", "importlib",
-            "asyncio.*",
+            "asyncio.*", "janus",
+            "concurrent.futures.*",
             "selectors", "weakref", "_weakrefset", "socket", "logging", "os",
             "collections.*",
             "nextline.pdb.*"
