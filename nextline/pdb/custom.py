@@ -26,7 +26,7 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)
 
     def _cmdloop(self):
-        self.proxy.entering_cmdloop()
+        self.proxy.entering_cmdloop(self.curframe)
         super()._cmdloop()
         self.proxy.exited_cmdloop()
 
