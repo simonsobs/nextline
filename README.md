@@ -2,3 +2,11 @@
 
 # Nextline
 
+_Nextline_ allows line-by-line execution of concurrent Python scripts by multiple users simultaneously from web browsers.
+
+## Packages
+
+- [**nextline:**](https://github.com/simonsobs/nextline) this package. the core functionality.
+- [**nextline-graphql:**](https://github.com/simonsobs/nextline-graphql) the GraphQL API
+- [**nextline-web:**](https://github.com/simonsobs/nextline-web) the web interface
+
