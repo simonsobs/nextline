@@ -2,7 +2,7 @@
 
 # Nextline
 
-_Nextline_ allows line-by-line execution of concurrent Python scripts by multiple users simultaneously from web browsers.
+_Nextline_ allows line-by-line execution of concurrent Python scripts by multiple users simultaneously from web browsers. Nextline is being developed as a DAQ sequencer of the [Observatory Control System (OCS)](https://github.com/simonsobs/ocs/).
 
 ## Packages
 
