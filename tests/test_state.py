@@ -11,12 +11,12 @@ def test_warning():
     state.update_finishing(id1)
     with pytest.warns(UserWarning) as record:
         state.update_finishing(id1)
-    assert "already finished" in (record[0].message.args[0])
+    assert "not found: thread_asynctask_id" in (record[0].message.args[0])
     id2 = (1111111, 123)
     state.update_finishing(id2)
     with pytest.warns(UserWarning) as record:
         state.update_finishing(id2)
-    assert "already finished" in (record[0].message.args[0])
+    assert "not found: thread_asynctask_id" in (record[0].message.args[0])
 
 def test_nthreads():
 

@@ -13,7 +13,6 @@ snapshots['test_state 1'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -21,7 +20,6 @@ snapshots['test_state 1'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -34,7 +32,6 @@ snapshots['test_state 2'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 1
         },
@@ -42,7 +39,6 @@ snapshots['test_state 2'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -55,7 +51,6 @@ snapshots['test_state 3'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -63,7 +58,6 @@ snapshots['test_state 3'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -76,7 +70,6 @@ snapshots['test_state 4'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -84,7 +77,6 @@ snapshots['test_state 4'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 2
         }
@@ -97,7 +89,6 @@ snapshots['test_state 5'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -105,7 +96,6 @@ snapshots['test_state 5'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -118,7 +108,6 @@ snapshots['test_state 6'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 3
         },
@@ -126,7 +115,6 @@ snapshots['test_state 6'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -136,7 +124,6 @@ snapshots['test_state 6'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 4
         },
@@ -144,7 +131,6 @@ snapshots['test_state 6'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -157,7 +143,6 @@ snapshots['test_state 7'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -165,7 +150,6 @@ snapshots['test_state 7'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -175,7 +159,6 @@ snapshots['test_state 7'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 4
         },
@@ -183,7 +166,6 @@ snapshots['test_state 7'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -196,7 +178,6 @@ snapshots['test_state 8'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -204,7 +185,6 @@ snapshots['test_state 8'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -214,7 +194,6 @@ snapshots['test_state 8'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         },
@@ -222,7 +201,6 @@ snapshots['test_state 8'] = {
             'file_lines': [
             ],
             'file_name': None,
-            'finished': False,
             'line_no': None,
             'prompting': 0
         }
@@ -230,40 +208,4 @@ snapshots['test_state 8'] = {
 }
 
 snapshots['test_state 9'] = {
-    1111111: {
-        None: {
-            'file_lines': [
-            ],
-            'file_name': None,
-            'finished': True,
-            'line_no': None,
-            'prompting': 0
-        },
-        123: {
-            'file_lines': [
-            ],
-            'file_name': None,
-            'finished': True,
-            'line_no': None,
-            'prompting': 0
-        }
-    },
-    2222222: {
-        None: {
-            'file_lines': [
-            ],
-            'file_name': None,
-            'finished': True,
-            'line_no': None,
-            'prompting': 0
-        },
-        124: {
-            'file_lines': [
-            ],
-            'file_name': None,
-            'finished': True,
-            'line_no': None,
-            'prompting': 0
-        }
-    }
 }
