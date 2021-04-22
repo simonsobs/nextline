@@ -1,8 +1,9 @@
 
 ##__________________________________________________________________||
-__all__ = ['Nextline']
+__all__ = ['Nextline', 'ThreadSafeAsyncioEvent']
 
 from .main import Nextline
+from .thread_safe_event import ThreadSafeAsyncioEvent
 
 ##__________________________________________________________________||
 from ._version import get_versions
