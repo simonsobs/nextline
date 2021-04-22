@@ -47,7 +47,13 @@ class Nextline:
         self.status = "finished"
 
     async def wait(self):
-        await asyncio.to_thread(self.t.join)
+        try:
+            await asyncio.to_thread(self.t.join)
+        except AttributeError:
+            # for Python 3.8
+            # to_thread() is new in Python 3.9
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, self.t.join)
 
     @property
     def pdb_cis(self):
