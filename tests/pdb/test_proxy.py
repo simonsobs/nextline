@@ -71,6 +71,7 @@ params = [
     pytest.param(subject.run_a, id="asyncio")
 ]
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="co_name <lambda> is different ")
 @pytest.mark.parametrize('subject', params)
 def test_proxy(proxy, mock_trace, mock_state, snapshot, subject):
     """test PdbProxy
