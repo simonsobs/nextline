@@ -49,6 +49,12 @@ class Nextline:
             threading.settrace(trace_org)
         self.status = "finished"
 
+    async def nextline_generator(self):
+        while True:
+            yield self
+            self.event.clear()
+            await self.event.wait()
+
     async def wait(self):
         try:
             await asyncio.to_thread(self.t.join)

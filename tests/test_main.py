@@ -19,10 +19,10 @@ breaks = {
 @pytest.mark.asyncio
 async def test_simple():
     nextline = Nextline(statement, breaks)
-    event = nextline.event
     assert nextline.status == 'initialized'
     nextline.run()
-    await event.wait()
+    g = nextline.nextline_generator()
+    nextline = await g.__anext__()
     time.sleep(0.02) # wait because sometimes pdb_ci is not in the registry yet
     state = nextline.state.data
     thread_id = list(state.keys())[0]
