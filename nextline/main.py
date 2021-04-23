@@ -9,14 +9,17 @@ from .trace import Trace
 
 ##__________________________________________________________________||
 class Nextline:
-    def __init__(self, statement, breaks, event=None):
+    def __init__(self, statement, breaks):
         self.statement = statement
         self.breaks = breaks
         self.condition = threading.Condition()
         self.trace = None
         self.state = None
-        self.event = event
         self.status = "initialized"
+
+        from . import ThreadSafeAsyncioEvent
+        self.event = ThreadSafeAsyncioEvent()
+
 
     def run(self):
         if __name__ in self.breaks:

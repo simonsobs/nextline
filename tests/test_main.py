@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from nextline import Nextline, ThreadSafeAsyncioEvent
+from nextline import Nextline
 
 ##__________________________________________________________________||
 statement = """
@@ -18,8 +18,8 @@ breaks = {
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_simple():
-    event = ThreadSafeAsyncioEvent()
-    nextline = Nextline(statement, breaks, event=event)
+    nextline = Nextline(statement, breaks)
+    event = nextline.event
     assert nextline.status == 'initialized'
     nextline.run()
     await event.wait()
