@@ -15,7 +15,7 @@ class Nextline:
         self.condition = threading.Condition()
         self.trace = None
         self.state = None
-        self.status = "initialized"
+        self.global_state = "initialized"
 
         from . import ThreadSafeAsyncioEvent
         self.event = ThreadSafeAsyncioEvent()
@@ -38,7 +38,7 @@ class Nextline:
             cmd = compile(self.statement, '<string>', 'exec')
         else:
             cmd = self.statement
-        self.status = "running"
+        self.global_state = "running"
         trace_org = sys.gettrace()
         threading.settrace(self.trace)
         sys.settrace(self.trace)
@@ -47,7 +47,7 @@ class Nextline:
         finally:
             sys.settrace(trace_org)
             threading.settrace(trace_org)
-        self.status = "finished"
+        self.global_state = "finished"
 
     async def nextline_generator(self):
         while True:
