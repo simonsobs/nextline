@@ -2,6 +2,7 @@ import sys
 import asyncio
 import threading
 import queue
+import linecache
 
 import janus
 
@@ -62,6 +63,11 @@ class Nextline:
             yield self
             self.event.clear()
             await self.event.wait()
+
+    def get_source(self, file_name=None):
+        if not file_name or file_name == '<string>':
+            return self.statement.split('\n')
+        return [l.rstrip() for l in linecache.getlines(file_name)]
 
     async def wait(self):
         try:
