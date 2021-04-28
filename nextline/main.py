@@ -6,7 +6,7 @@ import linecache
 
 import janus
 
-from .trace import Trace
+from .trace import Trace, State
 
 ##__________________________________________________________________||
 class Nextline:
@@ -22,13 +22,14 @@ class Nextline:
         self.event = ThreadSafeAsyncioEvent()
         self.event_global_state = ThreadSafeAsyncioEvent()
 
+        self.state = State(event=self.event)
+
     def run(self):
         if __name__ in self.breaks:
             self.breaks[__name__].append('<module>')
         else:
             self.breaks[__name__] = ['<module>']
-        self.trace = Trace(breaks=self.breaks, statement=self.statement, event=self.event)
-        self.state = self.trace.state
+        self.trace = Trace(state=self.state, breaks=self.breaks, statement=self.statement)
         self.pdb_ci_registry = self.trace.pdb_ci_registry
 
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)

@@ -140,7 +140,7 @@ class Trace:
     trace function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, breaks=None, statement=None, event=None):
+    def __init__(self, state, breaks=None, statement=None):
 
         if statement is None:
             statement = ""
@@ -149,7 +149,7 @@ class Trace:
             breaks = {}
 
         # public
-        self.state = State(event=event)
+        self.state = state
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}
