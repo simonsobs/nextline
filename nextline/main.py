@@ -20,7 +20,7 @@ class Nextline:
 
         from . import ThreadSafeAsyncioEvent
         self.event = ThreadSafeAsyncioEvent()
-        self.global_state_event = ThreadSafeAsyncioEvent()
+        self.event_global_state = ThreadSafeAsyncioEvent()
 
     def run(self):
         if __name__ in self.breaks:
@@ -40,7 +40,7 @@ class Nextline:
         else:
             cmd = self.statement
         self.global_state = "running"
-        self.global_state_event.set()
+        self.event_global_state.set()
         trace_org = sys.gettrace()
         threading.settrace(self.trace)
         sys.settrace(self.trace)
@@ -50,13 +50,13 @@ class Nextline:
             sys.settrace(trace_org)
             threading.settrace(trace_org)
         self.global_state = "finished"
-        self.global_state_event.set()
+        self.event_global_state.set()
 
     async def global_state_generator(self):
         while True:
             yield self.global_state
-            self.global_state_event.clear()
-            await self.global_state_event.wait()
+            self.event_global_state.clear()
+            await self.event_global_state.wait()
 
     async def nextline_generator(self):
         while True:
