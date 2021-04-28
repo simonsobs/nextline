@@ -7,13 +7,14 @@ from operator import itemgetter
 import warnings
 
 from .pdb.proxy import PdbProxy
+from .thread_safe_event import ThreadSafeAsyncioEvent
 
 ##__________________________________________________________________||
 class State:
     """
     """
-    def __init__(self, event):
-        self.event = event
+    def __init__(self):
+        self.event = ThreadSafeAsyncioEvent()
         self.condition = threading.Condition()
 
         self._data = defaultdict(

@@ -19,10 +19,10 @@ class Nextline:
         self.global_state = "initialized"
 
         from . import ThreadSafeAsyncioEvent
-        self.event = ThreadSafeAsyncioEvent()
         self.event_global_state = ThreadSafeAsyncioEvent()
 
-        self.state = State(event=self.event)
+        self.state = State()
+        self.event = self.state.event
 
     def run(self):
         if __name__ in self.breaks:
