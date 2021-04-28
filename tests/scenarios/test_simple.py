@@ -17,7 +17,7 @@ breaks = {
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_simple():
+async def test_run():
     nextline = Nextline(statement, breaks)
     assert nextline.global_state == 'initialized'
     nextline.run()
