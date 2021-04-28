@@ -2,11 +2,13 @@ import copy
 import pytest
 from unittest.mock import Mock, call, sentinel
 
+from nextline import ThreadSafeAsyncioEvent
 from nextline.trace import State
 
 ##__________________________________________________________________||
 def test_warning():
-    state = State()
+    event = ThreadSafeAsyncioEvent()
+    state = State(event)
     id1 = (1111111, None)
     state.update_finishing(id1)
     with pytest.warns(UserWarning) as record:
@@ -20,7 +22,8 @@ def test_warning():
 
 def test_nthreads():
 
-    state = State()
+    event = ThreadSafeAsyncioEvent()
+    state = State(event)
 
     id1 = (1111111, None)
     id2 = (1111111, 123)
@@ -47,7 +50,8 @@ def test_nthreads():
 
 def test_state(snapshot):
 
-    state = State()
+    event = ThreadSafeAsyncioEvent()
+    state = State(event)
 
     id1 = (1111111, None)
     id2 = (1111111, 123)

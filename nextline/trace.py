@@ -12,7 +12,7 @@ from .pdb.proxy import PdbProxy
 class State:
     """
     """
-    def __init__(self, event=None):
+    def __init__(self, event):
         self.event = event
         self.condition = threading.Condition()
 
@@ -44,8 +44,7 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'prompting': 0})
-        if self.event:
-            self.event.set()
+        self.event.set()
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -59,37 +58,32 @@ class State:
                     del self._data[thread_id]
                 except KeyError:
                     warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
-        if self.event:
-            self.event.set()
+        self.event.set()
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._prompting_count += 1
             self._data[thread_id][task_id]['prompting'] = self._prompting_count
-        if self.event:
-            self.event.set()
+        self.event.set()
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = 0
-        if self.event:
-            self.event.set()
+        self.event.set()
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
-        # if self.event:
-        #     self.event.set()
+        # self.event.set()
 
     def update_file_lines(self, thread_asynctask_id, file_lines):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['file_lines'] = file_lines
-        # if self.event:
-        #     self.event.set()
+        # self.event.set()
 
     @property
     def prompting(self):
