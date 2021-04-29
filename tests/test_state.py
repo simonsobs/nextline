@@ -5,7 +5,8 @@ from unittest.mock import Mock, call, sentinel
 from nextline.trace import State
 
 ##__________________________________________________________________||
-def test_warning():
+@pytest.mark.asyncio
+async def test_warning():
     state = State()
     id1 = (1111111, None)
     state.update_finishing(id1)
@@ -18,7 +19,8 @@ def test_warning():
         state.update_finishing(id2)
     assert "not found: thread_asynctask_id" in (record[0].message.args[0])
 
-def test_nthreads():
+@pytest.mark.asyncio
+async def test_nthreads():
 
     state = State()
 
@@ -45,7 +47,8 @@ def test_nthreads():
     state.update_finishing(id1)
     assert 0 == state.nthreads
 
-def test_state(snapshot):
+@pytest.mark.asyncio
+async def test_state(snapshot):
 
     state = State()
 

@@ -22,7 +22,8 @@ def subject():
     f()
     return
 
-def test_sys_settrace(MockPdbProxy, snapshot):
+@pytest.mark.asyncio
+async def test_sys_settrace(MockPdbProxy, snapshot):
     """test with actual sys.settrace()
     """
     state = State()
@@ -39,7 +40,8 @@ def test_sys_settrace(MockPdbProxy, snapshot):
     assert 2 == MockPdbProxy().trace_func.call_count
 
 ##__________________________________________________________________||
-def test_return(MockPdbProxy):
+@pytest.mark.asyncio
+async def test_return(MockPdbProxy):
     """test if correct trace function is returned
     """
     state = State()
@@ -50,7 +52,8 @@ def test_return(MockPdbProxy):
     assert 1 + 2 == MockPdbProxy.call_count
     # once in trace(), twice in the above lines in the test
 
-def test_args(MockPdbProxy, snapshot):
+@pytest.mark.asyncio
+async def test_args(MockPdbProxy, snapshot):
     """test if arguments are properly propagated to the proxy
     """
     state = State()
