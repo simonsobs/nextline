@@ -19,11 +19,16 @@ breaks = {
 @pytest.mark.asyncio
 async def test_run():
     nextline = Nextline(statement, breaks)
+    global_state_subscription = nextline.subscribe_global_state()
+    global_state = await global_state_subscription.__anext__()
+    assert global_state == 'initialized'
     assert nextline.global_state == 'initialized'
     nextline.run()
     g = nextline.nextline_generator()
     nextline = await g.__anext__()
     time.sleep(0.02) # wait because sometimes pdb_ci is not in the registry yet
+    global_state = await global_state_subscription.__anext__()
+    assert global_state == 'running'
     assert nextline.global_state == 'running'
     state = nextline.state.data
     thread_id = list(state.keys())[0]
