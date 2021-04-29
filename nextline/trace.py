@@ -38,7 +38,6 @@ class State:
                     prompting=0,
                     file_name=None,
                     line_no=None,
-                    file_lines=[],
                 )
             )
         )
@@ -125,12 +124,6 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
-        # self.event.set()
-
-    def update_file_lines(self, thread_asynctask_id, file_lines):
-        thread_id, task_id = thread_asynctask_id
-        with self.condition:
-            self._data[thread_id][task_id]['file_lines'] = file_lines
         # self.event.set()
 
     async def subscribe_thread_asynctask_ids(self):

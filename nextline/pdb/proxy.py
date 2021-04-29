@@ -125,12 +125,6 @@ class PdbProxy:
             line_no = frame.f_lineno
             self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no)
 
-            if file_name == '<string>':
-                file_lines = self.statement.split('\n')
-            else:
-                file_lines = [l.rstrip() for l in linecache.getlines(file_name, frame.f_globals)]
-            self.state.update_file_lines(self.thread_asynctask_id, file_lines)
-
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
