@@ -62,6 +62,10 @@ class Nextline:
         async for y in self.state.subscribe_thread_asynctask_ids():
             yield y
 
+    async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
+        async for y in self.state.subscribe_thread_asynctask_state(thread_asynctask_id):
+            yield y
+
     async def nextline_generator(self):
         event = self.state.event
         while True:

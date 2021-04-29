@@ -14,8 +14,20 @@ class State:
     """
     """
     def __init__(self):
+
         self.event = ThreadSafeAsyncioEvent()
+
+        self.loop = self.event._loop
+        # Obtain the loop from the event, which is crated as
+        # https://github.com/python/cpython/blob/v3.9.4/Lib/asyncio/locks.py#L177
+        # because the following usual way doesn't work without a running loop
+        # self.loop = asyncio.get_running_loop()
+
         self.event_thread_asynctask_ids = ThreadSafeAsyncioEvent()
+
+        self.events_thread_asynctask = {}
+        self.events_thread_asynctask_to_set = set()
+
         self.condition = threading.Condition()
 
         self._data = defaultdict(
@@ -37,6 +49,35 @@ class State:
 
         self._prompting_count = 0
 
+    def add_event_thread_asynctask(self, thread_asynctask_id):
+        self.loop.call_soon_threadsafe(partial(self.add_event_thread_asynctask_, thread_asynctask_id))
+        # Use call_soon_threadsafe() because this method can be called
+        # from a different thread. ThreadSafeAsyncioEvent needs to be
+        # initialized in the same loop that this class is initialized.
+
+    def add_event_thread_asynctask_(self, thread_asynctask_id):
+
+        event = ThreadSafeAsyncioEvent()
+
+        try:
+            self.events_thread_asynctask_to_set.remove(thread_asynctask_id)
+            event.set()
+        except KeyError:
+            pass
+
+        with self.condition:
+            self.events_thread_asynctask[thread_asynctask_id] = event
+
+    def set_event_thread_asynctask(self, thread_asynctask_id):
+        event = self.events_thread_asynctask.get(thread_asynctask_id)
+        if event:
+            event.set()
+        else:
+            # The method is called before the event is created in
+            # add_event_thread_asynctask_()
+            self.events_thread_asynctask_to_set.add(thread_asynctask_id)
+
+
     @property
     def data(self):
         with self.condition:
@@ -46,6 +87,7 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'prompting': 0})
+        self.add_event_thread_asynctask(thread_asynctask_id)
         self.event.set()
         self.event_thread_asynctask_ids.set()
 
@@ -69,12 +111,14 @@ class State:
         with self.condition:
             self._prompting_count += 1
             self._data[thread_id][task_id]['prompting'] = self._prompting_count
+        self.set_event_thread_asynctask(thread_asynctask_id)
         self.event.set()
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = 0
+        self.set_event_thread_asynctask(thread_asynctask_id)
         self.event.set()
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
@@ -93,6 +137,18 @@ class State:
         event = self.event_thread_asynctask_ids
         while True:
             yield self.thread_asynctask_ids
+            event.clear()
+            await event.wait()
+
+    async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
+        event = self.events_thread_asynctask[thread_asynctask_id]
+        thread_id, task_id = thread_asynctask_id
+        while True:
+            th = self._data[thread_id]
+            if th:
+                ta = th[task_id]
+                if ta:
+                    yield ta
             event.clear()
             await event.wait()
 
