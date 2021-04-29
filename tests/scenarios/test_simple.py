@@ -28,11 +28,6 @@ async def test_run():
 
     nextline.run()
 
-    g = nextline.nextline_generator()
-    nextline = await g.__anext__()
-
-    time.sleep(0.02) # wait because sometimes pdb_ci is not in the registry yet
-
     global_state = await global_state_subscription.__anext__()
     assert global_state == 'running'
 
