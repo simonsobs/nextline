@@ -15,6 +15,7 @@ class State:
     """
     def __init__(self):
         self.event = ThreadSafeAsyncioEvent()
+        self.event_thread_task_ids = ThreadSafeAsyncioEvent()
         self.condition = threading.Condition()
 
         self._data = defaultdict(
@@ -46,6 +47,7 @@ class State:
         with self.condition:
             self._data[thread_id][task_id].update({'prompting': 0})
         self.event.set()
+        self.event_thread_task_ids.set()
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -60,6 +62,7 @@ class State:
                 except KeyError:
                     warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
         self.event.set()
+        self.event_thread_task_ids.set()
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -85,6 +88,19 @@ class State:
         with self.condition:
             self._data[thread_id][task_id]['file_lines'] = file_lines
         # self.event.set()
+
+    @property
+    def thread_task_ids(self):
+        '''list of thread_asynctask_ids
+
+        '''
+        with self.condition:
+            ret = [
+                (thid, taid)
+                for thid, thda in self._data.items()
+                for taid, tada in thda.items()
+            ]
+        return ret
 
     @property
     def prompting(self):
