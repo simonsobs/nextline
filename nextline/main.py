@@ -59,11 +59,8 @@ class Nextline:
             await self.event_global_state.wait()
 
     async def subscribe_thread_task_ids(self):
-        event = self.state.event_thread_task_ids
-        while True:
-            yield self.state.thread_task_ids
-            event.clear()
-            await event.wait()
+        async for y in self.state.subscribe_thread_task_ids():
+            yield y
 
     async def nextline_generator(self):
         event = self.state.event

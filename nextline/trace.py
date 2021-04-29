@@ -89,6 +89,13 @@ class State:
             self._data[thread_id][task_id]['file_lines'] = file_lines
         # self.event.set()
 
+    async def subscribe_thread_task_ids(self):
+        event = self.event_thread_task_ids
+        while True:
+            yield self.thread_task_ids
+            event.clear()
+            await event.wait()
+
     @property
     def thread_task_ids(self):
         '''list of thread_asynctask_ids
