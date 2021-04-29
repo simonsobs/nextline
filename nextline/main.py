@@ -4,8 +4,6 @@ import threading
 import queue
 import linecache
 
-import janus
-
 from .trace import Trace, State
 
 ##__________________________________________________________________||
