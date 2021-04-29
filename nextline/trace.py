@@ -15,13 +15,9 @@ class State:
     """
     def __init__(self):
 
-        self.event = ThreadSafeAsyncioEvent()
+        self.loop = asyncio.get_running_loop()
 
-        self.loop = self.event._loop
-        # Obtain the loop from the event, which is crated as
-        # https://github.com/python/cpython/blob/v3.9.4/Lib/asyncio/locks.py#L177
-        # because the following usual way doesn't work without a running loop
-        # self.loop = asyncio.get_running_loop()
+        self.event = ThreadSafeAsyncioEvent()
 
         self.event_thread_asynctask_ids = ThreadSafeAsyncioEvent()
 
