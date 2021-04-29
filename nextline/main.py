@@ -58,7 +58,7 @@ class Nextline:
             self.event_global_state.clear()
             await self.event_global_state.wait()
 
-    async def thread_task_ids_generator(self):
+    async def subscribe_thread_task_ids(self):
         event = self.state.event_thread_task_ids
         while True:
             yield self.state.thread_task_ids
