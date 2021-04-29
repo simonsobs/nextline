@@ -52,7 +52,7 @@ class Nextline:
         self.global_state = "finished"
         self.event_global_state.set()
 
-    async def global_state_generator(self):
+    async def subscribe_global_state(self):
         while True:
             yield self.global_state
             self.event_global_state.clear()
