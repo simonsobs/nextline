@@ -133,8 +133,8 @@ class PdbProxy:
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
-        self.state.update_prompting(self.thread_asynctask_id)
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
+        self.state.update_prompting(self.thread_asynctask_id)
 
     def exited_cmdloop(self):
         """called by the customized pdb after it has exited from the command loop
