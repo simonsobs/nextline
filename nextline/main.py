@@ -22,7 +22,6 @@ class Nextline:
         self.event_global_state = ThreadSafeAsyncioEvent()
 
         self.state = State()
-        self.event = self.state.event
 
     def run(self):
         if __name__ in self.breaks:
@@ -60,10 +59,11 @@ class Nextline:
             await self.event_global_state.wait()
 
     async def nextline_generator(self):
+        event = self.state.event
         while True:
             yield self
-            self.event.clear()
-            await self.event.wait()
+            event.clear()
+            await event.wait()
 
     def get_source(self, file_name=None):
         if not file_name or file_name == '<string>':
