@@ -28,7 +28,7 @@ class PdbProxy:
             "concurrent.futures.*",
             "selectors", "weakref", "_weakrefset", "socket", "logging", "os",
             "collections.*",
-            "nextline.pdb.*"
+            "nextline.pdb.*", "nextline.queuedist"
         ]
 
         self.q_stdin = queue.Queue()
