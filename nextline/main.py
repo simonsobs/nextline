@@ -85,6 +85,8 @@ class Nextline:
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self.t.join)
 
+        await self.state.close()
+
     @property
     def pdb_cis(self):
         return self.pdb_ci_registry.pdb_cis

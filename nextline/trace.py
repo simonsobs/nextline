@@ -45,6 +45,10 @@ class State:
 
         self._prompting_count = 0
 
+    async def close(self):
+        self.queue_thread_asynctask_ids.close()
+        await self.queue_thread_asynctask_ids.wait_closed()
+
     def add_event_thread_asynctask(self, thread_asynctask_id):
         self.loop.call_soon_threadsafe(partial(self.add_event_thread_asynctask_, thread_asynctask_id))
         # Use call_soon_threadsafe() because this method can be called
