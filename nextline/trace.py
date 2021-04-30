@@ -9,6 +9,7 @@ import warnings
 
 from .pdb.proxy import PdbProxy
 from .thread_safe_event import ThreadSafeAsyncioEvent
+from .queuedist import QueueDist
 
 ##__________________________________________________________________||
 class State:
@@ -20,7 +21,7 @@ class State:
 
         self.event = ThreadSafeAsyncioEvent()
 
-        self.queue_thread_asynctask_ids = janus.Queue()
+        self.queue_thread_asynctask_ids = QueueDist()
 
         self.events_thread_asynctask = {}
         self.events_thread_asynctask_to_set = set()
@@ -46,8 +47,7 @@ class State:
         self._prompting_count = 0
 
     async def close(self):
-        self.queue_thread_asynctask_ids.close()
-        await self.queue_thread_asynctask_ids.wait_closed()
+        await self.queue_thread_asynctask_ids.close()
 
     def add_event_thread_asynctask(self, thread_asynctask_id):
         self.loop.call_soon_threadsafe(partial(self.add_event_thread_asynctask_, thread_asynctask_id))
@@ -89,7 +89,7 @@ class State:
             self._data[thread_id][task_id].update({'prompting': 0})
         self.add_event_thread_asynctask(thread_asynctask_id)
         self.event.set()
-        self.queue_thread_asynctask_ids.sync_q.put(self.thread_asynctask_ids)
+        self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -104,7 +104,7 @@ class State:
                 except KeyError:
                     warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
         self.event.set()
-        self.queue_thread_asynctask_ids.sync_q.put(self.thread_asynctask_ids)
+        self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -128,8 +128,7 @@ class State:
         # self.event.set()
 
     async def subscribe_thread_asynctask_ids(self):
-        while True:
-            y = await self.queue_thread_asynctask_ids.async_q.get()
+        async for y in self.queue_thread_asynctask_ids.subscribe():
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
