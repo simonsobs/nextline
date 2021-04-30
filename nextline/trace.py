@@ -1,5 +1,6 @@
 import threading
 import asyncio
+import janus
 import copy
 from collections import defaultdict
 from functools import partial
@@ -19,7 +20,7 @@ class State:
 
         self.event = ThreadSafeAsyncioEvent()
 
-        self.event_thread_asynctask_ids = ThreadSafeAsyncioEvent()
+        self.queue_thread_asynctask_ids = janus.Queue()
 
         self.events_thread_asynctask = {}
         self.events_thread_asynctask_to_set = set()
@@ -84,7 +85,7 @@ class State:
             self._data[thread_id][task_id].update({'prompting': 0})
         self.add_event_thread_asynctask(thread_asynctask_id)
         self.event.set()
-        self.event_thread_asynctask_ids.set()
+        self.queue_thread_asynctask_ids.sync_q.put(self.thread_asynctask_ids)
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -99,7 +100,7 @@ class State:
                 except KeyError:
                     warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
         self.event.set()
-        self.event_thread_asynctask_ids.set()
+        self.queue_thread_asynctask_ids.sync_q.put(self.thread_asynctask_ids)
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -123,11 +124,9 @@ class State:
         # self.event.set()
 
     async def subscribe_thread_asynctask_ids(self):
-        event = self.event_thread_asynctask_ids
         while True:
-            yield self.thread_asynctask_ids
-            event.clear()
-            await event.wait()
+            y = await self.queue_thread_asynctask_ids.async_q.get()
+            yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
         event = self.events_thread_asynctask[thread_asynctask_id]

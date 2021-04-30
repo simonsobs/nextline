@@ -50,8 +50,6 @@ async def test_run():
     assert global_state == 'initialized'
     assert nextline.global_state == 'initialized'
     thread_asynctask_ids_subscription = nextline.subscribe_thread_asynctask_ids()
-    thread_asynctask_ids = await thread_asynctask_ids_subscription.__anext__()
-    assert [] == thread_asynctask_ids
     nextline.run()
     thread_asynctask_ids = await thread_asynctask_ids_subscription.__anext__()
     print(thread_asynctask_ids)
