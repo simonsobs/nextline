@@ -22,9 +22,7 @@ class State:
         self.event = ThreadSafeAsyncioEvent()
 
         self.queue_thread_asynctask_ids = QueueDist()
-
-        self.events_thread_asynctask = {}
-        self.events_thread_asynctask_to_set = set()
+        self.queues_thread_asynctask = {}
 
         self.condition = threading.Condition()
 
@@ -48,35 +46,9 @@ class State:
 
     async def close(self):
         await self.queue_thread_asynctask_ids.close()
-
-    def add_event_thread_asynctask(self, thread_asynctask_id):
-        self.loop.call_soon_threadsafe(partial(self.add_event_thread_asynctask_, thread_asynctask_id))
-        # Use call_soon_threadsafe() because this method can be called
-        # from a different thread. ThreadSafeAsyncioEvent needs to be
-        # initialized in the same loop that this class is initialized.
-
-    def add_event_thread_asynctask_(self, thread_asynctask_id):
-
-        event = ThreadSafeAsyncioEvent()
-
-        try:
-            self.events_thread_asynctask_to_set.remove(thread_asynctask_id)
-            event.set()
-        except KeyError:
-            pass
-
-        with self.condition:
-            self.events_thread_asynctask[thread_asynctask_id] = event
-
-    def set_event_thread_asynctask(self, thread_asynctask_id):
-        event = self.events_thread_asynctask.get(thread_asynctask_id)
-        if event:
-            event.set()
-        else:
-            # The method is called before the event is created in
-            # add_event_thread_asynctask_()
-            self.events_thread_asynctask_to_set.add(thread_asynctask_id)
-
+        for q in self.queues_thread_asynctask.values():
+            await q.close()
+        self.queues_thread_asynctask.clear()
 
     @property
     def data(self):
@@ -87,8 +59,13 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'prompting': 0})
-        self.add_event_thread_asynctask(thread_asynctask_id)
         self.event.set()
+
+        fut = asyncio.run_coroutine_threadsafe(self._update_started(thread_asynctask_id), self.loop)
+        fut.result() # to wait and get the return value
+
+    async def _update_started(self, thread_asynctask_id):
+        self.queues_thread_asynctask[thread_asynctask_id] = QueueDist()
         self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
 
     def update_finishing(self, thread_asynctask_id):
@@ -104,22 +81,38 @@ class State:
                 except KeyError:
                     warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
         self.event.set()
+
+        fut = asyncio.run_coroutine_threadsafe(self._update_finishing(thread_asynctask_id), self.loop)
+        fut.result() # to wait and get the return value
+
+    async def _update_finishing(self, thread_asynctask_id):
         self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
+        q = self.queues_thread_asynctask.pop(thread_asynctask_id, None)
+        if q:
+            await q.close()
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._prompting_count += 1
             self._data[thread_id][task_id]['prompting'] = self._prompting_count
-        self.set_event_thread_asynctask(thread_asynctask_id)
+        self.publih_thread_asynctask_state(thread_asynctask_id)
         self.event.set()
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = 0
-        self.set_event_thread_asynctask(thread_asynctask_id)
+        self.publih_thread_asynctask_state(thread_asynctask_id)
         self.event.set()
+
+    def publih_thread_asynctask_state(self, thread_asynctask_id):
+        thread_id, task_id = thread_asynctask_id
+        th = self._data[thread_id]
+        if th:
+            ta = th[task_id]
+            if ta:
+                self.queues_thread_asynctask[thread_asynctask_id].put(ta)
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
         thread_id, task_id = thread_asynctask_id
@@ -132,16 +125,8 @@ class State:
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
-        event = self.events_thread_asynctask[thread_asynctask_id]
-        thread_id, task_id = thread_asynctask_id
-        while True:
-            th = self._data[thread_id]
-            if th:
-                ta = th[task_id]
-                if ta:
-                    yield ta
-            event.clear()
-            await event.wait()
+        async for y in self.queues_thread_asynctask[thread_asynctask_id].subscribe():
+            yield y
 
     @property
     def thread_asynctask_ids(self):

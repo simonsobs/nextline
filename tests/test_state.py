@@ -1,3 +1,5 @@
+import threading
+import asyncio
 import copy
 import pytest
 from unittest.mock import Mock, call, sentinel
@@ -8,6 +10,9 @@ from nextline.trace import State
 @pytest.mark.asyncio
 async def test_warning():
     state = State()
+    await asyncio.to_thread(_test_warning, state)
+
+def _test_warning(state):
     id1 = (1111111, None)
     state.update_finishing(id1)
     with pytest.warns(UserWarning) as record:
@@ -21,8 +26,10 @@ async def test_warning():
 
 @pytest.mark.asyncio
 async def test_nthreads():
-
     state = State()
+    await asyncio.to_thread(_test_nthreads, state)
+
+def _test_nthreads(state):
 
     id1 = (1111111, None)
     id2 = (1111111, 123)
@@ -49,8 +56,10 @@ async def test_nthreads():
 
 @pytest.mark.asyncio
 async def test_state(snapshot):
-
     state = State()
+    await asyncio.to_thread(_test_state, state, snapshot)
+
+def _test_state(state, snapshot):
 
     id1 = (1111111, None)
     id2 = (1111111, 123)

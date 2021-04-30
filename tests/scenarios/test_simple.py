@@ -33,6 +33,7 @@ async def test_run():
 
     assert nextline.global_state == 'running'
 
+    # await asyncio.sleep(0.1)
     thread_asynctask_ids_subscription = nextline.subscribe_thread_asynctask_ids()
     thread_asynctask_ids = await thread_asynctask_ids_subscription.__anext__()
     thread_asynctask_id = thread_asynctask_ids[0]
