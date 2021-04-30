@@ -16,34 +16,29 @@ class QueueDist:
     def __init__(self):
         self._in = janus.Queue()
 
-        self.condition = threading.Condition()
         self.subscribers = []
         self._last_item = self.NoLastItem
 
         self.t = threading.Thread(target=self._listen, daemon=True)
         self.t.start()
 
-        self.condition = threading.Condition()
-
     def _listen(self):
         while True:
             m = self._in.sync_q.get()
-            with self.condition:
-                for q in self.subscribers:
-                    q.sync_q.put(m)
-                if m is self.End:
-                    break
-                self._last_item = m
+            for q in self.subscribers:
+                q.sync_q.put(m)
+            if m is self.End:
+                break
+            self._last_item = m
 
     def put(self, item):
         self._in.sync_q.put(item)
 
     async def subscribe(self):
         q = janus.Queue()
-        with self.condition:
-            self.subscribers.append(q)
-            if self._last_item is not self.NoLastItem:
-                yield self._last_item
+        if self._last_item is not self.NoLastItem:
+            yield self._last_item
+        self.subscribers.append(q)
         while True:
             v = await q.async_q.get()
             if v is self.End:
