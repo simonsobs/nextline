@@ -12,7 +12,6 @@ class Nextline:
     def __init__(self, statement, breaks):
         self.statement = statement
         self.breaks = breaks
-        self.condition = threading.Condition()
         self.trace = None
         self.state = None
         self.global_state = "initialized"
