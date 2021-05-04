@@ -66,8 +66,9 @@ class State:
         fut.result() # to wait and get the return value
 
     async def _update_started(self, thread_asynctask_id):
-        self.queues_thread_asynctask[thread_asynctask_id] = QueueDist()
-        self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
+        with self.condition:
+            self.queues_thread_asynctask[thread_asynctask_id] = QueueDist()
+            self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
 
     def update_finishing(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -87,10 +88,11 @@ class State:
         fut.result() # to wait and get the return value
 
     async def _update_finishing(self, thread_asynctask_id):
-        self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
-        q = self.queues_thread_asynctask.pop(thread_asynctask_id, None)
-        if q:
-            await q.close()
+        with self.condition:
+            self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
+            q = self.queues_thread_asynctask.pop(thread_asynctask_id, None)
+            if q:
+                await q.close()
 
     def update_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
