@@ -5,6 +5,7 @@ import queue
 import linecache
 
 from .trace import Trace, State
+from .queuedist import QueueDist
 
 ##__________________________________________________________________||
 class Nextline:
@@ -16,8 +17,8 @@ class Nextline:
         self.state = None
         self.global_state = "initialized"
 
-        from . import ThreadSafeAsyncioEvent
-        self.event_global_state = ThreadSafeAsyncioEvent()
+        self.queue_global_state = QueueDist()
+        self.queue_global_state.put(self.global_state)
 
         self.state = State()
 
@@ -38,7 +39,7 @@ class Nextline:
         else:
             cmd = self.statement
         self.global_state = "running"
-        self.event_global_state.set()
+        self.queue_global_state.put(self.global_state)
         trace_org = sys.gettrace()
         threading.settrace(self.trace)
         sys.settrace(self.trace)
@@ -48,13 +49,11 @@ class Nextline:
             sys.settrace(trace_org)
             threading.settrace(trace_org)
         self.global_state = "finished"
-        self.event_global_state.set()
+        self.queue_global_state.put(self.global_state)
 
     async def subscribe_global_state(self):
-        while True:
-            yield self.global_state
-            self.event_global_state.clear()
-            await self.event_global_state.wait()
+        async for y in self.queue_global_state.subscribe():
+            yield y
 
     async def subscribe_thread_asynctask_ids(self):
         async for y in self.state.subscribe_thread_asynctask_ids():
@@ -85,6 +84,7 @@ class Nextline:
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self.t.join)
 
+        await self.queue_global_state.close()
         await self.state.close()
 
     @property
