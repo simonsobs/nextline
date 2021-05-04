@@ -109,11 +109,7 @@ class PdbProxy:
         # print('{}.{}()'.format(module_name, func_name))
         # self.pdb.set_next(frame)
 
-        trace = TraceBlock(
-            thread_asynctask_id=self.thread_asynctask_id,
-            pdb=self.pdb,
-            state=self.state
-        )
+        trace = TraceBlock(pdb=self.pdb)
         self._traces.append(trace)
         return trace(frame, event, arg)
 
@@ -139,17 +135,11 @@ class PdbProxy:
 
 ##__________________________________________________________________||
 class TraceBlock:
-    def __init__(self, thread_asynctask_id, pdb, state):
-        self.pdb = pdb
+    def __init__(self, pdb):
         self.trace_func = pdb.trace_dispatch
-        self.state = state
-        self.thread_asynctask_id = thread_asynctask_id
 
     def __call__(self, frame, event, arg):
-
         if self.trace_func:
-            # self.pdb.botframe = None
-            # self.pdb._set_stopinfo(None, None)
             self.trace_func = self.trace_func(frame, event, arg)
         return self
 
