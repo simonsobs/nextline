@@ -15,7 +15,7 @@ import time
 time.sleep(0.3)
 
 def f():
-    for _ in range(1000):
+    for _ in range(10):
         pass
     return
 
@@ -64,7 +64,7 @@ async def control_thread_task(nextline, thread_task_id):
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
         print(s)
         if s['prompting']:
-            nextline.send_pdb_command(thread_task_id, 'continue')
+            nextline.send_pdb_command(thread_task_id, 'next')
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
