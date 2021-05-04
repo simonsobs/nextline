@@ -24,11 +24,13 @@ class PdbProxy:
         self.statement = statement
         self.skip = [
             "threading", "queue", "importlib",
-            "asyncio.*", "janus",
+            "asyncio.*", "janus", "codec",
             "concurrent.futures.*",
             "selectors", "weakref", "_weakrefset", "socket", "logging", "os",
             "collections.*",
-            "nextline.pdb.*", "nextline.queuedist"
+            "importlib.*", "pathlib", "typing", "posixpath", "fnmatch",
+            "_pytest.*", "pluggy.*",
+            "nextline.pdb.*", "nextline.queuedist", "nextlinegraphql.schema.bindables",
         ]
 
         self.q_stdin = queue.Queue()
