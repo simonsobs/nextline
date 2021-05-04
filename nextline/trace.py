@@ -21,9 +21,6 @@ class State:
 
         self.event = ThreadSafeAsyncioEvent()
 
-        self.queue_thread_asynctask_ids = QueueDist()
-        self.queues_thread_asynctask = {}
-
         self.condition = threading.Condition()
 
         self._data = defaultdict(
@@ -43,6 +40,10 @@ class State:
         # }}
 
         self._prompting_count = 0
+
+        self.queue_thread_asynctask_ids = QueueDist()
+        self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
+        self.queues_thread_asynctask = {}
 
     async def close(self):
         await self.queue_thread_asynctask_ids.close()
