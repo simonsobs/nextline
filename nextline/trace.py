@@ -67,6 +67,8 @@ class State:
 
     async def _update_started(self, thread_asynctask_id):
         with self.condition:
+            if thread_asynctask_id in self.queues_thread_asynctask:
+                return
             self.queues_thread_asynctask[thread_asynctask_id] = QueueDist()
             self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
 
