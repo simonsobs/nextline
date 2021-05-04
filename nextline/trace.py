@@ -8,7 +8,6 @@ from operator import itemgetter
 import warnings
 
 from .pdb.proxy import PdbProxy
-from .thread_safe_event import ThreadSafeAsyncioEvent
 from .queuedist import QueueDist
 
 ##__________________________________________________________________||
@@ -18,8 +17,6 @@ class State:
     def __init__(self):
 
         self.loop = asyncio.get_running_loop()
-
-        self.event = ThreadSafeAsyncioEvent()
 
         self.condition = threading.Condition()
 
@@ -60,7 +57,6 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'prompting': 0})
-        self.event.set()
 
         fut = asyncio.run_coroutine_threadsafe(self._update_started(thread_asynctask_id), self.loop)
         fut.result() # to wait and get the return value
@@ -84,7 +80,6 @@ class State:
                     del self._data[thread_id]
                 except KeyError:
                     warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
-        self.event.set()
 
         fut = asyncio.run_coroutine_threadsafe(self._update_finishing(thread_asynctask_id), self.loop)
         fut.result() # to wait and get the return value
@@ -102,14 +97,12 @@ class State:
             self._prompting_count += 1
             self._data[thread_id][task_id]['prompting'] = self._prompting_count
         self.publih_thread_asynctask_state(thread_asynctask_id)
-        self.event.set()
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = 0
         self.publih_thread_asynctask_state(thread_asynctask_id)
-        self.event.set()
 
     def publih_thread_asynctask_state(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
@@ -123,7 +116,6 @@ class State:
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
-        # self.event.set()
 
     async def subscribe_thread_asynctask_ids(self):
         async for y in self.queue_thread_asynctask_ids.subscribe():
