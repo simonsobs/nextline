@@ -83,9 +83,4 @@ class Nextline:
         await self.queue_global_state.close()
         await self.state.close()
 
-    def nthreads(self):
-        if self.state is None:
-            return 0
-        return self.state.nthreads
-
 ##__________________________________________________________________||
