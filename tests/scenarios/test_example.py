@@ -1,4 +1,5 @@
 import sys
+import asyncio
 import threading
 from pathlib import Path
 import asyncio
@@ -42,29 +43,46 @@ def monkey_patch_syspath(monkeypatch):
     yield
 
 ##__________________________________________________________________||
+async def monitor_global_state(nextline):
+    async for s in nextline.subscribe_global_state():
+        print(s)
+
+async def control_execution(nextline):
+    controllers = {}
+    async for ids in nextline.subscribe_thread_asynctask_ids():
+        prev_ids = list(controllers.keys())
+        new_ids = [id_ for id_ in ids if id_ not in prev_ids]
+        ended_ids = [id_ for id_ in prev_ids if id_ not in ids]
+        for id_ in new_ids:
+            task = asyncio.create_task(control_thread_task(nextline, id_))
+            controllers[id_] = task
+        for id_ in ended_ids:
+            del controllers[id_]
+
+async def control_thread_task(nextline, thread_task_id):
+    print(thread_task_id)
+    async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
+        print(s)
+        if s['prompting']:
+            pdb_ci = nextline.pdb_ci_registry.get_ci(thread_task_id)
+            pdb_ci.send_pdb_command('continue')
+
+##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_run():
+
     nextline = Nextline(statement, breaks)
-    global_state_subscription = nextline.subscribe_global_state()
-    global_state = await global_state_subscription.__anext__()
-    assert global_state == 'initialized'
+
     assert nextline.global_state == 'initialized'
-    thread_asynctask_ids_subscription = nextline.subscribe_thread_asynctask_ids()
+
+    task_monitor_global_state = asyncio.create_task(monitor_global_state(nextline))
+    # await asyncio.sleep(0)
+
+    task_control_execution = asyncio.create_task(control_execution(nextline))
+
     nextline.run()
-    thread_asynctask_ids = await thread_asynctask_ids_subscription.__anext__()
-    print(thread_asynctask_ids)
-    g = nextline.nextline_generator()
-    nextline = await g.__anext__()
-    time.sleep(0.02) # wait because sometimes pdb_ci is not in the registry yet
-    global_state = await global_state_subscription.__anext__()
-    assert global_state == 'running'
-    assert nextline.global_state == 'running'
-    state = nextline.state.data
-    thread_id = list(state.keys())[0]
-    task_id = list(state[thread_id].keys())[0]
-    pdb_ci = nextline.pdb_ci_registry.get_ci((thread_id, task_id))
-    pdb_ci.send_pdb_command('continue')
-    # await nextline.wait()
-    # assert nextline.global_state == 'finished'
+
+    await nextline.wait()
+    assert nextline.global_state == 'finished'
 
 ##__________________________________________________________________||
