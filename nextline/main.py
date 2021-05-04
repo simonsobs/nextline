@@ -83,10 +83,6 @@ class Nextline:
         await self.queue_global_state.close()
         await self.state.close()
 
-    @property
-    def pdb_cis(self):
-        return self.pdb_ci_registry.pdb_cis
-
     def nthreads(self):
         if self.state is None:
             return 0
