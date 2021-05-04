@@ -1,3 +1,4 @@
+import sys
 import threading
 import asyncio
 import copy
@@ -5,6 +6,9 @@ import pytest
 from unittest.mock import Mock, call, sentinel
 
 from nextline.trace import State
+
+##__________________________________________________________________||
+pytestmark = pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread()")
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
