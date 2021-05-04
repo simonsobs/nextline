@@ -18,28 +18,22 @@ breaks = {
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_run():
+
     nextline = Nextline(statement, breaks)
-
-    global_state_subscription = nextline.subscribe_global_state()
-    global_state = await global_state_subscription.__anext__()
-    assert global_state == 'initialized'
-
     assert nextline.global_state == 'initialized'
 
     nextline.run()
 
-    global_state = await global_state_subscription.__anext__()
-    assert global_state == 'running'
+    async for global_state in nextline.subscribe_global_state():
+        print(global_state)
+        if global_state == 'running':
+            break
 
-    assert nextline.global_state == 'running'
-
-    thread_asynctask_ids_subscription = nextline.subscribe_thread_asynctask_ids()
-    thread_asynctask_ids = await thread_asynctask_ids_subscription.__anext__()
-    thread_asynctask_ids = await thread_asynctask_ids_subscription.__anext__()
-    thread_asynctask_id = thread_asynctask_ids[0]
-
-    thread_asynctask_state_subscription = nextline.subscribe_thread_asynctask_state(thread_asynctask_id)
-    thread_asynctask_state = await thread_asynctask_state_subscription.__anext__()
+    async for thread_asynctask_ids in nextline.subscribe_thread_asynctask_ids():
+        print(thread_asynctask_ids)
+        if thread_asynctask_ids:
+            thread_asynctask_id = thread_asynctask_ids[0]
+            break
 
     pdb_ci = nextline.pdb_ci_registry.get_ci(thread_asynctask_id)
     pdb_ci.send_pdb_command('continue')
