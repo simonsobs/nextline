@@ -64,8 +64,7 @@ async def control_thread_task(nextline, thread_task_id):
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
         print(s)
         if s['prompting']:
-            pdb_ci = nextline.pdb_ci_registry.get_ci(thread_task_id)
-            pdb_ci.send_pdb_command('continue')
+            nextline.send_pdb_command(thread_task_id, 'continue')
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio

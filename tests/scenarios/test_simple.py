@@ -35,8 +35,7 @@ async def test_run():
             thread_asynctask_id = thread_asynctask_ids[0]
             break
 
-    pdb_ci = nextline.pdb_ci_registry.get_ci(thread_asynctask_id)
-    pdb_ci.send_pdb_command('continue')
+    nextline.send_pdb_command(thread_asynctask_id, 'continue')
     await nextline.wait()
     assert nextline.global_state == 'finished'
 

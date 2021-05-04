@@ -67,6 +67,10 @@ class Nextline:
             return self.statement.split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
+    def send_pdb_command(self, thread_asynctask_id, command):
+        pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
+        pdb_ci.send_pdb_command(command)
+
     async def wait(self):
         try:
             await asyncio.to_thread(self.t.join)
