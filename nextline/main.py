@@ -63,13 +63,6 @@ class Nextline:
         async for y in self.state.subscribe_thread_asynctask_state(thread_asynctask_id):
             yield y
 
-    async def nextline_generator(self):
-        event = self.state.event
-        while True:
-            yield self
-            event.clear()
-            await event.wait()
-
     def get_source(self, file_name=None):
         if not file_name or file_name == '<string>':
             return self.statement.split('\n')
