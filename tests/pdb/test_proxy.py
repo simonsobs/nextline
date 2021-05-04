@@ -35,8 +35,7 @@ def proxy(mock_trace, mock_state):
         trace=mock_trace,
         breaks=breaks,
         state=mock_state,
-        ci_registry=Mock(),
-        statement=""
+        ci_registry=Mock()
         )
 
     y.pdb.trace_dispatch = Mock()

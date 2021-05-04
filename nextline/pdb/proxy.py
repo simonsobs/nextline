@@ -15,13 +15,12 @@ class PdbProxy:
 
     '''
 
-    def __init__(self, thread_asynctask_id, trace, breaks, state, ci_registry, statement):
+    def __init__(self, thread_asynctask_id, trace, breaks, state, ci_registry):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
         self.breaks = breaks
         self.state = state
         self.ci_registry = ci_registry
-        self.statement = statement
         self.skip = [
             "threading", "queue", "importlib",
             "asyncio.*", "janus", "codec",
@@ -113,8 +112,7 @@ class PdbProxy:
         trace = TraceBlock(
             thread_asynctask_id=self.thread_asynctask_id,
             pdb=self.pdb,
-            state=self.state,
-            statement=self.statement
+            state=self.state
         )
         self._traces.append(trace)
         return trace(frame, event, arg)
@@ -141,12 +139,11 @@ class PdbProxy:
 
 ##__________________________________________________________________||
 class TraceBlock:
-    def __init__(self, thread_asynctask_id, pdb, state, statement):
+    def __init__(self, thread_asynctask_id, pdb, state):
         self.pdb = pdb
         self.trace_func = pdb.trace_dispatch
         self.state = state
         self.thread_asynctask_id = thread_asynctask_id
-        self.statement = statement
 
     def __call__(self, frame, event, arg):
 

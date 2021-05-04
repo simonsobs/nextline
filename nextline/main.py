@@ -26,7 +26,7 @@ class Nextline:
             self.breaks[__name__].append('<module>')
         else:
             self.breaks[__name__] = ['<module>']
-        self.trace = Trace(state=self.state, breaks=self.breaks, statement=self.statement)
+        self.trace = Trace(state=self.state, breaks=self.breaks)
         self.pdb_ci_registry = self.trace.pdb_ci_registry
 
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)

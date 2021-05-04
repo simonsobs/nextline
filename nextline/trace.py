@@ -193,10 +193,7 @@ class Trace:
     trace function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, state, breaks=None, statement=None):
-
-        if statement is None:
-            statement = ""
+    def __init__(self, state, breaks=None):
 
         if breaks is None:
             breaks = {}
@@ -210,7 +207,6 @@ class Trace:
 
         # these are simply passed to pdb proxies
         self.breaks = breaks
-        self.statement = statement
 
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.
@@ -229,8 +225,7 @@ class Trace:
                     thread_asynctask_id=thread_asynctask_id,
                     breaks=self.breaks,
                     state=self.state,
-                    ci_registry=self.pdb_ci_registry,
-                    statement=self.statement
+                    ci_registry=self.pdb_ci_registry
                 )
                 self.pdb_proxies[thread_asynctask_id] = pdb_proxy
 
