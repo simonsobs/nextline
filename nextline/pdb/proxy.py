@@ -62,7 +62,6 @@ class PdbProxy:
         if not event == 'call':
             warnings.warn('The event is not "call": ({}, {}, {})'.format(frame, event, arg))
         if self._first:
-            self._first = False
             return self.trace_func_outermost(frame, event, arg)
         return self.trace_func_all(frame, event, arg)
 
@@ -75,6 +74,7 @@ class PdbProxy:
 
         """
         if event == 'call':
+            self._first = False
             self.state.update_started(self.thread_asynctask_id)
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
