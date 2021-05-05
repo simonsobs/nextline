@@ -8,6 +8,18 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 ##__________________________________________________________________||
+MODULES_TO_SKIP = [
+    "threading", "queue", "importlib",
+    "asyncio.*", "janus", "codec",
+    "concurrent.futures.*",
+    "selectors", "weakref", "_weakrefset", "socket", "logging", "os",
+    "collections.*",
+    "importlib.*", "pathlib", "typing", "posixpath", "fnmatch",
+    "_pytest.*", "pluggy.*",
+    "nextline.pdb.*", "nextline.queuedist", "nextlinegraphql.schema.bindables",
+]
+
+##__________________________________________________________________||
 class PdbProxy:
     '''A proxy of Pdb
 
@@ -21,16 +33,7 @@ class PdbProxy:
         self.breaks = breaks
         self.state = state
         self.ci_registry = ci_registry
-        self.skip = [
-            "threading", "queue", "importlib",
-            "asyncio.*", "janus", "codec",
-            "concurrent.futures.*",
-            "selectors", "weakref", "_weakrefset", "socket", "logging", "os",
-            "collections.*",
-            "importlib.*", "pathlib", "typing", "posixpath", "fnmatch",
-            "_pytest.*", "pluggy.*",
-            "nextline.pdb.*", "nextline.queuedist", "nextlinegraphql.schema.bindables",
-        ]
+        self.skip = MODULES_TO_SKIP
 
         self.q_stdin = queue.Queue()
         self.q_stdout = queue.Queue()
