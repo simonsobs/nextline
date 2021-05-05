@@ -111,7 +111,7 @@ class State:
         if th:
             ta = th[task_id]
             if ta:
-                self.queues_thread_asynctask[thread_asynctask_id].put(ta)
+                self.queues_thread_asynctask[thread_asynctask_id].put(ta.copy())
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no, trace_event):
         thread_id, task_id = thread_asynctask_id
