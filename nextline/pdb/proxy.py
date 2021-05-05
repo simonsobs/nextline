@@ -32,17 +32,20 @@ class PdbProxy:
         A thread and async tack ID
     trace : object
         A in stance of Trace
+    modules_to_trace: set
+        The set of modules to trace. This object is shared by multiple
+        instances of this class. Modules in which Pdb commands are
+        prompted will be added.
     breaks : list
     state: object
     ci_registry: object
-
-
     '''
 
-    def __init__(self, thread_asynctask_id, trace, breaks, state, ci_registry):
+    def __init__(self, thread_asynctask_id, trace, modules_to_trace, breaks, state, ci_registry):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
         self.breaks = breaks
+        self.modules_to_trace = modules_to_trace
         self.state = state
         self.ci_registry = ci_registry
         self.skip = MODULES_TO_SKIP
@@ -89,6 +92,9 @@ class PdbProxy:
 
         """
         if event == 'call':
+            module_name = frame.f_globals.get('__name__')
+            if not is_matched_to_any(module_name, self.modules_to_trace):
+                return
             self._first = False
             self.state.update_started(self.thread_asynctask_id)
         if self._trace_func_all:
@@ -135,6 +141,8 @@ class PdbProxy:
     def entering_cmdloop(self, frame):
         """called by the customized pdb before it is entering the command loop
         """
+        module_name = frame.f_globals.get('__name__')
+        self.modules_to_trace.add(module_name)
         if not frame.f_code.co_name == '<lambda>':
             file_name = self.pdb.canonic(frame.f_code.co_filename)
             line_no = frame.f_lineno

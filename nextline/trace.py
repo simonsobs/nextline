@@ -212,6 +212,8 @@ class Trace:
         # these are simply passed to pdb proxies
         self.breaks = breaks
 
+        self.modules_to_trace = {'nextline.main'}
+
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.
 
@@ -227,6 +229,7 @@ class Trace:
             pdb_proxy = PdbProxy(
                 trace=self,
                 thread_asynctask_id=thread_asynctask_id,
+                modules_to_trace=self.modules_to_trace,
                 breaks=self.breaks,
                 state=self.state,
                 ci_registry=self.pdb_ci_registry
