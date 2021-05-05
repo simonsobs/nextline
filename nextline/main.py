@@ -67,6 +67,16 @@ class Nextline:
             return self.statement.split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
+    def get_source_line(self, file_name, line_no):
+        '''
+        based on linecache.getline()
+        https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
+        '''
+        lines = self.get_source(file_name)
+        if 1 <= line_no <= len(lines):
+            return lines[line_no - 1]
+        return ''
+
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
         pdb_ci.send_pdb_command(command)
