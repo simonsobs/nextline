@@ -222,7 +222,8 @@ class Trace:
         thread_asynctask_id = compose_thread_asynctask_id()
         # print(*thread_asynctask_id)
 
-        if not (pdb_proxy := self.pdb_proxies.get(thread_asynctask_id)):
+        pdb_proxy = self.pdb_proxies.get(thread_asynctask_id)
+        if not pdb_proxy:
             pdb_proxy = PdbProxy(
                 trace=self,
                 thread_asynctask_id=thread_asynctask_id,
