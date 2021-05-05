@@ -25,6 +25,12 @@ class CustomizedPdb(Pdb):
         self.botframe = None
         self._set_stopinfo(None, None)
 
+    def trace_dispatch(self, frame, event, arg):
+        """override trace_dispatch()
+        """
+        self._trace_event = event
+        return super().trace_dispatch(frame, event, arg)
+
     def _cmdloop(self):
         self.proxy.entering_cmdloop(self.curframe)
         super()._cmdloop()
