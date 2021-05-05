@@ -2,6 +2,7 @@ import queue
 import asyncio
 import warnings
 import linecache
+import fnmatch
 
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
@@ -158,5 +159,18 @@ class TraceBlock:
         if self.trace_func:
             self.trace_func = self.trace_func(frame, event, arg)
         return self
+
+##__________________________________________________________________||
+def is_matched_to_any(word, patterns):
+    '''
+    based on Bdb.is_skipped_module()
+    https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
+    '''
+    if word is None:
+        return False
+    for pattern in patterns:
+        if fnmatch.fnmatch(word, pattern):
+            return True
+    return False
 
 ##__________________________________________________________________||
