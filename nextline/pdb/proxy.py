@@ -26,6 +26,17 @@ class PdbProxy:
 
     An instance of this class is created for each thread or async task.
 
+    Parameters
+    ----------
+    thread_asynctask_id : object
+        A thread and async tack ID
+    trace : object
+        A in stance of Trace
+    breaks : list
+    state: object
+    ci_registry: object
+
+
     '''
 
     def __init__(self, thread_asynctask_id, trace, breaks, state, ci_registry):
