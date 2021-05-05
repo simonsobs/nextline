@@ -208,7 +208,6 @@ class Trace:
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}
-        self.condition = threading.Condition()
 
         # these are simply passed to pdb proxies
         self.breaks = breaks
@@ -223,16 +222,15 @@ class Trace:
         thread_asynctask_id = compose_thread_asynctask_id()
         # print(*thread_asynctask_id)
 
-        with self.condition:
-            if not (pdb_proxy := self.pdb_proxies.get(thread_asynctask_id)):
-                pdb_proxy = PdbProxy(
-                    trace=self,
-                    thread_asynctask_id=thread_asynctask_id,
-                    breaks=self.breaks,
-                    state=self.state,
-                    ci_registry=self.pdb_ci_registry
-                )
-                self.pdb_proxies[thread_asynctask_id] = pdb_proxy
+        if not (pdb_proxy := self.pdb_proxies.get(thread_asynctask_id)):
+            pdb_proxy = PdbProxy(
+                trace=self,
+                thread_asynctask_id=thread_asynctask_id,
+                breaks=self.breaks,
+                state=self.state,
+                ci_registry=self.pdb_ci_registry
+            )
+            self.pdb_proxies[thread_asynctask_id] = pdb_proxy
 
         return pdb_proxy.trace_func(frame, event, arg)
 
