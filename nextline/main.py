@@ -9,9 +9,8 @@ from .queuedist import QueueDist
 
 ##__________________________________________________________________||
 class Nextline:
-    def __init__(self, statement, breaks):
+    def __init__(self, statement):
         self.statement = statement
-        self.breaks = breaks
         self.trace = None
         self.state = None
         self.global_state = "initialized"
@@ -22,11 +21,7 @@ class Nextline:
         self.state = State()
 
     def run(self):
-        if __name__ in self.breaks:
-            self.breaks[__name__].append('<module>')
-        else:
-            self.breaks[__name__] = ['<module>']
-        self.trace = Trace(state=self.state, breaks=self.breaks)
+        self.trace = Trace(state=self.state)
         self.pdb_ci_registry = self.trace.pdb_ci_registry
 
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)

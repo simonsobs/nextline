@@ -36,15 +36,13 @@ class PdbProxy:
         The set of modules to trace. This object is shared by multiple
         instances of this class. Modules in which Pdb commands are
         prompted will be added.
-    breaks : list
     state: object
     ci_registry: object
     '''
 
-    def __init__(self, thread_asynctask_id, trace, modules_to_trace, breaks, state, ci_registry):
+    def __init__(self, thread_asynctask_id, trace, modules_to_trace, state, ci_registry):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
-        self.breaks = breaks
         self.modules_to_trace = modules_to_trace
         self.state = state
         self.ci_registry = ci_registry
@@ -119,9 +117,6 @@ class PdbProxy:
         func_name = frame.f_code.co_name
         # a function name
         # Note: '<module>' for the code produced by compile()
-
-        # if not func_name in self.breaks.get(module_name, []):
-        #     return
 
         if self.pdb.is_skipped_module(module_name):
             # print(module_name)

@@ -198,19 +198,13 @@ class Trace:
     trace function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, state, breaks=None):
-
-        if breaks is None:
-            breaks = {}
+    def __init__(self, state):
 
         # public
         self.state = state
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}
-
-        # these are simply passed to pdb proxies
-        self.breaks = breaks
 
         self.modules_to_trace = {'nextline.main'}
 
@@ -230,7 +224,6 @@ class Trace:
                 trace=self,
                 thread_asynctask_id=thread_asynctask_id,
                 modules_to_trace=self.modules_to_trace,
-                breaks=self.breaks,
                 state=self.state,
                 ci_registry=self.pdb_ci_registry
             )
