@@ -97,15 +97,15 @@ class State:
         with self.condition:
             self._prompting_count += 1
             self._data[thread_id][task_id]['prompting'] = self._prompting_count
-        self.publih_thread_asynctask_state(thread_asynctask_id)
+        self.publish_thread_asynctask_state(thread_asynctask_id)
 
     def update_not_prompting(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._data[thread_id][task_id]['prompting'] = 0
-        self.publih_thread_asynctask_state(thread_asynctask_id)
+        self.publish_thread_asynctask_state(thread_asynctask_id)
 
-    def publih_thread_asynctask_state(self, thread_asynctask_id):
+    def publish_thread_asynctask_state(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         th = self._data[thread_id]
         if th:
