@@ -154,7 +154,7 @@ class TraceBlock:
         # if not frame.f_code.co_name == '<lambda>':
         #     file_name = self.pdb.canonic(frame.f_code.co_filename)
         #     line_no = frame.f_lineno
-        #     self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no)
+        #     self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
 
         if self.trace_func:
             self.trace_func = self.trace_func(frame, event, arg)
