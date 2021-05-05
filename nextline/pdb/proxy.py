@@ -133,7 +133,7 @@ class PdbProxy:
         self._traces.append(trace)
         return trace(frame, event, arg)
 
-    def entering_cmdloop(self, frame):
+    def entering_cmdloop(self, frame, event):
         """called by the customized pdb before it is entering the command loop
         """
         module_name = frame.f_globals.get('__name__')
@@ -141,7 +141,7 @@ class PdbProxy:
         if not frame.f_code.co_name == '<lambda>':
             file_name = self.pdb.canonic(frame.f_code.co_filename)
             line_no = frame.f_lineno
-            self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no)
+            self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
