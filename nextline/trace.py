@@ -28,6 +28,7 @@ class State:
                     prompting=0,
                     file_name=None,
                     line_no=None,
+                    trace_event=None,
                 )
             )
         )
@@ -112,10 +113,14 @@ class State:
             if ta:
                 self.queues_thread_asynctask[thread_asynctask_id].put(ta)
 
-    def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no):
+    def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no, trace_event):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id].update({'file_name': file_name, 'line_no': line_no})
+            self._data[thread_id][task_id].update({
+                'file_name': file_name,
+                'line_no': line_no,
+                'trace_event': trace_event
+            })
 
     async def subscribe_thread_asynctask_ids(self):
         async for y in self.queue_thread_asynctask_ids.subscribe():
