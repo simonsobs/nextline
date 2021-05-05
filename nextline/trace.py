@@ -237,8 +237,7 @@ class Trace:
         return pdb_proxy.trace_func(frame, event, arg)
 
     def returning(self, thread_asynctask_id):
-        with self.condition:
-            del self.pdb_proxies[thread_asynctask_id]
+        del self.pdb_proxies[thread_asynctask_id]
 
 ##__________________________________________________________________||
 def compose_thread_asynctask_id():
