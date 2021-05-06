@@ -49,11 +49,6 @@ class State:
             await q.close()
         self.queues_thread_asynctask.clear()
 
-    @property
-    def data(self):
-        with self.condition:
-            return copy.deepcopy(self._data)
-
     def update_started(self, thread_asynctask_id):
         thread_id, task_id = thread_asynctask_id
         with self.condition:
