@@ -64,7 +64,8 @@ params = [
     pytest.param(subject.f, id="simple"),
     pytest.param(subject.subject, id="nested-func"),
     pytest.param(subject.call_gen, id="yield"),
-    pytest.param(subject.run_a, id="asyncio")
+    pytest.param(subject.run_a, id="asyncio"),
+    pytest.param(subject.call_lambda, id="lambda")
 ]
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="co_name <lambda> is different ")

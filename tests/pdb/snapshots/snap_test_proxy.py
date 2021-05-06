@@ -83,6 +83,52 @@ snapshots['test_proxy[asyncio] 1'] = [
     ]
 ]
 
+snapshots['test_proxy[lambda] 1'] = [
+    [
+        (
+            'call_lambda',
+            'call',
+            False
+        ),
+        (
+            '<lambda>',
+            'call',
+            False
+        )
+    ],
+    [
+        (
+            'call_lambda',
+            'line',
+            False
+        ),
+        (
+            '<lambda>',
+            'line',
+            False
+        )
+    ],
+    [
+        (
+            'call_lambda',
+            'line',
+            False
+        ),
+        (
+            '<lambda>',
+            'return',
+            False
+        )
+    ],
+    [
+        (
+            'call_lambda',
+            'return',
+            False
+        )
+    ]
+]
+
 snapshots['test_proxy[nested-func] 1'] = [
     [
         (
