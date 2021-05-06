@@ -62,7 +62,7 @@ class Nextline:
             return self.statement.split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
-    def get_source_line(self, file_name, line_no):
+    def get_source_line(self, line_no, file_name=None):
         '''
         based on linecache.getline()
         https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
