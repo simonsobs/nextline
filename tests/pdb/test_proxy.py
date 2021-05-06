@@ -25,15 +25,12 @@ def mock_state():
 def proxy(mock_trace, mock_state):
     thread_asynctask_id = compose_thread_asynctask_id()
 
-    # unused
-    breaks = {
-        __name__: ['subject', 'f']
-    }
+    modules_to_trace = {'tests.pdb.subject'}
 
     y = PdbProxy(
         thread_asynctask_id=thread_asynctask_id,
         trace=mock_trace,
-        breaks=breaks,
+        modules_to_trace=modules_to_trace,
         state=mock_state,
         ci_registry=Mock()
         )
