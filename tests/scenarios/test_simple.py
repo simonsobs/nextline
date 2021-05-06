@@ -11,15 +11,11 @@ import time
 time.sleep(0.01)
 """
 
-breaks = {
-    Nextline.__module__: ['<module>'],
-}
-
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_run():
 
-    nextline = Nextline(statement, breaks)
+    nextline = Nextline(statement)
     assert nextline.global_state == 'initialized'
 
     nextline.run()

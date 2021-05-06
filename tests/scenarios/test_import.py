@@ -16,10 +16,6 @@ script.run()
 
 """.strip()
 
-breaks = {
-    Nextline.__module__: ['<module>'],
-}
-
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def monkey_patch_syspath(monkeypatch):
@@ -55,7 +51,7 @@ async def control_thread_task(nextline, thread_task_id):
 @pytest.mark.asyncio
 async def test_run():
 
-    nextline = Nextline(statement, breaks)
+    nextline = Nextline(statement)
 
     assert nextline.global_state == 'initialized'
 

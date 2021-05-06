@@ -12,7 +12,7 @@ from nextline import Nextline
 ##__________________________________________________________________||
 statement = """
 import time
-time.sleep(0.3)
+time.sleep(0.1)
 
 def f():
     for _ in range(10):
@@ -30,10 +30,6 @@ script_threading.run()
 import script_asyncio
 script_asyncio.run()
 """.strip()
-
-breaks = {
-    Nextline.__module__: ['<module>'],
-}
 
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
@@ -60,17 +56,26 @@ async def control_execution(nextline):
             del controllers[id_]
 
 async def control_thread_task(nextline, thread_task_id):
+    to_step = ['script_threading.run()', 'script_asyncio.run()']
+
     print(thread_task_id)
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
         print(s)
         if s['prompting']:
-            nextline.send_pdb_command(thread_task_id, 'next')
+            command = 'next'
+            if s['trace_event'] == 'line':
+                line = nextline.get_source_line(line_no=s['line_no'], file_name=s['file_name'])
+                if line in to_step:
+                    print(line)
+                    command = 'step'
+            nextline.send_pdb_command(thread_task_id, command)
+
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_run():
 
-    nextline = Nextline(statement, breaks)
+    nextline = Nextline(statement)
 
     assert nextline.global_state == 'initialized'
 
