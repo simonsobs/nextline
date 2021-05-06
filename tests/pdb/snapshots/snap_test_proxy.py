@@ -15,11 +15,6 @@ snapshots['test_proxy[asyncio] 1'] = [
             False
         ),
         (
-            '<lambda>',
-            'call',
-            False
-        ),
-        (
             'a',
             'call',
             False
@@ -37,11 +32,6 @@ snapshots['test_proxy[asyncio] 1'] = [
             False
         ),
         (
-            '<lambda>',
-            'line',
-            False
-        ),
-        (
             'a',
             'line',
             False
@@ -53,11 +43,6 @@ snapshots['test_proxy[asyncio] 1'] = [
         )
     ],
     [
-        (
-            '<lambda>',
-            'return',
-            False
-        ),
         (
             'a',
             'return',
@@ -89,21 +74,11 @@ snapshots['test_proxy[lambda] 1'] = [
             'call_lambda',
             'call',
             False
-        ),
-        (
-            '<lambda>',
-            'call',
-            False
         )
     ],
     [
         (
             'call_lambda',
-            'line',
-            False
-        ),
-        (
-            '<lambda>',
             'line',
             False
         )
@@ -112,11 +87,6 @@ snapshots['test_proxy[lambda] 1'] = [
         (
             'call_lambda',
             'line',
-            False
-        ),
-        (
-            '<lambda>',
-            'return',
             False
         )
     ],

@@ -114,12 +114,14 @@ class PdbProxy:
         module_name = frame.f_globals.get('__name__')
         # e.g., 'threading', '__main__', 'concurrent.futures.thread', 'asyncio.events'
 
+        if self.pdb.is_skipped_module(module_name):
+            # print(module_name)
+            return
+
         func_name = frame.f_code.co_name
         # a function name
         # Note: '<module>' for the code produced by compile()
-
-        if self.pdb.is_skipped_module(module_name):
-            # print(module_name)
+        if func_name == '<lambda>':
             return
 
         # print('{}.{}()'.format(module_name, func_name))
@@ -138,10 +140,10 @@ class PdbProxy:
         """
         module_name = frame.f_globals.get('__name__')
         self.modules_to_trace.add(module_name)
-        if not frame.f_code.co_name == '<lambda>':
-            file_name = self.pdb.canonic(frame.f_code.co_filename)
-            line_no = frame.f_lineno
-            self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
+
+        file_name = self.pdb.canonic(frame.f_code.co_filename)
+        line_no = frame.f_lineno
+        self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
