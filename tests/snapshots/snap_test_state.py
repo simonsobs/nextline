@@ -12,12 +12,14 @@ snapshots['test_state 1'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
@@ -27,12 +29,14 @@ snapshots['test_state 2'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 1
+            'prompting': 1,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
@@ -42,12 +46,14 @@ snapshots['test_state 3'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
@@ -57,12 +63,14 @@ snapshots['test_state 4'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 2
+            'prompting': 2,
+            'trace_event': None
         }
     }
 }
@@ -72,12 +80,14 @@ snapshots['test_state 5'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
@@ -87,24 +97,28 @@ snapshots['test_state 6'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 3
+            'prompting': 3,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     },
     2222222: {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 4
+            'prompting': 4,
+            'trace_event': None
         },
         124: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
@@ -114,24 +128,28 @@ snapshots['test_state 7'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     },
     2222222: {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 4
+            'prompting': 4,
+            'trace_event': None
         },
         124: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
@@ -141,24 +159,28 @@ snapshots['test_state 8'] = {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         123: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     },
     2222222: {
         None: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         },
         124: {
             'file_name': None,
             'line_no': None,
-            'prompting': 0
+            'prompting': 0,
+            'trace_event': None
         }
     }
 }
