@@ -2,8 +2,6 @@ import sys
 import asyncio
 import threading
 from pathlib import Path
-import asyncio
-import time
 
 import pytest
 
@@ -102,7 +100,6 @@ async def test_run():
     assert nextline.global_state == 'initialized'
 
     task_monitor_global_state = asyncio.create_task(monitor_global_state(nextline))
-    # await asyncio.sleep(0)
 
     task_control_execution = asyncio.create_task(control_execution(nextline))
 
