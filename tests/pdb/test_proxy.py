@@ -4,9 +4,10 @@ import asyncio
 import pytest
 from unittest.mock import Mock
 
-from nextline.trace import Trace, State, compose_thread_asynctask_id
+from nextline.trace import Trace, State
 from nextline.pdb.proxy import PdbProxy
 from nextline.pdb.custom import CustomizedPdb
+from nextline.trace import UniqThreadTaskIdComposer
 
 from . import subject
 
@@ -23,7 +24,7 @@ def mock_state():
 
 @pytest.fixture()
 def proxy(mock_trace, mock_state):
-    thread_asynctask_id = compose_thread_asynctask_id()
+    thread_asynctask_id = UniqThreadTaskIdComposer().compose()
 
     modules_to_trace = {'tests.pdb.subject'}
 

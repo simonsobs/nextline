@@ -232,33 +232,6 @@ class Trace:
         del self.pdb_proxies[thread_asynctask_id]
 
 ##__________________________________________________________________||
-def compose_thread_asynctask_id():
-    """Return the pair of the current thread ID and async task ID
-
-    The IDs are unique among exiting threads and async tasks. However,
-    they might be reused after threads or async tasks exit.
-
-
-    Returns
-    -------
-    tuple
-        The pair of the current thread ID and async task ID. If not in an
-        async task, the async task ID will be None.
-
-    """
-
-    thread_id = threading.get_ident()
-
-    asynctask_id = None
-    try:
-        asynctask_id = id(asyncio.current_task())
-    except RuntimeError:
-        # no running event loop
-        pass
-
-    return (thread_id, asynctask_id)
-
-##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
     """Compose paris of unique thread Id and async task Id
     """

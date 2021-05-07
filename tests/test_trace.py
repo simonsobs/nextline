@@ -3,7 +3,7 @@ import sys
 import pytest
 from unittest.mock import Mock, call, sentinel
 
-from nextline.trace import Trace, State, compose_thread_asynctask_id
+from nextline.trace import Trace, State
 from nextline.pdb.proxy import PdbProxy
 
 ##__________________________________________________________________||
@@ -33,8 +33,6 @@ async def test_sys_settrace(MockPdbProxy, snapshot):
     sys.settrace(trace)
     subject()
     sys.settrace(trace_org)
-
-    id_ = compose_thread_asynctask_id()
 
     assert 1 == MockPdbProxy.call_count
     assert 2 == MockPdbProxy().trace_func.call_count
