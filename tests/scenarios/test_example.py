@@ -53,20 +53,20 @@ async def control_execution(nextline):
     # if exceptions occurred in tasks don't need to be re-raised.
 
     # ==================================================
-    async_gen_ids = nextline.subscribe_thread_asynctask_ids()
-    task_ids_next = asyncio.create_task(async_gen_ids.__anext__())
+    subscription = nextline.subscribe_thread_asynctask_ids()
+    task_anext = asyncio.create_task(subscription.__anext__())
     while True:
-        aws = {task_ids_next, *tasks}
+        aws = {task_anext, *tasks}
         done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED)
         results = [t.result() for t in tasks if t in done] # re-raise exception
         tasks = tasks & pending
-        if not task_ids_next.done():
+        if not task_anext.done():
             continue
         try:
-            ids = task_ids_next.result()
+            ids = task_anext.result()
         except StopAsyncIteration:
             break
-        task_ids_next = asyncio.create_task(async_gen_ids.__anext__())
+        task_anext = asyncio.create_task(subscription.__anext__())
         # ===============================================
 
         ids = set(ids)
