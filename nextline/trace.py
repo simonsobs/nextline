@@ -196,7 +196,6 @@ class Trace:
     """
     def __init__(self, state):
 
-        # public
         self.state = state
         self.pdb_ci_registry = PdbCIRegistry()
 
