@@ -44,20 +44,43 @@ async def monitor_global_state(nextline):
         print(s)
 
 async def control_execution(nextline):
-    controllers = {}
-    async for ids in nextline.subscribe_thread_asynctask_ids():
-        prev_ids = list(controllers.keys())
-        new_ids = [id_ for id_ in ids if id_ not in prev_ids]
-        ended_ids = [id_ for id_ in prev_ids if id_ not in ids]
+    prev_ids = set()
+    tasks = set()
+
+    # The lines of code between ============= can be rewritten with
+    # one line of code as
+    #   async for ids in nextline.subscribe_thread_asynctask_ids():
+    # if exceptions occurred in tasks don't need to be re-raised.
+
+    # ==================================================
+    async_gen_ids = nextline.subscribe_thread_asynctask_ids()
+    task_ids_next = asyncio.create_task(async_gen_ids.__anext__())
+    while True:
+        aws = {task_ids_next, *tasks}
+        done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED)
+        results = [t.result() for t in tasks if t in done] # re-raise exception
+        tasks = tasks & pending
+        if not task_ids_next.done():
+            continue
+        try:
+            ids = task_ids_next.result()
+        except StopAsyncIteration:
+            break
+        task_ids_next = asyncio.create_task(async_gen_ids.__anext__())
+        # ===============================================
+
+        ids = set(ids)
+
+        new_ids = ids - prev_ids
+
         for id_ in new_ids:
             task = asyncio.create_task(control_thread_task(nextline, id_))
-            controllers[id_] = task
-        for id_ in ended_ids:
-            del controllers[id_]
+            tasks.add(task)
+
+        prev_ids = ids
 
 async def control_thread_task(nextline, thread_task_id):
     to_step = ['script_threading.run()', 'script_asyncio.run()']
-
     print(thread_task_id)
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
         print(s)
@@ -69,7 +92,6 @@ async def control_thread_task(nextline, thread_task_id):
                     print(line)
                     command = 'step'
             nextline.send_pdb_command(thread_task_id, command)
-
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
@@ -86,7 +108,10 @@ async def test_run():
 
     nextline.run()
 
-    await nextline.wait()
+    task_nextline_wait = asyncio.create_task(nextline.wait())
+    aws = [task_nextline_wait, task_monitor_global_state, task_control_execution]
+    await asyncio.gather(*aws)
+
     assert nextline.global_state == 'finished'
 
 ##__________________________________________________________________||
