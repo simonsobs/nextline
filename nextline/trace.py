@@ -2,9 +2,10 @@ import threading
 import asyncio
 import janus
 import copy
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from functools import partial
 from operator import itemgetter
+from itertools import count
 import warnings
 
 from .pdb.proxy import PdbProxy
@@ -255,5 +256,106 @@ def compose_thread_asynctask_id():
         pass
 
     return (thread_id, asynctask_id)
+
+##__________________________________________________________________||
+class UniqThreadTaskIdComposer:
+    """Compose paris of unique thread Id and async task Id
+    """
+
+    ThreadSpecifics = namedtuple('ThreadSpecifics', ['thread_ident', 'task_id_counter', 'task_ids'])
+    # thread_ident: threading.get_ident()
+    # task_id_counter: count().__next__
+    # task_ids: set()
+
+    def __init__(self):
+        self.thread_ident_task_obj_id_dict = {}
+        # key: (threading.get_ident(), id(asyncio.current_task()))
+        # value: (thread_id, task_id)
+
+        self.thread_task_id_dict = {}
+        # key: (thread_id, task_id)
+        # value: (threading.get_ident(), id(asyncio.current_task()))
+
+        self.thread_ident_dict = {} # key: threading.get_ident(), value: thread_id
+        self.thread_id_dict = {} # key: thread_id, value: T
+
+        self.thread_id_counter = count().__next__
+        self.thread_id_counter() # consume 0
+
+        self.condition = threading.Condition()
+
+    def compose(self):
+        """Return the pair of the current thread ID and async task ID
+
+        Returns
+        -------
+        tuple
+            The pair of the current thread ID and async task ID. If
+            not in an async task, the async task ID will be None.
+        """
+
+        thread_ident, task_obj_id = self._compose_possibly_recycled_ids()
+
+        try:
+            return self.thread_ident_task_obj_id_dict[(thread_ident, task_obj_id)]
+        except KeyError:
+            pass
+
+        thread_id = self.thread_ident_dict.get(thread_ident, None)
+        if not thread_id:
+            thread_id = self.thread_id_counter()
+
+            task_id_counter = count().__next__
+            task_id_counter() # consume 0
+
+            thread_specifics = self.ThreadSpecifics(
+                    thread_ident=thread_ident,
+                    task_id_counter=task_id_counter,
+                    task_ids=set()
+                )
+
+            with self.condition:
+                self.thread_ident_dict[thread_ident] = thread_id
+                self.thread_id_dict[thread_id] = thread_specifics
+
+        thread_specifics = self.thread_id_dict[thread_id]
+
+        task_id =  None
+        if task_obj_id:
+            task_id = thread_specifics.task_id_counter()
+        thread_specifics.task_ids.add(task_id)
+        thread_task_id = (thread_id, task_id)
+
+        with self.condition:
+            self.thread_ident_task_obj_id_dict[(thread_ident, task_obj_id)] = thread_task_id
+            self.thread_task_id_dict[thread_task_id] = (thread_ident, task_obj_id)
+
+        return thread_task_id
+
+    def exited(self, thread_task_id):
+        thread_id, task_id = thread_task_id
+        with self.condition:
+            thread_ident, task_obj_id = self.thread_task_id_dict.pop(thread_task_id)
+            self.thread_ident_task_obj_id_dict.pop((thread_ident, task_obj_id))
+            self.thread_id_dict[thread_id].task_ids.remove(task_id)
+            if not self.thread_id_dict[thread_id].task_ids:
+                self.thread_ident_dict.pop(thread_ident)
+
+    def _compose_possibly_recycled_ids(self):
+
+        thread_ident = threading.get_ident()
+        # can be recycled after a thread exits
+        # https://docs.python.org/3/library/threading.html#threading.get_ident
+
+        task_obj_id = None
+        try:
+            task_obj_id = id(asyncio.current_task())
+        except RuntimeError:
+            # no running event loop
+            pass
+        # can be also recycled
+        # https://docs.python.org/3/library/functions.html#id
+
+        return thread_ident, task_obj_id
 
 ##__________________________________________________________________||
