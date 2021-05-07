@@ -273,10 +273,7 @@ class UniqThreadTaskIdComposer:
         if uniq_id:
             return uniq_id
 
-        thread_id = self._compose_thread_id(non_uniq_id)
-        task_id = self._compose_task_id(non_uniq_id)
-        uniq_id = (thread_id, task_id)
-        return uniq_id
+        return self._compose_uniq_id(non_uniq_id)
 
     def exited(self, thread_task_id):
         thread_id, task_id = thread_task_id
@@ -310,15 +307,27 @@ class UniqThreadTaskIdComposer:
         except KeyError:
             return None
 
-    def _compose_thread_id(self, non_uniq_id):
+    def _compose_uniq_id(self, non_uniq_id):
+        thread_id = self._find_previsouly_composed_thread_id(non_uniq_id)
+        if not thread_id:
+            thread_id = self._compose_thread_id(non_uniq_id)
+        task_id = self._compose_task_id(non_uniq_id)
+        uniq_id = (thread_id, task_id)
+        with self.condition:
+            self.non_uniq_id_dict[non_uniq_id] = uniq_id
+            self.uniq_id_dict[uniq_id] = non_uniq_id
+        return uniq_id
 
+    def _find_previsouly_composed_thread_id(self, non_uniq_id):
         non_uniq_thread_id = non_uniq_id[0]
-
         try:
             return self.non_uniq_thread_id_dict[non_uniq_thread_id]
         except KeyError:
-            pass
+            return None
 
+    def _compose_thread_id(self, non_uniq_id):
+
+        non_uniq_thread_id = non_uniq_id[0]
         thread_id = self.thread_id_counter()
 
         task_id_counter = count().__next__
@@ -348,12 +357,8 @@ class UniqThreadTaskIdComposer:
         if non_uniq_task_id:
             task_id = thread_specifics.task_id_counter()
         thread_specifics.task_ids.add(task_id)
-        thread_task_id = (thread_id, task_id)
-
-        with self.condition:
-            self.non_uniq_id_dict[(non_uniq_thread_id, non_uniq_task_id)] = thread_task_id
-            self.uniq_id_dict[thread_task_id] = (non_uniq_thread_id, non_uniq_task_id)
 
         return task_id
 
 ##__________________________________________________________________||
+2
