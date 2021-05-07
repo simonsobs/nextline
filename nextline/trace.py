@@ -203,6 +203,8 @@ class Trace:
 
         self.modules_to_trace = {'nextline.main'}
 
+        self.id_composer = UniqThreadTaskIdComposer()
+
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.
 
@@ -210,7 +212,7 @@ class Trace:
 
         """
 
-        thread_asynctask_id = compose_thread_asynctask_id()
+        thread_asynctask_id = self.id_composer.compose()
         # print(*thread_asynctask_id)
 
         pdb_proxy = self.pdb_proxies.get(thread_asynctask_id)
