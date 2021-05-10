@@ -4,7 +4,7 @@ import asyncio
 import pytest
 from unittest.mock import Mock
 
-from nextline.trace import Trace, State
+from nextline.trace import Trace, Registry
 from nextline.pdb.proxy import PdbProxy
 from nextline.pdb.custom import CustomizedPdb
 from nextline.trace import UniqThreadTaskIdComposer
@@ -18,12 +18,12 @@ def mock_trace():
     yield y
 
 @pytest.fixture()
-def mock_state():
-    y = Mock(spec=State)
+def mock_regsitry():
+    y = Mock(spec=Registry)
     yield y
 
 @pytest.fixture()
-def proxy(mock_trace, mock_state):
+def proxy(mock_trace, mock_regsitry):
     thread_asynctask_id = UniqThreadTaskIdComposer().compose()
 
     modules_to_trace = {'tests.pdb.subject'}
@@ -32,7 +32,7 @@ def proxy(mock_trace, mock_state):
         thread_asynctask_id=thread_asynctask_id,
         trace=mock_trace,
         modules_to_trace=modules_to_trace,
-        state=mock_state,
+        regsitry=mock_regsitry,
         ci_registry=Mock()
         )
 
@@ -71,7 +71,7 @@ params = [
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="co_name <lambda> is different ")
 @pytest.mark.parametrize('subject', params)
-def test_proxy(proxy, mock_trace, mock_state, snapshot, subject):
+def test_proxy(proxy, mock_trace, mock_regsitry, snapshot, subject):
     """test PdbProxy
 
     """
@@ -83,8 +83,8 @@ def test_proxy(proxy, mock_trace, mock_state, snapshot, subject):
     subject()
     sys.settrace(trace_org)
 
-    assert 1 == mock_state.update_started.call_count
-    assert 1 == mock_state.update_finishing.call_count
+    assert 1 == mock_regsitry.update_started.call_count
+    assert 1 == mock_regsitry.update_finishing.call_count
 
     assert 1 == mock_trace.returning.call_count
 

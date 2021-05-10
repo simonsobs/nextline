@@ -3,7 +3,7 @@ import sys
 import pytest
 from unittest.mock import Mock, call, sentinel
 
-from nextline.trace import Trace, State
+from nextline.trace import Trace, Registry
 from nextline.pdb.proxy import PdbProxy
 
 ##__________________________________________________________________||
@@ -26,8 +26,8 @@ def subject():
 async def test_sys_settrace(MockPdbProxy, snapshot):
     """test with actual sys.settrace()
     """
-    state = State()
-    trace = Trace(state)
+    registry = Registry()
+    trace = Trace(registry)
 
     trace_org = sys.gettrace()
     sys.settrace(trace)
@@ -42,8 +42,8 @@ async def test_sys_settrace(MockPdbProxy, snapshot):
 async def test_return(MockPdbProxy):
     """test if correct trace function is returned
     """
-    state = State()
-    trace = Trace(state)
+    registry = Registry()
+    trace = Trace(registry)
     assert trace(sentinel.frame, 'call', None) is MockPdbProxy().trace_func()
     assert trace(sentinel.frame, 'line', None) is MockPdbProxy().trace_func()
 
@@ -54,8 +54,8 @@ async def test_return(MockPdbProxy):
 async def test_args(MockPdbProxy, snapshot):
     """test if arguments are properly propagated to the proxy
     """
-    state = State()
-    trace = Trace(state)
+    registry = Registry()
+    trace = Trace(registry)
     trace(sentinel.frame, 'call', None)
     trace(sentinel.frame, 'line', None)
     snapshot.assert_match(MockPdbProxy().method_calls)

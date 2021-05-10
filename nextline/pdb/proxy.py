@@ -36,15 +36,15 @@ class PdbProxy:
         The set of modules to trace. This object is shared by multiple
         instances of this class. Modules in which Pdb commands are
         prompted will be added.
-    state: object
+    regsitry: object
     ci_registry: object
     '''
 
-    def __init__(self, thread_asynctask_id, trace, modules_to_trace, state, ci_registry):
+    def __init__(self, thread_asynctask_id, trace, modules_to_trace, regsitry, ci_registry):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
         self.modules_to_trace = modules_to_trace
-        self.state = state
+        self.regsitry = regsitry
         self.ci_registry = ci_registry
         self.skip = MODULES_TO_SKIP
 
@@ -94,7 +94,7 @@ class PdbProxy:
             if not is_matched_to_any(module_name, self.modules_to_trace):
                 return
             self._first = False
-            self.state.update_started(self.thread_asynctask_id)
+            self.regsitry.update_started(self.thread_asynctask_id)
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
         if event == 'return':
@@ -103,7 +103,7 @@ class PdbProxy:
                 self._first = True
             else:
                 self.trace.returning(self.thread_asynctask_id)
-                self.state.update_finishing(self.thread_asynctask_id)
+                self.regsitry.update_finishing(self.thread_asynctask_id)
         return self.trace_func_outermost
 
     def trace_func_all(self, frame, event, arg):
@@ -130,7 +130,7 @@ class PdbProxy:
         trace = TraceBlock(
             thread_asynctask_id=self.thread_asynctask_id,
             pdb=self.pdb,
-            state=self.state
+            regsitry=self.regsitry
         )
         self._traces.append(trace)
         return trace(frame, event, arg)
@@ -143,26 +143,26 @@ class PdbProxy:
 
         file_name = self.pdb.canonic(frame.f_code.co_filename)
         line_no = frame.f_lineno
-        self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
+        self.regsitry.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
-        self.state.update_prompting(self.thread_asynctask_id)
+        self.regsitry.update_prompting(self.thread_asynctask_id)
 
     def exited_cmdloop(self):
         """called by the customized pdb after it has exited from the command loop
         """
         self.ci_registry.remove(self.thread_asynctask_id)
-        self.state.update_not_prompting(self.thread_asynctask_id)
+        self.regsitry.update_not_prompting(self.thread_asynctask_id)
         self.pdb_ci.end()
 
 ##__________________________________________________________________||
 class TraceBlock:
-    def __init__(self, thread_asynctask_id, pdb, state):
+    def __init__(self, thread_asynctask_id, pdb, regsitry):
         self.pdb = pdb
         self.trace_func = pdb.trace_dispatch
-        self.state = state
+        self.regsitry = regsitry
         self.thread_asynctask_id = thread_asynctask_id
 
     def __call__(self, frame, event, arg):
@@ -170,7 +170,7 @@ class TraceBlock:
         # if not frame.f_code.co_name == '<lambda>':
         #     file_name = self.pdb.canonic(frame.f_code.co_filename)
         #     line_no = frame.f_lineno
-        #     self.state.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
+        #     self.regsitry.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
 
         if self.trace_func:
             self.trace_func = self.trace_func(frame, event, arg)

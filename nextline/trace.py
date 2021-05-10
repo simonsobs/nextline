@@ -15,7 +15,7 @@ from .utils import (
 )
 
 ##__________________________________________________________________||
-class State:
+class Registry:
     """
     """
     def __init__(self):
@@ -197,9 +197,9 @@ class Trace:
     trace function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, state):
+    def __init__(self, regsitry):
 
-        self.state = state
+        self.regsitry = regsitry
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}
@@ -224,7 +224,7 @@ class Trace:
                 trace=self,
                 thread_asynctask_id=thread_asynctask_id,
                 modules_to_trace=self.modules_to_trace,
-                state=self.state,
+                regsitry=self.regsitry,
                 ci_registry=self.pdb_ci_registry
             )
             self.pdb_proxies[thread_asynctask_id] = pdb_proxy

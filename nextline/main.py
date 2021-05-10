@@ -4,7 +4,7 @@ import threading
 import queue
 import linecache
 
-from .trace import Trace, State
+from .trace import Trace, Registry
 from .utils import QueueDist
 
 ##__________________________________________________________________||
@@ -12,16 +12,15 @@ class Nextline:
     def __init__(self, statement):
         self.statement = statement
         self.trace = None
-        self.state = None
         self.global_state = "initialized"
 
         self.queue_global_state = QueueDist()
         self.queue_global_state.put(self.global_state)
 
-        self.state = State()
+        self.regsitry = Registry()
 
     def run(self):
-        self.trace = Trace(state=self.state)
+        self.trace = Trace(regsitry=self.regsitry)
         self.pdb_ci_registry = self.trace.pdb_ci_registry
 
         self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)
@@ -50,11 +49,11 @@ class Nextline:
             yield y
 
     async def subscribe_thread_asynctask_ids(self):
-        async for y in self.state.subscribe_thread_asynctask_ids():
+        async for y in self.regsitry.subscribe_thread_asynctask_ids():
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
-        async for y in self.state.subscribe_thread_asynctask_state(thread_asynctask_id):
+        async for y in self.regsitry.subscribe_thread_asynctask_state(thread_asynctask_id):
             yield y
 
     def get_source(self, file_name=None):
@@ -86,6 +85,6 @@ class Nextline:
             await loop.run_in_executor(None, self.t.join)
 
         await self.queue_global_state.close()
-        await self.state.close()
+        await self.regsitry.close()
 
 ##__________________________________________________________________||
