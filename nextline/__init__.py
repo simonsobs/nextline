@@ -3,7 +3,7 @@
 __all__ = ['Nextline', 'ThreadSafeAsyncioEvent']
 
 from .main import Nextline
-from .thread_safe_event import ThreadSafeAsyncioEvent
+from .utils import ThreadSafeAsyncioEvent
 
 ##__________________________________________________________________||
 from ._version import get_versions

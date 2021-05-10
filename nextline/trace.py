@@ -8,8 +8,11 @@ from operator import itemgetter
 import warnings
 
 from .pdb.proxy import PdbProxy
-from .queuedist import QueueDist
-from .thread_task_id import UniqThreadTaskIdComposer
+
+from .utils import (
+    QueueDist,
+    UniqThreadTaskIdComposer
+)
 
 ##__________________________________________________________________||
 class State:

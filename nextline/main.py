@@ -5,7 +5,7 @@ import queue
 import linecache
 
 from .trace import Trace, State
-from .queuedist import QueueDist
+from .utils import QueueDist
 
 ##__________________________________________________________________||
 class Nextline:

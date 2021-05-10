@@ -5,8 +5,10 @@ import time
 
 import pytest
 
-from nextline.queuedist import QueueDist
-from nextline.thread_safe_event import ThreadSafeAsyncioEvent
+from nextline.utils import (
+    QueueDist,
+    ThreadSafeAsyncioEvent
+)
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio

@@ -5,7 +5,7 @@ from functools import partial
 
 import pytest
 
-from nextline.trace import UniqThreadTaskIdComposer
+from nextline.utils import UniqThreadTaskIdComposer
 
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
