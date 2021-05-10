@@ -52,6 +52,10 @@ class QueueDist:
             if last_idx < idx:
                 yield item
 
+        self.subscribers.remove(q)
+        q.close()
+        await q.wait_closed()
+
     async def close(self):
         self.queue_in.sync_q.put(self.End)
 
@@ -65,9 +69,5 @@ class QueueDist:
 
         self.queue_in.close()
         await self.queue_in.wait_closed()
-
-        for q in self.subscribers:
-            q.close()
-            await q.wait_closed()
 
 ##__________________________________________________________________||
