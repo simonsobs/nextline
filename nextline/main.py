@@ -12,51 +12,30 @@ from .utils import QueueDist
 class Nextline:
     def __init__(self, statement):
         self.statement = statement
-        self.trace = None
-        self.global_state = "initialized"
-
         self.queue_global_state = QueueDist()
-        self.queue_global_state.put(self.global_state)
+        self.registry = Registry()
+        self.state = Initialized(nextline=self)
 
-        self.regsitry = Registry()
+    @property
+    def global_state(self):
+        return self.state.name
 
     def run(self):
-        self.trace = Trace(regsitry=self.regsitry)
-        self.pdb_ci_registry = self.trace.pdb_ci_registry
+        self.state = self.state.run(statement=self.statement)
 
-        self.t = threading.Thread(target=self._execute_statement_with_trace, daemon=True)
-        self.t.start()
-
-    def _execute_statement_with_trace(self):
-        if isinstance(self.statement, str):
-            cmd = compile(self.statement, '<string>', 'exec')
-        else:
-            cmd = self.statement
-        self.global_state = "running"
-        self.queue_global_state.put(self.global_state)
-        trace_org = sys.gettrace()
-        threading.settrace(self.trace)
-        sys.settrace(self.trace)
-        try:
-            exec(cmd)
-        except BaseException as e:
-            print(e)
-        finally:
-            sys.settrace(trace_org)
-            threading.settrace(trace_org)
-        self.global_state = "finished"
-        self.queue_global_state.put(self.global_state)
+    def finished(self, t):
+        self.state = self.state.finished(t)
 
     async def subscribe_global_state(self):
         async for y in self.queue_global_state.subscribe():
             yield y
 
     async def subscribe_thread_asynctask_ids(self):
-        async for y in self.regsitry.subscribe_thread_asynctask_ids():
+        async for y in self.registry.subscribe_thread_asynctask_ids():
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
-        async for y in self.regsitry.subscribe_thread_asynctask_state(thread_asynctask_id):
+        async for y in self.registry.subscribe_thread_asynctask_state(thread_asynctask_id):
             yield y
 
     def get_source(self, file_name=None):
@@ -75,9 +54,86 @@ class Nextline:
         return ''
 
     def send_pdb_command(self, thread_asynctask_id, command):
+        self.state.send_pdb_command(thread_asynctask_id, command)
+
+    async def wait(self):
+        async for s in self.subscribe_global_state():
+            if s == 'finished':
+                break
+        await self.state.wait()
+        await self.registry.close()
+        await self.queue_global_state.close()
+
+##__________________________________________________________________||
+class State:
+    """The base class of the states
+    """
+    def __init__(self, nextline):
+        self.nextline = nextline
+        self.nextline.queue_global_state.put(self.name)
+    def run(self, statement):
+        return self
+    async def wait(self):
+        pass
+    def finished(self, t):
+        return self
+    def send_pdb_command(self, thread_asynctask_id, command):
+        pass
+
+class Initialized(State):
+    name = "initialized"
+    def __init__(self, nextline):
+        super().__init__(nextline)
+    def run(self, statement):
+        return Running(nextline=self.nextline, statement=statement)
+
+class Running(State):
+    name = "running"
+
+    def __init__(self, nextline, statement):
+        super().__init__(nextline)
+
+        self.loop = asyncio.get_running_loop()
+        self.statement = statement
+        self.registry = nextline.registry
+        self.trace = Trace(registry=self.registry)
+        self.pdb_ci_registry = self.trace.pdb_ci_registry
+
+        if isinstance(self.statement, str):
+            cmd = compile(self.statement, '<string>', 'exec')
+        else:
+            cmd = self.statement
+        self.t = threading.Thread(target=self._execute_statement_with_trace, args=(cmd, ), daemon=True)
+        self.t.start()
+
+    def _execute_statement_with_trace(self, cmd):
+        trace_org = sys.gettrace()
+        threading.settrace(self.trace)
+        sys.settrace(self.trace)
+        try:
+            exec(cmd)
+        except BaseException as e:
+            print(e)
+            raise
+        finally:
+            sys.settrace(trace_org)
+            threading.settrace(trace_org)
+
+        self.nextline.finished(self.t)
+
+    def finished(self, t):
+        return Finished(nextline=self.nextline, t=t)
+
+    def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
         pdb_ci.send_pdb_command(command)
 
+
+class Finished(State):
+    name = "finished"
+    def __init__(self, nextline, t):
+        super().__init__(nextline)
+        self.t = t
     async def wait(self):
         try:
             await asyncio.to_thread(self.t.join)
@@ -86,8 +142,5 @@ class Nextline:
             # to_thread() is new in Python 3.9
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self.t.join)
-
-        await self.queue_global_state.close()
-        await self.regsitry.close()
 
 ##__________________________________________________________________||
