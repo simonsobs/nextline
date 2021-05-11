@@ -39,6 +39,8 @@ class Nextline:
         sys.settrace(self.trace)
         try:
             exec(cmd)
+        except BaseException as e:
+            print(e)
         finally:
             sys.settrace(trace_org)
             threading.settrace(trace_org)
