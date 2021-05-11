@@ -10,9 +10,9 @@ class Trace:
     trace function by sys.settrace() and threading.settrace().
 
     """
-    def __init__(self, regsitry):
+    def __init__(self, registry):
 
-        self.regsitry = regsitry
+        self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}
@@ -37,7 +37,7 @@ class Trace:
                 trace=self,
                 thread_asynctask_id=thread_asynctask_id,
                 modules_to_trace=self.modules_to_trace,
-                regsitry=self.regsitry,
+                registry=self.registry,
                 ci_registry=self.pdb_ci_registry
             )
             self.pdb_proxies[thread_asynctask_id] = pdb_proxy
