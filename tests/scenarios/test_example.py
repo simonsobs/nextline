@@ -39,7 +39,7 @@ def monkey_patch_syspath(monkeypatch):
 ##__________________________________________________________________||
 async def monitor_global_state(nextline):
     async for s in nextline.subscribe_global_state():
-        print(s)
+        print('monitor_global_state()', s)
 
 async def control_execution(nextline):
     prev_ids = set()
@@ -79,17 +79,22 @@ async def control_execution(nextline):
 
 async def control_thread_task(nextline, thread_task_id):
     to_step = ['script_threading.run()', 'script_asyncio.run()']
-    print(thread_task_id)
+    print(f'control_thread_task({thread_task_id})')
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
-        print(s)
+        # print(s)
         if s['prompting']:
             command = 'next'
             if s['trace_event'] == 'line':
                 line = nextline.get_source_line(line_no=s['line_no'], file_name=s['file_name'])
                 if line in to_step:
-                    print(line)
+                    # print(line)
                     command = 'step'
             nextline.send_pdb_command(thread_task_id, command)
+
+async def run(nextline):
+    await asyncio.sleep(0.1)
+    nextline.run()
+    await nextline.wait()
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
@@ -103,10 +108,9 @@ async def test_run():
 
     task_control_execution = asyncio.create_task(control_execution(nextline))
 
-    nextline.run()
+    task_run = asyncio.create_task(run(nextline))
 
-    task_nextline_wait = asyncio.create_task(nextline.wait())
-    aws = [task_nextline_wait, task_monitor_global_state, task_control_execution]
+    aws = [task_run, task_monitor_global_state, task_control_execution]
     await asyncio.gather(*aws)
 
     assert nextline.global_state == 'finished'
