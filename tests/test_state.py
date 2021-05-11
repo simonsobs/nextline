@@ -5,7 +5,7 @@ import copy
 import pytest
 from unittest.mock import Mock, call, sentinel
 
-from nextline.trace import Registry
+from nextline.registry import Registry
 
 ##__________________________________________________________________||
 pytestmark = pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread()")

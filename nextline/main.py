@@ -4,7 +4,8 @@ import threading
 import queue
 import linecache
 
-from .trace import Trace, Registry
+from .registry import Registry
+from .trace import Trace
 from .utils import QueueDist
 
 ##__________________________________________________________________||
