@@ -106,7 +106,7 @@ class Nextline:
 
 ##__________________________________________________________________||
 class State:
-    """The base class of the states
+    """The base state class in the Nextline state machine
     """
     def run(self, *_, **__):
         return self
@@ -116,11 +116,27 @@ class State:
         pass
 
 class Initialized(State):
+    """The state "initialized", ready to run
+    """
     name = "initialized"
     def run(self, *args, **kwargs):
         return Running(*args, **kwargs)
 
 class Running(State):
+    """The state "running", the script is being executed.
+
+    Parameters
+    ----------
+    statement : str
+        A Python code as a string
+    registry : object
+        An instance of Registry
+    finished : callable
+        A callable with one argument. This will be called with the
+        next state object when the script execution finishes.
+
+    """
+
     name = "running"
 
     def __init__(self, statement, registry, finished):
@@ -152,6 +168,16 @@ class Running(State):
 
 
 class Finished(State):
+    """The state "finished", the script execution has finished
+
+    Parameters
+    ----------
+
+    thread : object
+        The object of the thread in which the script was executed.
+        This thread is to be joined.
+    """
+
     name = "finished"
     def __init__(self, thread):
         self.thread = thread
