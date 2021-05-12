@@ -154,7 +154,7 @@ class Running(State):
         )
         self.thread.start()
 
-    def _done(self):
+    def _done(self, exc=None):
         # to be called at the end of self._exec()
         next_state = Finished(nextline=self.nextline, thread=self.thread)
         self.nextline._finished(next_state)

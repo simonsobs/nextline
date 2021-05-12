@@ -15,6 +15,10 @@ SOURCE = """
 x = 0
 """.strip()
 
+SOURCE_RAISE = """
+raise Exception('foo', 'bar')
+""".strip()
+
 ##__________________________________________________________________||
 def test_simple(trace):
     done = Mock()
@@ -25,6 +29,23 @@ def test_simple(trace):
     assert 3 == trace.call_count
     # print(trace.call_args_list)
 
-    assert [call()] == done.call_args_list
+    assert [call(None)] == done.call_args_list
+
+##__________________________________________________________________||
+def test_raise(trace):
+    done = Mock()
+    code = compile(SOURCE_RAISE, '<string>', 'exec')
+
+    exec_with_trace(code=code, trace=trace, done=done)
+
+    assert 4 == trace.call_count
+    # print(trace.call_args_list)
+
+    assert 1 == done.call_count
+    exc = done.call_args.args[0]
+    assert isinstance(exc, Exception)
+    assert ('foo', 'bar') == exc.args
+    with pytest.raises(Exception):
+        raise exc
 
 ##__________________________________________________________________||
