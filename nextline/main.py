@@ -7,6 +7,7 @@ import linecache
 from .registry import Registry
 from .trace import Trace
 from .utils import QueueDist
+from .exec_ import exec_with_trace
 
 ##__________________________________________________________________||
 class Nextline:
@@ -148,39 +149,11 @@ class Running(State):
             code = statement
 
         self.thread = threading.Thread(
-            target=self._exec,
+            target=exec_with_trace,
             args=(code, trace, self._done),
             daemon=True
         )
         self.thread.start()
-
-    def _exec(self, code, trace, done=None):
-        """execute code with trace
-
-        Parameters
-        ----------
-        code : object
-            A code to be executed. This must be an object that can be
-            executed by the Python built-in Function exec().
-        trace: callable
-            A trace function.
-        done: callable, optional
-            The callable to be called after the code exits.
-
-        """
-        trace_org = sys.gettrace()
-        threading.settrace(trace)
-        sys.settrace(trace)
-        try:
-            exec(code)
-        except BaseException as e:
-            print(e)
-            raise
-        finally:
-            sys.settrace(trace_org)
-            threading.settrace(trace_org)
-            if done:
-                done()
 
     def _done(self):
         # to be called at the end of self._exec()

@@ -17,7 +17,7 @@ class Trace:
 
         self.pdb_proxies = {}
 
-        self.modules_to_trace = {'nextline.main'}
+        self.modules_to_trace = {'nextline.exec_'}
 
         self.id_composer = UniqThreadTaskIdComposer()
 
