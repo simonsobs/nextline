@@ -6,7 +6,7 @@ import linecache
 
 from .registry import Registry
 from .trace import Trace
-from .utils import QueueDist
+from .utils import QueueDist, ThreadSafeAsyncioEvent
 from .exec_ import exec_with_trace
 
 ##__________________________________________________________________||
@@ -33,6 +33,7 @@ class Nextline:
         self._queue_state_name = QueueDist()
         self.registry = Registry()
         self._event_run = threading.Event()
+        self._event_finished = ThreadSafeAsyncioEvent()
         self._state = Initialized()
         self._queue_state_name.put(self._state.name)
 
@@ -64,8 +65,11 @@ class Nextline:
         self._event_run.clear()
         self._state = state
         self._queue_state_name.put(self._state.name)
+        self._event_finished.set()
 
     async def wait(self):
+        await self._event_finished.wait()
+        self._event_finished.clear()
         await self._state.wait()
         await self.registry.close()
         await self._queue_state_name.close()
@@ -104,9 +108,6 @@ class Nextline:
 class State:
     """The base class of the states
     """
-    def __init__(self):
-        self.thread = None
-
     def run(self, *_, **__):
         return self
 
@@ -116,23 +117,8 @@ class State:
     def send_pdb_command(self, thread_asynctask_id, command):
         pass
 
-    async def wait(self):
-        if self.thread:
-            await self._join(self.thread)
-
-    async def _join(self, thread):
-        try:
-            await asyncio.to_thread(thread.join)
-        except AttributeError:
-            # for Python 3.8
-            # to_thread() is new in Python 3.9
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, thread.join)
-
 class Initialized(State):
     name = "initialized"
-    def __init__(self):
-        super().__init__()
     def run(self, statement, registry, finished):
         return Running(statement=statement, registry=registry, finished=finished)
 
@@ -140,8 +126,6 @@ class Running(State):
     name = "running"
 
     def __init__(self, statement, registry, finished):
-        super().__init__()
-
         self.finished = finished
 
         trace = Trace(registry=registry)
@@ -172,7 +156,17 @@ class Running(State):
 class Finished(State):
     name = "finished"
     def __init__(self, thread):
-        super().__init__()
         self.thread = thread
+    async def wait(self):
+        if self.thread:
+            await self._join(self.thread)
+    async def _join(self, thread):
+        try:
+            await asyncio.to_thread(thread.join)
+        except AttributeError:
+            # for Python 3.8
+            # to_thread() is new in Python 3.9
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, thread.join)
 
 ##__________________________________________________________________||
