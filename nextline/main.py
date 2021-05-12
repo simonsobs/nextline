@@ -12,7 +12,7 @@ class Nextline:
     """Nextline allows line-by-line execution of concurrent Python scripts
 
     Nextline supports concurrency with threading and asyncio. It uses
-    an instance of Pdb for each thread and async task.
+    multiple instances of Pdb, one for each thread and async task.
 
     Note
     ----
@@ -159,7 +159,7 @@ class Running(State):
         self.thread.start()
 
     def _done(self, exception=None):
-        # to be called at the end of self._exec()
+        # to be called at the end of exec_with_trace()
         next_state = Finished(thread=self.thread, exception=exception)
         self.finished(next_state)
 
@@ -176,6 +176,9 @@ class Finished(State):
     thread : object
         The object of the thread in which the script was executed.
         This thread is to be joined.
+    exception : exception or None
+        The execution raised in the script execution if any. Otherwise
+        None
     """
 
     name = "finished"
