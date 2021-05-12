@@ -142,30 +142,45 @@ class Running(State):
         self.pdb_ci_registry = trace.pdb_ci_registry
 
         if isinstance(statement, str):
-            cmd = compile(statement, '<string>', 'exec')
+            code = compile(statement, '<string>', 'exec')
+            print(type(code))
         else:
-            cmd = statement
+            code = statement
 
         self.thread = threading.Thread(
             target=self._exec,
-            args=(cmd, trace, self._done),
+            args=(code, trace, self._done),
             daemon=True
         )
         self.thread.start()
 
-    def _exec(self, cmd, trace, done):
+    def _exec(self, code, trace, done=None):
+        """execute code with trace
+
+        Parameters
+        ----------
+        code : object
+            A code to be executed. This must be an object that can be
+            executed by the Python built-in Function exec().
+        trace: callable
+            A trace function.
+        done: callable, optional
+            The callable to be called after the code exits.
+
+        """
         trace_org = sys.gettrace()
         threading.settrace(trace)
         sys.settrace(trace)
         try:
-            exec(cmd)
+            exec(code)
         except BaseException as e:
             print(e)
             raise
         finally:
             sys.settrace(trace_org)
             threading.settrace(trace_org)
-            done()
+            if done:
+                done()
 
     def _done(self):
         # to be called at the end of self._exec()
