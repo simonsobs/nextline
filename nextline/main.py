@@ -159,7 +159,7 @@ class Running(State):
 
     def _done(self, exception=None):
         # to be called at the end of self._exec()
-        next_state = Finished(thread=self.thread)
+        next_state = Finished(thread=self.thread, exception=exception)
         self.finished(next_state)
 
     def send_pdb_command(self, thread_asynctask_id, command):
@@ -179,8 +179,9 @@ class Finished(State):
     """
 
     name = "finished"
-    def __init__(self, thread):
+    def __init__(self, thread, exception):
         self.thread = thread
+        self.exception = exception
     async def wait(self):
         if self.thread:
             await self._join(self.thread)
