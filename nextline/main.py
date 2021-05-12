@@ -7,6 +7,8 @@ from .trace import Trace
 from .utils import QueueDist, ThreadSafeAsyncioEvent
 from .exec_ import exec_with_trace
 
+SCRIPT_FILE_NAME = '<string>'
+
 ##__________________________________________________________________||
 class Nextline:
     """Nextline allows line-by-line execution of concurrent Python scripts
@@ -88,7 +90,7 @@ class Nextline:
         self._state.send_pdb_command(thread_asynctask_id, command)
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == '<string>':
+        if not file_name or file_name == SCRIPT_FILE_NAME:
             return self.statement.split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
@@ -147,7 +149,7 @@ class Running(State):
         self.pdb_ci_registry = trace.pdb_ci_registry
 
         if isinstance(statement, str):
-            code = compile(statement, '<string>', 'exec')
+            code = compile(statement, SCRIPT_FILE_NAME, 'exec')
         else:
             code = statement
 
