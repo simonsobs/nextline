@@ -135,22 +135,6 @@ class Registry:
             ]
         return ret
 
-    @property
-    def prompting(self):
-        '''list of thread_asynctask_id for which pdb is prompting in the order of started prompting
-
-        '''
-        with self.condition:
-            ret = [
-                (thid, taid, tada['prompting'])
-                for thid, thda in self._data.items()
-                for taid, tada in thda.items() if tada['prompting'] > 0
-            ]
-            # (thread_id, task_id, prompting)
-        ret = sorted(ret, key=itemgetter(2)) # sort by prompting
-        ret = [e[0:2] for e in ret] # (thread_id, task_id)
-        return ret
-
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
     """
