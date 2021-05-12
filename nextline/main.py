@@ -33,7 +33,7 @@ class Nextline:
         self._queue_state_name = QueueDist()
         self.registry = Registry()
         self._event_run = threading.Event()
-        self._state = Initialized(nextline=self)
+        self._state = Initialized()
         self._queue_state_name.put(self._state.name)
 
     @property
@@ -45,7 +45,11 @@ class Nextline:
     def run(self):
         """run the script
         """
-        self._state = self._state.run(statement=self.statement, finished=self._finished)
+        self._state = self._state.run(
+            statement=self.statement,
+            registry=self.registry,
+            finished=self._finished
+        )
         self._queue_state_name.put(self._state.name)
         self._event_run.set()
 
@@ -100,8 +104,7 @@ class Nextline:
 class State:
     """The base class of the states
     """
-    def __init__(self, nextline):
-        self.nextline = nextline
+    def __init__(self):
         self.thread = None
 
     def run(self, *_, **__):
@@ -128,20 +131,20 @@ class State:
 
 class Initialized(State):
     name = "initialized"
-    def __init__(self, nextline):
-        super().__init__(nextline)
-    def run(self, statement, finished):
-        return Running(nextline=self.nextline, statement=statement, finished=finished)
+    def __init__(self):
+        super().__init__()
+    def run(self, statement, registry, finished):
+        return Running(statement=statement, registry=registry, finished=finished)
 
 class Running(State):
     name = "running"
 
-    def __init__(self, nextline, statement, finished):
-        super().__init__(nextline)
+    def __init__(self, statement, registry, finished):
+        super().__init__()
 
         self.finished = finished
 
-        trace = Trace(registry=nextline.registry)
+        trace = Trace(registry=registry)
         self.pdb_ci_registry = trace.pdb_ci_registry
 
         if isinstance(statement, str):
@@ -158,7 +161,7 @@ class Running(State):
 
     def _done(self, exception=None):
         # to be called at the end of self._exec()
-        next_state = Finished(nextline=self.nextline, thread=self.thread)
+        next_state = Finished(thread=self.thread)
         self.finished(next_state)
 
     def send_pdb_command(self, thread_asynctask_id, command):
@@ -168,8 +171,8 @@ class Running(State):
 
 class Finished(State):
     name = "finished"
-    def __init__(self, nextline, thread):
-        super().__init__(nextline)
+    def __init__(self, thread):
+        super().__init__()
         self.thread = thread
 
 ##__________________________________________________________________||
