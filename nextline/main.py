@@ -44,11 +44,6 @@ class Nextline:
         """
         self._state = self._state.run(statement=self.statement)
 
-    async def wait(self):
-        await self._state.wait()
-        await self.registry.close()
-        await self.queue_global_state.close()
-
     def _finished(self, state):
         """change the state to "finished"
 
@@ -57,6 +52,11 @@ class Nextline:
 
         """
         self._state = state
+
+    async def wait(self):
+        await self._state.wait()
+        await self.registry.close()
+        await self.queue_global_state.close()
 
     async def subscribe_global_state(self):
         async for y in self.queue_global_state.subscribe():
