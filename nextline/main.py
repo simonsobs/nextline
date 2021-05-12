@@ -31,6 +31,7 @@ class Nextline:
         self.statement = statement
         self.queue_global_state = QueueDist()
         self.registry = Registry()
+        self._event_run = threading.Event()
         self._state = Initialized(nextline=self)
 
     @property
@@ -43,6 +44,7 @@ class Nextline:
         """run the script
         """
         self._state = self._state.run(statement=self.statement)
+        self._event_run.set()
 
     def _finished(self, state):
         """change the state to "finished"
@@ -51,6 +53,8 @@ class Nextline:
         thread that executes the script.
 
         """
+        self._event_run.wait() # in case the script finishes too quickly
+        self._event_run.clear()
         self._state = state
 
     async def wait(self):
