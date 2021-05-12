@@ -45,7 +45,7 @@ class Nextline:
     def run(self):
         """run the script
         """
-        self._state = self._state.run(statement=self.statement)
+        self._state = self._state.run(statement=self.statement, finished=self._finished)
         self._queue_state_name.put(self._state.name)
         self._event_run.set()
 
@@ -104,7 +104,7 @@ class State:
         self.nextline = nextline
         self.thread = None
 
-    def run(self, statement):
+    def run(self, *_, **__):
         return self
 
     async def wait(self):
@@ -130,14 +130,16 @@ class Initialized(State):
     name = "initialized"
     def __init__(self, nextline):
         super().__init__(nextline)
-    def run(self, statement):
-        return Running(nextline=self.nextline, statement=statement)
+    def run(self, statement, finished):
+        return Running(nextline=self.nextline, statement=statement, finished=finished)
 
 class Running(State):
     name = "running"
 
-    def __init__(self, nextline, statement):
+    def __init__(self, nextline, statement, finished):
         super().__init__(nextline)
+
+        self.finished = finished
 
         trace = Trace(registry=nextline.registry)
         self.pdb_ci_registry = trace.pdb_ci_registry
@@ -154,10 +156,10 @@ class Running(State):
         )
         self.thread.start()
 
-    def _done(self, exc=None):
+    def _done(self, exception=None):
         # to be called at the end of self._exec()
         next_state = Finished(nextline=self.nextline, thread=self.thread)
-        self.nextline._finished(next_state)
+        self.finished(next_state)
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
