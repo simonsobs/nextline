@@ -29,11 +29,11 @@ class Nextline:
 
     def __init__(self, statement):
         self.statement = statement
-        self.queue_global_state = QueueDist()
+        self._queue_state_name = QueueDist()
         self.registry = Registry()
         self._event_run = threading.Event()
         self._state = Initialized(nextline=self)
-        self.queue_global_state.put(self._state.name)
+        self._queue_state_name.put(self._state.name)
 
     @property
     def global_state(self) -> str:
@@ -45,7 +45,7 @@ class Nextline:
         """run the script
         """
         self._state = self._state.run(statement=self.statement)
-        self.queue_global_state.put(self._state.name)
+        self._queue_state_name.put(self._state.name)
         self._event_run.set()
 
     def _finished(self, state):
@@ -58,15 +58,15 @@ class Nextline:
         self._event_run.wait() # in case the script finishes too quickly
         self._event_run.clear()
         self._state = state
-        self.queue_global_state.put(self._state.name)
+        self._queue_state_name.put(self._state.name)
 
     async def wait(self):
         await self._state.wait()
         await self.registry.close()
-        await self.queue_global_state.close()
+        await self._queue_state_name.close()
 
     async def subscribe_global_state(self):
-        async for y in self.queue_global_state.subscribe():
+        async for y in self._queue_state_name.subscribe():
             yield y
 
     async def subscribe_thread_asynctask_ids(self):
