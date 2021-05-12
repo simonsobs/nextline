@@ -110,17 +110,15 @@ class State:
     """
     def run(self, *_, **__):
         return self
-
     async def wait(self):
         pass
-
-    def send_pdb_command(self, thread_asynctask_id, command):
+    def send_pdb_command(self, *_, **__):
         pass
 
 class Initialized(State):
     name = "initialized"
-    def run(self, statement, registry, finished):
-        return Running(statement=statement, registry=registry, finished=finished)
+    def run(self, *args, **kwargs):
+        return Running(*args, **kwargs)
 
 class Running(State):
     name = "running"
