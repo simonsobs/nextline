@@ -151,16 +151,6 @@ class Registry:
         ret = [e[0:2] for e in ret] # (thread_id, task_id)
         return ret
 
-    @property
-    def nthreads(self):
-        '''number of running threads
-        '''
-        with self.condition:
-            running_thread_ids = [
-                thid for thid, thda in self._data.items()
-            ]
-        return len(running_thread_ids)
-
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
     """
