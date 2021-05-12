@@ -23,7 +23,7 @@ class Nextline:
     Parameters
     ----------
     statement : str
-        A python code as a string
+        A Python code as a string
 
     """
 
