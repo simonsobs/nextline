@@ -144,7 +144,6 @@ class Running(State):
 
         if isinstance(statement, str):
             code = compile(statement, '<string>', 'exec')
-            print(type(code))
         else:
             code = statement
 
