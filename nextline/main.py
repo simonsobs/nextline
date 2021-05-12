@@ -1,7 +1,5 @@
-import sys
 import asyncio
 import threading
-import queue
 import linecache
 
 from .registry import Registry
@@ -172,7 +170,6 @@ class Finished(State):
 
     Parameters
     ----------
-
     thread : object
         The object of the thread in which the script was executed.
         This thread is to be joined.
