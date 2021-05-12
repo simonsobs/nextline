@@ -49,11 +49,12 @@ class Nextline:
         await self.registry.close()
         await self.queue_global_state.close()
 
-    def _change_state(self, state):
-        """change the state
+    def _finished(self, state):
+        """change the state to "finished"
 
-        This method is to be called by state objects. It is used to
-        change from Running to Finished.
+        This method is to be called by state object Running from the
+        thread that executes the script.
+
         """
         self._state = state
 
@@ -163,7 +164,7 @@ class Running(State):
     def _done(self):
         # to be called at the end of self._exec()
         next_state = Finished(nextline=self.nextline, thread=self.thread)
-        self.nextline._change_state(next_state)
+        self.nextline._finished(next_state)
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
