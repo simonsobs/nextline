@@ -9,7 +9,12 @@ class Trace:
     An instance of this class, which is callable, should be set as the
     trace function by sys.settrace() and threading.settrace().
 
+    Parameters
+    ----------
+    registry : object
+        An instance of Registry
     """
+
     def __init__(self, registry):
 
         self.registry = registry
