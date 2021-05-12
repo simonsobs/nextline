@@ -28,7 +28,7 @@ async def test_sys_settrace(MockPdbProxy, snapshot):
     """test with actual sys.settrace()
     """
     registry = Registry()
-    trace = Trace(registry)
+    trace = Trace(registry, modules_to_trace={})
 
     trace_org = sys.gettrace()
     sys.settrace(trace)
@@ -44,7 +44,7 @@ async def test_return(MockPdbProxy):
     """test if correct trace function is returned
     """
     registry = Registry()
-    trace = Trace(registry)
+    trace = Trace(registry, modules_to_trace={})
     assert trace(sentinel.frame, 'call', None) is MockPdbProxy().trace_func()
     assert trace(sentinel.frame, 'line', None) is MockPdbProxy().trace_func()
 
@@ -56,7 +56,7 @@ async def test_args(MockPdbProxy, snapshot):
     """test if arguments are properly propagated to the proxy
     """
     registry = Registry()
-    trace = Trace(registry)
+    trace = Trace(registry, modules_to_trace={})
     trace(sentinel.frame, 'call', None)
     trace(sentinel.frame, 'line', None)
     snapshot.assert_match(MockPdbProxy().method_calls)

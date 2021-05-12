@@ -140,7 +140,10 @@ class Running(State):
     def __init__(self, statement, registry, finished):
         self.finished = finished
 
-        trace = Trace(registry=registry)
+        trace = Trace(
+            registry=registry,
+            modules_to_trace={exec_with_trace.__module__}
+        )
         self.pdb_ci_registry = trace.pdb_ci_registry
 
         if isinstance(statement, str):

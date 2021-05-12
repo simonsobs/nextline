@@ -13,16 +13,21 @@ class Trace:
     ----------
     registry : object
         An instance of Registry
+    modules_to_trace : set
+        The names of modules to trace
     """
 
-    def __init__(self, registry):
+    def __init__(self, registry, modules_to_trace):
 
         self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.pdb_proxies = {}
 
-        self.modules_to_trace = {'nextline.exec_'}
+        self.modules_to_trace = set(modules_to_trace)
+        # Make a copy so that the original won't be modified.
+        # self.modules_to_trace will be shared and modified by
+        # multiple instances of PdbProxy.
 
         self.id_composer = UniqThreadTaskIdComposer()
 
