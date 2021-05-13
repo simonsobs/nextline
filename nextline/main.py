@@ -135,19 +135,20 @@ class Running(State):
     name = "running"
 
     def __init__(self, registry, exited):
+        self.registry = registry
         self._callback_func = exited
         self._event_exited = ThreadSafeAsyncioEvent()
 
         trace = Trace(
-            registry=registry,
+            registry=self.registry,
             modules_to_trace={exec_with_trace.__module__}
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
 
-        statement = registry.statement
+        statement = self.registry.statement
 
         if isinstance(statement, str):
-            code = compile(statement, registry.script_file_name, 'exec')
+            code = compile(statement, self.registry.script_file_name, 'exec')
         else:
             code = statement
 
@@ -161,7 +162,7 @@ class Running(State):
     def _done(self, exception=None):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
-        self._state_exited = Exited(thread=self.thread, exception=exception)
+        self._state_exited = Exited(self.registry, thread=self.thread, exception=exception)
         self._event_exited.set()
         self._callback_func(self._state_exited)
 
@@ -180,6 +181,8 @@ class Exited(State):
 
     Parameters
     ----------
+    registry : object
+        An instance of Registry
     thread : object
         The object of the thread in which the script was executed.
         This thread is to be joined.
@@ -189,13 +192,14 @@ class Exited(State):
     """
 
     name = "exited"
-    def __init__(self, thread, exception):
+    def __init__(self, registry, thread, exception):
+        self.registry = registry
         self.thread = thread
         self.exception = exception
     async def wait(self):
         if self.thread:
             await self._join(self.thread)
-        return Finished(exception=self.exception)
+        return Finished(self.registry, exception=self.exception)
     async def _join(self, thread):
         try:
             await asyncio.to_thread(thread.join)
@@ -212,13 +216,16 @@ class Finished(State):
 
     Parameters
     ----------
+    registry : object
+        An instance of Registry
     exception : exception or None
         The execution raised in the script execution if any. Otherwise
         None
     """
 
     name = "finished"
-    def __init__(self, exception):
+    def __init__(self, registry, exception):
+        self.registry = registry
         self.exception = exception
 
 ##__________________________________________________________________||
