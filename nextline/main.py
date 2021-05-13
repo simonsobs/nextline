@@ -28,11 +28,9 @@ class Nextline:
     """
 
     def __init__(self, statement):
-        self._queue_state_name = QueueDist()
         self._event_run = threading.Event()
 
         self._state = Initialized(statement)
-        self._queue_state_name.put(self._state.name)
         self.registry = self._state.registry
 
     @property
@@ -45,7 +43,6 @@ class Nextline:
         """run the script
         """
         self._state = self._state.run(exited=self._exited)
-        self._queue_state_name.put(self._state.name)
         self._event_run.set()
 
     def _exited(self, state):
@@ -58,20 +55,17 @@ class Nextline:
         self._event_run.wait() # in case the script finishes too quickly
         self._event_run.clear()
         self._state = state
-        self._queue_state_name.put(self._state.name)
 
     async def wait(self):
         """wait for the script execution to finish
         """
         self._state = await self._state.wait()
-        self._queue_state_name.put(self._state.name)
         await self.registry.close()
-        await self._queue_state_name.close()
 
     async def subscribe_global_state(self):
         # wish to be able to write with "yield from" but not possible
         # https://stackoverflow.com/a/59079548/7309855
-        agen = self._queue_state_name.subscribe()
+        agen = self.registry.subscribe_state_name()
         async for y in agen:
             yield y
 
@@ -118,6 +112,8 @@ class Initialized(State):
         self.registry = Registry()
         self.registry.register_statement(statement)
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
+        self.registry.register_state_name(self.name)
+
     def run(self, *args, **kwargs):
         return Running(self.registry, *args, **kwargs)
 
@@ -161,6 +157,7 @@ class Running(State):
             daemon=True
         )
         self.thread.start()
+        self.registry.register_state_name(self.name)
 
     def _done(self, exception=None):
         # callback function, to be called from another thread at the
@@ -199,6 +196,7 @@ class Exited(State):
         self.registry = registry
         self.thread = thread
         self.exception = exception
+        self.registry.register_state_name(self.name)
     async def wait(self):
         if self.thread:
             await self._join(self.thread)
@@ -230,5 +228,6 @@ class Finished(State):
     def __init__(self, registry, exception):
         self.registry = registry
         self.exception = exception
+        self.registry.register_state_name(self.name)
 
 ##__________________________________________________________________||

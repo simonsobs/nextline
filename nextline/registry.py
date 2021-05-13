@@ -38,6 +38,16 @@ class Registry:
 
         self.statement = None
 
+        self.queue_state_name = QueueDist()
+
+    def register_state_name(self, state_name):
+        self.queue_state_name.put(state_name)
+
+    async def subscribe_state_name(self):
+        agen = self.queue_state_name.subscribe()
+        async for y in agen:
+            yield y
+
     def register_statement(self, statement):
         self.statement = statement
 
@@ -64,6 +74,7 @@ class Registry:
         for q in self.queues_thread_task_state.values():
             await q.close()
         self.queues_thread_task_state.clear()
+        await self.queue_state_name.close()
 
     def register_thread_task_id(self, thread_task_id):
         with self.condition:
