@@ -21,11 +21,11 @@ def _test_warning(registry):
     registry.update_finishing(id1)
     with pytest.warns(UserWarning) as record:
         registry.update_finishing(id1)
-    assert "not found: thread_asynctask_id" in (record[0].message.args[0])
+    assert "not found: thread_task_id" in (record[0].message.args[0])
     id2 = (1111111, 123)
     registry.update_finishing(id2)
     with pytest.warns(UserWarning) as record:
         registry.update_finishing(id2)
-    assert "not found: thread_asynctask_id" in (record[0].message.args[0])
+    assert "not found: thread_task_id" in (record[0].message.args[0])
 
 ##__________________________________________________________________||

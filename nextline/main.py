@@ -79,11 +79,11 @@ class Nextline:
             yield y
 
     async def subscribe_thread_asynctask_ids(self):
-        async for y in self.registry.subscribe_thread_asynctask_ids():
+        async for y in self.registry.subscribe_thread_task_ids():
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
-        async for y in self.registry.subscribe_thread_asynctask_state(thread_asynctask_id):
+        async for y in self.registry.subscribe_thread_task_state(thread_asynctask_id):
             yield y
 
     def send_pdb_command(self, thread_asynctask_id, command):
