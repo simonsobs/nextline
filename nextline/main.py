@@ -69,6 +69,8 @@ class Nextline:
         await self._queue_state_name.close()
 
     async def subscribe_global_state(self):
+        # wish to be able to write with "yield from" but not possible
+        # https://stackoverflow.com/a/59079548/7309855
         async for y in self._queue_state_name.subscribe():
             yield y
 
