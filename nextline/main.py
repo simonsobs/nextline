@@ -163,8 +163,8 @@ class Running(State):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
         self._state_exited = Exited(self.registry, thread=self.thread, exception=exception)
-        self._event_exited.set()
         self._callback_func(self._state_exited)
+        self._event_exited.set()
 
     async def wait(self):
         await self._event_exited.wait()
