@@ -80,8 +80,12 @@ async def control_execution(nextline):
 async def control_thread_task(nextline, thread_task_id):
     to_step = ['script_threading.run()', 'script_asyncio.run()']
     print(f'control_thread_task({thread_task_id})')
+    file_name = ''
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
         # print(s)
+        if not file_name == s['file_name']:
+            file_name = s['file_name']
+            assert nextline.get_source(file_name)
         if s['prompting']:
             command = 'next'
             if s['trace_event'] == 'line':
