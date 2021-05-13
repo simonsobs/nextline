@@ -15,7 +15,7 @@ class State:
     def run(self, *_, **__):
         return self
     async def wait(self):
-        pass
+        return self
     def send_pdb_command(self, *_, **__):
         pass
 
