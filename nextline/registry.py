@@ -2,6 +2,7 @@ import threading
 import asyncio
 from collections import defaultdict
 from functools import partial
+from itertools import count
 import warnings
 
 from .utils import QueueDist
@@ -27,7 +28,8 @@ class Registry:
             )
         )
 
-        self._prompting_count = 0
+        self.prompting_counter = count().__next__
+        self.prompting_counter() # consume 0
 
         self.queue_thread_task_ids = QueueDist()
         self.queue_thread_task_ids.put(self.thread_task_ids)
@@ -80,8 +82,7 @@ class Registry:
 
     def register_prompting(self, thread_task_id):
         with self.condition:
-            self._prompting_count += 1
-            self._data[thread_task_id]['prompting'] = self._prompting_count
+            self._data[thread_task_id]['prompting'] = self.prompting_counter()
         self.publish_thread_task_state(thread_task_id)
 
     def deregister_prompting(self, thread_task_id):
