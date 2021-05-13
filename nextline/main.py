@@ -33,7 +33,6 @@ class Nextline:
         self._queue_state_name = QueueDist()
         self.registry = Registry()
         self._event_run = threading.Event()
-        self._event_finished = ThreadSafeAsyncioEvent()
         self._state = Initialized()
         self._queue_state_name.put(self._state.name)
 
@@ -65,11 +64,8 @@ class Nextline:
         self._event_run.clear()
         self._state = state
         self._queue_state_name.put(self._state.name)
-        self._event_finished.set()
 
     async def wait(self):
-        await self._event_finished.wait()
-        self._event_finished.clear()
         await self._state.wait()
         await self.registry.close()
         await self._queue_state_name.close()
@@ -141,6 +137,7 @@ class Running(State):
 
     def __init__(self, statement, registry, finished):
         self.finished = finished
+        self._event_finished = ThreadSafeAsyncioEvent()
 
         trace = Trace(
             registry=registry,
@@ -162,8 +159,14 @@ class Running(State):
 
     def _done(self, exception=None):
         # to be called at the end of exec_with_trace()
-        next_state = Finished(thread=self.thread, exception=exception)
-        self.finished(next_state)
+        self.next_state = Finished(thread=self.thread, exception=exception)
+        self._event_finished.set()
+        self.finished(self.next_state)
+
+    async def wait(self):
+        await self._event_finished.wait()
+        self._event_finished.clear()
+        await self.next_state.wait()
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
