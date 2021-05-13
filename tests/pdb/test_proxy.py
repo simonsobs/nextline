@@ -84,8 +84,8 @@ def test_proxy(proxy, mock_trace, mock_registry, snapshot, subject):
     subject()
     sys.settrace(trace_org)
 
-    assert 1 == mock_registry.update_started.call_count
-    assert 1 == mock_registry.update_finishing.call_count
+    assert 1 == mock_registry.register_thread_task_id.call_count
+    assert 1 == mock_registry.deregister_thread_task_id.call_count
 
     assert 1 == mock_trace.returning.call_count
 

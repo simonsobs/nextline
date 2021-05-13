@@ -18,14 +18,14 @@ async def test_warning():
 
 def _test_warning(registry):
     id1 = (1111111, None)
-    registry.update_finishing(id1)
+    registry.deregister_thread_task_id(id1)
     with pytest.warns(UserWarning) as record:
-        registry.update_finishing(id1)
+        registry.deregister_thread_task_id(id1)
     assert "not found: thread_task_id" in (record[0].message.args[0])
     id2 = (1111111, 123)
-    registry.update_finishing(id2)
+    registry.deregister_thread_task_id(id2)
     with pytest.warns(UserWarning) as record:
-        registry.update_finishing(id2)
+        registry.deregister_thread_task_id(id2)
     assert "not found: thread_task_id" in (record[0].message.args[0])
 
 ##__________________________________________________________________||

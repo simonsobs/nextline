@@ -94,7 +94,7 @@ class PdbProxy:
             if not is_matched_to_any(module_name, self.modules_to_trace):
                 return
             self._first = False
-            self.registry.update_started(self.thread_asynctask_id)
+            self.registry.register_thread_task_id(self.thread_asynctask_id)
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
         if event == 'return':
@@ -103,7 +103,7 @@ class PdbProxy:
                 self._first = True
             else:
                 self.trace.returning(self.thread_asynctask_id)
-                self.registry.update_finishing(self.thread_asynctask_id)
+                self.registry.deregister_thread_task_id(self.thread_asynctask_id)
         return self.trace_func_outermost
 
     def trace_func_all(self, frame, event, arg):
@@ -143,18 +143,18 @@ class PdbProxy:
 
         file_name = self.pdb.canonic(frame.f_code.co_filename)
         line_no = frame.f_lineno
-        self.registry.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
+        self.registry.register_thread_task_state(self.thread_asynctask_id, file_name, line_no, event)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
-        self.registry.update_prompting(self.thread_asynctask_id)
+        self.registry.register_prompting(self.thread_asynctask_id)
 
     def exited_cmdloop(self):
         """called by the customized pdb after it has exited from the command loop
         """
         self.ci_registry.remove(self.thread_asynctask_id)
-        self.registry.update_not_prompting(self.thread_asynctask_id)
+        self.registry.deregister_prompting(self.thread_asynctask_id)
         self.pdb_ci.end()
 
 ##__________________________________________________________________||
@@ -170,7 +170,7 @@ class TraceBlock:
         # if not frame.f_code.co_name == '<lambda>':
         #     file_name = self.pdb.canonic(frame.f_code.co_filename)
         #     line_no = frame.f_lineno
-        #     self.registry.update_file_name_line_no(self.thread_asynctask_id, file_name, line_no, event)
+        #     self.registry.register_thread_task_state(self.thread_asynctask_id, file_name, line_no, event)
 
         if self.trace_func:
             self.trace_func = self.trace_func(frame, event, arg)
