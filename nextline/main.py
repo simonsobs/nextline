@@ -128,15 +128,16 @@ class Running(State):
     registry : object
         An instance of Registry
     finished : callable
-        A callable with one argument. This will be called with the
-        next state object when the script execution finishes.
+        A callable with one argument, usually
+        Nextline._finished(state). It will be called with the next
+        state object (Finished) when the script execution finishes.
 
     """
 
     name = "running"
 
     def __init__(self, statement, registry, finished):
-        self.finished = finished
+        self._callback_func = finished
         self._event_finished = ThreadSafeAsyncioEvent()
 
         trace = Trace(
@@ -159,14 +160,14 @@ class Running(State):
 
     def _done(self, exception=None):
         # to be called at the end of exec_with_trace()
-        self.next_state = Finished(thread=self.thread, exception=exception)
+        self._state_finished = Finished(thread=self.thread, exception=exception)
         self._event_finished.set()
-        self.finished(self.next_state)
+        self._callback_func(self._state_finished)
 
     async def wait(self):
         await self._event_finished.wait()
         self._event_finished.clear()
-        await self.next_state.wait()
+        await self._state_finished.wait()
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
