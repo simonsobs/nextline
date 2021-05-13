@@ -44,10 +44,7 @@ class Nextline:
     def run(self):
         """run the script
         """
-        self._state = self._state.run(
-            registry=self.registry,
-            exited=self._exited
-        )
+        self._state = self._state.run(exited=self._exited)
         self._queue_state_name.put(self._state.name)
         self._event_run.set()
 
@@ -117,7 +114,7 @@ class Initialized(State):
         self.registry.register_statement(statement)
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
     def run(self, *args, **kwargs):
-        return Running(*args, **kwargs)
+        return Running(self.registry, *args, **kwargs)
 
 class Running(State):
     """The state "running", the script is being executed.
