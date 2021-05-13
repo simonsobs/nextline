@@ -29,9 +29,9 @@ class Nextline:
     """
 
     def __init__(self, statement):
-        self.statement = statement
         self._queue_state_name = QueueDist()
         self.registry = Registry()
+        self.registry.register_statement(statement)
         self._event_run = threading.Event()
 
         self._state = Initialized()
@@ -47,7 +47,7 @@ class Nextline:
         """run the script
         """
         self._state = self._state.run(
-            statement=self.statement,
+            statement=self.registry.statement,
             registry=self.registry,
             exited=self._exited
         )
@@ -91,7 +91,7 @@ class Nextline:
 
     def get_source(self, file_name=None):
         if not file_name or file_name == SCRIPT_FILE_NAME:
-            return self.statement.split('\n')
+            return self.registry.statement.split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
     def get_source_line(self, line_no, file_name=None):

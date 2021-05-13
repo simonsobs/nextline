@@ -35,6 +35,11 @@ class Registry:
         self.queue_thread_task_ids.put(self.thread_task_ids)
         self.queues_thread_task_state = {}
 
+        self.statement = None
+
+    def register_statement(self, statement):
+        self.statement = statement
+
     async def close(self):
         await self.queue_thread_task_ids.close()
         for q in self.queues_thread_task_state.values():
