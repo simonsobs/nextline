@@ -71,15 +71,18 @@ class Nextline:
     async def subscribe_global_state(self):
         # wish to be able to write with "yield from" but not possible
         # https://stackoverflow.com/a/59079548/7309855
-        async for y in self._queue_state_name.subscribe():
+        agen = self._queue_state_name.subscribe()
+        async for y in agen:
             yield y
 
     async def subscribe_thread_asynctask_ids(self):
-        async for y in self.registry.subscribe_thread_task_ids():
+        agen = self.registry.subscribe_thread_task_ids()
+        async for y in agen:
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
-        async for y in self.registry.subscribe_thread_task_state(thread_asynctask_id):
+        agen = self.registry.subscribe_thread_task_state(thread_asynctask_id)
+        async for y in agen:
             yield y
 
     def send_pdb_command(self, thread_asynctask_id, command):
