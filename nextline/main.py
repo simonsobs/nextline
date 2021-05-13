@@ -126,7 +126,7 @@ class Running(State):
     exited : callable
         A callable with one argument, usually
         Nextline._exited(state). It will be called with the next
-        state object (Finished) after the script has exited.
+        state object (Exited) after the script has exited.
 
     """
 
