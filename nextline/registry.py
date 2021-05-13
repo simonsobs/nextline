@@ -3,6 +3,7 @@ import asyncio
 from collections import defaultdict
 from functools import partial
 from itertools import count
+import linecache
 import warnings
 
 from .utils import QueueDist
@@ -39,6 +40,24 @@ class Registry:
 
     def register_statement(self, statement):
         self.statement = statement
+
+    def register_script_file_name(self, script_file_name):
+        self.script_file_name = script_file_name
+
+    def get_source(self, file_name=None):
+        if not file_name or file_name == self.script_file_name:
+            return self.statement.split('\n')
+        return [l.rstrip() for l in linecache.getlines(file_name)]
+
+    def get_source_line(self, line_no, file_name=None):
+        '''
+        based on linecache.getline()
+        https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
+        '''
+        lines = self.get_source(file_name)
+        if 1 <= line_no <= len(lines):
+            return lines[line_no - 1]
+        return ''
 
     async def close(self):
         await self.queue_thread_task_ids.close()

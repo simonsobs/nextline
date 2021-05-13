@@ -1,6 +1,5 @@
 import asyncio
 import threading
-import linecache
 
 from .registry import Registry
 from .trace import Trace
@@ -32,6 +31,7 @@ class Nextline:
         self._queue_state_name = QueueDist()
         self.registry = Registry()
         self.registry.register_statement(statement)
+        self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self._event_run = threading.Event()
 
         self._state = Initialized()
@@ -90,19 +90,10 @@ class Nextline:
         self._state.send_pdb_command(thread_asynctask_id, command)
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == SCRIPT_FILE_NAME:
-            return self.registry.statement.split('\n')
-        return [l.rstrip() for l in linecache.getlines(file_name)]
+        return self.registry.get_source(file_name=file_name)
 
     def get_source_line(self, line_no, file_name=None):
-        '''
-        based on linecache.getline()
-        https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
-        '''
-        lines = self.get_source(file_name)
-        if 1 <= line_no <= len(lines):
-            return lines[line_no - 1]
-        return ''
+        return self.registry.get_source_line(line_no=line_no, file_name=file_name)
 
 ##__________________________________________________________________||
 class State:
@@ -151,7 +142,7 @@ class Running(State):
         self.pdb_ci_registry = trace.pdb_ci_registry
 
         if isinstance(statement, str):
-            code = compile(statement, SCRIPT_FILE_NAME, 'exec')
+            code = compile(statement, registry.script_file_name, 'exec')
         else:
             code = statement
 
