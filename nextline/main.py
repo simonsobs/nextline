@@ -47,7 +47,6 @@ class Nextline:
         """run the script
         """
         self._state = self._state.run(
-            statement=self.registry.statement,
             registry=self.registry,
             exited=self._exited
         )
@@ -118,8 +117,6 @@ class Running(State):
 
     Parameters
     ----------
-    statement : str
-        A Python code as a string
     registry : object
         An instance of Registry
     exited : callable
@@ -131,7 +128,7 @@ class Running(State):
 
     name = "running"
 
-    def __init__(self, statement, registry, exited):
+    def __init__(self, registry, exited):
         self._callback_func = exited
         self._event_exited = ThreadSafeAsyncioEvent()
 
@@ -140,6 +137,8 @@ class Running(State):
             modules_to_trace={exec_with_trace.__module__}
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
+
+        statement = registry.statement
 
         if isinstance(statement, str):
             code = compile(statement, registry.script_file_name, 'exec')
