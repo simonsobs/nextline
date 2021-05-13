@@ -2,7 +2,6 @@ import threading
 import asyncio
 from collections import defaultdict
 from functools import partial
-from operator import itemgetter
 import warnings
 
 from .utils import QueueDist
@@ -17,22 +16,16 @@ class Registry:
 
         self.condition = threading.Condition()
 
+        # key thread_asynctask_id
         self._data = defaultdict(
             partial(
-                defaultdict,
-                partial(
-                    dict,
-                    prompting=0,
-                    file_name=None,
-                    line_no=None,
-                    trace_event=None,
-                )
+                dict,
+                prompting=0,
+                file_name=None,
+                line_no=None,
+                trace_event=None,
             )
         )
-        # e.g.,
-        # { thread_id : {
-        #     task_id: {'prompting': False, ...}
-        # }}
 
         self._prompting_count = 0
 
@@ -47,9 +40,8 @@ class Registry:
         self.queues_thread_asynctask.clear()
 
     def update_started(self, thread_asynctask_id):
-        thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id].update({'prompting': 0})
+            self._data[thread_asynctask_id].update({'prompting': 0})
 
         fut = asyncio.run_coroutine_threadsafe(self._update_started(thread_asynctask_id), self.loop)
         fut.result() # to wait and get the return value
@@ -62,17 +54,11 @@ class Registry:
             self.queue_thread_asynctask_ids.put(self.thread_asynctask_ids)
 
     def update_finishing(self, thread_asynctask_id):
-        thread_id, task_id = thread_asynctask_id
         with self.condition:
             try:
-                del self._data[thread_id][task_id]
+                del self._data[thread_asynctask_id]
             except KeyError:
                 warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
-            if not self._data[thread_id]:
-                try:
-                    del self._data[thread_id]
-                except KeyError:
-                    warnings.warn("not found: thread_asynctask_id = {}".format(thread_asynctask_id))
 
         fut = asyncio.run_coroutine_threadsafe(self._update_finishing(thread_asynctask_id), self.loop)
         fut.result() # to wait and get the return value
@@ -85,30 +71,23 @@ class Registry:
                 await q.close()
 
     def update_prompting(self, thread_asynctask_id):
-        thread_id, task_id = thread_asynctask_id
         with self.condition:
             self._prompting_count += 1
-            self._data[thread_id][task_id]['prompting'] = self._prompting_count
+            self._data[thread_asynctask_id]['prompting'] = self._prompting_count
         self.publish_thread_asynctask_state(thread_asynctask_id)
 
     def update_not_prompting(self, thread_asynctask_id):
-        thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id]['prompting'] = 0
+            self._data[thread_asynctask_id]['prompting'] = 0
         self.publish_thread_asynctask_state(thread_asynctask_id)
 
     def publish_thread_asynctask_state(self, thread_asynctask_id):
-        thread_id, task_id = thread_asynctask_id
-        th = self._data[thread_id]
-        if th:
-            ta = th[task_id]
-            if ta:
-                self.queues_thread_asynctask[thread_asynctask_id].put(ta.copy())
+        if thread_asynctask_id in self._data:
+            self.queues_thread_asynctask[thread_asynctask_id].put(self._data[thread_asynctask_id].copy())
 
     def update_file_name_line_no(self, thread_asynctask_id, file_name, line_no, trace_event):
-        thread_id, task_id = thread_asynctask_id
         with self.condition:
-            self._data[thread_id][task_id].update({
+            self._data[thread_asynctask_id].update({
                 'file_name': file_name,
                 'line_no': line_no,
                 'trace_event': trace_event
@@ -128,12 +107,7 @@ class Registry:
 
         '''
         with self.condition:
-            ret = [
-                (thid, taid)
-                for thid, thda in self._data.items()
-                for taid, tada in thda.items()
-            ]
-        return ret
+            return list(self._data.keys())
 
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
