@@ -31,11 +31,9 @@ class Nextline:
         self._queue_state_name = QueueDist()
         self._event_run = threading.Event()
 
-        self._state = Initialized()
+        self._state = Initialized(statement)
         self._queue_state_name.put(self._state.name)
         self.registry = self._state.registry
-        self.registry.register_statement(statement)
-        self.registry.register_script_file_name(SCRIPT_FILE_NAME)
 
     @property
     def global_state(self) -> str:
@@ -107,10 +105,17 @@ class State:
 
 class Initialized(State):
     """The state "initialized", ready to run
+
+    Parameters
+    ----------
+    statement : str
+        A Python code as a string
     """
     name = "initialized"
-    def __init__(self):
+    def __init__(self, statement):
         self.registry = Registry()
+        self.registry.register_statement(statement)
+        self.registry.register_script_file_name(SCRIPT_FILE_NAME)
     def run(self, *args, **kwargs):
         return Running(*args, **kwargs)
 
