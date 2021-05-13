@@ -48,16 +48,16 @@ class Nextline:
         self._state = self._state.run(
             statement=self.statement,
             registry=self.registry,
-            finished=self._finished
+            exited=self._exited
         )
         self._queue_state_name.put(self._state.name)
         self._event_run.set()
 
-    def _finished(self, state):
-        """change the state to "finished"
+    def _exited(self, state):
+        """callback function for the script execution
 
-        This method is to be called by state object Running from the
-        thread that executes the script.
+        This method is to be called by Running from the thread that
+        executes the script when the execution has exited.
 
         """
         self._event_run.wait() # in case the script finishes too quickly
@@ -66,7 +66,8 @@ class Nextline:
         self._queue_state_name.put(self._state.name)
 
     async def wait(self):
-        await self._state.wait()
+        self._state = await self._state.wait()
+        self._queue_state_name.put(self._state.name)
         await self.registry.close()
         await self._queue_state_name.close()
 
@@ -127,18 +128,18 @@ class Running(State):
         A Python code as a string
     registry : object
         An instance of Registry
-    finished : callable
+    exited : callable
         A callable with one argument, usually
-        Nextline._finished(state). It will be called with the next
-        state object (Finished) when the script execution finishes.
+        Nextline._exited(state). It will be called with the next
+        state object (Finished) after the script has exited.
 
     """
 
     name = "running"
 
-    def __init__(self, statement, registry, finished):
-        self._callback_func = finished
-        self._event_finished = ThreadSafeAsyncioEvent()
+    def __init__(self, statement, registry, exited):
+        self._callback_func = exited
+        self._event_exited = ThreadSafeAsyncioEvent()
 
         trace = Trace(
             registry=registry,
@@ -159,23 +160,24 @@ class Running(State):
         self.thread.start()
 
     def _done(self, exception=None):
-        # to be called at the end of exec_with_trace()
-        self._state_finished = Finished(thread=self.thread, exception=exception)
-        self._event_finished.set()
-        self._callback_func(self._state_finished)
+        # callback function, to be called from another thread at the
+        # end of exec_with_trace()
+        self._state_exited = Exited(thread=self.thread, exception=exception)
+        self._event_exited.set()
+        self._callback_func(self._state_exited)
 
     async def wait(self):
-        await self._event_finished.wait()
-        self._event_finished.clear()
-        await self._state_finished.wait()
+        await self._event_exited.wait()
+        self._event_exited.clear()
+        return await self._state_exited.wait()
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
         pdb_ci.send_pdb_command(command)
 
 
-class Finished(State):
-    """The state "finished", the script execution has finished
+class Exited(State):
+    """The state "exited", the script execution has exited
 
     Parameters
     ----------
@@ -187,13 +189,14 @@ class Finished(State):
         None
     """
 
-    name = "finished"
+    name = "exited"
     def __init__(self, thread, exception):
         self.thread = thread
         self.exception = exception
     async def wait(self):
         if self.thread:
             await self._join(self.thread)
+        return Finished(exception=self.exception)
     async def _join(self, thread):
         try:
             await asyncio.to_thread(thread.join)
@@ -202,5 +205,21 @@ class Finished(State):
             # to_thread() is new in Python 3.9
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, thread.join)
+
+class Finished(State):
+    """The state "finished", the script execution has finished
+
+    The thread which executed the script has been joined.
+
+    Parameters
+    ----------
+    exception : exception or None
+        The execution raised in the script execution if any. Otherwise
+        None
+    """
+
+    name = "finished"
+    def __init__(self, exception):
+        self.exception = exception
 
 ##__________________________________________________________________||
