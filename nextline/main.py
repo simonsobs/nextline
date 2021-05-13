@@ -33,6 +33,7 @@ class Nextline:
         self._queue_state_name = QueueDist()
         self.registry = Registry()
         self._event_run = threading.Event()
+
         self._state = Initialized()
         self._queue_state_name.put(self._state.name)
 
@@ -66,6 +67,8 @@ class Nextline:
         self._queue_state_name.put(self._state.name)
 
     async def wait(self):
+        """wait for the script execution to finish
+        """
         self._state = await self._state.wait()
         self._queue_state_name.put(self._state.name)
         await self.registry.close()
