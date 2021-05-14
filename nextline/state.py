@@ -21,7 +21,7 @@ class State:
     def send_pdb_command(self, *_, **__):
         pass
     def exception(self):
-        pass
+        return None
 
 class Initialized(State):
     """The state "initialized", ready to run
@@ -159,8 +159,12 @@ class Finished(State):
         self.registry.register_state_name(self.name)
 
     def exception(self):
-        if self._exception:
-            raise self._exception
+        """Return the exception of the script execution
+
+        Return None if no execution has been raised.
+
+        """
+        return self._exception
 
     async def close(self):
         closed = Closed(self.registry)
