@@ -29,7 +29,9 @@ class Initialized(State):
     statement : str
         A Python code as a string
     """
+
     name = "initialized"
+
     def __init__(self, statement):
         self.registry = Registry()
         self.registry.register_statement(statement)
@@ -114,6 +116,7 @@ class Exited(State):
     """
 
     name = "exited"
+
     def __init__(self, registry, thread, exception):
         self.registry = registry
         self.thread = thread
@@ -147,6 +150,7 @@ class Finished(State):
     """
 
     name = "finished"
+
     def __init__(self, registry, exception):
         self.registry = registry
         self.exception = exception
