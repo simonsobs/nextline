@@ -4,7 +4,7 @@ import warnings
 
 from .registry import Registry
 from .trace import Trace
-from .utils import QueueDist, ThreadSafeAsyncioEvent
+from .utils import ThreadSafeAsyncioEvent
 from .exec_ import exec_with_trace
 
 SCRIPT_FILE_NAME = '<string>'
