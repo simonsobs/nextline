@@ -27,6 +27,9 @@ class Nextline:
         self._state = Initialized(statement)
         self.registry = self._state.registry
 
+    def __repr__(self):
+        return f'<{self.__class__.__name__} {self.global_state!r}>'
+
     @property
     def global_state(self) -> str:
         """state, e.g., "initialized", "running", "finished"
