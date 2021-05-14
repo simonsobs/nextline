@@ -56,7 +56,7 @@ class Nextline:
     async def wait(self):
         """wait for the script execution to finish
         """
-        self._state = await self._state.wait()
+        self._state = await self._state.finish()
 
     async def close(self):
         """close the nextline

@@ -49,7 +49,7 @@ async def test_state_normal_flow(callback_exited):
     assert isinstance(state, Running)
     assert state.registry.state_name in ("running", "exited")
 
-    state = await state.wait()
+    state = await state.finish()
     assert isinstance(state, Finished)
     assert "finished" == state.registry.state_name
 
@@ -61,7 +61,7 @@ async def test_state_normal_flow(callback_exited):
 async def test_callback_exited(callback_exited):
     state = Initialized(SOURCE)
     state = state.run(exited=callback_exited)
-    state = await state.wait()
+    state = await state.finish()
 
     assert 1 == callback_exited.call_count
     state = callback_exited.call_args.args[0]
@@ -71,7 +71,7 @@ async def test_callback_exited(callback_exited):
 async def test_raise(callback_exited):
     state = Initialized(SOURCE_RAISE)
     state = state.run(exited=callback_exited)
-    state = await state.wait()
+    state = await state.finish()
 
     with pytest.raises(Exception):
         state.exception()
@@ -80,7 +80,7 @@ async def test_raise(callback_exited):
 async def test_not_raise(callback_exited):
     state = Initialized(SOURCE)
     state = state.run(exited=callback_exited)
-    state = await state.wait()
+    state = await state.finish()
 
     state.exception()
 

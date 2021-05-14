@@ -14,7 +14,7 @@ class State:
     """
     def run(self, *_, **__):
         return self
-    async def wait(self):
+    async def finish(self):
         return self
     async def close(self):
         return self
@@ -92,10 +92,10 @@ class Running(State):
         self._callback_func(self._state_exited)
         self._event_exited.set()
 
-    async def wait(self):
+    async def finish(self):
         await self._event_exited.wait()
         self._event_exited.clear()
-        return await self._state_exited.wait()
+        return await self._state_exited.finish()
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
@@ -124,7 +124,7 @@ class Exited(State):
         self._thread = thread
         self._exception = exception
         self.registry.register_state_name(self.name)
-    async def wait(self):
+    async def finish(self):
         if self._thread:
             await self._join(self._thread)
         return Finished(self.registry, exception=self._exception)
