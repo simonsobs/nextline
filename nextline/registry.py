@@ -38,9 +38,11 @@ class Registry:
 
         self.statement = None
 
+        self.state_name = None
         self.queue_state_name = QueueDist()
 
     def register_state_name(self, state_name):
+        self.state_name = state_name
         self.queue_state_name.put(state_name)
 
     async def subscribe_state_name(self):

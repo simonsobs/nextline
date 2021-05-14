@@ -39,12 +39,19 @@ async def test_state_normal_flow(callback_exited):
 
     state = Initialized(SOURCE)
     assert isinstance(state, Initialized)
+    assert "initialized" == state.registry.state_name
+
     state = state.run(exited=callback_exited)
     assert isinstance(state, Running)
+    assert state.registry.state_name in ("running", "exited")
+
     state = await state.wait()
     assert isinstance(state, Finished)
+    assert "finished" == state.registry.state_name
+
     state = await state.close()
     assert isinstance(state, Closed)
+    assert "closed" == state.registry.state_name
 
 @pytest.mark.asyncio
 async def test_callback_exited(callback_exited):
