@@ -36,5 +36,7 @@ async def test_run():
     nextline.send_pdb_command(thread_asynctask_id, 'continue')
     await nextline.wait()
     assert nextline.global_state == 'finished'
+    await nextline.close()
+    assert nextline.global_state == 'closed'
 
 ##__________________________________________________________________||

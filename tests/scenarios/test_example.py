@@ -99,6 +99,7 @@ async def run(nextline):
     await asyncio.sleep(0.1)
     nextline.run()
     await nextline.wait()
+    await nextline.close()
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
@@ -117,6 +118,6 @@ async def test_run():
     aws = [task_run, task_monitor_global_state, task_control_execution]
     await asyncio.gather(*aws)
 
-    assert nextline.global_state == 'finished'
+    assert nextline.global_state == 'closed'
 
 ##__________________________________________________________________||

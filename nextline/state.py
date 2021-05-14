@@ -16,6 +16,8 @@ class State:
         return self
     async def wait(self):
         return self
+    async def close(self):
+        return self
     def send_pdb_command(self, *_, **__):
         pass
 
@@ -148,6 +150,29 @@ class Finished(State):
     def __init__(self, registry, exception):
         self.registry = registry
         self.exception = exception
+        self.registry.register_state_name(self.name)
+
+    async def close(self):
+        closed = Closed(self.registry)
+
+        await self.registry.close() # close the registry here because
+                                    # await cannot be used in
+                                    # Closed.__init__()
+        return closed
+
+class Closed(State):
+    """The state "closed"
+
+    Parameters
+    ----------
+    registry : object
+        An instance of Registry
+    """
+
+    name = "closed"
+
+    def __init__(self, registry):
+        self.registry = registry
         self.registry.register_state_name(self.name)
 
 ##__________________________________________________________________||

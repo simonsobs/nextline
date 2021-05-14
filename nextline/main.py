@@ -54,7 +54,11 @@ class Nextline:
         """wait for the script execution to finish
         """
         self._state = await self._state.wait()
-        await self.registry.close()
+
+    async def close(self):
+        """close the nextline
+        """
+        self._state = await self._state.close()
 
     async def subscribe_global_state(self):
         # wish to be able to write with "yield from" but not possible

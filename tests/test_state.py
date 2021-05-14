@@ -8,7 +8,8 @@ from nextline.state import (
     Initialized,
     Running,
     Exited,
-    Finished
+    Finished,
+    Closed
 )
 
 ##__________________________________________________________________||
@@ -34,13 +35,16 @@ def callback_exited():
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_normal_flow(callback_exited):
+async def test_state_normal_flow(callback_exited):
+
     state = Initialized(SOURCE)
     assert isinstance(state, Initialized)
     state = state.run(exited=callback_exited)
     assert isinstance(state, Running)
     state = await state.wait()
     assert isinstance(state, Finished)
+    state = await state.close()
+    assert isinstance(state, Closed)
 
 @pytest.mark.asyncio
 async def test_callback_exited(callback_exited):

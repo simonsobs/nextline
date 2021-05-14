@@ -64,5 +64,7 @@ async def test_run():
 
     await nextline.wait()
     assert nextline.global_state == 'finished'
+    await nextline.close()
+    assert nextline.global_state == 'closed'
 
 ##__________________________________________________________________||
