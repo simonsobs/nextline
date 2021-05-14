@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import warnings
 
 from .registry import Registry
 from .trace import Trace
@@ -97,7 +98,11 @@ class Running(State):
             result=result,
             exception=exception
         )
-        self._callback_func(self._state_exited)
+        if self._callback_func:
+            try:
+                self._callback_func(self._state_exited)
+            except BaseException as e:
+                warnings.warn(f'An exception occurred in the callback: {e}')
         self._event_exited.set()
 
     async def finish(self):
