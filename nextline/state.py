@@ -227,7 +227,7 @@ class Finished(State):
             self._next = Closed(self.registry)
 
             await self.registry.close() # close the registry here because
-                                        # await cannot be used in
+                                        # "await" is not allowed in
                                         # Closed.__init__()
         return self._next
 
