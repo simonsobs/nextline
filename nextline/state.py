@@ -79,13 +79,14 @@ class Running(State):
         else:
             code = statement
 
+        self.registry.register_state_name(self.name)
+
         self._thread = threading.Thread(
             target=exec_with_trace,
             args=(code, trace, self._done),
             daemon=True
         )
         self._thread.start()
-        self.registry.register_state_name(self.name)
 
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
