@@ -67,6 +67,7 @@ async def test_callback_exited(callback_exited):
     state = callback_exited.call_args.args[0]
     assert isinstance(state, Exited)
 
+##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_exception(callback_exited):
     state = Initialized(SOURCE_RAISE)
@@ -81,11 +82,34 @@ async def test_exception(callback_exited):
         raise state.exception()
 
 @pytest.mark.asyncio
-async def test_not_raise(callback_exited):
+async def test_exception_none(callback_exited):
     state = Initialized(SOURCE)
     state = state.run(exited=callback_exited)
     state = await state.finish()
+    assert isinstance(state, Finished)
 
     assert state.exception() is None
+
+##__________________________________________________________________||
+@pytest.mark.asyncio
+async def test_result(callback_exited):
+    state = Initialized(SOURCE)
+    state = state.run(exited=callback_exited)
+
+    state = await state.finish()
+    assert isinstance(state, Finished)
+
+    assert state.result() is None
+
+@pytest.mark.asyncio
+async def test_result_raise(callback_exited):
+    state = Initialized(SOURCE_RAISE)
+    state = state.run(exited=callback_exited)
+
+    state = await state.finish()
+    assert isinstance(state, Finished)
+
+    with pytest.raises(Exception):
+        state.result()
 
 ##__________________________________________________________________||

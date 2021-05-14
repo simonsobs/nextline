@@ -22,6 +22,8 @@ class State:
         pass
     def exception(self):
         return None
+    def result(self):
+        return None
 
 class Initialized(State):
     """The state "initialized", ready to run
@@ -88,7 +90,12 @@ class Running(State):
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
-        self._state_exited = Exited(self.registry, thread=self._thread, exception=exception)
+        self._state_exited = Exited(
+            self.registry,
+            thread=self._thread,
+            result=result,
+            exception=exception
+        )
         self._callback_func(self._state_exited)
         self._event_exited.set()
 
@@ -112,6 +119,8 @@ class Exited(State):
     thread : object
         The object of the thread in which the script was executed.
         This thread is to be joined.
+    result : any
+        The result of the script execution, always None
     exception : exception or None
         The execution raised in the script execution if any. Otherwise
         None
@@ -119,15 +128,16 @@ class Exited(State):
 
     name = "exited"
 
-    def __init__(self, registry, thread, exception):
+    def __init__(self, registry, thread, result, exception):
         self.registry = registry
         self._thread = thread
+        self._result = result
         self._exception = exception
         self.registry.register_state_name(self.name)
     async def finish(self):
         if self._thread:
             await self._join(self._thread)
-        return Finished(self.registry, exception=self._exception)
+        return Finished(self.registry, result=self._result, exception=self._exception)
     async def _join(self, thread):
         try:
             await asyncio.to_thread(thread.join)
@@ -146,6 +156,8 @@ class Finished(State):
     ----------
     registry : object
         An instance of Registry
+    result : any
+        The result of the script execution, always None
     exception : exception or None
         The exception of the script execution if any. Otherwise None
 
@@ -153,7 +165,8 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry, exception):
+    def __init__(self, registry, result, exception):
+        self._result = result
         self._exception = exception
 
         self.registry = registry
@@ -166,6 +179,23 @@ class Finished(State):
 
         """
         return self._exception
+
+    def result(self):
+        """Return the result of the script execution
+
+        None in the current implementation as the build-in function
+        exec() returns None.
+
+        Re-raise the exception if an exception has been raised in the
+        script execution.
+
+        """
+
+        if self._exception:
+            raise self._exception
+
+        return self._result
+
 
     async def close(self):
         closed = Closed(self.registry)
