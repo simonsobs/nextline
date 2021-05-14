@@ -147,8 +147,8 @@ class Finished(State):
     registry : object
         An instance of Registry
     exception : exception or None
-        The execution raised in the script execution if any. Otherwise
-        None
+        The exception of the script execution if any. Otherwise None
+
     """
 
     name = "finished"
