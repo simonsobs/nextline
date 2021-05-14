@@ -28,21 +28,67 @@ def monkey_patch_trace(monkeypatch):
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_state():
+async def test_state_transitions_single_op():
 
     nextline = Nextline(SOURCE)
-    task_monitor_state = asyncio.create_task(monitor_state(nextline))
+    event_initialized = asyncio.Event()
+    task_monitor_state = asyncio.create_task(monitor_state(nextline, event_initialized))
+    await event_initialized.wait()
+
     nextline.run()
+
     await nextline.finish()
     await nextline.close()
+
     aws = [task_monitor_state]
     results = await asyncio.gather(*aws)
-    states, *_ = results
-    assert ['initialized', 'running', 'exited', 'finished', 'closed'] == states
 
-async def monitor_state(nextline):
+    states, *_ = results
+
+    expectecd = ['initialized', 'running', 'exited', 'finished', 'closed']
+    assert  expectecd == states
+
+@pytest.mark.asyncio
+async def test_state_transitions_multiple_async_ops():
+    """test state transitions with multiple asynchronous operations
+
+    The methods finish() and close() can be called multiple times
+    asynchronously. However, each state transition should occur once.
+
+    """
+
+    nclients = 3
+
+    nextline = Nextline(SOURCE)
+
+    event_initialized = asyncio.Event()
+    task_monitor_state = asyncio.create_task(monitor_state(nextline, event_initialized))
+    await event_initialized.wait()
+
+    nextline.run()
+
+    tasks_finish_and_close = []
+    for _ in range(nclients):
+        task = asyncio.create_task(finish_and_close(nextline))
+        tasks_finish_and_close.append(task)
+
+    aws = [task_monitor_state, *tasks_finish_and_close]
+    results = await asyncio.gather(*aws)
+
+    states, *_ = results
+
+    expectecd = ['initialized', 'running', 'exited', 'finished', 'closed']
+    assert  expectecd == states
+
+async def finish_and_close(nextline):
+    await nextline.finish()
+    await nextline.close()
+
+async def monitor_state(nextline, event_initialized):
     ret = []
     async for s in nextline.subscribe_global_state():
+        if s == 'initialized':
+            event_initialized.set()
         # print('monitor_state()', s)
         ret.append(s)
     return ret
