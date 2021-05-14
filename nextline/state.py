@@ -75,18 +75,18 @@ class Running(State):
         else:
             code = statement
 
-        self.thread = threading.Thread(
+        self._thread = threading.Thread(
             target=exec_with_trace,
             args=(code, trace, self._done),
             daemon=True
         )
-        self.thread.start()
+        self._thread.start()
         self.registry.register_state_name(self.name)
 
     def _done(self, exception=None):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
-        self._state_exited = Exited(self.registry, thread=self.thread, exception=exception)
+        self._state_exited = Exited(self.registry, thread=self._thread, exception=exception)
         self._callback_func(self._state_exited)
         self._event_exited.set()
 
@@ -119,13 +119,13 @@ class Exited(State):
 
     def __init__(self, registry, thread, exception):
         self.registry = registry
-        self.thread = thread
-        self.exception = exception
+        self._thread = thread
+        self._exception = exception
         self.registry.register_state_name(self.name)
     async def wait(self):
-        if self.thread:
-            await self._join(self.thread)
-        return Finished(self.registry, exception=self.exception)
+        if self._thread:
+            await self._join(self._thread)
+        return Finished(self.registry, exception=self._exception)
     async def _join(self, thread):
         try:
             await asyncio.to_thread(thread.join)
@@ -153,7 +153,7 @@ class Finished(State):
 
     def __init__(self, registry, exception):
         self.registry = registry
-        self.exception = exception
+        self._exception = exception
         self.registry.register_state_name(self.name)
 
     async def close(self):
