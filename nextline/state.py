@@ -61,7 +61,7 @@ class Running(State):
 
     name = "running"
 
-    def __init__(self, registry, exited):
+    def __init__(self, registry, exited=None):
         self.registry = registry
         self._callback_func = exited
         self._event_exited = ThreadSafeAsyncioEvent()
