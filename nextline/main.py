@@ -1,7 +1,7 @@
 import asyncio
 import threading
 
-from .state import Initialized
+from .state import Initialized, Exited
 
 ##__________________________________________________________________||
 class Nextline:
@@ -46,11 +46,13 @@ class Nextline:
         self._state = self._state.run(exited=self._exited)
         self._event_run.set()
 
-    def _exited(self, state):
+    def _exited(self, state: Exited):
         """callback function for the script execution
 
-        This method is to be called by Running from the thread that
-        executes the script when the execution has exited.
+        It is used to receive the Exited object.
+
+        This method is called by Running in the thread that executes
+        the script when the execution has exited.
 
         """
         self._event_run.wait() # in case the script finishes too quickly
