@@ -59,10 +59,10 @@ async def test_exited_callback():
 
     callback = Mock()
 
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE, exited=callback)
     assert isinstance(state, Initialized)
 
-    state = state.run(exited=callback)
+    state = state.run()
     assert isinstance(state, Running)
 
     state = await state.finish()
@@ -81,11 +81,11 @@ async def test_exited_callback_raise():
 
     callback = Mock(side_effect=Exception('ntYpOsermaRb'))
 
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE, exited=callback)
     assert isinstance(state, Initialized)
 
     with pytest.warns(UserWarning) as record:
-        state = state.run(exited=callback)
+        state = state.run()
         assert isinstance(state, Running)
 
         state = await state.finish()

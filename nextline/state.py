@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import warnings
+from typing import Optional, Callable
 
 from .registry import Registry
 from .trace import Trace
@@ -13,7 +14,7 @@ SCRIPT_FILE_NAME = '<string>'
 class State:
     """The base state class in the Nextline state machine
     """
-    def run(self, *_, **__):
+    def run(self):
         return self
     async def finish(self):
         return self
@@ -33,18 +34,24 @@ class Initialized(State):
     ----------
     statement : str
         A Python code as a string
+    exited : callable, optional
+        A callable with one argument, usually Nextline._exited(state).
+        It will be called with the state object Exited after the
+        script has exited.
     """
 
     name = "initialized"
 
-    def __init__(self, statement):
+    def __init__(self, statement: str, exited: Optional[Callable] = None):
+        self._exited = exited
+
         self.registry = Registry()
         self.registry.register_statement(statement)
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self.registry.register_state_name(self.name)
 
-    def run(self, *args, **kwargs):
-        return Running(self.registry, *args, **kwargs)
+    def run(self):
+        return Running(self.registry, self._exited)
 
 class Running(State):
     """The state "running", the script is being executed.
@@ -54,15 +61,13 @@ class Running(State):
     registry : object
         An instance of Registry
     exited : callable
-        A callable with one argument, usually
-        Nextline._exited(state). It will be called with the next
-        state object (Exited) after the script has exited.
+        see Initialized
 
     """
 
     name = "running"
 
-    def __init__(self, registry, exited=None):
+    def __init__(self, registry, exited):
         self.registry = registry
         self._callback_func = exited
         self._event_exited = ThreadSafeAsyncioEvent()

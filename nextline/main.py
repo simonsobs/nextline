@@ -27,7 +27,7 @@ class Nextline:
         self._condition_finish = asyncio.Condition()
         self._condition_close = asyncio.Condition()
 
-        self._state = Initialized(statement)
+        self._state = Initialized(statement, exited=self._exited)
         self.registry = self._state.registry
 
     def __repr__(self):
@@ -43,7 +43,7 @@ class Nextline:
     def run(self):
         """run the script
         """
-        self._state = self._state.run(exited=self._exited)
+        self._state = self._state.run()
         self._event_run.set()
 
     def _exited(self, state: Exited):
