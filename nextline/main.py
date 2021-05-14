@@ -53,8 +53,12 @@ class Nextline:
         self._event_run.clear()
         self._state = state
 
-    async def wait(self):
-        """wait for the script execution to finish
+    async def finish(self):
+        """finish the script execution
+
+        wait for the script execution in another thread to exit and
+        join the thread.
+
         """
         self._state = await self._state.finish()
 

@@ -98,7 +98,7 @@ async def control_thread_task(nextline, thread_task_id):
 async def run(nextline):
     await asyncio.sleep(0.1)
     nextline.run()
-    await nextline.wait()
+    await nextline.finish()
     await nextline.close()
 
 ##__________________________________________________________________||

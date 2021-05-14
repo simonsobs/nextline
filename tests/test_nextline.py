@@ -33,7 +33,7 @@ async def test_state():
     nextline = Nextline(SOURCE)
     task_monitor_state = asyncio.create_task(monitor_state(nextline))
     nextline.run()
-    await nextline.wait()
+    await nextline.finish()
     await nextline.close()
     aws = [task_monitor_state]
     results = await asyncio.gather(*aws)
