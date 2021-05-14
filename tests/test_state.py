@@ -38,19 +38,31 @@ async def wrap_registry(monkeypatch):
     monkeypatch.setattr('nextline.state.Registry', mock_class)
     yield
 
-@pytest.fixture()
-def callback_exited():
-    y = Mock()
-    yield y
-
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_state_transition(callback_exited):
+async def test_state_transition():
 
     state = Initialized(SOURCE)
     assert isinstance(state, Initialized)
 
-    state = state.run(exited=callback_exited)
+    state = state.run()
+    assert isinstance(state, Running)
+
+    state = await state.finish()
+    assert isinstance(state, Finished)
+
+    state = await state.close()
+    assert isinstance(state, Closed)
+
+@pytest.mark.asyncio
+async def test_exited_callback():
+
+    callback = Mock()
+
+    state = Initialized(SOURCE)
+    assert isinstance(state, Initialized)
+
+    state = state.run(exited=callback)
     assert isinstance(state, Running)
 
     state = await state.finish()
@@ -60,17 +72,37 @@ async def test_state_transition(callback_exited):
     assert isinstance(state, Closed)
 
     # The existed state is received by the callback
-    assert 1 == callback_exited.call_count
-    state, *_ = callback_exited.call_args.args
+    assert 1 == callback.call_count
+    state, *_ = callback.call_args.args
     assert isinstance(state, Exited)
 
 @pytest.mark.asyncio
-async def test_register_state_name(callback_exited, wrap_registry):
+async def test_exited_callback_raise():
+
+    callback = Mock(side_effect=Exception('ntYpOsermaRb'))
 
     state = Initialized(SOURCE)
     assert isinstance(state, Initialized)
 
-    state = state.run(exited=callback_exited)
+    with pytest.warns(UserWarning) as record:
+        state = state.run(exited=callback)
+        assert isinstance(state, Running)
+
+        state = await state.finish()
+        assert isinstance(state, Finished)
+
+    assert "ntYpOsermaRb" in (record[0].message.args[0])
+
+    state = await state.close()
+    assert isinstance(state, Closed)
+
+@pytest.mark.asyncio
+async def test_register_state_name(wrap_registry):
+
+    state = Initialized(SOURCE)
+    assert isinstance(state, Initialized)
+
+    state = state.run()
     assert isinstance(state, Running)
 
     state = await state.finish()
@@ -85,9 +117,9 @@ async def test_register_state_name(callback_exited, wrap_registry):
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_exception(callback_exited):
+async def test_exception():
     state = Initialized(SOURCE_RAISE)
-    state = state.run(exited=callback_exited)
+    state = state.run()
 
     state = await state.finish()
     assert isinstance(state, Finished)
@@ -98,9 +130,9 @@ async def test_exception(callback_exited):
         raise state.exception()
 
 @pytest.mark.asyncio
-async def test_exception_none(callback_exited):
+async def test_exception_none():
     state = Initialized(SOURCE)
-    state = state.run(exited=callback_exited)
+    state = state.run()
     state = await state.finish()
     assert isinstance(state, Finished)
 
@@ -108,9 +140,9 @@ async def test_exception_none(callback_exited):
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_result(callback_exited):
+async def test_result():
     state = Initialized(SOURCE)
-    state = state.run(exited=callback_exited)
+    state = state.run()
 
     state = await state.finish()
     assert isinstance(state, Finished)
@@ -118,9 +150,9 @@ async def test_result(callback_exited):
     assert state.result() is None
 
 @pytest.mark.asyncio
-async def test_result_raise(callback_exited):
+async def test_result_raise():
     state = Initialized(SOURCE_RAISE)
-    state = state.run(exited=callback_exited)
+    state = state.run()
 
     state = await state.finish()
     assert isinstance(state, Finished)
