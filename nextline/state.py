@@ -154,8 +154,9 @@ class Finished(State):
     name = "finished"
 
     def __init__(self, registry, exception):
-        self.registry = registry
         self._exception = exception
+
+        self.registry = registry
         self.registry.register_state_name(self.name)
 
     def exception(self):
