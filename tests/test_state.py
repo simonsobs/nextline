@@ -77,6 +77,36 @@ async def test_exited_callback():
     assert isinstance(state, Exited)
 
 @pytest.mark.asyncio
+async def test_state_transition_once():
+
+    callback = Mock()
+
+    initialized = Initialized(SOURCE, exited=callback)
+    assert isinstance(initialized, Initialized)
+
+    running = initialized.run()
+    assert isinstance(running, Running)
+
+    assert running is initialized.run() # the same object
+
+    finished = await running.finish()
+    assert isinstance(finished, Finished)
+
+    assert finished is await running.finish() # the same object
+
+    closed = await finished.close()
+    assert isinstance(closed, Closed)
+
+    assert closed is await finished.close() # the same object
+
+    # The existed state is received by the callback
+    assert 1 == callback.call_count
+    exited, *_ = callback.call_args.args
+    assert isinstance(exited, Exited)
+
+    assert finished is await exited.finish() # the same object
+
+@pytest.mark.asyncio
 async def test_exited_callback_raise():
 
     callback = Mock(side_effect=Exception('ntYpOsermaRb'))

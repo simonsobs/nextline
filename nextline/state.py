@@ -44,6 +44,7 @@ class Initialized(State):
 
     def __init__(self, statement: str, exited: Optional[Callable] = None):
         self._exited = exited
+        self._next = None
 
         self.registry = Registry()
         self.registry.register_statement(statement)
@@ -51,7 +52,9 @@ class Initialized(State):
         self.registry.register_state_name(self.name)
 
     def run(self):
-        return Running(self.registry, self._exited)
+        if not self._next:
+            self._next = Running(self.registry, self._exited)
+        return self._next
 
 class Running(State):
     """The state "running", the script is being executed.
@@ -71,6 +74,7 @@ class Running(State):
         self.registry = registry
         self._callback_func = exited
         self._event_exited = ThreadSafeAsyncioEvent()
+        self._next = None
 
         trace = Trace(
             registry=self.registry,
@@ -111,9 +115,11 @@ class Running(State):
         self._event_exited.set()
 
     async def finish(self):
-        await self._event_exited.wait()
-        self._event_exited.clear()
-        return await self._state_exited.finish()
+        if not self._next:
+            await self._event_exited.wait()
+            self._event_exited.clear()
+            self._next = await self._state_exited.finish()
+        return self._next
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
@@ -144,11 +150,17 @@ class Exited(State):
         self._thread = thread
         self._result = result
         self._exception = exception
+
+        self._next = None
+
         self.registry.register_state_name(self.name)
+
     async def finish(self):
-        if self._thread:
+        if not self._next:
             await self._join(self._thread)
-        return Finished(self.registry, result=self._result, exception=self._exception)
+            self._next = Finished(self.registry, result=self._result, exception=self._exception)
+        return self._next
+
     async def _join(self, thread):
         try:
             await asyncio.to_thread(thread.join)
@@ -180,6 +192,8 @@ class Finished(State):
         self._result = result
         self._exception = exception
 
+        self._next = None
+
         self.registry = registry
         self.registry.register_state_name(self.name)
 
@@ -209,12 +223,13 @@ class Finished(State):
 
 
     async def close(self):
-        closed = Closed(self.registry)
+        if not self._next:
+            self._next = Closed(self.registry)
 
-        await self.registry.close() # close the registry here because
-                                    # await cannot be used in
-                                    # Closed.__init__()
-        return closed
+            await self.registry.close() # close the registry here because
+                                        # await cannot be used in
+                                        # Closed.__init__()
+        return self._next
 
 class Closed(State):
     """The state "closed"
