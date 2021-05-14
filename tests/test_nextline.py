@@ -28,6 +28,11 @@ def monkey_patch_trace(monkeypatch):
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
+async def test_repr():
+    nextline = Nextline(SOURCE)
+    repr(nextline)
+
+@pytest.mark.asyncio
 async def test_state_transitions_single_op():
 
     nextline = Nextline(SOURCE)

@@ -31,6 +31,7 @@ class Nextline:
         self.registry = self._state.registry
 
     def __repr__(self):
+        # e.g., "<Nextline 'running'>"
         return f'<{self.__class__.__name__} {self.global_state!r}>'
 
     @property
