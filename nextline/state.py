@@ -20,6 +20,8 @@ class State:
         return self
     def send_pdb_command(self, *_, **__):
         pass
+    def exception(self):
+        pass
 
 class Initialized(State):
     """The state "initialized", ready to run
@@ -155,6 +157,10 @@ class Finished(State):
         self.registry = registry
         self._exception = exception
         self.registry.register_state_name(self.name)
+
+    def exception(self):
+        if self._exception:
+            raise self._exception
 
     async def close(self):
         closed = Closed(self.registry)

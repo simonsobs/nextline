@@ -18,6 +18,10 @@ import time
 time.sleep(0.1)
 """.strip()
 
+SOURCE_RAISE = """
+raise Exception('foo', 'bar')
+""".strip()
+
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def monkey_patch_trace(monkeypatch):
@@ -62,5 +66,22 @@ async def test_callback_exited(callback_exited):
     assert 1 == callback_exited.call_count
     state = callback_exited.call_args.args[0]
     assert isinstance(state, Exited)
+
+@pytest.mark.asyncio
+async def test_raise(callback_exited):
+    state = Initialized(SOURCE_RAISE)
+    state = state.run(exited=callback_exited)
+    state = await state.wait()
+
+    with pytest.raises(Exception):
+        state.exception()
+
+@pytest.mark.asyncio
+async def test_not_raise(callback_exited):
+    state = Initialized(SOURCE)
+    state = state.run(exited=callback_exited)
+    state = await state.wait()
+
+    state.exception()
 
 ##__________________________________________________________________||
