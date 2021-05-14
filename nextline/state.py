@@ -85,7 +85,7 @@ class Running(State):
         self._thread.start()
         self.registry.register_state_name(self.name)
 
-    def _done(self, exception=None):
+    def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
         self._state_exited = Exited(self.registry, thread=self._thread, exception=exception)

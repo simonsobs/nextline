@@ -29,7 +29,7 @@ def test_simple(trace):
     assert 3 == trace.call_count
     # print(trace.call_args_list)
 
-    assert [call(None)] == done.call_args_list
+    assert [call(None, None)] == done.call_args_list
 
 ##__________________________________________________________________||
 def test_raise(trace):
@@ -42,7 +42,8 @@ def test_raise(trace):
     # print(trace.call_args_list)
 
     assert 1 == done.call_count
-    exc = done.call_args.args[0]
+    ret, exc = done.call_args.args
+    assert ret is None
     assert isinstance(exc, Exception)
     assert ('foo', 'bar') == exc.args
     with pytest.raises(Exception):

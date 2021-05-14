@@ -13,24 +13,27 @@ def exec_with_trace(code, trace, done=None):
     trace: callable
         A trace function.
     done: callable, optional
-        A callable with one argument. This will to be called after the
-        code exits. If an exception occurs in the code, the exception
-        will be given as the argument. If no exception occurs, None
-        will be given.
-
+        A callable with two arguments. It will to be called after the
+        code exits. The first argument is the return value, which is
+        always None in the current implementation, because the
+        built-in function exec() returns None. The second argument is
+        the exception if an exception occurs or otherwise None.
     """
+
     trace_org = sys.gettrace()
     threading.settrace(trace)
     sys.settrace(trace)
+    ret = None
     exc = None
     try:
-        exec(code)
+        ret = exec(code)
+        # ret is always None
     except BaseException as e:
         exc = e
     finally:
         sys.settrace(trace_org)
         threading.settrace(trace_org)
         if done:
-            done(exc)
+            done(ret, exc)
 
 ##__________________________________________________________________||
