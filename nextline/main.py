@@ -1,3 +1,4 @@
+import asyncio
 import threading
 
 from .state import Initialized
@@ -23,6 +24,8 @@ class Nextline:
 
     def __init__(self, statement):
         self._event_run = threading.Event()
+        self._condition_finish = asyncio.Condition()
+        self._condition_close = asyncio.Condition()
 
         self._state = Initialized(statement)
         self.registry = self._state.registry
@@ -60,12 +63,14 @@ class Nextline:
         join the thread.
 
         """
-        self._state = await self._state.finish()
+        async with self._condition_finish:
+            self._state = await self._state.finish()
 
     async def close(self):
         """close the nextline
         """
-        self._state = await self._state.close()
+        async with self._condition_close:
+            self._state = await self._state.close()
 
     async def subscribe_global_state(self):
         # wish to be able to write with "yield from" but not possible
