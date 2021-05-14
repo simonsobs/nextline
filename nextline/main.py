@@ -36,7 +36,7 @@ class Nextline:
 
     @property
     def global_state(self) -> str:
-        """state, e.g., "initialized", "running", "finished"
+        """state, e.g., "initialized", "running", "exited", "finished", "closed"
         """
         return self._state.name
 
