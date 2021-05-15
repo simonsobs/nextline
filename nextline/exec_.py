@@ -20,11 +20,11 @@ def exec_with_trace(code, trace, done=None):
         the exception if an exception occurs or otherwise None.
     """
 
+    ret = None
+    exc = None
     trace_org = sys.gettrace()
     threading.settrace(trace)
     sys.settrace(trace)
-    ret = None
-    exc = None
     try:
         ret = exec(code)
         # ret is always None
