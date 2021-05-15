@@ -147,7 +147,7 @@ async def test_register_state_name(wrap_registry):
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_exception():
+async def test_finished_exception():
     state = Initialized(SOURCE_RAISE)
     state = state.run()
 
@@ -160,7 +160,7 @@ async def test_exception():
         raise state.exception()
 
 @pytest.mark.asyncio
-async def test_exception_none():
+async def test_finished_exception_none():
     state = Initialized(SOURCE)
     state = state.run()
     state = await state.finish()
@@ -168,9 +168,8 @@ async def test_exception_none():
 
     assert state.exception() is None
 
-##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_result():
+async def test_finished_result():
     state = Initialized(SOURCE)
     state = state.run()
 
@@ -180,7 +179,7 @@ async def test_result():
     assert state.result() is None
 
 @pytest.mark.asyncio
-async def test_result_raise():
+async def test_finished_result_raise():
     state = Initialized(SOURCE_RAISE)
     state = state.run()
 
