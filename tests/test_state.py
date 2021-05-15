@@ -40,7 +40,7 @@ async def wrap_registry(monkeypatch):
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_state_transition():
+async def test_transition():
 
     state = Initialized(SOURCE)
     assert isinstance(state, Initialized)
@@ -77,7 +77,7 @@ async def test_exited_callback():
     assert isinstance(state, Exited)
 
 @pytest.mark.asyncio
-async def test_state_transition_once():
+async def test_transition_once():
 
     callback = Mock()
 
