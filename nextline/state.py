@@ -221,14 +221,10 @@ class Finished(State):
 
         return self._result
 
-
     async def close(self):
         if not self._next:
             self._next = Closed(self.registry)
-
-            await self.registry.close() # close the registry here because
-                                        # "await" is not allowed in
-                                        # Closed.__init__()
+            await self._next._ainit()
         return self._next
 
 class Closed(State):
@@ -245,5 +241,9 @@ class Closed(State):
     def __init__(self, registry):
         self.registry = registry
         self.registry.register_state_name(self.name)
+
+    async def _ainit(self):
+        await self.registry.close() # close here because "await" is
+                                    # not allowed in __init__()
 
 ##__________________________________________________________________||
