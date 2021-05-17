@@ -23,6 +23,12 @@ class ObsoleteMixin:
 class State(ObsoleteMixin):
     """The base state class in the Nextline state machine
     """
+    def __repr__(self):
+        # e.g., "<Initialized 'initialized'>"
+        items = [self.__class__.__name__, repr(self.name)]
+        if self.is_obsolete:
+            items.append('obsolete')
+        return f'<{" ".join(items)}>'
     def run(self):
         return self
     async def finish(self):
@@ -69,13 +75,6 @@ class Initialized(State):
         self.registry.register_statement(statement)
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self.registry.register_state_name(self.name)
-
-    def __repr__(self):
-        # e.g., "<Initialized 'initialized'>"
-        items = [self.__class__.__name__, repr(self.name)]
-        if self.is_obsolete:
-            items.append('obsolete')
-        return f'<{" ".join(items)}>'
 
     def run(self):
         self.assert_not_obsolete()
