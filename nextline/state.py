@@ -11,7 +11,16 @@ from .exec_ import exec_with_trace
 SCRIPT_FILE_NAME = '<string>'
 
 ##__________________________________________________________________||
-class State:
+class ObsoleteMixin:
+    def assert_not_obsolete(self):
+        if self.is_obsolete():
+            raise Exception(f'The state is obsolete: {self!r}')
+    def is_obsolete(self):
+        return getattr(self, "_obsolete", False)
+    def obsolete(self):
+        self._obsolete = True
+
+class State(ObsoleteMixin):
     """The base state class in the Nextline state machine
     """
     def run(self):
