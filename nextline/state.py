@@ -33,6 +33,8 @@ class State(ObsoleteMixin):
         return self
     async def finish(self):
         return self
+    def reset(self):
+        return self
     async def close(self):
         return self
     def send_pdb_command(self, *_, **__):
@@ -241,8 +243,6 @@ class Finished(State):
         self._result = result
         self._exception = exception
 
-        self._next = None
-
         self.registry = registry
         self.registry.register_state_name(self.name)
 
@@ -270,11 +270,23 @@ class Finished(State):
 
         return self._result
 
+    def reset(self):
+        self.assert_not_obsolete()
+        statement = self.registry.statement
+        initialized = Initialized(
+            statement=statement,
+            exited=self._exited,
+            registry=self.registry
+        )
+        self.obsolete()
+        return initialized
+
     async def close(self):
-        if not self._next:
-            self._next = Closed(self.registry, self._exited)
-            await self._next._ainit()
-        return self._next
+        self.assert_not_obsolete()
+        closed = Closed(self.registry, self._exited)
+        await closed._ainit()
+        self.obsolete()
+        return closed
 
 class Closed(State):
     """The state "closed"
