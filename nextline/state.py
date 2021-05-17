@@ -56,6 +56,12 @@ class Initialized(State):
             self._next = Running(self.registry, self._exited)
         return self._next
 
+    async def close(self):
+        if not self._next:
+            self._next = Closed(self.registry)
+            await self._next._ainit()
+        return self._next
+
 class Running(State):
     """The state "running", the script is being executed.
 
