@@ -73,23 +73,21 @@ class Initialized(State):
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
-        if self._outdated:
-            items.append('outdated')
+        if self.is_obsolete:
+            items.append('obsolete')
         return f'<{" ".join(items)}>'
 
     def run(self):
-        if self._outdated:
-            raise Exception(f'The state is outdated: {self!r}')
+        self.assert_not_obsolete()
         running = Running(self.registry, self._exited)
-        self._outdated = True
+        self.obsolete()
         return running
 
     async def close(self):
-        if self._outdated:
-            raise Exception(f'The state is outdated: {self!r}')
+        self.assert_not_obsolete()
         closed = Closed(self.registry, self._exited)
         await closed._ainit()
-        self._outdated = True
+        self.obsolete()
         return closed
 
 class Running(State):
