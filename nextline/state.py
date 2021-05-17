@@ -124,7 +124,6 @@ class Running(State):
     async def finish(self):
         if not self._next:
             await self._event_exited.wait()
-            self._event_exited.clear()
             self._next = await self._state_exited.finish()
         return self._next
 
