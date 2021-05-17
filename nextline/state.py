@@ -50,7 +50,7 @@ class Initialized(State):
                  registry: Optional[Registry] = None):
         self._exited = exited
 
-        self._active = True
+        self._outdated = False
 
         if registry:
             self.registry = registry
@@ -64,23 +64,23 @@ class Initialized(State):
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
-        if not self._active:
-            items.append('inactive')
+        if self._outdated:
+            items.append('outdated')
         return f'<{" ".join(items)}>'
 
     def run(self):
-        if not self._active:
-            raise Exception(f'The state is not active: {self!r}')
+        if self._outdated:
+            raise Exception(f'The state is outdated: {self!r}')
         running = Running(self.registry, self._exited)
-        self._active = False
+        self._outdated = True
         return running
 
     async def close(self):
-        if not self._active:
-            raise Exception(f'The state is not active: {self!r}')
+        if self._outdated:
+            raise Exception(f'The state is outdated: {self!r}')
         closed = Closed(self.registry, self._exited)
         await closed._ainit()
-        self._active = False
+        self._outdated = True
         return closed
 
 class Running(State):
