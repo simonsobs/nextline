@@ -61,14 +61,14 @@ class Initialized(State):
 
     def run(self):
         if not self._active:
-            raise Exception(f'The state is not active: {self}')
+            raise Exception(f'The state is not active: {self!r}')
         running = Running(self.registry, self._exited)
         self._active = False
         return running
 
     async def close(self):
         if not self._active:
-            raise Exception(f'The state is not active: {self}')
+            raise Exception(f'The state is not active: {self!r}')
         closed = Closed(self.registry)
         await closed._ainit()
         self._active = False
