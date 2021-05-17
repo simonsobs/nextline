@@ -270,6 +270,12 @@ class Finished(State):
 
         return self._result
 
+    async def finish(self):
+        # This method can be called when Nextline.finish() is
+        # asynchronously called multiple times.
+        self.assert_not_obsolete()
+        return self
+
     def reset(self):
         self.assert_not_obsolete()
         statement = self.registry.statement
