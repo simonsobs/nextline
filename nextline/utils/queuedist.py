@@ -15,6 +15,7 @@ class QueueDist:
 
     def __init__(self):
         self.queue_in = janus.Queue()
+        self._closed = False
 
         self.subscribers = []
         self.last_enumarated = (-1, self.NoLastItem)
@@ -57,6 +58,10 @@ class QueueDist:
         await q.wait_closed()
 
     async def close(self):
+
+        if self._closed:
+            return
+
         self.queue_in.sync_q.put(self.End)
 
         try:
@@ -69,5 +74,6 @@ class QueueDist:
 
         self.queue_in.close()
         await self.queue_in.wait_closed()
+        self._closed = True
 
 ##__________________________________________________________________||

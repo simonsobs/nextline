@@ -28,6 +28,11 @@ async def obj():
 async def test_open_close(obj):
     assert obj
 
+@pytest.mark.asyncio
+async def test_close_multiple_times(obj):
+    await obj.close()
+    await obj.close()
+
 async def async_send(obj, items):
     for i in items:
         await asyncio.sleep(0) # let other tasks run
