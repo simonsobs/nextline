@@ -115,6 +115,32 @@ async def test_finished(finished):
     assert isinstance(finished, Finished)
 
 @pytest.mark.asyncio
+async def test_finished_reset(finished):
+    assert isinstance(finished, Finished)
+
+    initialized = finished.reset()
+    assert isinstance(initialized, Initialized)
+
+    with pytest.raises(Exception):
+        finished.reset()
+
+    with pytest.raises(Exception):
+        await finished.close()
+
+@pytest.mark.asyncio
+async def test_finished_close(finished):
+    assert isinstance(finished, Finished)
+
+    closed = await finished.close()
+    assert isinstance(closed, Closed)
+
+    with pytest.raises(Exception):
+        finished.reset()
+
+    with pytest.raises(Exception):
+        await finished.close()
+
+@pytest.mark.asyncio
 async def test_closed(closed):
     assert isinstance(closed, Closed)
 
@@ -175,8 +201,6 @@ async def test_transition_once():
     closed = await finished.close()
     assert isinstance(closed, Closed)
 
-    assert closed is await finished.close() # the same object
-
     # The existed state is received by the callback
     assert 1 == callback.call_count
     exited, *_ = callback.call_args.args
@@ -206,20 +230,29 @@ async def test_exited_callback_raise():
 
 @pytest.mark.asyncio
 async def test_register_state_name(wrap_registry):
-
     state = Initialized(SOURCE)
-    assert isinstance(state, Initialized)
-
     state = state.run()
-    assert isinstance(state, Running)
-
     state = await state.finish()
-    assert isinstance(state, Finished)
-
     state = await state.close()
-    assert isinstance(state, Closed)
 
     expected = ['initialized', 'running', 'exited', 'finished', 'closed']
+    actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
+    assert expected == actual
+
+@pytest.mark.asyncio
+async def test_register_state_name(wrap_registry):
+    state = Initialized(SOURCE)
+    state = state.run()
+    state = await state.finish()
+    state = state.reset()
+    state = state.run()
+    state = await state.finish()
+    state = await state.close()
+
+    expected = [
+        'initialized', 'running', 'exited', 'finished',
+        'initialized', 'running', 'exited', 'finished', 'closed'
+    ]
     actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
     assert expected == actual
 
