@@ -26,7 +26,7 @@ class State(ObsoleteMixin):
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
-        if self.is_obsolete:
+        if self.is_obsolete():
             items.append('obsolete')
         return f'<{" ".join(items)}>'
     def run(self):

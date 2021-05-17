@@ -77,13 +77,13 @@ async def closed(finished):
 @pytest.mark.asyncio
 async def test_initialized(initialized, callback):
     assert isinstance(initialized, Initialized)
-    repr(initialized)
+    assert 'obsolete' not in repr(initialized)
 
 @pytest.mark.asyncio
 async def test_initialized_run(initialized):
     running = initialized.run()
     assert isinstance(running, Running)
-    repr(initialized)
+    assert 'obsolete' in repr(initialized)
 
     with pytest.raises(Exception):
         initialized.run()
