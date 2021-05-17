@@ -107,12 +107,19 @@ class Running(State):
             result=result,
             exception=exception
         )
+
         if self._callback_func:
             try:
                 self._callback_func(self._state_exited)
             except BaseException as e:
                 warnings.warn(f'An exception occurred in the callback: {e}')
-        self._event_exited.set()
+
+        try:
+            self._event_exited.set()
+        except RuntimeError:
+            # The Event loop is closed.
+            # This can happen when finish() is not called.
+            pass
 
     async def finish(self):
         if not self._next:
