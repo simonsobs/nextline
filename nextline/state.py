@@ -65,8 +65,6 @@ class Initialized(State):
                  registry: Optional[Registry] = None):
         self._exited = exited
 
-        self._outdated = False
-
         if registry:
             self.registry = registry
         else:
