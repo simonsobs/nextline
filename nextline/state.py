@@ -52,6 +52,13 @@ class Initialized(State):
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self.registry.register_state_name(self.name)
 
+    def __repr__(self):
+        # e.g., "<Initialized 'initialized'>"
+        items = [self.__class__.__name__, repr(self.name)]
+        if not self._active:
+            items.append('inactive')
+        return f'<{" ".join(items)}>'
+
     def run(self):
         if not self._active:
             raise Exception(f'The state is not active: {self}')
