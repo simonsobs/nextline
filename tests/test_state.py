@@ -113,13 +113,26 @@ async def test_exited(exited, callback):
 @pytest.mark.asyncio
 async def test_finished(finished):
     assert isinstance(finished, Finished)
+    assert 'obsolete' not in repr(finished)
+
+@pytest.mark.asyncio
+async def test_finished_finish(finished):
+    # The same object should be returned no matter
+    # how many times called.
+    assert finished is await finished.finish()
+    assert finished is await finished.finish()
+
+    assert 'obsolete' not in repr(finished)
 
 @pytest.mark.asyncio
 async def test_finished_reset(finished):
-    assert isinstance(finished, Finished)
 
     initialized = finished.reset()
     assert isinstance(initialized, Initialized)
+    assert 'obsolete' in repr(finished)
+
+    with pytest.raises(Exception):
+        await finished.finish()
 
     with pytest.raises(Exception):
         finished.reset()
@@ -129,10 +142,13 @@ async def test_finished_reset(finished):
 
 @pytest.mark.asyncio
 async def test_finished_close(finished):
-    assert isinstance(finished, Finished)
 
     closed = await finished.close()
     assert isinstance(closed, Closed)
+    assert 'obsolete' in repr(finished)
+
+    with pytest.raises(Exception):
+        await finished.finish()
 
     with pytest.raises(Exception):
         finished.reset()
@@ -143,6 +159,15 @@ async def test_finished_close(finished):
 @pytest.mark.asyncio
 async def test_closed(closed):
     assert isinstance(closed, Closed)
+    assert 'obsolete' not in repr(finished)
+
+@pytest.mark.asyncio
+async def test_closed_close(closed):
+    # The same object should be returned no matter
+    # how many times called.
+    assert closed is await closed.close()
+
+    assert 'obsolete' not in repr(closed)
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
