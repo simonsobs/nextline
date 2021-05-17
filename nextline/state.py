@@ -44,7 +44,8 @@ class Initialized(State):
 
     def __init__(self, statement: str, exited: Optional[Callable] = None):
         self._exited = exited
-        self._next = None
+
+        self._active = True
 
         self.registry = Registry()
         self.registry.register_statement(statement)
@@ -52,15 +53,19 @@ class Initialized(State):
         self.registry.register_state_name(self.name)
 
     def run(self):
-        if not self._next:
-            self._next = Running(self.registry, self._exited)
-        return self._next
+        if not self._active:
+            raise Exception(f'The state is not active: {self}')
+        running = Running(self.registry, self._exited)
+        self._active = False
+        return running
 
     async def close(self):
-        if not self._next:
-            self._next = Closed(self.registry)
-            await self._next._ainit()
-        return self._next
+        if not self._active:
+            raise Exception(f'The state is not active: {self}')
+        closed = Closed(self.registry)
+        await closed._ainit()
+        self._active = False
+        return closed
 
 class Running(State):
     """The state "running", the script is being executed.
