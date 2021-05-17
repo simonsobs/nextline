@@ -69,7 +69,7 @@ class Initialized(State):
     async def close(self):
         if not self._active:
             raise Exception(f'The state is not active: {self!r}')
-        closed = Closed(self.registry)
+        closed = Closed(self.registry, self._exited)
         await closed._ainit()
         self._active = False
         return closed
@@ -90,7 +90,7 @@ class Running(State):
 
     def __init__(self, registry, exited):
         self.registry = registry
-        self._callback_func = exited
+        self._exited = exited
         self._event_exited = ThreadSafeAsyncioEvent()
         self._next = None
 
@@ -121,14 +121,15 @@ class Running(State):
         # end of exec_with_trace()
         self._state_exited = Exited(
             self.registry,
+            self._exited,
             thread=self._thread,
             result=result,
             exception=exception
         )
 
-        if self._callback_func:
+        if self._exited:
             try:
-                self._callback_func(self._state_exited)
+                self._exited(self._state_exited)
             except BaseException as e:
                 warnings.warn(f'An exception occurred in the callback: {e}')
 
@@ -157,6 +158,8 @@ class Exited(State):
     ----------
     registry : object
         An instance of Registry
+    exited : callable
+        see Initialized
     thread : object
         The object of the thread in which the script was executed.
         This thread is to be joined.
@@ -169,8 +172,9 @@ class Exited(State):
 
     name = "exited"
 
-    def __init__(self, registry, thread, result, exception):
+    def __init__(self, registry, exited, thread, result, exception):
         self.registry = registry
+        self._exited = exited
         self._thread = thread
         self._result = result
         self._exception = exception
@@ -182,7 +186,11 @@ class Exited(State):
     async def finish(self):
         if not self._next:
             await self._join(self._thread)
-            self._next = Finished(self.registry, result=self._result, exception=self._exception)
+            self._next = Finished(
+                self.registry, self._exited,
+                result=self._result,
+                exception=self._exception
+            )
         return self._next
 
     async def _join(self, thread):
@@ -203,6 +211,8 @@ class Finished(State):
     ----------
     registry : object
         An instance of Registry
+    exited : callable
+        see Initialized
     result : any
         The result of the script execution, always None
     exception : exception or None
@@ -212,7 +222,9 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry, result, exception):
+    def __init__(self, registry, exited, result, exception):
+        self._exited = exited
+
         self._result = result
         self._exception = exception
 
@@ -247,7 +259,7 @@ class Finished(State):
 
     async def close(self):
         if not self._next:
-            self._next = Closed(self.registry)
+            self._next = Closed(self.registry, self._exited)
             await self._next._ainit()
         return self._next
 
@@ -258,11 +270,15 @@ class Closed(State):
     ----------
     registry : object
         An instance of Registry
+    exited : callable
+        see Initialized
     """
 
     name = "closed"
 
-    def __init__(self, registry):
+    def __init__(self, registry, exited):
+        self._exited = exited
+
         self.registry = registry
         self.registry.register_state_name(self.name)
 
