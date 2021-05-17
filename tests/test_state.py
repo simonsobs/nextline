@@ -39,6 +39,86 @@ async def wrap_registry(monkeypatch):
     yield
 
 ##__________________________________________________________________||
+@pytest.fixture(params=[True, False])
+def callback(request):
+    if request.param:
+        y = Mock()
+    else:
+        y = None
+    yield y
+
+@pytest.fixture()
+async def initialized(callback):
+    y = Initialized(SOURCE, callback)
+    yield y
+
+@pytest.fixture()
+async def running(initialized):
+    y = initialized.run()
+    yield y
+
+@pytest.fixture()
+async def exited(running):
+    await running._event_exited.wait()
+    y = running._state_exited
+    yield y
+
+@pytest.fixture()
+async def finished(exited):
+    y = await exited.finish()
+    yield y
+
+@pytest.fixture()
+async def closed(finished):
+    y = await finished.close()
+    yield y
+
+##__________________________________________________________________||
+@pytest.mark.asyncio
+async def test_initialized(initialized, callback):
+    assert isinstance(initialized, Initialized)
+    repr(initialized)
+
+@pytest.mark.asyncio
+async def test_initialized_run(initialized):
+    running = initialized.run()
+    assert isinstance(running, Running)
+    repr(initialized)
+
+    with pytest.raises(Exception):
+        initialized.run()
+
+    with pytest.raises(Exception):
+        await initialized.close()
+
+@pytest.mark.asyncio
+async def test_initialized_close(initialized, callback):
+    closed = await initialized.close()
+    assert isinstance(closed, Closed)
+
+    with pytest.raises(Exception):
+        initialized.run()
+
+    with pytest.raises(Exception):
+        await initialized.close()
+
+@pytest.mark.asyncio
+async def test_running(running):
+    assert isinstance(running, Running)
+
+@pytest.mark.asyncio
+async def test_exited(exited, callback):
+    assert isinstance(exited, Exited)
+
+@pytest.mark.asyncio
+async def test_finished(finished):
+    assert isinstance(finished, Finished)
+
+@pytest.mark.asyncio
+async def test_closed(closed):
+    assert isinstance(closed, Closed)
+
+##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_transition():
 
@@ -86,8 +166,6 @@ async def test_transition_once():
 
     running = initialized.run()
     assert isinstance(running, Running)
-
-    assert running is initialized.run() # the same object
 
     finished = await running.finish()
     assert isinstance(finished, Finished)
