@@ -38,16 +38,25 @@ class Initialized(State):
         A callable with one argument, usually Nextline._exited(state).
         It will be called with the state object Exited after the
         script has exited.
+    registry : object, optional
+        An instance of Registry. This parameter will be given by a state
+        object when the state is reset.
+
     """
 
     name = "initialized"
 
-    def __init__(self, statement: str, exited: Optional[Callable] = None):
+    def __init__(self, statement: str, exited: Optional[Callable] = None,
+                 registry: Optional[Registry] = None):
         self._exited = exited
 
         self._active = True
 
-        self.registry = Registry()
+        if registry:
+            self.registry = registry
+        else:
+            self.registry = Registry()
+
         self.registry.register_statement(statement)
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self.registry.register_state_name(self.name)
