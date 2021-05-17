@@ -317,4 +317,10 @@ class Closed(State):
         await self.registry.close() # close here because "await" is
                                     # not allowed in __init__()
 
+    async def close(self):
+        # This method can be called when Nextline.close() is
+        # asynchronously called multiple times.
+        self.assert_not_obsolete()
+        return self
+
 ##__________________________________________________________________||
