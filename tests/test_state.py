@@ -87,10 +87,7 @@ async def test_initialized(initialized, callback):
     assert isinstance(initialized, Initialized)
     assert 'obsolete' not in repr(initialized)
 
-@pytest.mark.asyncio
-async def test_initialized_run(initialized):
-    running = initialized.run()
-    assert isinstance(running, Running)
+async def assert_initialized_obsolete(initialized):
     assert 'obsolete' in repr(initialized)
 
     with pytest.raises(StateObsoleteError):
@@ -101,6 +98,12 @@ async def test_initialized_run(initialized):
 
     with pytest.raises(StateObsoleteError):
         await initialized.close()
+
+@pytest.mark.asyncio
+async def test_initialized_run(initialized):
+    running = initialized.run()
+    assert isinstance(running, Running)
+    await assert_initialized_obsolete(initialized)
 
 @pytest.mark.parametrize('statement', params_statement)
 @pytest.mark.asyncio
@@ -120,31 +123,13 @@ async def test_initialized_reset(initialized, statement, wrap_registry):
 
     assert expected_statement == reset.registry.statement
 
-    assert 'obsolete' in repr(initialized)
-
-    with pytest.raises(StateObsoleteError):
-        initialized.run()
-
-    with pytest.raises(StateObsoleteError):
-        initialized.reset()
-
-    with pytest.raises(StateObsoleteError):
-        await initialized.close()
+    await assert_initialized_obsolete(initialized)
 
 @pytest.mark.asyncio
 async def test_initialized_close(initialized):
     closed = await initialized.close()
     assert isinstance(closed, Closed)
-    assert 'obsolete' in repr(initialized)
-
-    with pytest.raises(StateObsoleteError):
-        initialized.run()
-
-    with pytest.raises(StateObsoleteError):
-        initialized.reset()
-
-    with pytest.raises(StateObsoleteError):
-        await initialized.close()
+    await assert_initialized_obsolete(initialized)
 
 @pytest.mark.asyncio
 async def test_initialized_send_pdb_command(initialized):
