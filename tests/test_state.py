@@ -102,12 +102,6 @@ class TestInitialized(BaseTestState):
     def state(self, initialized):
         yield initialized
 
-    @pytest.mark.asyncio
-    async def test_initialized(self, initialized, callback):
-        assert isinstance(initialized, Initialized)
-        assert 'obsolete' not in repr(initialized)
-
-    async def assert_initialized_obsolete(self, initialized):
         assert 'obsolete' in repr(initialized)
 
         with pytest.raises(StateObsoleteError):
