@@ -45,7 +45,7 @@ class State(ObsoleteMixin):
     async def finish(self):
         return self
     def reset(self, *_, **__):
-        return self
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     async def close(self):
         return self
     def send_pdb_command(self, *_, **__):
