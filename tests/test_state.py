@@ -115,51 +115,51 @@ class TestInitialized(BaseTestState):
         yield initialized
 
     @pytest.mark.asyncio
-    async def test_initialized_run(self, initialized):
-        running = initialized.run()
+    async def test_run(self, state):
+        running = state.run()
         assert isinstance(running, Running)
-        await self.assert_obsolete(initialized)
+        await self.assert_obsolete(state)
 
     @pytest.mark.parametrize('statement', params_statement)
     @pytest.mark.asyncio
-    async def test_initialized_reset(self, initialized, statement):
+    async def test_reset(self, state, statement):
 
-        initial_statement = initialized.registry.get_statement()
+        initial_statement = state.registry.get_statement()
 
         if statement:
             expected_statement = statement
-            reset = initialized.reset(statement=statement)
+            reset = state.reset(statement=statement)
         else:
             expected_statement = initial_statement
-            reset = initialized.reset()
+            reset = state.reset()
 
         assert isinstance(reset, Initialized)
-        assert reset is not initialized
+        assert reset is not state
 
         assert expected_statement == reset.registry.get_statement()
 
-        await self.assert_obsolete(initialized)
+        await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
-    async def test_initialized_close(self, initialized):
-        closed = await initialized.close()
+    async def test_close(self, state):
+        closed = await state.close()
         assert isinstance(closed, Closed)
-        await self.assert_obsolete(initialized)
+        await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
-    async def test_initialized_send_pdb_command(self, initialized):
+    async def test_send_pdb_command(self, state):
         with pytest.raises(StateMethodError):
-            initialized.send_pdb_command()
+            state.send_pdb_command()
 
     @pytest.mark.asyncio
-    async def test_initialized_exception(self, initialized):
+    async def test_exception(self, state):
         with pytest.raises(StateMethodError):
-            initialized.exception()
+            state.exception()
 
     @pytest.mark.asyncio
-    async def test_initialized_result(self, initialized):
+    async def test_result(self, state):
         with pytest.raises(StateMethodError):
-            initialized.result()
+            state.result()
 
 class TestRunning(BaseTestState):
 
