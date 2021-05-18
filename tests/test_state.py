@@ -121,6 +121,11 @@ class BaseTestState(ABC):
         with pytest.raises(StateMethodError):
             reset = state.reset(**kwargs)
 
+    @pytest.mark.asyncio
+    async def test_finish(self, state):
+        with pytest.raises(StateMethodError):
+            await state.finish()
+
 class TestInitialized(BaseTestState):
 
     state_class = Initialized
@@ -186,6 +191,12 @@ class TestRunning(BaseTestState):
     def state(self, running):
         yield running
 
+    @pytest.mark.asyncio
+    async def test_finish(self, state):
+        finished = await state.finish()
+        assert isinstance(finished, Finished)
+        await self.assert_obsolete(state)
+
 class TestExited(BaseTestState):
 
     state_class = Exited
@@ -193,6 +204,12 @@ class TestExited(BaseTestState):
     @pytest.fixture()
     def state(self, exited):
         yield exited
+
+    @pytest.mark.asyncio
+    async def test_finish(self, state):
+        finished = await state.finish()
+        assert isinstance(finished, Finished)
+        await self.assert_obsolete(state)
 
 class TestFinished(BaseTestState):
 
@@ -223,6 +240,15 @@ class TestFinished(BaseTestState):
 
         await self.assert_obsolete(state)
 
+    @pytest.mark.asyncio
+    async def test_finish(self, state):
+        # The same object should be returned no matter
+        # how many times called.
+        assert state is await state.finish()
+        assert state is await state.finish()
+        assert state is await state.finish()
+        assert 'obsolete' not in repr(state)
+
 class TestClosed(BaseTestState):
 
     state_class = Closed
@@ -230,44 +256,6 @@ class TestClosed(BaseTestState):
     @pytest.fixture()
     def state(self, closed):
         yield closed
-
-@pytest.mark.asyncio
-async def test_running(running):
-    assert isinstance(running, Running)
-
-@pytest.mark.asyncio
-async def test_exited(exited, callback):
-    assert isinstance(exited, Exited)
-
-@pytest.mark.asyncio
-async def test_finished(finished):
-    assert isinstance(finished, Finished)
-    assert 'obsolete' not in repr(finished)
-
-@pytest.mark.asyncio
-async def test_finished_finish(finished):
-    # The same object should be returned no matter
-    # how many times called.
-    assert finished is await finished.finish()
-    assert finished is await finished.finish()
-
-    assert 'obsolete' not in repr(finished)
-
-@pytest.mark.asyncio
-async def test_finished_reset(finished):
-
-    initialized = finished.reset()
-    assert isinstance(initialized, Initialized)
-    assert 'obsolete' in repr(finished)
-
-    with pytest.raises(StateObsoleteError):
-        await finished.finish()
-
-    with pytest.raises(StateObsoleteError):
-        finished.reset()
-
-    with pytest.raises(StateObsoleteError):
-        await finished.close()
 
 @pytest.mark.asyncio
 async def test_finished_close(finished):
@@ -284,11 +272,6 @@ async def test_finished_close(finished):
 
     with pytest.raises(StateObsoleteError):
         await finished.close()
-
-@pytest.mark.asyncio
-async def test_closed(closed):
-    assert isinstance(closed, Closed)
-    assert 'obsolete' not in repr(finished)
 
 @pytest.mark.asyncio
 async def test_closed_close(closed):
@@ -335,32 +318,6 @@ async def test_exited_callback():
     assert 1 == callback.call_count
     state, *_ = callback.call_args.args
     assert isinstance(state, Exited)
-
-@pytest.mark.asyncio
-async def test_transition_once():
-
-    callback = Mock()
-
-    initialized = Initialized(SOURCE_ONE, exited=callback)
-    assert isinstance(initialized, Initialized)
-
-    running = initialized.run()
-    assert isinstance(running, Running)
-
-    finished = await running.finish()
-    assert isinstance(finished, Finished)
-
-    assert finished is await running.finish() # the same object
-
-    closed = await finished.close()
-    assert isinstance(closed, Closed)
-
-    # The existed state is received by the callback
-    assert 1 == callback.call_count
-    exited, *_ = callback.call_args.args
-    assert isinstance(exited, Exited)
-
-    assert finished is await exited.finish() # the same object
 
 @pytest.mark.asyncio
 async def test_exited_callback_raise():
