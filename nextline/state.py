@@ -16,6 +16,11 @@ class StateObsoleteError(Exception):
     """
     pass
 
+class StateMethodError(Exception):
+    """Irrelevant operation on the state.
+    """
+    pass
+
 ##__________________________________________________________________||
 class ObsoleteMixin:
     def assert_not_obsolete(self):
@@ -44,7 +49,7 @@ class State(ObsoleteMixin):
     async def close(self):
         return self
     def send_pdb_command(self, *_, **__):
-        raise Exception(f'Not available in the state: {self!r}')
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     def exception(self):
         return None
     def result(self):

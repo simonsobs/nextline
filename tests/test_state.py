@@ -10,7 +10,8 @@ from nextline.state import (
     Exited,
     Finished,
     Closed,
-    StateObsoleteError
+    StateObsoleteError,
+    StateMethodError
 )
 
 ##__________________________________________________________________||
@@ -147,7 +148,7 @@ async def test_initialized_close(initialized):
 
 @pytest.mark.asyncio
 async def test_initialized_send_pdb_command(initialized):
-    with pytest.raises(Exception) as e:
+    with pytest.raises(StateMethodError) as e:
         initialized.send_pdb_command()
 
 @pytest.mark.asyncio
