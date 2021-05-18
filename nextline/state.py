@@ -44,7 +44,7 @@ class State(ObsoleteMixin):
         raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     async def finish(self):
         return self
-    def reset(self):
+    def reset(self, *_, **__):
         return self
     async def close(self):
         return self
@@ -299,9 +299,10 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(self):
+    def reset(self, statement=None):
         self.assert_not_obsolete()
-        statement = self.registry.get_statement()
+        if statement is None:
+            statement = self.registry.get_statement()
         initialized = Initialized(
             statement=statement,
             exited=self._exited,
