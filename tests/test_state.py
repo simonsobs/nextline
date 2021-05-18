@@ -18,6 +18,10 @@ import time
 time.sleep(0.1)
 """.strip()
 
+SOURCE_TWO = """
+x = 2
+""".strip()
+
 SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
@@ -73,6 +77,8 @@ async def closed(finished):
     y = await finished.close()
     yield y
 
+params_statement = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
+
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_initialized(initialized, callback):
@@ -89,15 +95,51 @@ async def test_initialized_run(initialized):
         initialized.run()
 
     with pytest.raises(Exception):
+        initialized.reset()
+
+    with pytest.raises(Exception):
         await initialized.close()
 
+@pytest.mark.parametrize('statement', params_statement)
 @pytest.mark.asyncio
-async def test_initialized_close(initialized, callback):
-    closed = await initialized.close()
-    assert isinstance(closed, Closed)
+async def test_initialized_reset(initialized, statement, wrap_registry):
+
+    initial_statement = initialized.registry.statement
+
+    if statement:
+        expected_statement = statement
+        reset = initialized.reset(statement=statement)
+    else:
+        expected_statement = initial_statement
+        reset = initialized.reset()
+
+    assert isinstance(reset, Initialized)
+    assert reset is not initialized
+
+    assert expected_statement == reset.registry.statement
+
+    assert 'obsolete' in repr(initialized)
 
     with pytest.raises(Exception):
         initialized.run()
+
+    with pytest.raises(Exception):
+        initialized.reset()
+
+    with pytest.raises(Exception):
+        await initialized.close()
+
+@pytest.mark.asyncio
+async def test_initialized_close(initialized):
+    closed = await initialized.close()
+    assert isinstance(closed, Closed)
+    assert 'obsolete' in repr(initialized)
+
+    with pytest.raises(Exception):
+        initialized.run()
+
+    with pytest.raises(Exception):
+        initialized.reset()
 
     with pytest.raises(Exception):
         await initialized.close()
