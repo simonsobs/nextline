@@ -94,14 +94,6 @@ class BaseTestState(ABC):
         assert isinstance(state, self.state_class)
         assert 'obsolete' not in repr(state)
 
-class TestInitialized(BaseTestState):
-
-    state_class = Initialized
-
-    @pytest.fixture()
-    def state(self, initialized):
-        yield initialized
-
     async def assert_obsolete(self, state):
         assert 'obsolete' in repr(state)
 
@@ -113,6 +105,14 @@ class TestInitialized(BaseTestState):
 
         with pytest.raises(StateObsoleteError):
             await state.close()
+
+class TestInitialized(BaseTestState):
+
+    state_class = Initialized
+
+    @pytest.fixture()
+    def state(self, initialized):
+        yield initialized
 
     @pytest.mark.asyncio
     async def test_initialized_run(self, initialized):
