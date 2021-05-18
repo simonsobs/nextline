@@ -41,13 +41,17 @@ class State(ObsoleteMixin):
             items.append('obsolete')
         return f'<{" ".join(items)}>'
     def run(self):
-        return self
+        self.assert_not_obsolete()
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     async def finish(self):
-        return self
-    def reset(self):
-        return self
+        self.assert_not_obsolete()
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+    def reset(self, *_, **__):
+        self.assert_not_obsolete()
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     async def close(self):
-        return self
+        self.assert_not_obsolete()
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     def send_pdb_command(self, *_, **__):
         raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     def exception(self):
@@ -130,7 +134,6 @@ class Running(State):
         self.registry = registry
         self._exited = exited
         self._event_exited = ThreadSafeAsyncioEvent()
-        self._next = None
 
         trace = Trace(
             registry=self.registry,
@@ -179,10 +182,11 @@ class Running(State):
             pass
 
     async def finish(self):
-        if not self._next:
-            await self._event_exited.wait()
-            self._next = await self._state_exited.finish()
-        return self._next
+        self.assert_not_obsolete()
+        await self._event_exited.wait()
+        finished = await self._state_exited.finish()
+        self.obsolete()
+        return finished
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
@@ -217,19 +221,18 @@ class Exited(State):
         self._result = result
         self._exception = exception
 
-        self._next = None
-
         self.registry.register_state_name(self.name)
 
     async def finish(self):
-        if not self._next:
-            await self._join(self._thread)
-            self._next = Finished(
-                self.registry, self._exited,
-                result=self._result,
-                exception=self._exception
-            )
-        return self._next
+        self.assert_not_obsolete()
+        await self._join(self._thread)
+        finished = Finished(
+            self.registry, self._exited,
+            result=self._result,
+            exception=self._exception
+        )
+        self.obsolete()
+        return finished
 
     async def _join(self, thread):
         try:
@@ -299,9 +302,10 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(self):
+    def reset(self, statement=None):
         self.assert_not_obsolete()
-        statement = self.registry.get_statement()
+        if statement is None:
+            statement = self.registry.get_statement()
         initialized = Initialized(
             statement=statement,
             exited=self._exited,
