@@ -82,6 +82,18 @@ class Initialized(State):
         self.obsolete()
         return running
 
+    def reset(self, statement=None):
+        self.assert_not_obsolete()
+        if statement is None:
+            statement = self.registry.statement
+        initialized = Initialized(
+            statement=statement,
+            exited=self._exited,
+            registry=self.registry
+        )
+        self.obsolete()
+        return initialized
+
     async def close(self):
         self.assert_not_obsolete()
         closed = Closed(self.registry, self._exited)
