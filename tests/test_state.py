@@ -13,7 +13,7 @@ from nextline.state import (
 )
 
 ##__________________________________________________________________||
-SOURCE = """
+SOURCE_ONE = """
 import time
 time.sleep(0.1)
 """.strip()
@@ -49,7 +49,7 @@ def callback(request):
 
 @pytest.fixture()
 async def initialized(callback):
-    y = Initialized(SOURCE, callback)
+    y = Initialized(SOURCE_ONE, callback)
     yield y
 
 @pytest.fixture()
@@ -173,7 +173,7 @@ async def test_closed_close(closed):
 @pytest.mark.asyncio
 async def test_transition():
 
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE_ONE)
     assert isinstance(state, Initialized)
 
     state = state.run()
@@ -190,7 +190,7 @@ async def test_exited_callback():
 
     callback = Mock()
 
-    state = Initialized(SOURCE, exited=callback)
+    state = Initialized(SOURCE_ONE, exited=callback)
     assert isinstance(state, Initialized)
 
     state = state.run()
@@ -212,7 +212,7 @@ async def test_transition_once():
 
     callback = Mock()
 
-    initialized = Initialized(SOURCE, exited=callback)
+    initialized = Initialized(SOURCE_ONE, exited=callback)
     assert isinstance(initialized, Initialized)
 
     running = initialized.run()
@@ -238,7 +238,7 @@ async def test_exited_callback_raise():
 
     callback = Mock(side_effect=Exception('ntYpOsermaRb'))
 
-    state = Initialized(SOURCE, exited=callback)
+    state = Initialized(SOURCE_ONE, exited=callback)
     assert isinstance(state, Initialized)
 
     with pytest.warns(UserWarning) as record:
@@ -255,7 +255,7 @@ async def test_exited_callback_raise():
 
 @pytest.mark.asyncio
 async def test_register_state_name(wrap_registry):
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE_ONE)
     state = state.run()
     state = await state.finish()
     state = await state.close()
@@ -266,7 +266,7 @@ async def test_register_state_name(wrap_registry):
 
 @pytest.mark.asyncio
 async def test_register_state_name(wrap_registry):
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE_ONE)
     state = state.run()
     state = await state.finish()
     state = state.reset()
@@ -297,7 +297,7 @@ async def test_finished_exception():
 
 @pytest.mark.asyncio
 async def test_finished_exception_none():
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE_ONE)
     state = state.run()
     state = await state.finish()
     assert isinstance(state, Finished)
@@ -306,7 +306,7 @@ async def test_finished_exception_none():
 
 @pytest.mark.asyncio
 async def test_finished_result():
-    state = Initialized(SOURCE)
+    state = Initialized(SOURCE_ONE)
     state = state.run()
 
     state = await state.finish()
