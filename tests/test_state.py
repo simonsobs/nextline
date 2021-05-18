@@ -106,6 +106,21 @@ class BaseTestState(ABC):
         with pytest.raises(StateObsoleteError):
             await state.close()
 
+    @pytest.mark.asyncio
+    async def test_run(self, state):
+        with pytest.raises(StateMethodError):
+            state.run()
+
+    @pytest.mark.parametrize('statement', params_statement)
+    @pytest.mark.asyncio
+    async def test_reset(self, state, statement):
+        if statement:
+            kwargs = dict(statement=statement)
+        else:
+            kwargs = dict()
+        with pytest.raises(StateMethodError):
+            reset = state.reset(**kwargs)
+
 class TestInitialized(BaseTestState):
 
     state_class = Initialized
@@ -128,10 +143,12 @@ class TestInitialized(BaseTestState):
 
         if statement:
             expected_statement = statement
-            reset = state.reset(statement=statement)
+            kwargs = dict(statement=statement)
         else:
             expected_statement = initial_statement
-            reset = state.reset()
+            kwargs = dict()
+
+        reset = state.reset(**kwargs)
 
         assert isinstance(reset, Initialized)
         assert reset is not state
@@ -184,6 +201,27 @@ class TestFinished(BaseTestState):
     @pytest.fixture()
     def state(self, finished):
         yield finished
+
+    @pytest.mark.parametrize('statement', params_statement)
+    @pytest.mark.asyncio
+    async def test_reset(self, state, statement):
+
+        initial_statement = state.registry.get_statement()
+
+        if statement:
+            expected_statement = statement
+            kwargs = dict(statement=statement)
+        else:
+            expected_statement = initial_statement
+            kwargs = dict()
+
+        reset = state.reset(**kwargs)
+
+        assert isinstance(reset, Initialized)
+
+        assert expected_statement == reset.registry.get_statement()
+
+        await self.assert_obsolete(state)
 
 class TestClosed(BaseTestState):
 
