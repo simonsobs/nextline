@@ -41,6 +41,7 @@ class State(ObsoleteMixin):
             items.append('obsolete')
         return f'<{" ".join(items)}>'
     def run(self):
+        self.assert_not_obsolete()
         raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     async def finish(self):
         return self
