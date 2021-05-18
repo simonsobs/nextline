@@ -46,48 +46,50 @@ async def wrap_registry(monkeypatch):
     yield
 
 ##__________________________________________________________________||
-@pytest.fixture(params=[True, False])
-def callback(request):
-    if request.param:
-        y = Mock()
-    else:
-        y = None
-    yield y
-
-@pytest.fixture()
-async def initialized(callback):
-    y = Initialized(SOURCE_ONE, callback)
-    yield y
-
-@pytest.fixture()
-async def running(initialized):
-    y = initialized.run()
-    yield y
-
-@pytest.fixture()
-async def exited(running):
-    await running._event_exited.wait()
-    y = running._state_exited
-    yield y
-
-@pytest.fixture()
-async def finished(exited):
-    y = await exited.finish()
-    yield y
-
-@pytest.fixture()
-async def closed(finished):
-    y = await finished.close()
-    yield y
-
-params_statement = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
-
-##__________________________________________________________________||
 class BaseTestState(ABC):
+
+    @pytest.fixture(params=[True, False])
+    def callback(self, request):
+        if request.param:
+            y = Mock()
+        else:
+            y = None
+        yield y
+
+    @pytest.fixture()
+    async def initialized(self, callback):
+        y = Initialized(SOURCE_ONE, callback)
+        yield y
+
+    @pytest.fixture()
+    async def running(self, initialized):
+        y = initialized.run()
+        yield y
+
+    @pytest.fixture()
+    async def exited(self, running):
+        await running._event_exited.wait()
+        y = running._state_exited
+        yield y
+
+    @pytest.fixture()
+    async def finished(self, exited):
+        y = await exited.finish()
+        yield y
+
+    @pytest.fixture()
+    async def closed(self, finished):
+        y = await finished.close()
+        yield y
 
     @abstractmethod
     def state(self, *_, **__):
         pass
+
+    params = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
+    @pytest.fixture(params=params)
+    def statement_for_test_reset(self, request):
+        yield request.param
 
     @pytest.mark.asyncio
     async def test_state(self, state):
@@ -111,9 +113,9 @@ class BaseTestState(ABC):
         with pytest.raises(StateMethodError):
             state.run()
 
-    @pytest.mark.parametrize('statement', params_statement)
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement):
+    async def test_reset(self, state, statement_for_test_reset):
+        statement = statement_for_test_reset
         if statement:
             kwargs = dict(statement=statement)
         else:
@@ -125,6 +127,16 @@ class BaseTestState(ABC):
     async def test_finish(self, state):
         with pytest.raises(StateMethodError):
             await state.finish()
+
+    @pytest.mark.asyncio
+    async def test_exception(self, state):
+        with pytest.raises(StateMethodError):
+            state.exception()
+
+    @pytest.mark.asyncio
+    async def test_result(self, state):
+        with pytest.raises(StateMethodError):
+            state.result()
 
 class TestInitialized(BaseTestState):
 
@@ -140,10 +152,10 @@ class TestInitialized(BaseTestState):
         assert isinstance(running, Running)
         await self.assert_obsolete(state)
 
-    @pytest.mark.parametrize('statement', params_statement)
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement):
+    async def test_reset(self, state, statement_for_test_reset):
 
+        statement = statement_for_test_reset
         initial_statement = state.registry.get_statement()
 
         if statement:
@@ -192,6 +204,27 @@ class TestRunning(BaseTestState):
         yield running
 
     @pytest.mark.asyncio
+    async def test_catch_callback_exception(self):
+
+        callback = Mock(side_effect=Exception('ntYpOsermaRb'))
+
+        state = Initialized(SOURCE_ONE, exited=callback)
+        assert isinstance(state, Initialized)
+
+        with pytest.warns(UserWarning) as record:
+            state = state.run()
+            assert isinstance(state, Running)
+
+            state = await state.finish()
+            assert isinstance(state, Finished)
+
+        assert 1 == len(record)
+        assert "ntYpOsermaRb" in record[0].message.args[0]
+
+        state = await state.close()
+        assert isinstance(state, Closed)
+
+    @pytest.mark.asyncio
     async def test_finish(self, state):
         finished = await state.finish()
         assert isinstance(finished, Finished)
@@ -211,6 +244,17 @@ class TestExited(BaseTestState):
         assert isinstance(finished, Finished)
         await self.assert_obsolete(state)
 
+    @pytest.mark.asyncio
+    async def test_callback(self, state, callback):
+        '''Test the existed state is received by the callback
+
+        '''
+
+        if not callback:
+            return
+        assert 1 == callback.call_count
+        assert state is callback.call_args.args[0]
+
 class TestFinished(BaseTestState):
 
     state_class = Finished
@@ -219,10 +263,10 @@ class TestFinished(BaseTestState):
     def state(self, finished):
         yield finished
 
-    @pytest.mark.parametrize('statement', params_statement)
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement):
+    async def test_reset(self, state, statement_for_test_reset):
 
+        statement = statement_for_test_reset
         initial_statement = state.registry.get_statement()
 
         if statement:
@@ -249,6 +293,44 @@ class TestFinished(BaseTestState):
         assert state is await state.finish()
         assert 'obsolete' not in repr(state)
 
+    @pytest.mark.asyncio
+    async def test_close(self, state):
+        closed = await state.close()
+        assert isinstance(closed, Closed)
+        await self.assert_obsolete(state)
+
+    @pytest.mark.asyncio
+    async def test_exception(self, state):
+        assert state.exception() is None
+
+    @pytest.mark.asyncio
+    async def test_result(self, state):
+        assert state.result() is None
+
+    @pytest.mark.asyncio
+    async def test_exception_raise(self):
+        state = Initialized(SOURCE_RAISE)
+        state = state.run()
+
+        state = await state.finish()
+        assert isinstance(state, Finished)
+
+        assert isinstance(state.exception(), Exception)
+        assert ('foo', 'bar') == state.exception().args
+        with pytest.raises(Exception):
+            raise state.exception()
+
+    @pytest.mark.asyncio
+    async def test_result_raise(self):
+        state = Initialized(SOURCE_RAISE)
+        state = state.run()
+
+        state = await state.finish()
+        assert isinstance(state, Finished)
+
+        with pytest.raises(Exception):
+            state.result()
+
 class TestClosed(BaseTestState):
 
     state_class = Closed
@@ -257,29 +339,14 @@ class TestClosed(BaseTestState):
     def state(self, closed):
         yield closed
 
-@pytest.mark.asyncio
-async def test_finished_close(finished):
-
-    closed = await finished.close()
-    assert isinstance(closed, Closed)
-    assert 'obsolete' in repr(finished)
-
-    with pytest.raises(StateObsoleteError):
-        await finished.finish()
-
-    with pytest.raises(StateObsoleteError):
-        finished.reset()
-
-    with pytest.raises(StateObsoleteError):
-        await finished.close()
-
-@pytest.mark.asyncio
-async def test_closed_close(closed):
-    # The same object should be returned no matter
-    # how many times called.
-    assert closed is await closed.close()
-
-    assert 'obsolete' not in repr(closed)
+    @pytest.mark.asyncio
+    async def test_close(self, state):
+        # The same object should be returned no matter
+        # how many times called.
+        assert state is await state.close()
+        assert state is await state.close()
+        assert state is await state.close()
+        assert 'obsolete' not in repr(state)
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
@@ -293,48 +360,6 @@ async def test_transition():
 
     state = await state.finish()
     assert isinstance(state, Finished)
-
-    state = await state.close()
-    assert isinstance(state, Closed)
-
-@pytest.mark.asyncio
-async def test_exited_callback():
-
-    callback = Mock()
-
-    state = Initialized(SOURCE_ONE, exited=callback)
-    assert isinstance(state, Initialized)
-
-    state = state.run()
-    assert isinstance(state, Running)
-
-    state = await state.finish()
-    assert isinstance(state, Finished)
-
-    state = await state.close()
-    assert isinstance(state, Closed)
-
-    # The existed state is received by the callback
-    assert 1 == callback.call_count
-    state, *_ = callback.call_args.args
-    assert isinstance(state, Exited)
-
-@pytest.mark.asyncio
-async def test_exited_callback_raise():
-
-    callback = Mock(side_effect=Exception('ntYpOsermaRb'))
-
-    state = Initialized(SOURCE_ONE, exited=callback)
-    assert isinstance(state, Initialized)
-
-    with pytest.warns(UserWarning) as record:
-        state = state.run()
-        assert isinstance(state, Running)
-
-        state = await state.finish()
-        assert isinstance(state, Finished)
-
-    assert "ntYpOsermaRb" in (record[0].message.args[0])
 
     state = await state.close()
     assert isinstance(state, Closed)
@@ -366,49 +391,5 @@ async def test_register_state_name():
     ]
     actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
     assert expected == actual
-
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_finished_exception():
-    state = Initialized(SOURCE_RAISE)
-    state = state.run()
-
-    state = await state.finish()
-    assert isinstance(state, Finished)
-
-    assert isinstance(state.exception(), Exception)
-    assert ('foo', 'bar') == state.exception().args
-    with pytest.raises(Exception):
-        raise state.exception()
-
-@pytest.mark.asyncio
-async def test_finished_exception_none():
-    state = Initialized(SOURCE_ONE)
-    state = state.run()
-    state = await state.finish()
-    assert isinstance(state, Finished)
-
-    assert state.exception() is None
-
-@pytest.mark.asyncio
-async def test_finished_result():
-    state = Initialized(SOURCE_ONE)
-    state = state.run()
-
-    state = await state.finish()
-    assert isinstance(state, Finished)
-
-    assert state.result() is None
-
-@pytest.mark.asyncio
-async def test_finished_result_raise():
-    state = Initialized(SOURCE_RAISE)
-    state = state.run()
-
-    state = await state.finish()
-    assert isinstance(state, Finished)
-
-    with pytest.raises(Exception):
-        state.result()
 
 ##__________________________________________________________________||
