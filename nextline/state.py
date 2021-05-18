@@ -51,9 +51,9 @@ class State(ObsoleteMixin):
     def send_pdb_command(self, *_, **__):
         raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     def exception(self):
-        return None
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     def result(self):
-        return None
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
 
 class Initialized(State):
     """The state "initialized", ready to run

@@ -148,8 +148,18 @@ async def test_initialized_close(initialized):
 
 @pytest.mark.asyncio
 async def test_initialized_send_pdb_command(initialized):
-    with pytest.raises(StateMethodError) as e:
+    with pytest.raises(StateMethodError):
         initialized.send_pdb_command()
+
+@pytest.mark.asyncio
+async def test_initialized_exception(initialized):
+    with pytest.raises(StateMethodError):
+        initialized.exception()
+
+@pytest.mark.asyncio
+async def test_initialized_result(initialized):
+    with pytest.raises(StateMethodError):
+        initialized.result()
 
 @pytest.mark.asyncio
 async def test_running(running):
