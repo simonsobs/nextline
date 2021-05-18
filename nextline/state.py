@@ -11,12 +11,29 @@ from .exec_ import exec_with_trace
 SCRIPT_FILE_NAME = '<string>'
 
 ##__________________________________________________________________||
-class State:
+class ObsoleteMixin:
+    def assert_not_obsolete(self):
+        if self.is_obsolete():
+            raise Exception(f'The state is obsolete: {self!r}')
+    def is_obsolete(self):
+        return getattr(self, "_obsolete", False)
+    def obsolete(self):
+        self._obsolete = True
+
+class State(ObsoleteMixin):
     """The base state class in the Nextline state machine
     """
+    def __repr__(self):
+        # e.g., "<Initialized 'initialized'>"
+        items = [self.__class__.__name__, repr(self.name)]
+        if self.is_obsolete():
+            items.append('obsolete')
+        return f'<{" ".join(items)}>'
     def run(self):
         return self
     async def finish(self):
+        return self
+    def reset(self):
         return self
     async def close(self):
         return self
@@ -38,40 +55,50 @@ class Initialized(State):
         A callable with one argument, usually Nextline._exited(state).
         It will be called with the state object Exited after the
         script has exited.
+    registry : object, optional
+        An instance of Registry. This parameter will be given by a state
+        object when the state is reset.
+
     """
 
     name = "initialized"
 
-    def __init__(self, statement: str, exited: Optional[Callable] = None):
+    def __init__(self, statement: str, exited: Optional[Callable] = None,
+                 registry: Optional[Registry] = None):
         self._exited = exited
 
-        self._active = True
+        if registry:
+            self.registry = registry
+        else:
+            self.registry = Registry()
 
-        self.registry = Registry()
         self.registry.register_statement(statement)
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self.registry.register_state_name(self.name)
 
-    def __repr__(self):
-        # e.g., "<Initialized 'initialized'>"
-        items = [self.__class__.__name__, repr(self.name)]
-        if not self._active:
-            items.append('inactive')
-        return f'<{" ".join(items)}>'
-
     def run(self):
-        if not self._active:
-            raise Exception(f'The state is not active: {self!r}')
+        self.assert_not_obsolete()
         running = Running(self.registry, self._exited)
-        self._active = False
+        self.obsolete()
         return running
 
+    def reset(self, statement=None):
+        self.assert_not_obsolete()
+        if statement is None:
+            statement = self.registry.statement
+        initialized = Initialized(
+            statement=statement,
+            exited=self._exited,
+            registry=self.registry
+        )
+        self.obsolete()
+        return initialized
+
     async def close(self):
-        if not self._active:
-            raise Exception(f'The state is not active: {self!r}')
+        self.assert_not_obsolete()
         closed = Closed(self.registry, self._exited)
         await closed._ainit()
-        self._active = False
+        self.obsolete()
         return closed
 
 class Running(State):
@@ -228,8 +255,6 @@ class Finished(State):
         self._result = result
         self._exception = exception
 
-        self._next = None
-
         self.registry = registry
         self.registry.register_state_name(self.name)
 
@@ -257,11 +282,29 @@ class Finished(State):
 
         return self._result
 
+    async def finish(self):
+        # This method can be called when Nextline.finish() is
+        # asynchronously called multiple times.
+        self.assert_not_obsolete()
+        return self
+
+    def reset(self):
+        self.assert_not_obsolete()
+        statement = self.registry.statement
+        initialized = Initialized(
+            statement=statement,
+            exited=self._exited,
+            registry=self.registry
+        )
+        self.obsolete()
+        return initialized
+
     async def close(self):
-        if not self._next:
-            self._next = Closed(self.registry, self._exited)
-            await self._next._ainit()
-        return self._next
+        self.assert_not_obsolete()
+        closed = Closed(self.registry, self._exited)
+        await closed._ainit()
+        self.obsolete()
+        return closed
 
 class Closed(State):
     """The state "closed"
@@ -285,5 +328,11 @@ class Closed(State):
     async def _ainit(self):
         await self.registry.close() # close here because "await" is
                                     # not allowed in __init__()
+
+    async def close(self):
+        # This method can be called when Nextline.close() is
+        # asynchronously called multiple times.
+        self.assert_not_obsolete()
+        return self
 
 ##__________________________________________________________________||
