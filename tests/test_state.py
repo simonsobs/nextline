@@ -145,6 +145,11 @@ async def test_initialized_close(initialized):
         await initialized.close()
 
 @pytest.mark.asyncio
+async def test_initialized_send_pdb_command(initialized):
+    with pytest.raises(Exception) as e:
+        initialized.send_pdb_command()
+
+@pytest.mark.asyncio
 async def test_running(running):
     assert isinstance(running, Running)
 

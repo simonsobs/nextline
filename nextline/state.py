@@ -38,7 +38,7 @@ class State(ObsoleteMixin):
     async def close(self):
         return self
     def send_pdb_command(self, *_, **__):
-        pass
+        raise Exception(f'Not available in the state: {self!r}')
     def exception(self):
         return None
     def result(self):
