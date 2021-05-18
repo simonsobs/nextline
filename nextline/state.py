@@ -11,10 +11,16 @@ from .exec_ import exec_with_trace
 SCRIPT_FILE_NAME = '<string>'
 
 ##__________________________________________________________________||
+class StateObsoleteError(Exception):
+    """Operation on an obsolete state object.
+    """
+    pass
+
+##__________________________________________________________________||
 class ObsoleteMixin:
     def assert_not_obsolete(self):
         if self.is_obsolete():
-            raise Exception(f'The state is obsolete: {self!r}')
+            raise StateObsoleteError(f'The state object is obsolete: {self!r}')
     def is_obsolete(self):
         return getattr(self, "_obsolete", False)
     def obsolete(self):

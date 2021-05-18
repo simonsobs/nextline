@@ -9,7 +9,8 @@ from nextline.state import (
     Running,
     Exited,
     Finished,
-    Closed
+    Closed,
+    StateObsoleteError
 )
 
 ##__________________________________________________________________||
@@ -91,13 +92,13 @@ async def test_initialized_run(initialized):
     assert isinstance(running, Running)
     assert 'obsolete' in repr(initialized)
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         initialized.run()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         initialized.reset()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await initialized.close()
 
 @pytest.mark.parametrize('statement', params_statement)
@@ -120,13 +121,13 @@ async def test_initialized_reset(initialized, statement, wrap_registry):
 
     assert 'obsolete' in repr(initialized)
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         initialized.run()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         initialized.reset()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await initialized.close()
 
 @pytest.mark.asyncio
@@ -135,13 +136,13 @@ async def test_initialized_close(initialized):
     assert isinstance(closed, Closed)
     assert 'obsolete' in repr(initialized)
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         initialized.run()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         initialized.reset()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await initialized.close()
 
 @pytest.mark.asyncio
@@ -178,13 +179,13 @@ async def test_finished_reset(finished):
     assert isinstance(initialized, Initialized)
     assert 'obsolete' in repr(finished)
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await finished.finish()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         finished.reset()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await finished.close()
 
 @pytest.mark.asyncio
@@ -194,13 +195,13 @@ async def test_finished_close(finished):
     assert isinstance(closed, Closed)
     assert 'obsolete' in repr(finished)
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await finished.finish()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         finished.reset()
 
-    with pytest.raises(Exception):
+    with pytest.raises(StateObsoleteError):
         await finished.close()
 
 @pytest.mark.asyncio
