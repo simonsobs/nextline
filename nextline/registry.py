@@ -53,8 +53,14 @@ class Registry:
     def register_statement(self, statement):
         self.statement = statement
 
+    def get_statement(self):
+        return self.statement
+
     def register_script_file_name(self, script_file_name):
         self.script_file_name = script_file_name
+
+    def get_script_file_name(self):
+        return self.script_file_name
 
     def get_source(self, file_name=None):
         if not file_name or file_name == self.script_file_name:

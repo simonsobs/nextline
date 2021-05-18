@@ -96,7 +96,7 @@ class Initialized(State):
     def reset(self, statement=None):
         self.assert_not_obsolete()
         if statement is None:
-            statement = self.registry.statement
+            statement = self.registry.get_statement()
         initialized = Initialized(
             statement=statement,
             exited=self._exited,
@@ -138,10 +138,10 @@ class Running(State):
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
 
-        statement = self.registry.statement
+        statement = self.registry.get_statement()
 
         if isinstance(statement, str):
-            code = compile(statement, self.registry.script_file_name, 'exec')
+            code = compile(statement, self.registry.get_script_file_name(), 'exec')
         else:
             code = statement
 
@@ -301,7 +301,7 @@ class Finished(State):
 
     def reset(self):
         self.assert_not_obsolete()
-        statement = self.registry.statement
+        statement = self.registry.get_statement()
         initialized = Initialized(
             statement=statement,
             exited=self._exited,
