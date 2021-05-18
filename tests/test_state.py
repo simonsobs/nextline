@@ -38,7 +38,7 @@ def monkey_patch_trace(monkeypatch):
     monkeypatch.setattr('nextline.state.Trace', mock_class)
     yield mock_class
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 async def wrap_registry(monkeypatch):
     mock_class = Mock(side_effect=lambda : Mock(wraps=Registry()))
     monkeypatch.setattr('nextline.state.Registry', mock_class)
@@ -107,9 +107,9 @@ async def test_initialized_run(initialized):
 
 @pytest.mark.parametrize('statement', params_statement)
 @pytest.mark.asyncio
-async def test_initialized_reset(initialized, statement, wrap_registry):
+async def test_initialized_reset(initialized, statement):
 
-    initial_statement = initialized.registry.statement
+    initial_statement = initialized.registry.get_statement()
 
     if statement:
         expected_statement = statement
@@ -121,7 +121,7 @@ async def test_initialized_reset(initialized, statement, wrap_registry):
     assert isinstance(reset, Initialized)
     assert reset is not initialized
 
-    assert expected_statement == reset.registry.statement
+    assert expected_statement == reset.registry.get_statement()
 
     await assert_initialized_obsolete(initialized)
 
@@ -298,7 +298,7 @@ async def test_exited_callback_raise():
     assert isinstance(state, Closed)
 
 @pytest.mark.asyncio
-async def test_register_state_name(wrap_registry):
+async def test_register_state_name():
     state = Initialized(SOURCE_ONE)
     state = state.run()
     state = await state.finish()
@@ -309,7 +309,7 @@ async def test_register_state_name(wrap_registry):
     assert expected == actual
 
 @pytest.mark.asyncio
-async def test_register_state_name(wrap_registry):
+async def test_register_state_name():
     state = Initialized(SOURCE_ONE)
     state = state.run()
     state = await state.finish()
