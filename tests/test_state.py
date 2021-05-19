@@ -345,8 +345,9 @@ async def test_register_state_name():
     assert expected == actual
 
 @pytest.mark.asyncio
-async def test_register_state_name():
+async def test_register_state_name_reset():
     state = Initialized(SOURCE_ONE)
+    state = state.reset()
     state = state.run()
     state = await state.finish()
     state = state.reset()
@@ -355,7 +356,19 @@ async def test_register_state_name():
     state = await state.close()
 
     expected = [
+        'initialized',
         'initialized', 'running', 'exited', 'finished',
+        'initialized', 'running', 'exited', 'finished', 'closed'
+    ]
+    actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
+    assert expected == actual
+
+    state = state.reset()
+    state = state.run()
+    state = await state.finish()
+    state = await state.close()
+
+    expected = [
         'initialized', 'running', 'exited', 'finished', 'closed'
     ]
     actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
