@@ -181,6 +181,12 @@ class Running(State):
             # This can happen when finish() is not called.
             pass
 
+    async def exited(self):
+        """return the exited state after the script exits.
+        """
+        await self._event_exited.wait()
+        return self._state_exited
+
     async def finish(self):
         self.assert_not_obsolete()
         await self._event_exited.wait()

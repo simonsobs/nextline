@@ -68,8 +68,7 @@ class BaseTestState(ABC):
 
     @pytest.fixture()
     async def exited(self, running):
-        await running._event_exited.wait()
-        y = running._state_exited
+        y = await running.exited()
         yield y
 
     @pytest.fixture()

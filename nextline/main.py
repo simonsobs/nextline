@@ -49,8 +49,7 @@ class Nextline:
         """receive the exited state, to be scheduled in run().
 
         """
-        await self._state._event_exited.wait()
-        self._state = self._state._state_exited
+        self._state = await self._state.exited()
 
     async def finish(self):
         """finish the script execution
