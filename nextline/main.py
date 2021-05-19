@@ -23,11 +23,10 @@ class Nextline:
     """
 
     def __init__(self, statement):
-        self._event_run = threading.Event()
         self._condition_finish = asyncio.Condition()
         self._condition_close = asyncio.Condition()
 
-        self._state = Initialized(statement, exited=self._exited)
+        self._state = Initialized(statement)
         self.registry = self._state.registry
 
     def __repr__(self):
@@ -44,20 +43,14 @@ class Nextline:
         """run the script
         """
         self._state = self._state.run()
-        self._event_run.set()
+        self._task_exited = asyncio.create_task(self._exited())
 
-    def _exited(self, state: Exited):
-        """callback function for the script execution
-
-        It is used to receive the Exited object.
-
-        This method is called by Running in the thread that executes
-        the script when the execution has exited.
+    async def _exited(self):
+        """receive the exited state, to be scheduled in run().
 
         """
-        self._event_run.wait() # in case the script finishes too quickly
-        self._event_run.clear()
-        self._state = state
+        await self._state._event_exited.wait()
+        self._state = self._state._state_exited
 
     async def finish(self):
         """finish the script execution
@@ -66,6 +59,7 @@ class Nextline:
         join the thread.
 
         """
+        await self._task_exited
         async with self._condition_finish:
             self._state = await self._state.finish()
 
