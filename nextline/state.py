@@ -118,7 +118,7 @@ class Running(State):
 
     def __init__(self, registry):
         self.registry = registry
-        self._event_exited = ThreadSafeAsyncioEvent()
+        self._event = ThreadSafeAsyncioEvent()
 
         trace = Trace(
             registry=self.registry,
@@ -145,7 +145,7 @@ class Running(State):
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
-        self._state_exited = Exited(
+        self._exited = Exited(
             self.registry,
             thread=self._thread,
             result=result,
@@ -153,7 +153,7 @@ class Running(State):
         )
 
         try:
-            self._event_exited.set()
+            self._event.set()
         except RuntimeError:
             # The Event loop is closed.
             # This can happen when neither exited() of finish() is called.
@@ -162,13 +162,13 @@ class Running(State):
     async def exited(self):
         """return the exited state after the script exits.
         """
-        await self._event_exited.wait()
-        return self._state_exited
+        await self._event.wait()
+        return self._exited
 
     async def finish(self):
         self.assert_not_obsolete()
-        await self._event_exited.wait()
-        finished = await self._state_exited.finish()
+        await self._event.wait()
+        finished = await self._exited.finish()
         self.obsolete()
         return finished
 
