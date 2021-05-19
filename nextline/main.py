@@ -1,7 +1,7 @@
 import asyncio
 import threading
 
-from .state import Initialized, Exited
+from .state import Initialized
 
 ##__________________________________________________________________||
 class Nextline:
