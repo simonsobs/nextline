@@ -111,6 +111,11 @@ class BaseTestState(ABC):
             state.run()
 
     @pytest.mark.asyncio
+    async def test_exited(self, state):
+        with pytest.raises(StateMethodError):
+            await state.exited()
+
+    @pytest.mark.asyncio
     async def test_reset(self, state, statement_for_test_reset):
         statement = statement_for_test_reset
         if statement:
@@ -199,6 +204,11 @@ class TestRunning(BaseTestState):
     @pytest.fixture()
     def state(self, running):
         yield running
+
+    @pytest.mark.asyncio
+    async def test_exited(self, state):
+        exited = await state.exited()
+        assert isinstance(exited, Exited)
 
     @pytest.mark.asyncio
     async def test_finish(self, state):
