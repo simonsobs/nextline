@@ -107,8 +107,6 @@ class Initialized(State):
 
     def reset(self, statement=None):
         self.assert_not_obsolete()
-        if statement is None:
-            statement = self.registry.get_statement()
         initialized = Initialized(statement=statement, registry=self.registry)
         self.obsolete()
         return initialized
@@ -292,8 +290,6 @@ class Finished(State):
 
     def reset(self, statement=None):
         self.assert_not_obsolete()
-        if statement is None:
-            statement = self.registry.get_statement()
         initialized = Initialized(statement=statement, registry=self.registry)
         self.obsolete()
         return initialized
@@ -318,6 +314,7 @@ class Closed(State):
 
     def __init__(self, registry):
         self.registry = registry
+        self.statement = self.registry.get_statement()
         self.registry.register_state_name(self.name)
 
     async def _ainit(self):
@@ -327,7 +324,7 @@ class Closed(State):
     def reset(self, statement=None):
         self.assert_not_obsolete()
         if statement is None:
-            statement = self.registry.get_statement()
+            statement = self.statement
         initialized = Initialized(statement=statement)
         self.obsolete()
         return initialized
