@@ -43,6 +43,9 @@ class State(ObsoleteMixin):
     def run(self):
         self.assert_not_obsolete()
         raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+    async def exited(self):
+        self.assert_not_obsolete()
+        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
     async def finish(self):
         self.assert_not_obsolete()
         raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
@@ -162,6 +165,7 @@ class Running(State):
     async def exited(self):
         """return the exited state after the script exits.
         """
+        self.assert_not_obsolete()
         await self._event.wait()
         return self._exited
 
