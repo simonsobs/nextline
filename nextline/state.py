@@ -66,10 +66,6 @@ class Initialized(State):
     ----------
     statement : str
         A Python code as a string
-    exited : callable, optional
-        A callable with one argument, usually Nextline._exited(state).
-        It will be called with the state object Exited after the
-        script has exited.
     registry : object, optional
         An instance of Registry. This parameter will be given by a state
         object when the state is reset.
@@ -78,10 +74,7 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, statement: str, exited: Optional[Callable] = None,
-                 registry: Optional[Registry] = None):
-        self._exited = exited
-
+    def __init__(self, statement: str, registry: Optional[Registry] = None):
         if registry:
             self.registry = registry
         else:
@@ -93,7 +86,7 @@ class Initialized(State):
 
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.registry, self._exited)
+        running = Running(self.registry)
         self.obsolete()
         return running
 
@@ -101,17 +94,13 @@ class Initialized(State):
         self.assert_not_obsolete()
         if statement is None:
             statement = self.registry.get_statement()
-        initialized = Initialized(
-            statement=statement,
-            exited=self._exited,
-            registry=self.registry
-        )
+        initialized = Initialized(statement=statement, registry=self.registry)
         self.obsolete()
         return initialized
 
     async def close(self):
         self.assert_not_obsolete()
-        closed = Closed(self.registry, self._exited)
+        closed = Closed(self.registry)
         await closed._ainit()
         self.obsolete()
         return closed
@@ -123,16 +112,12 @@ class Running(State):
     ----------
     registry : object
         An instance of Registry
-    exited : callable
-        see Initialized
-
     """
 
     name = "running"
 
-    def __init__(self, registry, exited):
+    def __init__(self, registry):
         self.registry = registry
-        self._exited = exited
         self._event_exited = ThreadSafeAsyncioEvent()
 
         trace = Trace(
@@ -162,23 +147,16 @@ class Running(State):
         # end of exec_with_trace()
         self._state_exited = Exited(
             self.registry,
-            self._exited,
             thread=self._thread,
             result=result,
             exception=exception
         )
 
-        if self._exited:
-            try:
-                self._exited(self._state_exited)
-            except BaseException as e:
-                warnings.warn(f'An exception occurred in the callback: {e}')
-
         try:
             self._event_exited.set()
         except RuntimeError:
             # The Event loop is closed.
-            # This can happen when finish() is not called.
+            # This can happen when neither exited() of finish() is called.
             pass
 
     async def exited(self):
@@ -206,8 +184,6 @@ class Exited(State):
     ----------
     registry : object
         An instance of Registry
-    exited : callable
-        see Initialized
     thread : object
         The object of the thread in which the script was executed.
         This thread is to be joined.
@@ -220,9 +196,8 @@ class Exited(State):
 
     name = "exited"
 
-    def __init__(self, registry, exited, thread, result, exception):
+    def __init__(self, registry, thread, result, exception):
         self.registry = registry
-        self._exited = exited
         self._thread = thread
         self._result = result
         self._exception = exception
@@ -233,7 +208,7 @@ class Exited(State):
         self.assert_not_obsolete()
         await self._join(self._thread)
         finished = Finished(
-            self.registry, self._exited,
+            self.registry,
             result=self._result,
             exception=self._exception
         )
@@ -258,8 +233,6 @@ class Finished(State):
     ----------
     registry : object
         An instance of Registry
-    exited : callable
-        see Initialized
     result : any
         The result of the script execution, always None
     exception : exception or None
@@ -269,9 +242,7 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry, exited, result, exception):
-        self._exited = exited
-
+    def __init__(self, registry, result, exception):
         self._result = result
         self._exception = exception
 
@@ -312,17 +283,13 @@ class Finished(State):
         self.assert_not_obsolete()
         if statement is None:
             statement = self.registry.get_statement()
-        initialized = Initialized(
-            statement=statement,
-            exited=self._exited,
-            registry=self.registry
-        )
+        initialized = Initialized(statement=statement, registry=self.registry)
         self.obsolete()
         return initialized
 
     async def close(self):
         self.assert_not_obsolete()
-        closed = Closed(self.registry, self._exited)
+        closed = Closed(self.registry)
         await closed._ainit()
         self.obsolete()
         return closed
@@ -334,15 +301,11 @@ class Closed(State):
     ----------
     registry : object
         An instance of Registry
-    exited : callable
-        see Initialized
     """
 
     name = "closed"
 
-    def __init__(self, registry, exited):
-        self._exited = exited
-
+    def __init__(self, registry):
         self.registry = registry
         self.registry.register_state_name(self.name)
 
