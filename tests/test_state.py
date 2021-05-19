@@ -49,8 +49,12 @@ async def wrap_registry(monkeypatch):
 class BaseTestState(ABC):
 
     @pytest.fixture()
-    async def initialized(self):
-        y = Initialized(SOURCE_ONE)
+    def statement(self):
+        yield SOURCE_ONE
+
+    @pytest.fixture()
+    async def initialized(self, statement):
+        y = Initialized(statement)
         yield y
 
     @pytest.fixture()
