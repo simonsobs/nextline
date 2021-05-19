@@ -82,8 +82,7 @@ class BaseTestState(ABC):
     def statement_for_test_reset(self, request):
         yield request.param
 
-    @pytest.mark.asyncio
-    async def test_state(self, state):
+    def test_state(self, state):
         assert isinstance(state, self.state_class)
         assert 'obsolete' not in repr(state)
 
@@ -105,8 +104,7 @@ class BaseTestState(ABC):
         with pytest.raises(StateObsoleteError):
             await state.close()
 
-    @pytest.mark.asyncio
-    async def test_run(self, state):
+    def test_run(self, state):
         with pytest.raises(StateMethodError):
             state.run()
 
@@ -116,7 +114,11 @@ class BaseTestState(ABC):
             await state.exited()
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement_for_test_reset):
+    async def test_finish(self, state):
+        with pytest.raises(StateMethodError):
+            await state.finish()
+
+    def test_reset(self, state, statement_for_test_reset):
         statement = statement_for_test_reset
         if statement:
             kwargs = dict(statement=statement)
@@ -125,18 +127,17 @@ class BaseTestState(ABC):
         with pytest.raises(StateMethodError):
             reset = state.reset(**kwargs)
 
-    @pytest.mark.asyncio
-    async def test_finish(self, state):
+    def test_send_pdb_command(self, state):
+        thread_asynctask_id = (1, None)
+        command = 'next'
         with pytest.raises(StateMethodError):
-            await state.finish()
+            state.send_pdb_command(thread_asynctask_id, command)
 
-    @pytest.mark.asyncio
-    async def test_exception(self, state):
+    def test_exception(self, state):
         with pytest.raises(StateMethodError):
             state.exception()
 
-    @pytest.mark.asyncio
-    async def test_result(self, state):
+    def test_result(self, state):
         with pytest.raises(StateMethodError):
             state.result()
 
@@ -171,6 +172,7 @@ class TestInitialized(BaseTestState):
 
         assert isinstance(reset, Initialized)
         assert reset is not state
+        assert reset.registry is state.registry
 
         assert expected_statement == reset.registry.get_statement()
 
@@ -181,21 +183,6 @@ class TestInitialized(BaseTestState):
         closed = await state.close()
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
-
-    @pytest.mark.asyncio
-    async def test_send_pdb_command(self, state):
-        with pytest.raises(StateMethodError):
-            state.send_pdb_command()
-
-    @pytest.mark.asyncio
-    async def test_exception(self, state):
-        with pytest.raises(StateMethodError):
-            state.exception()
-
-    @pytest.mark.asyncio
-    async def test_result(self, state):
-        with pytest.raises(StateMethodError):
-            state.result()
 
 class TestRunning(BaseTestState):
 
@@ -215,6 +202,9 @@ class TestRunning(BaseTestState):
         finished = await state.finish()
         assert isinstance(finished, Finished)
         await self.assert_obsolete(state)
+
+    def test_send_pdb_command(self, state):
+        pass
 
 class TestExited(BaseTestState):
 
@@ -239,6 +229,15 @@ class TestFinished(BaseTestState):
         yield finished
 
     @pytest.mark.asyncio
+    async def test_finish(self, state):
+        # The same object should be returned no matter
+        # how many times called.
+        assert state is await state.finish()
+        assert state is await state.finish()
+        assert state is await state.finish()
+        assert 'obsolete' not in repr(state)
+
+    @pytest.mark.asyncio
     async def test_reset(self, state, statement_for_test_reset):
 
         statement = statement_for_test_reset
@@ -254,19 +253,11 @@ class TestFinished(BaseTestState):
         reset = state.reset(**kwargs)
 
         assert isinstance(reset, Initialized)
+        assert reset.registry is state.registry
 
         assert expected_statement == reset.registry.get_statement()
 
         await self.assert_obsolete(state)
-
-    @pytest.mark.asyncio
-    async def test_finish(self, state):
-        # The same object should be returned no matter
-        # how many times called.
-        assert state is await state.finish()
-        assert state is await state.finish()
-        assert state is await state.finish()
-        assert 'obsolete' not in repr(state)
 
     @pytest.mark.asyncio
     async def test_close(self, state):
