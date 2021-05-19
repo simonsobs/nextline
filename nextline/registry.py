@@ -9,6 +9,34 @@ import warnings
 from .utils import QueueDist
 
 ##__________________________________________________________________||
+class Engine:
+    """will be renamed Registry
+
+    Registry now will be renamed something else
+    """
+    def __init__(self):
+        self.loop = asyncio.get_running_loop()
+        self._data = {}
+
+    async def close(self):
+        for f in self._data.values():
+            await f['queue'].close()
+
+    def add_field(self, key):
+        # need to check the loop
+        if key in self._data:
+            raise Exception(f'key already exist {key!r}')
+        self._data[key] = {'entry': None, 'queue': QueueDist()}
+
+    def register(self, key, item):
+        self._data[key]['entry'] = item
+        self._data[key]['queue'].put(item)
+
+    async def subscribe(self, key):
+        agen = self._data[key]['queue'].subscribe()
+        async for y in agen:
+            yield y
+
 class Registry:
     """
     """
