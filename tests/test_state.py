@@ -97,6 +97,9 @@ class BaseTestState(ABC):
             await state.exited()
 
         with pytest.raises(StateObsoleteError):
+            await state.finish()
+
+        with pytest.raises(StateObsoleteError):
             state.reset()
 
         with pytest.raises(StateObsoleteError):
