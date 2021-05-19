@@ -83,8 +83,14 @@ class BaseTestState(ABC):
 
     params = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
     @pytest.fixture(params=params)
-    def statement_for_test_reset(self, request):
-        yield request.param
+    def statements_for_test_reset(self, statement, request):
+        old_statement = statement
+        statement = request.param
+        if statement:
+            expected_statement = statement
+        else:
+            expected_statement = old_statement
+        yield (expected_statement, statement)
 
     def test_state(self, state):
         assert isinstance(state, self.state_class)
@@ -122,14 +128,12 @@ class BaseTestState(ABC):
         with pytest.raises(StateMethodError):
             await state.finish()
 
-    def test_reset(self, state, statement_for_test_reset):
-        statement = statement_for_test_reset
-        if statement:
-            kwargs = dict(statement=statement)
-        else:
-            kwargs = dict()
+    @pytest.mark.asyncio
+    async def test_reset(self, state, statements_for_test_reset):
+        _t, statement = statements_for_test_reset
+
         with pytest.raises(StateMethodError):
-            reset = state.reset(**kwargs)
+            state.reset(statement=statement)
 
     def test_send_pdb_command(self, state):
         thread_asynctask_id = (1, None)
@@ -160,25 +164,16 @@ class TestInitialized(BaseTestState):
         await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement_for_test_reset):
+    async def test_reset(self, state, statements_for_test_reset):
+        expected_statement, statement = statements_for_test_reset
 
-        statement = statement_for_test_reset
-        initial_statement = state.registry.get_statement()
-
-        if statement:
-            expected_statement = statement
-            kwargs = dict(statement=statement)
-        else:
-            expected_statement = initial_statement
-            kwargs = dict()
-
-        reset = state.reset(**kwargs)
-
+        reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
-        assert reset is not state
-        assert reset.registry is state.registry
 
         assert expected_statement == reset.registry.get_statement()
+
+        assert reset is not state
+        assert reset.registry is state.registry
 
         await self.assert_obsolete(state)
 
@@ -242,24 +237,15 @@ class TestFinished(BaseTestState):
         assert 'obsolete' not in repr(state)
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement_for_test_reset):
+    async def test_reset(self, state, statements_for_test_reset):
+        expected_statement, statement = statements_for_test_reset
 
-        statement = statement_for_test_reset
-        initial_statement = state.registry.get_statement()
-
-        if statement:
-            expected_statement = statement
-            kwargs = dict(statement=statement)
-        else:
-            expected_statement = initial_statement
-            kwargs = dict()
-
-        reset = state.reset(**kwargs)
-
+        reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
-        assert reset.registry is state.registry
 
         assert expected_statement == reset.registry.get_statement()
+
+        assert reset.registry is state.registry
 
         await self.assert_obsolete(state)
 
@@ -310,24 +296,15 @@ class TestClosed(BaseTestState):
         yield closed
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statement_for_test_reset):
+    async def test_reset(self, state, statements_for_test_reset):
+        expected_statement, statement = statements_for_test_reset
 
-        statement = statement_for_test_reset
-        initial_statement = state.registry.get_statement()
-
-        if statement:
-            expected_statement = statement
-            kwargs = dict(statement=statement)
-        else:
-            expected_statement = initial_statement
-            kwargs = dict()
-
-        reset = state.reset(**kwargs)
-
+        reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
-        assert reset.registry is not state.registry
 
         assert expected_statement == reset.registry.get_statement()
+
+        assert reset.registry is not state.registry
 
         await self.assert_obsolete(state)
 
