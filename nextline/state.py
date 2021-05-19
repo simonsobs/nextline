@@ -87,9 +87,14 @@ class Initialized(State):
         self.registry.register_script_file_name(SCRIPT_FILE_NAME)
         self.registry.register_state_name(self.name)
 
+        if isinstance(statement, str):
+            self._code = compile(statement, SCRIPT_FILE_NAME, 'exec')
+        else:
+            self._code = statement
+
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.registry)
+        running = Running(self.registry, self._code)
         self.obsolete()
         return running
 
@@ -115,11 +120,13 @@ class Running(State):
     ----------
     registry : object
         An instance of Registry
+    code : object
+        The code object to be executed.
     """
 
     name = "running"
 
-    def __init__(self, registry):
+    def __init__(self, registry, code):
         self.registry = registry
         self._event = ThreadSafeAsyncioEvent()
 
@@ -128,13 +135,6 @@ class Running(State):
             modules_to_trace={exec_with_trace.__module__}
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
-
-        statement = self.registry.get_statement()
-
-        if isinstance(statement, str):
-            code = compile(statement, self.registry.get_script_file_name(), 'exec')
-        else:
-            code = statement
 
         self.registry.register_state_name(self.name)
 
