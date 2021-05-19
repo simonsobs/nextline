@@ -41,6 +41,7 @@ class Registry:
     """
     """
     def __init__(self):
+        self.engine = Engine()
 
         self.loop = asyncio.get_running_loop()
 
@@ -111,6 +112,8 @@ class Registry:
             await q.close()
         self.queues_thread_task_state.clear()
         await self.queue_state_name.close()
+        await self.engine.close()
+
 
     def register_thread_task_id(self, thread_task_id):
         with self.condition:
