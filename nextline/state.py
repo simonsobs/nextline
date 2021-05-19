@@ -1,7 +1,7 @@
 import asyncio
 import threading
 import warnings
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 
 from .registry import Registry
 from .trace import Trace
@@ -67,8 +67,10 @@ class Initialized(State):
 
     Parameters
     ----------
-    statement : str
-        A Python code as a string
+    statement : str or None
+        A Python code as a string. None can be given by a state object
+        when the state is reset. If None, the statement will be
+        obtained from the registry.
     registry : object, optional
         An instance of Registry. This parameter will be given by a state
         object when the state is reset.
@@ -77,20 +79,25 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, statement: str, registry: Optional[Registry] = None):
+    def __init__(self, statement: Union[str, None], registry: Optional[Registry] = None):
+
         if registry:
             self.registry = registry
         else:
             self.registry = Registry()
 
-        self.registry.register_statement(statement)
-        self.registry.register_script_file_name(SCRIPT_FILE_NAME)
-        self.registry.register_state_name(self.name)
+        if statement:
+            self.registry.register_statement(statement)
+            self.registry.register_script_file_name(SCRIPT_FILE_NAME)
+        else:
+            statement = self.registry.get_statement()
 
         if isinstance(statement, str):
             self._code = compile(statement, SCRIPT_FILE_NAME, 'exec')
         else:
             self._code = statement
+
+        self.registry.register_state_name(self.name)
 
     def run(self):
         self.assert_not_obsolete()
