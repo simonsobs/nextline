@@ -48,17 +48,9 @@ async def wrap_registry(monkeypatch):
 ##__________________________________________________________________||
 class BaseTestState(ABC):
 
-    @pytest.fixture(params=[True, False])
-    def callback(self, request):
-        if request.param:
-            y = Mock()
-        else:
-            y = None
-        yield y
-
     @pytest.fixture()
-    async def initialized(self, callback):
-        y = Initialized(SOURCE_ONE, callback)
+    async def initialized(self):
+        y = Initialized(SOURCE_ONE)
         yield y
 
     @pytest.fixture()
@@ -203,27 +195,6 @@ class TestRunning(BaseTestState):
         yield running
 
     @pytest.mark.asyncio
-    async def test_catch_callback_exception(self):
-
-        callback = Mock(side_effect=Exception('ntYpOsermaRb'))
-
-        state = Initialized(SOURCE_ONE, exited=callback)
-        assert isinstance(state, Initialized)
-
-        with pytest.warns(UserWarning) as record:
-            state = state.run()
-            assert isinstance(state, Running)
-
-            state = await state.finish()
-            assert isinstance(state, Finished)
-
-        assert 1 == len(record)
-        assert "ntYpOsermaRb" in record[0].message.args[0]
-
-        state = await state.close()
-        assert isinstance(state, Closed)
-
-    @pytest.mark.asyncio
     async def test_finish(self, state):
         finished = await state.finish()
         assert isinstance(finished, Finished)
@@ -242,17 +213,6 @@ class TestExited(BaseTestState):
         finished = await state.finish()
         assert isinstance(finished, Finished)
         await self.assert_obsolete(state)
-
-    @pytest.mark.asyncio
-    async def test_callback(self, state, callback):
-        '''Test the existed state is received by the callback
-
-        '''
-
-        if not callback:
-            return
-        assert 1 == callback.call_count
-        assert state is callback.call_args.args[0]
 
 class TestFinished(BaseTestState):
 
