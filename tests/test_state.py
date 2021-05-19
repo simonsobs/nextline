@@ -306,6 +306,28 @@ class TestClosed(BaseTestState):
         yield closed
 
     @pytest.mark.asyncio
+    async def test_reset(self, state, statement_for_test_reset):
+
+        statement = statement_for_test_reset
+        initial_statement = state.registry.get_statement()
+
+        if statement:
+            expected_statement = statement
+            kwargs = dict(statement=statement)
+        else:
+            expected_statement = initial_statement
+            kwargs = dict()
+
+        reset = state.reset(**kwargs)
+
+        assert isinstance(reset, Initialized)
+        assert reset.registry is not state.registry
+
+        assert expected_statement == reset.registry.get_statement()
+
+        await self.assert_obsolete(state)
+
+    @pytest.mark.asyncio
     async def test_close(self, state):
         # The same object should be returned no matter
         # how many times called.
