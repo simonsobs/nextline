@@ -68,8 +68,7 @@ class Registry:
         self.queue_thread_task_ids.put(self.thread_task_ids)
         self.queues_thread_task_state = {}
 
-        self.statement = None
-
+        self.engine.add_field('statement')
         self.engine.add_field('state_name')
 
     def register_state_name(self, state_name):
@@ -81,10 +80,10 @@ class Registry:
             yield y
 
     def register_statement(self, statement):
-        self.statement = statement
+        self.engine.register('statement', statement)
 
     def get_statement(self):
-        return self.statement
+        return self.engine.get('statement')
 
     def register_script_file_name(self, script_file_name):
         self.script_file_name = script_file_name
@@ -94,7 +93,7 @@ class Registry:
 
     def get_source(self, file_name=None):
         if not file_name or file_name == self.script_file_name:
-            return self.statement.split('\n')
+            return self.engine.get('statement').split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
     def get_source_line(self, line_no, file_name=None):
