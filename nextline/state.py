@@ -309,7 +309,6 @@ class Closed(State):
     registry : object
         An instance of Registry
     """
-
     name = "closed"
 
     def __init__(self, registry):
