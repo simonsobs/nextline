@@ -32,6 +32,9 @@ class Engine:
         self._data[key]['entry'] = item
         self._data[key]['queue'].put(item)
 
+    def get(self, key):
+        return self._data[key]['entry']
+
     async def subscribe(self, key):
         agen = self._data[key]['queue'].subscribe()
         async for y in agen:
@@ -67,15 +70,13 @@ class Registry:
 
         self.statement = None
 
-        self.state_name = None
-        self.queue_state_name = QueueDist()
+        self.engine.add_field('state_name')
 
     def register_state_name(self, state_name):
-        self.state_name = state_name
-        self.queue_state_name.put(state_name)
+        self.engine.register('state_name', state_name)
 
     async def subscribe_state_name(self):
-        agen = self.queue_state_name.subscribe()
+        agen = self.engine.subscribe('state_name')
         async for y in agen:
             yield y
 
@@ -111,7 +112,6 @@ class Registry:
         for q in self.queues_thread_task_state.values():
             await q.close()
         self.queues_thread_task_state.clear()
-        await self.queue_state_name.close()
         await self.engine.close()
 
 
