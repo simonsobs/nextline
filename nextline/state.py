@@ -143,6 +143,8 @@ class Running(State):
 
         self.registry.register_state_name(self.name)
 
+        self.loop = asyncio.get_running_loop()
+
         self._thread = threading.Thread(
             target=exec_with_trace,
             args=(code, trace, self._done),
@@ -153,6 +155,12 @@ class Running(State):
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
         # end of exec_with_trace()
+
+        if self.loop.is_closed():
+            # The exit is not being waited in the main thread, for
+            # example, neither exited() of finish() is called.
+            return
+
         self._exited = Exited(
             self.registry,
             thread=self._thread,
@@ -163,8 +171,7 @@ class Running(State):
         try:
             self._event.set()
         except RuntimeError:
-            # The Event loop is closed.
-            # This can happen when neither exited() of finish() is called.
+            # The event loop is closed.
             pass
 
     async def exited(self):
