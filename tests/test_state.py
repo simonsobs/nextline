@@ -56,21 +56,38 @@ class BaseTestState(ABC):
     async def initialized(self, statement):
         y = Initialized(statement)
         yield y
+        if y.is_obsolete():
+            return
+        await y.close()
 
     @pytest.fixture()
     async def running(self, initialized):
         y = initialized.run()
         yield y
+        if y.is_obsolete():
+            return
+        exited = await y.exited()
+        if exited.is_obsolete():
+            return
+        finished = await exited.finish()
+        await finished.close()
 
     @pytest.fixture()
     async def exited(self, running):
         y = await running.exited()
         yield y
+        if y.is_obsolete():
+            return
+        finished = await y.finish()
+        await finished.close()
 
     @pytest.fixture()
     async def finished(self, exited):
         y = await exited.finish()
         yield y
+        if y.is_obsolete():
+            return
+        await y.close()
 
     @pytest.fixture()
     async def closed(self, finished):
