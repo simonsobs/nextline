@@ -1,12 +1,13 @@
 import threading
 import asyncio
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import partial
 from itertools import count
 import linecache
 import warnings
+import janus
 
-from .utils import QueueDist
+from .utils import QueueDist, ThreadSafeAsyncioEvent
 
 ##__________________________________________________________________||
 class Engine:
@@ -17,28 +18,94 @@ class Engine:
     def __init__(self):
         self.loop = asyncio.get_running_loop()
         self._data = {}
+        self._queue = {}
+        self._aws = []
+        self._early_subscripiton = {}
 
     async def close(self):
-        for f in self._data.values():
-            await f['queue'].close()
+        # print('close()', self._aws)
+        if self._aws:
+            await asyncio.gather(*self._aws)
+        # print('close()', self._queue)
+        while self._queue:
+            _, q = self._queue.popitem()
+            await q.close()
+        self._data.clear()
 
     def add_field(self, key):
-        # need to check the loop
         if key in self._data:
             raise Exception(f'key already exist {key!r}')
-        self._data[key] = {'entry': None, 'queue': QueueDist()}
+        self._data[key] = None
+
+        coro = self._a_add_field(key)
+        task = self._run_coroutine(coro)
+        if task:
+            self._aws.append(task)
+
+    async def _a_add_field(self, key):
+        queue = QueueDist()
+        self._queue[key] = queue
+        # print(self._early_subscripiton)
+        early_subscripitons = self._early_subscripiton.pop(key, None)
+        while early_subscripitons:
+            early_subscripitons.popleft().sync_q.put(queue)
 
     def register(self, key, item):
-        self._data[key]['entry'] = item
-        self._data[key]['queue'].put(item)
+        # print(f'register({key!r}, {item!r})')
+        if key not in self._data:
+            raise Exception(f'key does not exist {key!r}')
+
+        self._data[key] = item
+
+        coro = self._a_register(key, item)
+        task = self._run_coroutine(coro)
+        if task:
+            self._aws.append(task)
+
+    async def _a_register(self, key, item):
+        # print(f'_a_register({key!r}, {item!r})')
+        self._queue[key].put(item)
 
     def get(self, key):
-        return self._data[key]['entry']
+        return self._data[key]
+
+    async def find_agen(self, key):
+        q = self._queue.get(key)
+        if q:
+            return q.subscribe()
+        queue = janus.Queue()
+        self._early_subscripiton.setdefault(key, deque()).append(queue)
+        q = await queue.async_q.get()
+        return q.subscribe()
 
     async def subscribe(self, key):
-        agen = self._data[key]['queue'].subscribe()
+        agen = await self.find_agen(key)
+        # print(f'subscribe({key!r})', agen)
         async for y in agen:
+            # print(f'subscribe({key!r})', y)
             yield y
+
+    def _is_the_same_running_loop(self):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return False
+        return self.loop is loop
+
+    def _run_coroutine(self, coro):
+
+        if self._is_the_same_running_loop():
+            return asyncio.create_task(coro)
+
+        # In another thread
+
+        if self.loop.is_closed():
+            # The loop in the main thread is closed.
+            warnings.warn(f'The loop is closed: {self.loop}')
+            return
+
+        fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        fut.result()
 
 class Registry:
     """
