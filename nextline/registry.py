@@ -20,7 +20,6 @@ class Engine:
         self._data = {}
         self._queue = {}
         self._aws = []
-        self._early_subscripiton = {}
 
     async def close(self):
         # print('close()', self._aws)
@@ -30,6 +29,7 @@ class Engine:
         while self._queue:
             _, q = self._queue.popitem()
             await q.close()
+        # print('close()', self._queue)
         self._data.clear()
 
     def add_field(self, key):
@@ -43,12 +43,10 @@ class Engine:
             self._aws.append(task)
 
     async def _a_add_field(self, key):
+        if key in self._queue:
+            return
         queue = QueueDist()
         self._queue[key] = queue
-        # print(self._early_subscripiton)
-        early_subscripitons = self._early_subscripiton.pop(key, None)
-        while early_subscripitons:
-            early_subscripitons.popleft().sync_q.put(queue)
 
     def register(self, key, item):
         # print(f'register({key!r}, {item!r})')
@@ -71,11 +69,9 @@ class Engine:
 
     async def find_agen(self, key):
         q = self._queue.get(key)
-        if q:
-            return q.subscribe()
-        queue = janus.Queue()
-        self._early_subscripiton.setdefault(key, deque()).append(queue)
-        q = await queue.async_q.get()
+        if not q:
+            q = QueueDist()
+            self._queue[key] = q
         return q.subscribe()
 
     async def subscribe(self, key):
