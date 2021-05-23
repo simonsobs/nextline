@@ -94,26 +94,25 @@ async def test_subscribe_after_end(obj):
     await task_receive
 
 ##__________________________________________________________________||
-nsubscribers = [0, 1, 2, 5, 20, 100]
-nitems = [0, 1, 2, 300]
-event_at = [0, 1, 2, 100, 200, 250]
+nsubscribers = [0, 1, 2, 5, 50]
+pre_nitems = [0, 1, 2, 50]
+post_nitems = [0, 1, 2, 100]
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
-@pytest.mark.parametrize('event_at', event_at)
-@pytest.mark.parametrize('nitems', nitems)
+@pytest.mark.parametrize('post_nitems', post_nitems)
+@pytest.mark.parametrize('pre_nitems', pre_nitems)
 @pytest.mark.parametrize('nsubscribers', nsubscribers)
 @pytest.mark.asyncio
-async def test_thread(obj, nsubscribers, nitems, event_at):
+async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
     '''test if the issue is resovled
     https://github.com/simonsobs/nextline/issues/2
 
     '''
 
-    if nitems < event_at:
-        pytest.skip("nitems < event_at")
+    nitems = pre_nitems + post_nitems
 
-    if nsubscribers >= 100 and nitems >= 100:
-        pytest.skip("nsubscribers >= 100 and nitems >= 100")
+    if nsubscribers >= 50 and nitems >= 100:
+        pytest.skip("nsubscribers >= 50 and nitems >= 100")
 
     async def subscribe(obj, event):
         await event.wait()
@@ -135,8 +134,8 @@ async def test_thread(obj, nsubscribers, nitems, event_at):
         await obj.close()
 
     items = list(range(nitems))
-    pre_items = items[:event_at]
-    post_items = items[event_at:]
+    pre_items = items[:pre_nitems]
+    post_items = items[pre_nitems:]
 
     event = ThreadSafeAsyncioEvent()
     event_end = ThreadSafeAsyncioEvent()
