@@ -33,7 +33,7 @@ class Engine:
 
     def open_register(self, name: str):
         if name in self._data:
-            raise Exception(f'key already exist {name!r}')
+            raise Exception(f'register name already exists {name!r}')
         self._data[name] = None
 
         coro = self._create_queue(name)
@@ -48,15 +48,15 @@ class Engine:
         if task:
             self._aws.append(task)
 
-    async def _create_queue(self, key):
+    async def _create_queue(self, name):
         """Create a queue
 
         This method needs to run in self.loop.
         """
-        if key in self._queue:
+        if name in self._queue:
             return
         queue = QueueDist()
-        self._queue[key] = queue
+        self._queue[name] = queue
 
     async def _close_queue(self, name):
         """Close a queue
@@ -66,30 +66,30 @@ class Engine:
         queue = self._queue.pop(name)
         await queue.close()
 
-    def register(self, key, item):
-        # print(f'register({key!r}, {item!r})')
-        if key not in self._data:
-            raise Exception(f'key does not exist {key!r}')
+    def register(self, name, item):
+        # print(f'register({name!r}, {item!r})')
+        if name not in self._data:
+            raise Exception(f'register does not exist {name!r}')
 
-        self._data[key] = item
+        self._data[name] = item
 
-        coro = self._distribute(key, item)
+        coro = self._distribute(name, item)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
 
-    async def _distribute(self, key, item):
-        # print(f'_distribute({key!r}, {item!r})')
-        self._queue[key].put(item)
+    async def _distribute(self, name, item):
+        # print(f'_distribute({name!r}, {item!r})')
+        self._queue[name].put(item)
 
-    def get(self, key):
-        return self._data[key]
+    def get(self, name):
+        return self._data[name]
 
-    async def subscribe(self, key):
-        queue = self._queue.get(key)
+    async def subscribe(self, name):
+        queue = self._queue.get(name)
         if not queue:
-            await self._create_queue(key)
-            queue = self._queue.get(key)
+            await self._create_queue(name)
+            queue = self._queue.get(name)
         async for y in queue.subscribe():
             yield y
 
