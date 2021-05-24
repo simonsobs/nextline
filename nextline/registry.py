@@ -32,7 +32,7 @@ class Engine:
         # print('close()', self._queue)
         self._data.clear()
 
-    def add_field(self, key):
+    def open_register(self, key):
         if key in self._data:
             raise Exception(f'key already exist {key!r}')
         self._data[key] = None
@@ -133,12 +133,12 @@ class Registry:
 
         self.queues_thread_task_state = {}
 
-        self.engine.add_field('thread_task_ids')
+        self.engine.open_register('thread_task_ids')
         self.engine.register('thread_task_ids', self.thread_task_ids)
 
-        self.engine.add_field('statement')
-        self.engine.add_field('state_name')
-        self.engine.add_field('script_file_name')
+        self.engine.open_register('statement')
+        self.engine.open_register('state_name')
+        self.engine.open_register('script_file_name')
 
     def register_state_name(self, state_name):
         self.engine.register('state_name', state_name)

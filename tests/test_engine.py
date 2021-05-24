@@ -1,5 +1,4 @@
 import sys
-import threading
 import asyncio
 
 import pytest
@@ -24,7 +23,7 @@ async def test_one(thread, nsubscribers, nitems):
         return ret
 
     def register(engine, field, items):
-        engine.add_field(field)
+        engine.open_register(field)
         assert engine.get(field) is None
         for item in items:
             engine.register(field, item)
