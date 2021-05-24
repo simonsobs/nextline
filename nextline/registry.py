@@ -131,9 +131,10 @@ class Registry:
         self.prompting_counter = count().__next__
         self.prompting_counter() # consume 0
 
-        self.queue_thread_task_ids = QueueDist()
-        self.queue_thread_task_ids.put(self.thread_task_ids)
         self.queues_thread_task_state = {}
+
+        self.engine.add_field('thread_task_ids')
+        self.engine.register('thread_task_ids', self.thread_task_ids)
 
         self.engine.add_field('statement')
         self.engine.add_field('state_name')
@@ -175,7 +176,6 @@ class Registry:
         return ''
 
     async def close(self):
-        await self.queue_thread_task_ids.close()
         for q in self.queues_thread_task_state.values():
             await q.close()
         self.queues_thread_task_state.clear()
@@ -194,7 +194,7 @@ class Registry:
             if thread_task_id in self.queues_thread_task_state:
                 return
             self.queues_thread_task_state[thread_task_id] = QueueDist()
-            self.queue_thread_task_ids.put(self.thread_task_ids)
+            self.engine.register('thread_task_ids', self.thread_task_ids)
 
     def deregister_thread_task_id(self, thread_task_id):
         with self.condition:
@@ -208,7 +208,7 @@ class Registry:
 
     async def _deregister_thread_task_id(self, thread_task_id):
         with self.condition:
-            self.queue_thread_task_ids.put(self.thread_task_ids)
+            self.engine.register('thread_task_ids', self.thread_task_ids)
             q = self.queues_thread_task_state.pop(thread_task_id, None)
             if q:
                 await q.close()
@@ -236,7 +236,8 @@ class Registry:
             self.queues_thread_task_state[thread_task_id].put(self._data[thread_task_id].copy())
 
     async def subscribe_thread_task_ids(self):
-        async for y in self.queue_thread_task_ids.subscribe():
+        agen = self.engine.subscribe('thread_task_ids')
+        async for y in agen:
             yield y
 
     async def subscribe_thread_task_state(self, thread_task_id):
