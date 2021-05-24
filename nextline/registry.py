@@ -37,12 +37,16 @@ class Engine:
             raise Exception(f'key already exist {key!r}')
         self._data[key] = None
 
-        coro = self._a_add_field(key)
+        coro = self._create_queue(key)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
 
-    async def _a_add_field(self, key):
+    async def _create_queue(self, key):
+        """Create a queue
+
+        This method needs to run in self.loop.
+        """
         if key in self._queue:
             return
         queue = QueueDist()
@@ -55,45 +59,38 @@ class Engine:
 
         self._data[key] = item
 
-        coro = self._a_register(key, item)
+        coro = self._distribute(key, item)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
 
-    async def _a_register(self, key, item):
-        # print(f'_a_register({key!r}, {item!r})')
+    async def _distribute(self, key, item):
+        # print(f'_distribute({key!r}, {item!r})')
         self._queue[key].put(item)
 
     def get(self, key):
         return self._data[key]
 
-    async def find_agen(self, key):
-        q = self._queue.get(key)
-        if not q:
-            q = QueueDist()
-            self._queue[key] = q
-        return q.subscribe()
-
     async def subscribe(self, key):
-        agen = await self.find_agen(key)
-        # print(f'subscribe({key!r})', agen)
-        async for y in agen:
-            # print(f'subscribe({key!r})', y)
+        queue = self._queue.get(key)
+        if not queue:
+            await self._create_queue(key)
+            queue = self._queue.get(key)
+        async for y in queue.subscribe():
             yield y
 
-    def _is_the_same_running_loop(self):
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return False
-        return self.loop is loop
-
     def _run_coroutine(self, coro):
+        """Run a coroutine in the loop.
+
+        Return a task if in the loop. If not in the loop, schedule to
+        run in the loop and wait until it exits.
+
+        """
 
         if self._is_the_same_running_loop():
             return asyncio.create_task(coro)
 
-        # In another thread
+        # not in the loop, i.e., in another thread
 
         if self.loop.is_closed():
             # The loop in the main thread is closed.
@@ -102,6 +99,13 @@ class Engine:
 
         fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
         fut.result()
+
+    def _is_the_same_running_loop(self):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return False
+        return self.loop is loop
 
 class Registry:
     """
