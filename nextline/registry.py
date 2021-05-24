@@ -31,12 +31,12 @@ class Engine:
         # print('close()', self._queue)
         self._data.clear()
 
-    def open_register(self, key):
-        if key in self._data:
-            raise Exception(f'key already exist {key!r}')
-        self._data[key] = None
+    def open_register(self, name: str):
+        if name in self._data:
+            raise Exception(f'key already exist {name!r}')
+        self._data[name] = None
 
-        coro = self._create_queue(key)
+        coro = self._create_queue(name)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
