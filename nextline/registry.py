@@ -5,6 +5,7 @@ from functools import partial
 from itertools import count
 import linecache
 import warnings
+from typing import Hashable
 
 from .utils import QueueDist
 
@@ -31,65 +32,65 @@ class Engine:
         # print('close()', self._queue)
         self._data.clear()
 
-    def open_register(self, name: str):
-        if name in self._data:
-            raise Exception(f'register name already exists {name!r}')
-        self._data[name] = None
+    def open_register(self, key: Hashable):
+        if key in self._data:
+            raise Exception(f'register key already exists {key!r}')
+        self._data[key] = None
 
-        coro = self._create_queue(name)
+        coro = self._create_queue(key)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
 
-    def close_register(self, name: str):
-        del self._data[name]
-        coro = self._close_queue(name)
+    def close_register(self, key: Hashable):
+        del self._data[key]
+        coro = self._close_queue(key)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
 
-    async def _create_queue(self, name):
+    async def _create_queue(self, key):
         """Create a queue
 
         This method needs to run in self.loop.
         """
-        if name in self._queue:
+        if key in self._queue:
             return
         queue = QueueDist()
-        self._queue[name] = queue
+        self._queue[key] = queue
 
-    async def _close_queue(self, name):
+    async def _close_queue(self, key):
         """Close a queue
 
         This method needs to run in self.loop.
         """
-        queue = self._queue.pop(name)
+        queue = self._queue.pop(key)
         await queue.close()
 
-    def register(self, name, item):
-        # print(f'register({name!r}, {item!r})')
-        if name not in self._data:
-            raise Exception(f'register does not exist {name!r}')
+    def register(self, key, item):
+        # print(f'register({key!r}, {item!r})')
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
 
-        self._data[name] = item
+        self._data[key] = item
 
-        coro = self._distribute(name, item)
+        coro = self._distribute(key, item)
         task = self._run_coroutine(coro)
         if task:
             self._aws.append(task)
 
-    async def _distribute(self, name, item):
-        # print(f'_distribute({name!r}, {item!r})')
-        self._queue[name].put(item)
+    async def _distribute(self, key, item):
+        # print(f'_distribute({key!r}, {item!r})')
+        self._queue[key].put(item)
 
-    def get(self, name):
-        return self._data[name]
+    def get(self, key):
+        return self._data[key]
 
-    async def subscribe(self, name):
-        queue = self._queue.get(name)
+    async def subscribe(self, key):
+        queue = self._queue.get(key)
         if not queue:
-            await self._create_queue(name)
-            queue = self._queue.get(name)
+            await self._create_queue(key)
+            queue = self._queue.get(key)
         async for y in queue.subscribe():
             yield y
 

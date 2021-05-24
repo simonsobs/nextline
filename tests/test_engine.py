@@ -17,40 +17,40 @@ nsubscribers = [0, 1, 2, 70]
 @pytest.mark.asyncio
 async def test_one(close_register, thread, nsubscribers, nitems):
 
-    async def subscribe(engine, register_name):
+    async def subscribe(engine, register_key):
         ret = []
-        async for y in engine.subscribe(register_name):
+        async for y in engine.subscribe(register_key):
             ret.append(y)
         return ret
 
-    def register(engine, register_name, items):
-        engine.open_register(register_name)
-        assert engine.get(register_name) is None
+    def register(engine, register_key, items):
+        engine.open_register(register_key)
+        assert engine.get(register_key) is None
         for item in items:
-            engine.register(register_name, item)
-            assert engine.get(register_name) == item
+            engine.register(register_key, item)
+            assert engine.get(register_key) == item
         if close_register:
-            engine.close_register(register_name)
+            engine.close_register(register_key)
 
-    async def aregister(engine, register_name, items):
-        return register(engine, register_name, items)
+    async def aregister(engine, register_key, items):
+        return register(engine, register_key, items)
 
     engine = Engine()
 
-    register_name = 'item'
-    items = [f'{register_name}-{i+1}' for i in range(nitems)]
+    register_key = 'item'
+    items = [f'{register_key}-{i+1}' for i in range(nitems)]
 
     # subscribe
     tasks_subscribe = []
     for i in range(nsubscribers):
-        task = asyncio.create_task(subscribe(engine, register_name))
+        task = asyncio.create_task(subscribe(engine, register_key))
         tasks_subscribe.append(task)
 
     # register
     if thread:
-        coro = asyncio.to_thread(register, engine, register_name, items)
+        coro = asyncio.to_thread(register, engine, register_key, items)
     else:
-        coro = aregister(engine, register_name, items)
+        coro = aregister(engine, register_key, items)
     task_register = asyncio.create_task(coro)
 
     await asyncio.gather(task_register)
