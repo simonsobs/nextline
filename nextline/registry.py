@@ -1,13 +1,12 @@
 import threading
 import asyncio
-from collections import defaultdict, deque
+from collections import defaultdict
 from functools import partial
 from itertools import count
 import linecache
 import warnings
-import janus
 
-from .utils import QueueDist, ThreadSafeAsyncioEvent
+from .utils import QueueDist
 
 ##__________________________________________________________________||
 class Engine:
