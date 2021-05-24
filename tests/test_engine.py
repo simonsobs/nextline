@@ -1,16 +1,14 @@
 import sys
 import threading
 import asyncio
-from functools import partial
-from collections import deque
 
 import pytest
 
 from nextline.registry import Engine
 
 ##__________________________________________________________________||
-nitems = [0, 1, 2, 5]
-nsubscribers = [0, 1, 2, 7]
+nitems = [0, 1, 2, 50]
+nsubscribers = [0, 1, 2, 70]
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
 @pytest.mark.parametrize('nitems', nitems)
@@ -20,46 +18,38 @@ nsubscribers = [0, 1, 2, 7]
 async def test_one(thread, nsubscribers, nitems):
 
     async def subscribe(engine, field):
-
-        agen = engine.subscribe(field)
         ret = []
-        async for y in agen:
+        async for y in engine.subscribe(field):
             ret.append(y)
         return ret
 
-    def thread_register(engine, field, items):
-
+    def register(engine, field, items):
         engine.add_field(field)
         assert engine.get(field) is None
-
         for item in items:
             engine.register(field, item)
             assert engine.get(field) == item
 
-    async def async_register(engine, field, items):
-
-        engine.add_field(field)
-        assert engine.get(field) is None
-
-        for item in items:
-            engine.register(field, item)
-            assert engine.get(field) == item
+    async def aregister(engine, field, items):
+        return register(engine, field, items)
 
     engine = Engine()
 
     field = 'item'
     items = [f'{field}-{i+1}' for i in range(nitems)]
 
+    # subscribe
     tasks_subscribe = []
     for i in range(nsubscribers):
         task = asyncio.create_task(subscribe(engine, field))
         tasks_subscribe.append(task)
 
+    # register
     if thread:
-        target = partial(thread_register, engine, field, items)
-        task_register = asyncio.to_thread(target)
+        coro = asyncio.to_thread(register, engine, field, items)
     else:
-        task_register = asyncio.create_task(async_register(engine, field, items))
+        coro = aregister(engine, field, items)
+    task_register = asyncio.create_task(coro)
 
     await asyncio.gather(task_register)
 
