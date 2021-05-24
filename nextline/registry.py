@@ -41,6 +41,13 @@ class Engine:
         if task:
             self._aws.append(task)
 
+    def close_register(self, name: str):
+        del self._data[name]
+        coro = self._close_queue(name)
+        task = self._run_coroutine(coro)
+        if task:
+            self._aws.append(task)
+
     async def _create_queue(self, key):
         """Create a queue
 
@@ -50,6 +57,14 @@ class Engine:
             return
         queue = QueueDist()
         self._queue[key] = queue
+
+    async def _close_queue(self, name):
+        """Close a queue
+
+        This method needs to run in self.loop.
+        """
+        queue = self._queue.pop(name)
+        await queue.close()
 
     def register(self, key, item):
         # print(f'register({key!r}, {item!r})')

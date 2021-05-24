@@ -13,8 +13,9 @@ nsubscribers = [0, 1, 2, 70]
 @pytest.mark.parametrize('nitems', nitems)
 @pytest.mark.parametrize('nsubscribers', nsubscribers)
 @pytest.mark.parametrize('thread', [True, False])
+@pytest.mark.parametrize('close_register', [True, False])
 @pytest.mark.asyncio
-async def test_one(thread, nsubscribers, nitems):
+async def test_one(close_register, thread, nsubscribers, nitems):
 
     async def subscribe(engine, register_name):
         ret = []
@@ -28,6 +29,8 @@ async def test_one(thread, nsubscribers, nitems):
         for item in items:
             engine.register(register_name, item)
             assert engine.get(register_name) == item
+        if close_register:
+            engine.close_register(register_name)
 
     async def aregister(engine, register_name, items):
         return register(engine, register_name, items)
