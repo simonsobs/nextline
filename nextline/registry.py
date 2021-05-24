@@ -137,6 +137,7 @@ class Registry:
 
         self.engine.add_field('statement')
         self.engine.add_field('state_name')
+        self.engine.add_field('script_file_name')
 
     def register_state_name(self, state_name):
         self.engine.register('state_name', state_name)
@@ -153,13 +154,13 @@ class Registry:
         return self.engine.get('statement')
 
     def register_script_file_name(self, script_file_name):
-        self.script_file_name = script_file_name
+        self.engine.register('script_file_name', script_file_name)
 
     def get_script_file_name(self):
-        return self.script_file_name
+        return self.engine.get('script_file_name')
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == self.script_file_name:
+        if not file_name or file_name == self.engine.get('script_file_name'):
             return self.engine.get('statement').split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
