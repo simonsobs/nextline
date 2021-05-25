@@ -143,7 +143,12 @@ class PdbProxy:
 
         file_name = self.pdb.canonic(frame.f_code.co_filename)
         line_no = frame.f_lineno
-        self.registry.register_thread_task_state(self.thread_asynctask_id, file_name, line_no, event)
+        state = {
+            'file_name': file_name,
+            'line_no': line_no,
+            'trace_event': event
+        }
+        self.registry.register_thread_task_state(self.thread_asynctask_id, state)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()

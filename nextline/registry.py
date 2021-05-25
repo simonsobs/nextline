@@ -204,13 +204,9 @@ class Registry:
 
 
 
-    def register_thread_task_state(self, thread_task_id, file_name, line_no, trace_event):
+    def register_thread_task_state(self, thread_task_id, state):
         with self.condition:
-            self._data[thread_task_id].update({
-                'file_name': file_name,
-                'line_no': line_no,
-                'trace_event': trace_event
-            })
+            self._data[thread_task_id].update(state)
 
     def register_prompting(self, thread_task_id):
         with self.condition:
