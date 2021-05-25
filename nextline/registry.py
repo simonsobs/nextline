@@ -121,7 +121,7 @@ class Registry:
         self.prompting_counter() # consume 0
 
         self.engine.open_register('thread_task_ids')
-        self.engine.register('thread_task_ids', self.thread_task_ids)
+        self.engine.register('thread_task_ids', [])
 
         self.engine.open_register('statement')
         self.engine.open_register('state_name')
@@ -179,7 +179,11 @@ class Registry:
             # multiple times for the same self.thread_asynctask_id for
             # ayncio tasks
             pass
-        self.engine.register('thread_task_ids', self.thread_task_ids)
+        thread_task_ids = self.engine.get('thread_task_ids')
+        if thread_task_ids and thread_task_id in thread_task_ids:
+            return
+        thread_task_ids = thread_task_ids + [thread_task_id]
+        self.engine.register('thread_task_ids', thread_task_ids)
 
     def deregister_thread_task_id(self, thread_task_id):
         with self.condition:
@@ -188,8 +192,17 @@ class Registry:
             except KeyError:
                 warnings.warn("not found: thread_task_id = {}".format(thread_task_id))
 
-        self.engine.register('thread_task_ids', self.thread_task_ids)
         self.engine.close_register(thread_task_id)
+
+        thread_task_ids = self.engine.get('thread_task_ids')
+        if not thread_task_ids:
+            return
+        if thread_task_id not  in thread_task_ids:
+            return
+        thread_task_ids = [i for i in thread_task_ids if i != thread_task_id]
+        self.engine.register('thread_task_ids', thread_task_ids)
+
+
 
     def register_thread_task_state(self, thread_task_id, file_name, line_no, trace_event):
         with self.condition:
@@ -221,14 +234,6 @@ class Registry:
     async def subscribe_thread_task_state(self, thread_task_id):
         async for y in self.engine.subscribe(thread_task_id):
             yield y
-
-    @property
-    def thread_task_ids(self):
-        '''list of thread_task_ids
-
-        '''
-        with self.condition:
-            return list(self._data.keys())
 
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
