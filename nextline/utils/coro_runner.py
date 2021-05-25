@@ -1,4 +1,5 @@
 import asyncio
+from typing import Coroutine
 
 ##__________________________________________________________________||
 class CoroutineRunner:
@@ -7,7 +8,11 @@ class CoroutineRunner:
     def __init__(self):
         self.loop = asyncio.get_running_loop()
 
-    def run(self, coro):
+    def __repr__(self):
+        # e.g., "<CoroutineRunner loop=<_UnixSelectorEventLoop running=True closed=False debug=False>>"
+        return f'<{self.__class__.__name__} loop={self.loop!r}>'
+
+    def run(self, coro: Coroutine):
         """Run a coroutine in the loop.
 
         Return a task if in the loop. If not in the loop, schedule to
