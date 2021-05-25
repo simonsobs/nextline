@@ -47,7 +47,10 @@ class Engine:
             self._aws.append(task)
 
     def close_register(self, key: Hashable):
-        del self._data[key]
+        try:
+            del self._data[key]
+        except KeyError:
+            warnings.warn(f'key not found: {key}')
         coro = self._close_queue(key)
         task = self._run_coroutine(coro)
         if task:
