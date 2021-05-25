@@ -33,8 +33,12 @@ class Engine:
         self._data.clear()
 
     def open_register(self, key: Hashable):
-        if key in self._data:
-            raise Exception(f'register key already exists {key!r}')
+        # # commented out because can be opened multiple times for the same key
+        # # from trace_func_outermost(), in which
+        # # self.registry.register_thread_task_id() can be called multiple times for the same
+        # # self.thread_asynctask_id for ayncio tasks
+        # if key in self._data:
+        #    raise Exception(f'register key already exists {key!r}')
         self._data[key] = None
 
         coro = self._create_queue(key)
