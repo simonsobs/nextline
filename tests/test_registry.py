@@ -20,10 +20,10 @@ def _test_warning(registry):
     id1 = (1111111, None)
     with pytest.warns(UserWarning) as record:
         registry.deregister_thread_task_id(id1)
-    assert "not found: thread_task_id" in (record[0].message.args[0])
+    assert "key not found" in (record[0].message.args[0])
     id2 = (1111111, 123)
     with pytest.warns(UserWarning) as record:
         registry.deregister_thread_task_id(id2)
-    assert "not found: thread_task_id" in (record[0].message.args[0])
+    assert "key not found" in (record[0].message.args[0])
 
 ##__________________________________________________________________||

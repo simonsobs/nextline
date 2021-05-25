@@ -103,19 +103,6 @@ class Registry:
     def __init__(self):
         self.engine = Engine()
 
-        self.condition = threading.Condition()
-
-        # key thread_task_id
-        self._data = defaultdict(
-            partial(
-                dict,
-                prompting=0,
-                file_name=None,
-                line_no=None,
-                trace_event=None,
-            )
-        )
-
         self.engine.open_register('thread_task_ids')
         self.engine.register('thread_task_ids', [])
 
@@ -163,8 +150,6 @@ class Registry:
 
 
     def register_thread_task_id(self, thread_task_id):
-        with self.condition:
-            self._data[thread_task_id].update({'prompting': 0})
 
         try:
             self.engine.open_register(thread_task_id)
@@ -182,11 +167,6 @@ class Registry:
         self.engine.register('thread_task_ids', thread_task_ids)
 
     def deregister_thread_task_id(self, thread_task_id):
-        with self.condition:
-            try:
-                del self._data[thread_task_id]
-            except KeyError:
-                warnings.warn("not found: thread_task_id = {}".format(thread_task_id))
 
         self.engine.close_register(thread_task_id)
 
@@ -198,17 +178,8 @@ class Registry:
         thread_task_ids = [i for i in thread_task_ids if i != thread_task_id]
         self.engine.register('thread_task_ids', thread_task_ids)
 
-
-
     def register_thread_task_state(self, thread_task_id, state):
-        with self.condition:
-            self._data[thread_task_id].update(state)
-        self.publish_thread_task_state(thread_task_id)
-
-    def publish_thread_task_state(self, thread_task_id):
-        if thread_task_id in self._data:
-            # print(self._data[thread_task_id])
-            self.engine.register(thread_task_id, self._data[thread_task_id].copy())
+        self.engine.register(thread_task_id, state.copy())
 
     async def subscribe_thread_task_ids(self):
         agen = self.engine.subscribe('thread_task_ids')
