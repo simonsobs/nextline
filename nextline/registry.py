@@ -154,8 +154,6 @@ class Registry:
         self.prompting_counter = count().__next__
         self.prompting_counter() # consume 0
 
-        self.queues_thread_task_state = {}
-
         self.engine.open_register('thread_task_ids')
         self.engine.register('thread_task_ids', self.thread_task_ids)
 
@@ -199,9 +197,6 @@ class Registry:
         return ''
 
     async def close(self):
-        for q in self.queues_thread_task_state.values():
-            await q.close()
-        self.queues_thread_task_state.clear()
         await self.engine.close()
 
 
@@ -214,9 +209,7 @@ class Registry:
 
     async def _register_thread_task_id(self, thread_task_id):
         with self.condition:
-            if thread_task_id in self.queues_thread_task_state:
-                return
-            self.queues_thread_task_state[thread_task_id] = QueueDist()
+            self.engine.open_register(thread_task_id)
             self.engine.register('thread_task_ids', self.thread_task_ids)
 
     def deregister_thread_task_id(self, thread_task_id):
@@ -232,9 +225,7 @@ class Registry:
     async def _deregister_thread_task_id(self, thread_task_id):
         with self.condition:
             self.engine.register('thread_task_ids', self.thread_task_ids)
-            q = self.queues_thread_task_state.pop(thread_task_id, None)
-            if q:
-                await q.close()
+            self.engine.close_register(thread_task_id)
 
     def register_thread_task_state(self, thread_task_id, file_name, line_no, trace_event):
         with self.condition:
@@ -256,7 +247,7 @@ class Registry:
 
     def publish_thread_task_state(self, thread_task_id):
         if thread_task_id in self._data:
-            self.queues_thread_task_state[thread_task_id].put(self._data[thread_task_id].copy())
+            self.engine.register(thread_task_id, self._data[thread_task_id].copy())
 
     async def subscribe_thread_task_ids(self):
         agen = self.engine.subscribe('thread_task_ids')
@@ -264,7 +255,7 @@ class Registry:
             yield y
 
     async def subscribe_thread_task_state(self, thread_task_id):
-        async for y in self.queues_thread_task_state[thread_task_id].subscribe():
+        async for y in self.engine.subscribe(thread_task_id):
             yield y
 
     @property
