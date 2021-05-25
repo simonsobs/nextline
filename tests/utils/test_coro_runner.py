@@ -1,3 +1,4 @@
+import sys
 import asyncio
 
 import pytest
@@ -23,6 +24,7 @@ async def test_async(obj):
     await task
     assert 1 == afunc.await_count
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
 @pytest.mark.asyncio
 async def test_thread(obj):
     def run():
