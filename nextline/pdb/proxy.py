@@ -38,14 +38,16 @@ class PdbProxy:
         prompted will be added.
     registry: object
     ci_registry: object
+    prompting_counter : callable
     '''
 
-    def __init__(self, thread_asynctask_id, trace, modules_to_trace, registry, ci_registry):
+    def __init__(self, thread_asynctask_id, trace, modules_to_trace, registry, ci_registry, prompting_counter):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
         self.modules_to_trace = modules_to_trace
         self.registry = registry
         self.ci_registry = ci_registry
+        self.prompting_counter = prompting_counter
         self.skip = MODULES_TO_SKIP
 
         self.q_stdin = queue.Queue()
@@ -146,7 +148,8 @@ class PdbProxy:
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
-        self.registry.register_prompting(self.thread_asynctask_id)
+        prompting = self.prompting_counter()
+        self.registry.register_prompting(self.thread_asynctask_id, prompting)
 
     def exited_cmdloop(self):
         """called by the customized pdb after it has exited from the command loop

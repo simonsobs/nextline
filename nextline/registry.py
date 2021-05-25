@@ -2,7 +2,6 @@ import threading
 import asyncio
 from collections import defaultdict
 from functools import partial
-from itertools import count
 import linecache
 import warnings
 from typing import Hashable
@@ -117,9 +116,6 @@ class Registry:
             )
         )
 
-        self.prompting_counter = count().__next__
-        self.prompting_counter() # consume 0
-
         self.engine.open_register('thread_task_ids')
         self.engine.register('thread_task_ids', [])
 
@@ -208,9 +204,9 @@ class Registry:
         with self.condition:
             self._data[thread_task_id].update(state)
 
-    def register_prompting(self, thread_task_id):
+    def register_prompting(self, thread_task_id, prompting):
         with self.condition:
-            self._data[thread_task_id]['prompting'] = self.prompting_counter()
+            self._data[thread_task_id]['prompting'] = prompting
         self.publish_thread_task_state(thread_task_id)
 
     def deregister_prompting(self, thread_task_id):

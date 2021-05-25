@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from itertools import count
 
 import pytest
 from unittest.mock import Mock
@@ -29,12 +30,16 @@ def proxy(mock_trace, mock_registry):
 
     modules_to_trace = {'tests.pdb.subject'}
 
+    prompting_counter = count().__next__
+    prompting_counter() # consume 0
+
     y = PdbProxy(
         thread_asynctask_id=thread_asynctask_id,
         trace=mock_trace,
         modules_to_trace=modules_to_trace,
         registry=mock_registry,
-        ci_registry=Mock()
+        ci_registry=Mock(),
+        prompting_counter=prompting_counter
         )
 
     y.pdb.trace_dispatch = Mock()
