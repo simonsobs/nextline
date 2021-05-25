@@ -132,8 +132,6 @@ class Registry:
     def __init__(self):
         self.engine = Engine()
 
-        self.loop = asyncio.get_running_loop()
-
         self.condition = threading.Condition()
 
         # key thread_task_id
