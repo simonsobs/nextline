@@ -1,6 +1,5 @@
 import threading
 import asyncio
-import linecache
 import warnings
 from typing import Hashable
 
@@ -127,21 +126,6 @@ class Registry:
 
     def get_script_file_name(self):
         return self.engine.get('script_file_name')
-
-    def get_source(self, file_name=None):
-        if not file_name or file_name == self.engine.get('script_file_name'):
-            return self.engine.get('statement').split('\n')
-        return [l.rstrip() for l in linecache.getlines(file_name)]
-
-    def get_source_line(self, line_no, file_name=None):
-        '''
-        based on linecache.getline()
-        https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
-        '''
-        lines = self.get_source(file_name)
-        if 1 <= line_no <= len(lines):
-            return lines[line_no - 1]
-        return ''
 
     async def close(self):
         await self.engine.close()

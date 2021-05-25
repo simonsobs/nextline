@@ -1,4 +1,5 @@
 import asyncio
+import linecache
 
 from .state import Initialized
 
@@ -94,9 +95,18 @@ class Nextline:
         self._state.send_pdb_command(thread_asynctask_id, command)
 
     def get_source(self, file_name=None):
-        return self.registry.get_source(file_name=file_name)
+        if not file_name or file_name == self.registry.engine.get('script_file_name'):
+            return self.registry.engine.get('statement').split('\n')
+        return [l.rstrip() for l in linecache.getlines(file_name)]
 
     def get_source_line(self, line_no, file_name=None):
-        return self.registry.get_source_line(line_no=line_no, file_name=file_name)
+        '''
+        based on linecache.getline()
+        https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
+        '''
+        lines = self.get_source(file_name)
+        if 1 <= line_no <= len(lines):
+            return lines[line_no - 1]
+        return ''
 
 ##__________________________________________________________________||
