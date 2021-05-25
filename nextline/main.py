@@ -62,6 +62,12 @@ class Nextline:
         async with self._condition_finish:
             self._state = await self._state.finish()
 
+    def exception(self):
+        return self._state.exception()
+
+    def result(self):
+        self._state.result()
+
     async def close(self):
         """close the nextline
         """

@@ -99,6 +99,8 @@ async def run(nextline):
     await asyncio.sleep(0.1)
     nextline.run()
     await nextline.finish()
+    nextline.exception()
+    nextline.result() # raise exception
     await nextline.close()
 
 ##__________________________________________________________________||

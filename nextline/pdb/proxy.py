@@ -38,14 +38,16 @@ class PdbProxy:
         prompted will be added.
     registry: object
     ci_registry: object
+    prompting_counter : callable
     '''
 
-    def __init__(self, thread_asynctask_id, trace, modules_to_trace, registry, ci_registry):
+    def __init__(self, thread_asynctask_id, trace, modules_to_trace, registry, ci_registry, prompting_counter):
         self.thread_asynctask_id = thread_asynctask_id
         self.trace = trace
         self.modules_to_trace = modules_to_trace
         self.registry = registry
         self.ci_registry = ci_registry
+        self.prompting_counter = prompting_counter
         self.skip = MODULES_TO_SKIP
 
         self.q_stdin = queue.Queue()
@@ -135,26 +137,26 @@ class PdbProxy:
         self._traces.append(trace)
         return trace(frame, event, arg)
 
-    def entering_cmdloop(self, frame, event):
+    def entering_cmdloop(self, frame, state):
         """called by the customized pdb before it is entering the command loop
         """
         module_name = frame.f_globals.get('__name__')
         self.modules_to_trace.add(module_name)
 
-        file_name = self.pdb.canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
-        self.registry.register_thread_task_state(self.thread_asynctask_id, file_name, line_no, event)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
-        self.registry.register_prompting(self.thread_asynctask_id)
+        prompting = self.prompting_counter()
+        state['prompting'] = prompting
+        self.registry.register_thread_task_state(self.thread_asynctask_id, state)
 
-    def exited_cmdloop(self):
+    def exited_cmdloop(self, state):
         """called by the customized pdb after it has exited from the command loop
         """
         self.ci_registry.remove(self.thread_asynctask_id)
-        self.registry.deregister_prompting(self.thread_asynctask_id)
+        state['prompting'] = 0
+        self.registry.register_thread_task_state(self.thread_asynctask_id, state)
         self.pdb_ci.end()
 
 ##__________________________________________________________________||

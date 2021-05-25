@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import threading
 from functools import partial
@@ -93,49 +94,73 @@ async def test_subscribe_after_end(obj):
     await task_receive
 
 ##__________________________________________________________________||
+nsubscribers = [0, 1, 2, 5, 50]
+pre_nitems = [0, 1, 2, 50]
+post_nitems = [0, 1, 2, 100]
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
+@pytest.mark.parametrize('post_nitems', post_nitems)
+@pytest.mark.parametrize('pre_nitems', pre_nitems)
+@pytest.mark.parametrize('nsubscribers', nsubscribers)
 @pytest.mark.asyncio
-async def test_thread(obj):
+async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
     '''test if the issue is resovled
     https://github.com/simonsobs/nextline/issues/2
 
-    not perfect. needs to be revised.
     '''
 
-    def send(obj, event, items):
-        for i in items:
-            obj.put(i)
-            # time.sleep(0.00001)
-        obj.put(None)
+    nitems = pre_nitems + post_nitems
 
-    async def set_event(obj, event, at=5):
+    if nsubscribers >= 50 and nitems >= 100:
+        pytest.skip("nsubscribers >= 50 and nitems >= 100")
+
+    async def subscribe(obj, event):
+        await event.wait()
+        items = []
         async for i in obj.subscribe():
-            if i is None or i >= at:
-                event.set()
-            if i is None:
-                break
-        return
+            items.append(i)
+        return items
 
-    items = list(range(2000))
+    def send(obj, pre_items, event, post_items, event_end):
+        for i in pre_items:
+            obj.put(i)
+        event.set()
+        for i in post_items:
+            obj.put(i)
+        event_end.set()
+
+    async def close(obj, event_end):
+        await event_end.wait()
+        await obj.close()
+
+    items = list(range(nitems))
+    pre_items = items[:pre_nitems]
+    post_items = items[pre_nitems:]
+
     event = ThreadSafeAsyncioEvent()
-    send = partial(send, obj, event, items)
-    t = threading.Thread(target=send, daemon=True)
-    t.start()
+    event_end = ThreadSafeAsyncioEvent()
 
-    task_set_event = asyncio.create_task(set_event(obj, event))
+    coro = asyncio.to_thread(send, obj, pre_items, event, post_items, event_end)
+    task_send = asyncio.create_task(coro)
 
-    ntasks = 5
-    tasks = []
+    tasks_subscribe = []
+    for i in range(nsubscribers):
+        coro = subscribe(obj, event)
+        task = asyncio.create_task(coro)
+        tasks_subscribe.append(task)
 
-    await event.wait()
+    coro = close(obj, event_end)
+    task_close = asyncio.create_task(coro)
 
-    for i in range(ntasks):
-        tasks.append(asyncio.create_task(async_receive(obj)))
+    results = await asyncio.gather(*tasks_subscribe, task_send, task_close)
+    for actual in results[:nsubscribers]:
+        if not actual: # can be empty
+            continue
+        # print(actual[0])
+        expected = items[items.index(actual[0]):] # no missing or duplicate
+                                                  # items from the first
+                                                  # received item
+        assert actual == expected
 
-    for i in range(ntasks):
-        received = await tasks[i]
-        if received:
-            assert received == items[items.index(received[0]):]
-
-    t.join()
 
 ##__________________________________________________________________||

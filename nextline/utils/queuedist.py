@@ -20,6 +20,7 @@ class QueueDist:
         self._condition_close = asyncio.Condition()
 
         self.subscribers = []
+        self._condition_subscribers = threading.Condition()
         self.last_enumarated = (-1, self.NoLastItem)
 
         self.thread_listen = threading.Thread(target=self._listen, daemon=True)
@@ -30,8 +31,9 @@ class QueueDist:
         while True:
             item = self.queue_in.sync_q.get()
             enumarated = (idx, item)
-            for q in self.subscribers:
-                q.sync_q.put(enumarated)
+            with self._condition_subscribers:
+                for q in self.subscribers:
+                    q.sync_q.put(enumarated)
             self.last_enumarated = enumarated
             if item is self.End:
                 break
@@ -42,7 +44,10 @@ class QueueDist:
 
     async def subscribe(self):
         q = janus.Queue()
-        self.subscribers.append(q)
+
+        with self._condition_subscribers:
+            self.subscribers.append(q)
+
         last_idx, last_item = self.last_enumarated
         if last_item is self.End:
             return
@@ -55,7 +60,9 @@ class QueueDist:
             if last_idx < idx:
                 yield item
 
-        self.subscribers.remove(q)
+        with self._condition_subscribers:
+            self.subscribers.remove(q)
+
         q.close()
         await q.wait_closed()
 
