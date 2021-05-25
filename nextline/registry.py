@@ -71,8 +71,9 @@ class Engine:
 
         This method needs to run in self.loop.
         """
-        queue = self._queue.pop(key)
-        await queue.close()
+        queue = self._queue.pop(key, None)
+        if queue:
+            await queue.close()
 
     def register(self, key, item):
         # print(f'register({key!r}, {item!r})')
