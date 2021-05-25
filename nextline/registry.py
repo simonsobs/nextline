@@ -33,12 +33,8 @@ class Engine:
         self._data.clear()
 
     def open_register(self, key: Hashable):
-        # # commented out because can be opened multiple times for the same key
-        # # from trace_func_outermost(), in which
-        # # self.registry.register_thread_task_id() can be called multiple times for the same
-        # # self.thread_asynctask_id for ayncio tasks
-        # if key in self._data:
-        #    raise Exception(f'register key already exists {key!r}')
+        if key in self._data:
+           raise Exception(f'register key already exists {key!r}')
         self._data[key] = None
 
         coro = self._create_queue(key)
@@ -204,7 +200,15 @@ class Registry:
         with self.condition:
             self._data[thread_task_id].update({'prompting': 0})
 
-        self.engine.open_register(thread_task_id)
+        try:
+            self.engine.open_register(thread_task_id)
+        except:
+            # The same thread_task_id can occur multiple times
+            # because, in trace_func_outermost(),
+            # self.registry.register_thread_task_id() can be called
+            # multiple times for the same self.thread_asynctask_id for
+            # ayncio tasks
+            pass
         self.engine.register('thread_task_ids', self.thread_task_ids)
 
     def deregister_thread_task_id(self, thread_task_id):
