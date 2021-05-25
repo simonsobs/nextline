@@ -204,13 +204,8 @@ class Registry:
         with self.condition:
             self._data[thread_task_id].update({'prompting': 0})
 
-        fut = asyncio.run_coroutine_threadsafe(self._register_thread_task_id(thread_task_id), self.loop)
-        fut.result() # to wait and get the return value
-
-    async def _register_thread_task_id(self, thread_task_id):
-        with self.condition:
-            self.engine.open_register(thread_task_id)
-            self.engine.register('thread_task_ids', self.thread_task_ids)
+        self.engine.open_register(thread_task_id)
+        self.engine.register('thread_task_ids', self.thread_task_ids)
 
     def deregister_thread_task_id(self, thread_task_id):
         with self.condition:
@@ -219,13 +214,8 @@ class Registry:
             except KeyError:
                 warnings.warn("not found: thread_task_id = {}".format(thread_task_id))
 
-        fut = asyncio.run_coroutine_threadsafe(self._deregister_thread_task_id(thread_task_id), self.loop)
-        fut.result() # to wait and get the return value
-
-    async def _deregister_thread_task_id(self, thread_task_id):
-        with self.condition:
-            self.engine.register('thread_task_ids', self.thread_task_ids)
-            self.engine.close_register(thread_task_id)
+        self.engine.register('thread_task_ids', self.thread_task_ids)
+        self.engine.close_register(thread_task_id)
 
     def register_thread_task_state(self, thread_task_id, file_name, line_no, trace_event):
         with self.condition:
