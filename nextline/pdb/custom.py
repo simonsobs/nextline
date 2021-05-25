@@ -32,7 +32,14 @@ class CustomizedPdb(Pdb):
         return super().trace_dispatch(frame, event, arg)
 
     def _cmdloop(self):
-        self.proxy.entering_cmdloop(self.curframe, self._trace_event)
+        frame = self.curframe
+        module_name = frame.f_globals.get('__name__')
+        state = {
+            'file_name': self.canonic(frame.f_code.co_filename),
+            'line_no': frame.f_lineno,
+            'trace_event': self._trace_event
+        }
+        self.proxy.entering_cmdloop(self.curframe, state)
         super()._cmdloop()
         self.proxy.exited_cmdloop()
 

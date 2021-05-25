@@ -135,19 +135,12 @@ class PdbProxy:
         self._traces.append(trace)
         return trace(frame, event, arg)
 
-    def entering_cmdloop(self, frame, event):
+    def entering_cmdloop(self, frame, state):
         """called by the customized pdb before it is entering the command loop
         """
         module_name = frame.f_globals.get('__name__')
         self.modules_to_trace.add(module_name)
 
-        file_name = self.pdb.canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
-        state = {
-            'file_name': file_name,
-            'line_no': line_no,
-            'trace_event': event
-        }
         self.registry.register_thread_task_state(self.thread_asynctask_id, state)
 
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
