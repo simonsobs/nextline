@@ -35,13 +35,14 @@ class CustomizedPdb(Pdb):
         frame = self.curframe
         module_name = frame.f_globals.get('__name__')
         state = {
+            'prompting': 0,
             'file_name': self.canonic(frame.f_code.co_filename),
             'line_no': frame.f_lineno,
             'trace_event': self._trace_event
         }
         self.proxy.entering_cmdloop(self.curframe, state)
         super()._cmdloop()
-        self.proxy.exited_cmdloop()
+        self.proxy.exited_cmdloop(state)
 
     def set_continue(self):
         """override bdb.set_continue()

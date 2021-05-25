@@ -203,19 +203,11 @@ class Registry:
     def register_thread_task_state(self, thread_task_id, state):
         with self.condition:
             self._data[thread_task_id].update(state)
-
-    def register_prompting(self, thread_task_id, prompting):
-        with self.condition:
-            self._data[thread_task_id]['prompting'] = prompting
-        self.publish_thread_task_state(thread_task_id)
-
-    def deregister_prompting(self, thread_task_id):
-        with self.condition:
-            self._data[thread_task_id]['prompting'] = 0
         self.publish_thread_task_state(thread_task_id)
 
     def publish_thread_task_state(self, thread_task_id):
         if thread_task_id in self._data:
+            # print(self._data[thread_task_id])
             self.engine.register(thread_task_id, self._data[thread_task_id].copy())
 
     async def subscribe_thread_task_ids(self):
