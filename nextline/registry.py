@@ -1,7 +1,5 @@
 import threading
 import asyncio
-from collections import defaultdict
-from functools import partial
 import linecache
 import warnings
 from typing import Hashable

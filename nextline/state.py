@@ -1,7 +1,6 @@
 import asyncio
 import threading
-import warnings
-from typing import Optional, Callable, Union
+from typing import Optional, Union
 
 from .registry import Registry
 from .trace import Trace

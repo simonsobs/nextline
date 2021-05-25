@@ -1,5 +1,4 @@
 import asyncio
-import threading
 
 from .state import Initialized
 
