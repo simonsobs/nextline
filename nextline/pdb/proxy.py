@@ -64,6 +64,7 @@ class PdbProxy:
         self._traces = []
 
         self._first = True
+        self._future = False
 
     def trace_func(self, frame, event, arg):
         """The main trace function
@@ -80,8 +81,29 @@ class PdbProxy:
         if not event == 'call':
             warnings.warn(f'The event is not "call": ({frame!r}, {event!r}, {arg!r})')
         if self._first:
-            return self.trace_func_outermost(frame, event, arg)
+            return self.trace_func_outermost_call(frame, event, arg)
+        if self._future:
+            return self.trace_func_outermost_call_future(frame, event, arg)
         return self.trace_func_all(frame, event, arg)
+
+    def trace_func_outermost_call(self, frame, event, arg):
+        module_name = frame.f_globals.get('__name__')
+        if not is_matched_to_any(module_name, self.modules_to_trace):
+            return
+        self._first = False
+        self.registry.register_thread_task_id(self.thread_asynctask_id)
+        if self._trace_func_all:
+            self._trace_func_all = self._trace_func_all(frame, event, arg)
+        return self.trace_func_outermost
+
+    def trace_func_outermost_call_future(self, frame, event, arg):
+        module_name = frame.f_globals.get('__name__')
+        if not is_matched_to_any(module_name, self.modules_to_trace):
+            return
+        self._future = False
+        if self._trace_func_all:
+            self._trace_func_all = self._trace_func_all(frame, event, arg)
+        return self.trace_func_outermost
 
     def trace_func_outermost(self, frame, event, arg):
         """The trace function of the outermost scope in the thread or async task
@@ -91,18 +113,12 @@ class PdbProxy:
         the thread or async task.
 
         """
-        if event == 'call':
-            module_name = frame.f_globals.get('__name__')
-            if not is_matched_to_any(module_name, self.modules_to_trace):
-                return
-            self._first = False
-            self.registry.register_thread_task_id(self.thread_asynctask_id)
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
         if event == 'return':
             if asyncio.isfuture(arg):
                 # awaiting. will be called again
-                self._first = True
+                self._future = True
             else:
                 self.trace.returning(self.thread_asynctask_id)
                 self.registry.deregister_thread_task_id(self.thread_asynctask_id)
