@@ -15,9 +15,10 @@ class CustomizedPdb(Pdb):
 
     """
 
-    def __init__(self, proxy, *args, **kwargs):
+    def __init__(self, proxy, prompting_counter, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._proxy = proxy
+        self._prompting_counter = prompting_counter
 
         # self.quitting = True # not sure if necessary
 
@@ -35,13 +36,14 @@ class CustomizedPdb(Pdb):
         frame = self.curframe
         module_name = frame.f_globals.get('__name__')
         state = {
-            'prompting': 0,
+            'prompting': self._prompting_counter(),
             'file_name': self.canonic(frame.f_code.co_filename),
             'line_no': frame.f_lineno,
             'trace_event': self._trace_event
         }
         self._proxy.entering_cmdloop(self.curframe, state)
         super()._cmdloop()
+        state['prompting'] = 0
         self._proxy.exited_cmdloop(state)
 
     def set_continue(self):

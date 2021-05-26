@@ -47,7 +47,6 @@ class PdbProxy:
         self.modules_to_trace = modules_to_trace
         self.registry = registry
         self.ci_registry = ci_registry
-        self.prompting_counter = prompting_counter
         self.skip = MODULES_TO_SKIP
 
         self.q_stdin = queue.Queue()
@@ -55,6 +54,7 @@ class PdbProxy:
 
         self.pdb = CustomizedPdb(
             proxy=self,
+            prompting_counter=prompting_counter,
             stdin=StreamIn(self.q_stdin),
             stdout=StreamOut(self.q_stdout),
             skip=self.skip,
@@ -173,19 +173,15 @@ class PdbProxy:
         module_name = frame.f_globals.get('__name__')
         self.modules_to_trace.add(module_name)
 
-
         self.pdb_ci = PdbCommandInterface(self.pdb, self.q_stdin, self.q_stdout)
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
-        prompting = self.prompting_counter()
-        state['prompting'] = prompting
         self.registry.register(self.thread_asynctask_id, state.copy())
 
     def exited_cmdloop(self, state):
         """called by the customized pdb after it has exited from the command loop
         """
         self.ci_registry.remove(self.thread_asynctask_id)
-        state['prompting'] = 0
         self.registry.register(self.thread_asynctask_id, state.copy())
         self.pdb_ci.end()
 
