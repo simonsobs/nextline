@@ -89,7 +89,10 @@ class Engine:
             raise Exception(f'register key does not exist {key!r}')
 
         with self._condition:
-            self._data[key].remove(item)
+            try:
+                self._data[key].remove(item)
+            except ValueError:
+                warnings.warn(f'item not found: {item}')
             copy = self._data[key].copy()
 
         coro = self._distribute(key, copy)
