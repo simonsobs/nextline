@@ -3,7 +3,7 @@ import asyncio
 
 import pytest
 
-from nextline.registry import Registry
+from nextline.utils import Registry
 
 ##__________________________________________________________________||
 nitems = [0, 1, 2, 50]

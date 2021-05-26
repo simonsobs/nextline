@@ -4,7 +4,8 @@ from abc import ABC, abstractmethod
 import pytest
 from unittest.mock import Mock
 
-from nextline.registry import Registry, PdbCIRegistry
+from nextline.registry import PdbCIRegistry
+from nextline.utils import Registry
 from nextline.state import (
     Initialized,
     Running,

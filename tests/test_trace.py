@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import Mock, call, sentinel
 
 from nextline.trace import Trace
-from nextline.registry import Registry
+from nextline.utils import Registry
 from nextline.pdb.proxy import PdbProxy
 
 ##__________________________________________________________________||

@@ -2,9 +2,8 @@ import asyncio
 import threading
 from typing import Optional, Union
 
-from .registry import Registry
 from .trace import Trace
-from .utils import ThreadSafeAsyncioEvent
+from .utils import Registry, ThreadSafeAsyncioEvent
 from .exec_ import exec_with_trace
 
 SCRIPT_FILE_NAME = '<string>'
