@@ -84,19 +84,22 @@ class Initialized(State):
             self.registry = registry
         else:
             self.registry = Registry()
+            self.registry.open_register('statement')
+            self.registry.open_register('state_name')
+            self.registry.open_register('script_file_name')
 
         if statement:
-            self.registry.register_statement(statement)
-            self.registry.register_script_file_name(SCRIPT_FILE_NAME)
+            self.registry.register('statement', statement)
+            self.registry.register('script_file_name', SCRIPT_FILE_NAME)
         else:
-            statement = self.registry.get_statement()
+            statement = self.registry.get('statement')
 
         if isinstance(statement, str):
             self._code = compile(statement, SCRIPT_FILE_NAME, 'exec')
         else:
             self._code = statement
 
-        self.registry.register_state_name(self.name)
+        self.registry.register('state_name', self.name)
 
     def run(self):
         self.assert_not_obsolete()
@@ -140,7 +143,7 @@ class Running(State):
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
 
-        self.registry.register_state_name(self.name)
+        self.registry.register('state_name', self.name)
 
         self.loop = asyncio.get_running_loop()
 
@@ -217,7 +220,7 @@ class Exited(State):
         self._result = result
         self._exception = exception
 
-        self.registry.register_state_name(self.name)
+        self.registry.register('state_name', self.name)
 
     async def finish(self):
         self.assert_not_obsolete()
@@ -262,7 +265,7 @@ class Finished(State):
         self._exception = exception
 
         self.registry = registry
-        self.registry.register_state_name(self.name)
+        self.registry.register('state_name', self.name)
 
     def exception(self):
         """Return the exception of the script execution
@@ -319,8 +322,8 @@ class Closed(State):
 
     def __init__(self, registry):
         self.registry = registry
-        self.statement = self.registry.get_statement()
-        self.registry.register_state_name(self.name)
+        self.statement = self.registry.get('statement')
+        self.registry.register('state_name', self.name)
 
     async def _ainit(self):
         await self.registry.close() # close here because "await" is

@@ -187,7 +187,7 @@ class TestInitialized(BaseTestState):
         reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
 
-        assert expected_statement == reset.registry.get_statement()
+        assert expected_statement == reset.registry.get('statement')
 
         assert reset is not state
         assert reset.registry is state.registry
@@ -260,7 +260,7 @@ class TestFinished(BaseTestState):
         reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
 
-        assert expected_statement == reset.registry.get_statement()
+        assert expected_statement == reset.registry.get('statement')
 
         assert reset.registry is state.registry
 
@@ -319,7 +319,7 @@ class TestClosed(BaseTestState):
         reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
 
-        assert expected_statement == reset.registry.get_statement()
+        assert expected_statement == reset.registry.get('statement')
 
         assert reset.registry is not state.registry
 
@@ -358,7 +358,7 @@ async def test_register_state_name():
     state = await state.close()
 
     expected = ['initialized', 'running', 'exited', 'finished', 'closed']
-    actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
+    actual = [c.args[1] for c in state.registry.register.call_args_list if c.args[0] == 'state_name']
     assert expected == actual
 
 @pytest.mark.asyncio
@@ -377,7 +377,7 @@ async def test_register_state_name_reset():
         'initialized', 'running', 'exited', 'finished',
         'initialized', 'running', 'exited', 'finished', 'closed'
     ]
-    actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
+    actual = [c.args[1] for c in state.registry.register.call_args_list if c.args[0] == 'state_name']
     assert expected == actual
 
     state = state.reset()
@@ -388,7 +388,7 @@ async def test_register_state_name_reset():
     expected = [
         'initialized', 'running', 'exited', 'finished', 'closed'
     ]
-    actual = [a.args[0] for a in state.registry.register_state_name.call_args_list]
+    actual = [c.args[1] for c in state.registry.register.call_args_list if c.args[0] == 'state_name']
     assert expected == actual
 
 ##__________________________________________________________________||

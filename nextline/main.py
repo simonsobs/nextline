@@ -77,17 +77,17 @@ class Nextline:
     async def subscribe_global_state(self):
         # wish to be able to write with "yield from" but not possible
         # https://stackoverflow.com/a/59079548/7309855
-        agen = self.registry.subscribe_state_name()
+        agen = self.registry.subscribe('state_name')
         async for y in agen:
             yield y
 
     async def subscribe_thread_asynctask_ids(self):
-        agen = self.registry.subscribe_thread_task_ids()
+        agen = self.registry.subscribe('thread_task_ids')
         async for y in agen:
             yield y
 
     async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
-        agen = self.registry.subscribe_thread_task_state(thread_asynctask_id)
+        agen = self.registry.subscribe(thread_asynctask_id)
         async for y in agen:
             yield y
 
@@ -95,8 +95,8 @@ class Nextline:
         self._state.send_pdb_command(thread_asynctask_id, command)
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == self.registry.engine.get('script_file_name'):
-            return self.registry.engine.get('statement').split('\n')
+        if not file_name or file_name == self.registry.get('script_file_name'):
+            return self.registry.get('statement').split('\n')
         return [l.rstrip() for l in linecache.getlines(file_name)]
 
     def get_source_line(self, line_no, file_name=None):

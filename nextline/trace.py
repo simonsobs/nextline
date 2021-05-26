@@ -35,6 +35,7 @@ class Trace:
         # multiple instances of PdbProxy.
 
         self.id_composer = UniqThreadTaskIdComposer()
+        self.registry.open_register_list('thread_task_ids')
 
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.

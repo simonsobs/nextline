@@ -6,13 +6,10 @@ from typing import Hashable
 from .utils import QueueDist, CoroutineRunner
 
 ##__________________________________________________________________||
-class Engine:
-    """will be renamed Registry
-
-    Registry now will be renamed something else
-    """
+class Registry:
     def __init__(self):
         self._runner = CoroutineRunner()
+        self._condition = threading.Condition()
         self._data = {}
         self._queue = {}
         self._aws = []
@@ -38,6 +35,16 @@ class Engine:
         if task:
             self._aws.append(task)
 
+    def open_register_list(self, key: Hashable):
+        if key in self._data:
+           raise Exception(f'register key already exists {key!r}')
+        self._data[key] = []
+
+        coro = self._create_queue(key)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
     def close_register(self, key: Hashable):
         try:
             del self._data[key]
@@ -47,6 +54,58 @@ class Engine:
         task = self._runner.run(coro)
         if task:
             self._aws.append(task)
+
+    def register(self, key, item):
+        # print(f'register({key!r}, {item!r})')
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
+
+        self._data[key] = item
+
+        coro = self._distribute(key, item)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
+    def register_list_item(self, key, item):
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
+
+        with self._condition:
+            self._data[key].append(item)
+            copy = self._data[key].copy()
+
+        coro = self._distribute(key, copy)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
+    def deregister_list_item(self, key, item):
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
+
+        with self._condition:
+            try:
+                self._data[key].remove(item)
+            except ValueError:
+                warnings.warn(f'item not found: {item}')
+            copy = self._data[key].copy()
+
+        coro = self._distribute(key, copy)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
+    def get(self, key):
+        return self._data[key]
+
+    async def subscribe(self, key):
+        queue = self._queue.get(key)
+        if not queue:
+            await self._create_queue(key)
+            queue = self._queue.get(key)
+        async for y in queue.subscribe():
+            yield y
 
     async def _create_queue(self, key):
         """Create a queue
@@ -67,110 +126,9 @@ class Engine:
         if queue:
             await queue.close()
 
-    def register(self, key, item):
-        # print(f'register({key!r}, {item!r})')
-        if key not in self._data:
-            raise Exception(f'register key does not exist {key!r}')
-
-        self._data[key] = item
-
-        coro = self._distribute(key, item)
-        task = self._runner.run(coro)
-        if task:
-            self._aws.append(task)
-
     async def _distribute(self, key, item):
         # print(f'_distribute({key!r}, {item!r})')
         self._queue[key].put(item)
-
-    def get(self, key):
-        return self._data[key]
-
-    async def subscribe(self, key):
-        queue = self._queue.get(key)
-        if not queue:
-            await self._create_queue(key)
-            queue = self._queue.get(key)
-        async for y in queue.subscribe():
-            yield y
-
-class Registry:
-    """
-    """
-    def __init__(self):
-        self.engine = Engine()
-
-        self.engine.open_register('thread_task_ids')
-        self.engine.register('thread_task_ids', [])
-
-        self.engine.open_register('statement')
-        self.engine.open_register('state_name')
-        self.engine.open_register('script_file_name')
-
-    def register_state_name(self, state_name):
-        self.engine.register('state_name', state_name)
-
-    async def subscribe_state_name(self):
-        agen = self.engine.subscribe('state_name')
-        async for y in agen:
-            yield y
-
-    def register_statement(self, statement):
-        self.engine.register('statement', statement)
-
-    def get_statement(self):
-        return self.engine.get('statement')
-
-    def register_script_file_name(self, script_file_name):
-        self.engine.register('script_file_name', script_file_name)
-
-    def get_script_file_name(self):
-        return self.engine.get('script_file_name')
-
-    async def close(self):
-        await self.engine.close()
-
-
-    def register_thread_task_id(self, thread_task_id):
-
-        try:
-            self.engine.open_register(thread_task_id)
-        except:
-            # The same thread_task_id can occur multiple times
-            # because, in trace_func_outermost(),
-            # self.registry.register_thread_task_id() can be called
-            # multiple times for the same self.thread_asynctask_id for
-            # ayncio tasks
-            pass
-        thread_task_ids = self.engine.get('thread_task_ids')
-        if thread_task_ids and thread_task_id in thread_task_ids:
-            return
-        thread_task_ids = thread_task_ids + [thread_task_id]
-        self.engine.register('thread_task_ids', thread_task_ids)
-
-    def deregister_thread_task_id(self, thread_task_id):
-
-        self.engine.close_register(thread_task_id)
-
-        thread_task_ids = self.engine.get('thread_task_ids')
-        if not thread_task_ids:
-            return
-        if thread_task_id not  in thread_task_ids:
-            return
-        thread_task_ids = [i for i in thread_task_ids if i != thread_task_id]
-        self.engine.register('thread_task_ids', thread_task_ids)
-
-    def register_thread_task_state(self, thread_task_id, state):
-        self.engine.register(thread_task_id, state.copy())
-
-    async def subscribe_thread_task_ids(self):
-        agen = self.engine.subscribe('thread_task_ids')
-        async for y in agen:
-            yield y
-
-    async def subscribe_thread_task_state(self, thread_task_id):
-        async for y in self.engine.subscribe(thread_task_id):
-            yield y
 
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
