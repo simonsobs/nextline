@@ -140,8 +140,7 @@ class Registry:
     def __init__(self):
         self.engine = Engine()
 
-        self.engine.open_register('thread_task_ids')
-        self.engine.register('thread_task_ids', [])
+        self.engine.open_register_list('thread_task_ids')
 
         self.engine.open_register('statement')
         self.engine.open_register('state_name')
@@ -182,23 +181,13 @@ class Registry:
             # multiple times for the same self.thread_asynctask_id for
             # ayncio tasks
             pass
-        thread_task_ids = self.engine.get('thread_task_ids')
-        if thread_task_ids and thread_task_id in thread_task_ids:
+        if thread_task_id in self.engine.get('thread_task_ids'):
             return
-        thread_task_ids = thread_task_ids + [thread_task_id]
-        self.engine.register('thread_task_ids', thread_task_ids)
+        self.engine.register_list_item('thread_task_ids', thread_task_id)
 
     def deregister_thread_task_id(self, thread_task_id):
-
         self.engine.close_register(thread_task_id)
-
-        thread_task_ids = self.engine.get('thread_task_ids')
-        if not thread_task_ids:
-            return
-        if thread_task_id not  in thread_task_ids:
-            return
-        thread_task_ids = [i for i in thread_task_ids if i != thread_task_id]
-        self.engine.register('thread_task_ids', thread_task_ids)
+        self.engine.deregister_list_item('thread_task_ids', thread_task_id)
 
     def register_thread_task_state(self, thread_task_id, state):
         self.engine.register(thread_task_id, state.copy())
