@@ -78,7 +78,7 @@ class PdbProxy:
         # print(module_name)
 
         if not event == 'call':
-            warnings.warn('The event is not "call": ({}, {}, {})'.format(frame, event, arg))
+            warnings.warn(f'The event is not "call": ({frame!r}, {event!r}, {arg!r})')
         if self._first:
             return self.trace_func_outermost(frame, event, arg)
         return self.trace_func_all(frame, event, arg)
