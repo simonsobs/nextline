@@ -123,14 +123,18 @@ class PdbProxy:
         """
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
-        if event == 'return':
-            if asyncio.isfuture(arg):
-                # awaiting. will be called again
-                self._future = True
-            else:
-                self.trace.returning(self.thread_asynctask_id)
-                self.registry.deregister_thread_task_id(self.thread_asynctask_id)
-        return self.trace_func_exit_thread_task
+
+        if event != 'return':
+            return self.trace_func_exit_thread_task
+
+        if asyncio.isfuture(arg):
+            # awaiting. will be called again
+            self._future = True
+            return
+
+        self.trace.returning(self.thread_asynctask_id)
+        self.registry.deregister_thread_task_id(self.thread_asynctask_id)
+        return
 
     def trace_func_all(self, frame, event, arg):
         """The trace function that calls the trace function of pdb
