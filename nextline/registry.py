@@ -48,6 +48,29 @@ class Engine:
         if task:
             self._aws.append(task)
 
+    def register(self, key, item):
+        # print(f'register({key!r}, {item!r})')
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
+
+        self._data[key] = item
+
+        coro = self._distribute(key, item)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
+    def get(self, key):
+        return self._data[key]
+
+    async def subscribe(self, key):
+        queue = self._queue.get(key)
+        if not queue:
+            await self._create_queue(key)
+            queue = self._queue.get(key)
+        async for y in queue.subscribe():
+            yield y
+
     async def _create_queue(self, key):
         """Create a queue
 
@@ -67,32 +90,9 @@ class Engine:
         if queue:
             await queue.close()
 
-    def register(self, key, item):
-        # print(f'register({key!r}, {item!r})')
-        if key not in self._data:
-            raise Exception(f'register key does not exist {key!r}')
-
-        self._data[key] = item
-
-        coro = self._distribute(key, item)
-        task = self._runner.run(coro)
-        if task:
-            self._aws.append(task)
-
     async def _distribute(self, key, item):
         # print(f'_distribute({key!r}, {item!r})')
         self._queue[key].put(item)
-
-    def get(self, key):
-        return self._data[key]
-
-    async def subscribe(self, key):
-        queue = self._queue.get(key)
-        if not queue:
-            await self._create_queue(key)
-            queue = self._queue.get(key)
-        async for y in queue.subscribe():
-            yield y
 
 class Registry:
     """
