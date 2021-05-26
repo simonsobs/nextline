@@ -17,7 +17,7 @@ class CustomizedPdb(Pdb):
 
     def __init__(self, proxy, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.proxy = proxy
+        self._proxy = proxy
 
         # self.quitting = True # not sure if necessary
 
@@ -40,9 +40,9 @@ class CustomizedPdb(Pdb):
             'line_no': frame.f_lineno,
             'trace_event': self._trace_event
         }
-        self.proxy.entering_cmdloop(self.curframe, state)
+        self._proxy.entering_cmdloop(self.curframe, state)
         super()._cmdloop()
-        self.proxy.exited_cmdloop(state)
+        self._proxy.exited_cmdloop(state)
 
     def set_continue(self):
         """override bdb.set_continue()
@@ -66,7 +66,7 @@ class CustomizedPdb(Pdb):
     #     return True
 
     def do_list(self, arg):
-        statement = self.proxy.statement
+        statement = self._proxy.statement
         import linecache
         getlines_org = linecache.getlines
         linecache.getlines = partial(getlines, getlines_org, statement)
