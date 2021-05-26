@@ -13,6 +13,7 @@ class Engine:
     """
     def __init__(self):
         self._runner = CoroutineRunner()
+        self._condition = threading.Condition()
         self._data = {}
         self._queue = {}
         self._aws = []
@@ -38,6 +39,16 @@ class Engine:
         if task:
             self._aws.append(task)
 
+    def open_register_list(self, key: Hashable):
+        if key in self._data:
+           raise Exception(f'register key already exists {key!r}')
+        self._data[key] = []
+
+        coro = self._create_queue(key)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
     def close_register(self, key: Hashable):
         try:
             del self._data[key]
@@ -56,6 +67,32 @@ class Engine:
         self._data[key] = item
 
         coro = self._distribute(key, item)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
+    def register_list_item(self, key, item):
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
+
+        with self._condition:
+            self._data[key].append(item)
+            copy = self._data[key].copy()
+
+        coro = self._distribute(key, copy)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
+
+    def deregister_list_item(self, key, item):
+        if key not in self._data:
+            raise Exception(f'register key does not exist {key!r}')
+
+        with self._condition:
+            self._data[key].remove(item)
+            copy = self._data[key].copy()
+
+        coro = self._distribute(key, copy)
         task = self._runner.run(coro)
         if task:
             self._aws.append(task)
