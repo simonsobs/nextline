@@ -174,20 +174,13 @@ class Running(State):
         except RuntimeError:
             # The event loop is closed.
             pass
+        self.obsolete()
 
     async def exited(self):
         """return the exited state after the script exits.
         """
-        self.assert_not_obsolete()
         await self._event.wait()
         return self._exited
-
-    async def finish(self):
-        self.assert_not_obsolete()
-        await self._event.wait()
-        finished = await self._exited.finish()
-        self.obsolete()
-        return finished
 
     def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)

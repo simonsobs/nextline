@@ -209,15 +209,29 @@ class TestRunning(BaseTestState):
     def state(self, running):
         yield running
 
-    @pytest.mark.asyncio
-    async def test_exited(self, state):
-        exited = await state.exited()
-        assert isinstance(exited, Exited)
+    async def assert_obsolete(self, state):
+        assert 'obsolete' in repr(state)
+
+        with pytest.raises(StateObsoleteError):
+            state.run()
+
+        with pytest.raises(StateObsoleteError):
+            await state.finish()
+
+        with pytest.raises(StateObsoleteError):
+            state.reset()
+
+        with pytest.raises(StateObsoleteError):
+            await state.close()
 
     @pytest.mark.asyncio
-    async def test_finish(self, state):
-        finished = await state.finish()
-        assert isinstance(finished, Finished)
+    async def test_exited(self, state):
+        # exited() can be called multiple times
+        exited = await state.exited()
+        assert isinstance(exited, Exited)
+        assert exited is await state.exited()
+        assert exited is await state.exited()
+
         await self.assert_obsolete(state)
 
     def test_send_pdb_command(self, state):
@@ -286,6 +300,7 @@ class TestFinished(BaseTestState):
         state = Initialized(SOURCE_RAISE)
         state = state.run()
 
+        state = await state.exited()
         state = await state.finish()
         assert isinstance(state, Finished)
 
@@ -299,6 +314,7 @@ class TestFinished(BaseTestState):
         state = Initialized(SOURCE_RAISE)
         state = state.run()
 
+        state = await state.exited()
         state = await state.finish()
         assert isinstance(state, Finished)
 
@@ -345,6 +361,9 @@ async def test_transition():
     state = state.run()
     assert isinstance(state, Running)
 
+    state = await state.exited()
+    assert isinstance(state, Exited)
+
     state = await state.finish()
     assert isinstance(state, Finished)
 
@@ -355,6 +374,7 @@ async def test_transition():
 async def test_register_state_name():
     state = Initialized(SOURCE_ONE)
     state = state.run()
+    state = await state.exited()
     state = await state.finish()
     state = await state.close()
 
@@ -367,9 +387,11 @@ async def test_register_state_name_reset():
     state = Initialized(SOURCE_ONE)
     state = state.reset()
     state = state.run()
+    state = await state.exited()
     state = await state.finish()
     state = state.reset()
     state = state.run()
+    state = await state.exited()
     state = await state.finish()
     state = await state.close()
 
@@ -383,6 +405,7 @@ async def test_register_state_name_reset():
 
     state = state.reset()
     state = state.run()
+    state = await state.exited()
     state = await state.finish()
     state = await state.close()
 
