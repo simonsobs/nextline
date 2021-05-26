@@ -97,7 +97,8 @@ class PdbProxy:
         if not is_matched_to_any(module_name, self.modules_to_trace):
             return
         self._first = False
-        self.registry.register_thread_task_id(self.thread_asynctask_id)
+        self.registry.open_register(self.thread_asynctask_id)
+        self.registry.register_list_item('thread_task_ids', self.thread_asynctask_id)
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
         return self.trace_func_exit_thread_task
@@ -133,7 +134,8 @@ class PdbProxy:
             return
 
         self.trace.returning(self.thread_asynctask_id)
-        self.registry.deregister_thread_task_id(self.thread_asynctask_id)
+        self.registry.close_register(self.thread_asynctask_id)
+        self.registry.deregister_list_item('thread_task_ids', self.thread_asynctask_id)
         return
 
     def trace_func_all(self, frame, event, arg):
@@ -177,14 +179,14 @@ class PdbProxy:
         self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
         prompting = self.prompting_counter()
         state['prompting'] = prompting
-        self.registry.register_thread_task_state(self.thread_asynctask_id, state)
+        self.registry.register(self.thread_asynctask_id, state.copy())
 
     def exited_cmdloop(self, state):
         """called by the customized pdb after it has exited from the command loop
         """
         self.ci_registry.remove(self.thread_asynctask_id)
         state['prompting'] = 0
-        self.registry.register_thread_task_state(self.thread_asynctask_id, state)
+        self.registry.register(self.thread_asynctask_id, state.copy())
         self.pdb_ci.end()
 
 ##__________________________________________________________________||

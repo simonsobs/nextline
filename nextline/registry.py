@@ -6,11 +6,7 @@ from typing import Hashable
 from .utils import QueueDist, CoroutineRunner
 
 ##__________________________________________________________________||
-class Engine:
-    """will be renamed Registry
-
-    Registry now will be renamed something else
-    """
+class Registry:
     def __init__(self):
         self._runner = CoroutineRunner()
         self._condition = threading.Condition()
@@ -133,73 +129,6 @@ class Engine:
     async def _distribute(self, key, item):
         # print(f'_distribute({key!r}, {item!r})')
         self._queue[key].put(item)
-
-class Registry:
-    """
-    """
-    def __init__(self):
-        self.engine = Engine()
-
-        self.engine.open_register_list('thread_task_ids')
-
-        self.engine.open_register('statement')
-        self.engine.open_register('state_name')
-        self.engine.open_register('script_file_name')
-
-    def register_state_name(self, state_name):
-        self.engine.register('state_name', state_name)
-
-    async def subscribe_state_name(self):
-        agen = self.engine.subscribe('state_name')
-        async for y in agen:
-            yield y
-
-    def register_statement(self, statement):
-        self.engine.register('statement', statement)
-
-    def get_statement(self):
-        return self.engine.get('statement')
-
-    def register_script_file_name(self, script_file_name):
-        self.engine.register('script_file_name', script_file_name)
-
-    def get_script_file_name(self):
-        return self.engine.get('script_file_name')
-
-    async def close(self):
-        await self.engine.close()
-
-
-    def register_thread_task_id(self, thread_task_id):
-
-        try:
-            self.engine.open_register(thread_task_id)
-        except:
-            # The same thread_task_id can occur multiple times
-            # because, in trace_func_outermost(),
-            # self.registry.register_thread_task_id() can be called
-            # multiple times for the same self.thread_asynctask_id for
-            # ayncio tasks
-            pass
-        if thread_task_id in self.engine.get('thread_task_ids'):
-            return
-        self.engine.register_list_item('thread_task_ids', thread_task_id)
-
-    def deregister_thread_task_id(self, thread_task_id):
-        self.engine.close_register(thread_task_id)
-        self.engine.deregister_list_item('thread_task_ids', thread_task_id)
-
-    def register_thread_task_state(self, thread_task_id, state):
-        self.engine.register(thread_task_id, state.copy())
-
-    async def subscribe_thread_task_ids(self):
-        agen = self.engine.subscribe('thread_task_ids')
-        async for y in agen:
-            yield y
-
-    async def subscribe_thread_task_state(self, thread_task_id):
-        async for y in self.engine.subscribe(thread_task_id):
-            yield y
 
 class PdbCIRegistry:
     """Hold the list of active pdb command interfaces
