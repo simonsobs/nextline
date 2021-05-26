@@ -81,12 +81,18 @@ class PdbProxy:
         if not event == 'call':
             warnings.warn(f'The event is not "call": ({frame!r}, {event!r}, {arg!r})')
         if self._first:
-            return self.trace_func_outermost_call(frame, event, arg)
+            return self.trace_func_register_new_thread_task(frame, event, arg)
         if self._future:
-            return self.trace_func_outermost_call_future(frame, event, arg)
+            return self.trace_func_reentry_after_future(frame, event, arg)
         return self.trace_func_all(frame, event, arg)
 
-    def trace_func_outermost_call(self, frame, event, arg):
+    def trace_func_register_new_thread_task(self, frame, event, arg):
+        """The trace function for a new thread or async task
+
+        The trace function of the first "call" event of the outermost
+        scope of the thread or async task.
+
+        """
         module_name = frame.f_globals.get('__name__')
         if not is_matched_to_any(module_name, self.modules_to_trace):
             return
@@ -94,23 +100,25 @@ class PdbProxy:
         self.registry.register_thread_task_id(self.thread_asynctask_id)
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
-        return self.trace_func_outermost
+        return self.trace_func_exit_thread_task
 
-    def trace_func_outermost_call_future(self, frame, event, arg):
+    def trace_func_reentry_after_future(self, frame, event, arg):
+        """The trace function of reentry after "future" is returned
+
+        """
         module_name = frame.f_globals.get('__name__')
         if not is_matched_to_any(module_name, self.modules_to_trace):
             return
         self._future = False
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
-        return self.trace_func_outermost
+        return self.trace_func_exit_thread_task
 
-    def trace_func_outermost(self, frame, event, arg):
+    def trace_func_exit_thread_task(self, frame, event, arg):
         """The trace function of the outermost scope in the thread or async task
 
-        This method is used as a trace function of the outermost scope
-        of the thread or async task. It is used to detect the end of
-        the thread or async task.
+        The trace function to detect the end of the thread or async
+        task.
 
         """
         if self._trace_func_all:
@@ -122,7 +130,7 @@ class PdbProxy:
             else:
                 self.trace.returning(self.thread_asynctask_id)
                 self.registry.deregister_thread_task_id(self.thread_asynctask_id)
-        return self.trace_func_outermost
+        return self.trace_func_exit_thread_task
 
     def trace_func_all(self, frame, event, arg):
         """The trace function that calls the trace function of pdb
