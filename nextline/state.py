@@ -170,12 +170,13 @@ class Running(State):
             exception=exception
         )
 
+        self.obsolete()
+
         try:
             self._event.set()
         except RuntimeError:
             # The event loop is closed.
             pass
-        self.obsolete()
 
     async def exited(self):
         """return the exited state after the script exits.
