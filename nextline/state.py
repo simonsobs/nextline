@@ -86,6 +86,7 @@ class Initialized(State):
             self.registry.open_register('statement')
             self.registry.open_register('state_name')
             self.registry.open_register('script_file_name')
+            self.registry.open_register_list('thread_task_ids')
 
         if statement:
             self.registry.register('statement', statement)
