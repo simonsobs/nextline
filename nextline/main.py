@@ -68,6 +68,11 @@ class Nextline:
     def result(self):
         self._state.result()
 
+    def reset(self):
+        """reset the state
+        """
+        self._state = self._state.reset()
+
     async def close(self):
         """close the nextline
         """
