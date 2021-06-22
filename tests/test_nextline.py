@@ -12,6 +12,10 @@ import time
 time.sleep(0.1)
 """.strip()
 
+SOURCE_TWO = """
+x = 2
+""".strip()
+
 SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
@@ -97,5 +101,28 @@ async def monitor_state(nextline, event_initialized):
         # print('monitor_state()', s)
         ret.append(s)
     return ret
+
+##__________________________________________________________________||
+@pytest.mark.asyncio
+async def test_reset():
+    nextline = Nextline(SOURCE)
+    nextline.run()
+    await nextline.finish()
+    nextline.reset()
+    nextline.run()
+    await nextline.finish()
+    await nextline.close()
+
+@pytest.mark.asyncio
+async def test_reset_with_statement():
+    nextline = Nextline(SOURCE)
+    assert SOURCE.split('\n') == nextline.get_source()
+    nextline.run()
+    await nextline.finish()
+    nextline.reset(statement=SOURCE_TWO)
+    assert SOURCE_TWO.split('\n') == nextline.get_source()
+    nextline.run()
+    await nextline.finish()
+    await nextline.close()
 
 ##__________________________________________________________________||
