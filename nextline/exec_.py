@@ -26,7 +26,7 @@ def exec_with_trace(code, trace, done=None):
     threading.settrace(trace)
     sys.settrace(trace)
     try:
-        ret = exec(code)
+        ret = exec(code, globals())
         # ret is always None
     except BaseException as e:
         exc = e
