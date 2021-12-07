@@ -34,6 +34,7 @@ setup(
             'pytest-cov>=2.8',
             'pytest-asyncio>=0.14',
             'snapshottest>0.5'
-        ]
+        ],
+        "dev": ["flake8", "black", ],
     }
 )
