@@ -34,6 +34,7 @@ setup(
             "snapshottest>0.5",
         ],
         "dev": [
+            "twine",
             "flake8",
             "black",
         ],
