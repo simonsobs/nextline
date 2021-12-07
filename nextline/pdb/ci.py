@@ -1,5 +1,6 @@
 import threading
 
+
 ##__________________________________________________________________||
 class PdbCommandInterface:
     """Relay pdb command prompts and commands
@@ -17,6 +18,7 @@ class PdbCommandInterface:
         The queue connected to stdout in pdb
 
     """
+
     def __init__(self, pdb, queue_in, queue_out):
         self.pdb = pdb
         self.queue_in = queue_in
@@ -25,24 +27,19 @@ class PdbCommandInterface:
         self.nprompts = 0
 
     def send_pdb_command(self, command):
-        """send a command to pdb
-        """
+        """send a command to pdb"""
         self.command = command
         self.queue_in.put(command)
 
     def start(self):
-        """start interfacing the pdb
-
-        """
+        """start interfacing the pdb"""
         self.thread = threading.Thread(target=self._receive_pdb_stdout)
         self.thread.start()
 
     def end(self):
-        """end interfacing the pdb
-
-        """
+        """end interfacing the pdb"""
         self.ended = True
-        self.queue_out.put(None) # end the thread
+        self.queue_out.put(None)  # end the thread
         self.thread.join()
 
     def _receive_pdb_stdout(self):
@@ -55,16 +52,16 @@ class PdbCommandInterface:
             self.stdout = out
 
     def _read_uptp_prompt(self, queue, prompt):
-        """read the queue up to the prompt
-        """
-        out = ''
+        """read the queue up to the prompt"""
+        out = ""
         while True:
             m = queue.get()
-            if m is None: # end
+            if m is None:  # end
                 return None
             out += m
             if prompt == m:
                 break
         return out
+
 
 ##__________________________________________________________________||

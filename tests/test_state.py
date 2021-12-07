@@ -1,4 +1,3 @@
-import time
 from abc import ABC, abstractmethod
 
 import pytest
@@ -13,7 +12,7 @@ from nextline.state import (
     Finished,
     Closed,
     StateObsoleteError,
-    StateMethodError
+    StateMethodError,
 )
 
 ##__________________________________________________________________||
@@ -30,6 +29,7 @@ SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
 
+
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def monkey_patch_trace(monkeypatch):
@@ -37,18 +37,19 @@ def monkey_patch_trace(monkeypatch):
     mock_instance.return_value = None
     mock_instance.pdb_ci_registry = Mock(spec=PdbCIRegistry)
     mock_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr('nextline.state.Trace', mock_class)
+    monkeypatch.setattr("nextline.state.Trace", mock_class)
     yield mock_class
+
 
 @pytest.fixture(autouse=True)
 async def wrap_registry(monkeypatch):
-    mock_class = Mock(side_effect=lambda : Mock(wraps=Registry()))
-    monkeypatch.setattr('nextline.state.Registry', mock_class)
+    mock_class = Mock(side_effect=lambda: Mock(wraps=Registry()))
+    monkeypatch.setattr("nextline.state.Registry", mock_class)
     yield
+
 
 ##__________________________________________________________________||
 class BaseTestState(ABC):
-
     @pytest.fixture()
     def statement(self):
         yield SOURCE_ONE
@@ -100,6 +101,7 @@ class BaseTestState(ABC):
         pass
 
     params = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
+
     @pytest.fixture(params=params)
     def statements_for_test_reset(self, statement, request):
         old_statement = statement
@@ -112,10 +114,10 @@ class BaseTestState(ABC):
 
     def test_state(self, state):
         assert isinstance(state, self.state_class)
-        assert 'obsolete' not in repr(state)
+        assert "obsolete" not in repr(state)
 
     async def assert_obsolete(self, state):
-        assert 'obsolete' in repr(state)
+        assert "obsolete" in repr(state)
 
         with pytest.raises(StateObsoleteError):
             state.run()
@@ -155,7 +157,7 @@ class BaseTestState(ABC):
 
     def test_send_pdb_command(self, state):
         thread_asynctask_id = (1, None)
-        command = 'next'
+        command = "next"
         with pytest.raises(StateMethodError):
             state.send_pdb_command(thread_asynctask_id, command)
 
@@ -166,6 +168,7 @@ class BaseTestState(ABC):
     def test_result(self, state):
         with pytest.raises(StateMethodError):
             state.result()
+
 
 class TestInitialized(BaseTestState):
 
@@ -188,7 +191,7 @@ class TestInitialized(BaseTestState):
         reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
 
-        assert expected_statement == reset.registry.get('statement')
+        assert expected_statement == reset.registry.get("statement")
 
         assert reset is not state
         assert reset.registry is state.registry
@@ -201,6 +204,7 @@ class TestInitialized(BaseTestState):
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
 
+
 class TestRunning(BaseTestState):
 
     state_class = Running
@@ -210,7 +214,7 @@ class TestRunning(BaseTestState):
         yield running
 
     async def assert_obsolete(self, state):
-        assert 'obsolete' in repr(state)
+        assert "obsolete" in repr(state)
 
         with pytest.raises(StateObsoleteError):
             state.run()
@@ -237,6 +241,7 @@ class TestRunning(BaseTestState):
     def test_send_pdb_command(self, state):
         pass
 
+
 class TestExited(BaseTestState):
 
     state_class = Exited
@@ -250,6 +255,7 @@ class TestExited(BaseTestState):
         finished = await state.finish()
         assert isinstance(finished, Finished)
         await self.assert_obsolete(state)
+
 
 class TestFinished(BaseTestState):
 
@@ -266,7 +272,7 @@ class TestFinished(BaseTestState):
         assert state is await state.finish()
         assert state is await state.finish()
         assert state is await state.finish()
-        assert 'obsolete' not in repr(state)
+        assert "obsolete" not in repr(state)
 
     @pytest.mark.asyncio
     async def test_reset(self, state, statements_for_test_reset):
@@ -275,7 +281,7 @@ class TestFinished(BaseTestState):
         reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
 
-        assert expected_statement == reset.registry.get('statement')
+        assert expected_statement == reset.registry.get("statement")
 
         assert reset.registry is state.registry
 
@@ -305,7 +311,7 @@ class TestFinished(BaseTestState):
         assert isinstance(state, Finished)
 
         assert isinstance(state.exception(), Exception)
-        assert ('foo', 'bar') == state.exception().args
+        assert ("foo", "bar") == state.exception().args
         with pytest.raises(Exception):
             raise state.exception()
 
@@ -320,6 +326,7 @@ class TestFinished(BaseTestState):
 
         with pytest.raises(Exception):
             state.result()
+
 
 class TestClosed(BaseTestState):
 
@@ -336,7 +343,7 @@ class TestClosed(BaseTestState):
         reset = state.reset(statement=statement)
         assert isinstance(reset, Initialized)
 
-        assert expected_statement == reset.registry.get('statement')
+        assert expected_statement == reset.registry.get("statement")
 
         assert reset.registry is not state.registry
 
@@ -349,7 +356,8 @@ class TestClosed(BaseTestState):
         assert state is await state.close()
         assert state is await state.close()
         assert state is await state.close()
-        assert 'obsolete' not in repr(state)
+        assert "obsolete" not in repr(state)
+
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
@@ -370,6 +378,7 @@ async def test_transition():
     state = await state.close()
     assert isinstance(state, Closed)
 
+
 @pytest.mark.asyncio
 async def test_register_state_name():
     state = Initialized(SOURCE_ONE)
@@ -378,9 +387,14 @@ async def test_register_state_name():
     state = await state.finish()
     state = await state.close()
 
-    expected = ['initialized', 'running', 'exited', 'finished', 'closed']
-    actual = [c.args[1] for c in state.registry.register.call_args_list if c.args[0] == 'state_name']
+    expected = ["initialized", "running", "exited", "finished", "closed"]
+    actual = [
+        c.args[1]
+        for c in state.registry.register.call_args_list
+        if c.args[0] == "state_name"
+    ]
     assert expected == actual
+
 
 @pytest.mark.asyncio
 async def test_register_state_name_reset():
@@ -396,11 +410,22 @@ async def test_register_state_name_reset():
     state = await state.close()
 
     expected = [
-        'initialized',
-        'initialized', 'running', 'exited', 'finished',
-        'initialized', 'running', 'exited', 'finished', 'closed'
+        "initialized",
+        "initialized",
+        "running",
+        "exited",
+        "finished",
+        "initialized",
+        "running",
+        "exited",
+        "finished",
+        "closed",
     ]
-    actual = [c.args[1] for c in state.registry.register.call_args_list if c.args[0] == 'state_name']
+    actual = [
+        c.args[1]
+        for c in state.registry.register.call_args_list
+        if c.args[0] == "state_name"
+    ]
     assert expected == actual
 
     state = state.reset()
@@ -409,10 +434,13 @@ async def test_register_state_name_reset():
     state = await state.finish()
     state = await state.close()
 
-    expected = [
-        'initialized', 'running', 'exited', 'finished', 'closed'
+    expected = ["initialized", "running", "exited", "finished", "closed"]
+    actual = [
+        c.args[1]
+        for c in state.registry.register.call_args_list
+        if c.args[0] == "state_name"
     ]
-    actual = [c.args[1] for c in state.registry.register.call_args_list if c.args[0] == 'state_name']
     assert expected == actual
+
 
 ##__________________________________________________________________||

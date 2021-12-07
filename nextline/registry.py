@@ -1,9 +1,10 @@
 import threading
 
+
 ##__________________________________________________________________||
 class PdbCIRegistry:
-    """Hold the list of active pdb command interfaces
-    """
+    """Hold the list of active pdb command interfaces"""
+
     def __init__(self):
         self.pdb_cis = []
         self._dict = {}
@@ -22,5 +23,6 @@ class PdbCIRegistry:
     def get_ci(self, thread_task_id):
         with self.condition:
             return self._dict.get(thread_task_id, None)
+
 
 ##__________________________________________________________________||

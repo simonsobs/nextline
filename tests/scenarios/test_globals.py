@@ -4,9 +4,7 @@ https://github.com/simonsobs/nextline/issues/7
 """
 
 
-import sys
 import asyncio
-import threading
 from pathlib import Path
 
 import pytest
@@ -21,6 +19,7 @@ def f():
 f()
 """.strip()
 
+
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def monkey_patch_syspath(monkeypatch):
@@ -28,10 +27,12 @@ def monkey_patch_syspath(monkeypatch):
     monkeypatch.syspath_prepend(str(this_dir))
     yield
 
+
 ##__________________________________________________________________||
 async def monitor_global_state(nextline):
     async for s in nextline.subscribe_global_state():
-        print('monitor_global_state()', s)
+        print("monitor_global_state()", s)
+
 
 async def control_execution(nextline):
     prev_ids = set()
@@ -47,8 +48,12 @@ async def control_execution(nextline):
     task_anext = asyncio.create_task(subscription.__anext__())
     while True:
         aws = {task_anext, *tasks}
-        done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED)
-        results = [t.result() for t in tasks if t in done] # re-raise exception
+        done, pending = await asyncio.wait(
+            aws, return_when=asyncio.FIRST_COMPLETED
+        )
+        results = [
+            t.result() for t in tasks if t in done
+        ]  # re-raise exception
         tasks = tasks & pending
         if not task_anext.done():
             continue
@@ -69,31 +74,36 @@ async def control_execution(nextline):
 
         prev_ids = ids
 
+
 async def control_thread_task(nextline, thread_task_id):
     to_step = []
-    print(f'control_thread_task({thread_task_id})')
-    file_name = ''
+    print(f"control_thread_task({thread_task_id})")
+    file_name = ""
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
         # print(s)
-        if not file_name == s['file_name']:
-            file_name = s['file_name']
+        if not file_name == s["file_name"]:
+            file_name = s["file_name"]
             assert nextline.get_source(file_name)
-        if s['prompting']:
-            command = 'next'
-            if s['trace_event'] == 'line':
-                line = nextline.get_source_line(line_no=s['line_no'], file_name=s['file_name'])
+        if s["prompting"]:
+            command = "next"
+            if s["trace_event"] == "line":
+                line = nextline.get_source_line(
+                    line_no=s["line_no"], file_name=s["file_name"]
+                )
                 if line in to_step:
                     # print(line)
-                    command = 'step'
+                    command = "step"
             nextline.send_pdb_command(thread_task_id, command)
+
 
 async def run(nextline):
     await asyncio.sleep(0.1)
     nextline.run()
     await nextline.finish()
     nextline.exception()
-    nextline.result() # raise exception
+    nextline.result()  # raise exception
     await nextline.close()
+
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
@@ -101,9 +111,11 @@ async def test_run():
 
     nextline = Nextline(statement)
 
-    assert nextline.global_state == 'initialized'
+    assert nextline.global_state == "initialized"
 
-    task_monitor_global_state = asyncio.create_task(monitor_global_state(nextline))
+    task_monitor_global_state = asyncio.create_task(
+        monitor_global_state(nextline)
+    )
 
     task_control_execution = asyncio.create_task(control_execution(nextline))
 
@@ -112,6 +124,7 @@ async def test_run():
     aws = [task_run, task_monitor_global_state, task_control_execution]
     await asyncio.gather(*aws)
 
-    assert nextline.global_state == 'closed'
+    assert nextline.global_state == "closed"
+
 
 ##__________________________________________________________________||

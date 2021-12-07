@@ -6,59 +6,74 @@ from .trace import Trace
 from .utils import Registry, ThreadSafeAsyncioEvent
 from .exec_ import exec_with_trace
 
-SCRIPT_FILE_NAME = '<string>'
+SCRIPT_FILE_NAME = "<string>"
 
-##__________________________________________________________________||
+
+# __________________________________________________________________||
 class StateObsoleteError(Exception):
-    """Operation on an obsolete state object.
-    """
+    """Operation on an obsolete state object."""
+
     pass
+
 
 class StateMethodError(Exception):
-    """Irrelevant operation on the state.
-    """
+    """Irrelevant operation on the state."""
+
     pass
 
-##__________________________________________________________________||
+
+# __________________________________________________________________||
 class ObsoleteMixin:
     def assert_not_obsolete(self):
         if self.is_obsolete():
-            raise StateObsoleteError(f'The state object is obsolete: {self!r}')
+            raise StateObsoleteError(f"The state object is obsolete: {self!r}")
+
     def is_obsolete(self):
         return getattr(self, "_obsolete", False)
+
     def obsolete(self):
         self._obsolete = True
 
+
 class State(ObsoleteMixin):
-    """The base state class in the Nextline state machine
-    """
+    """The base state class in the Nextline state machine"""
+
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
         if self.is_obsolete():
-            items.append('obsolete')
+            items.append("obsolete")
         return f'<{" ".join(items)}>'
+
     def run(self):
         self.assert_not_obsolete()
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     async def exited(self):
         self.assert_not_obsolete()
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     async def finish(self):
         self.assert_not_obsolete()
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     def reset(self, *_, **__):
         self.assert_not_obsolete()
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     async def close(self):
         self.assert_not_obsolete()
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     def send_pdb_command(self, *_, **__):
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     def exception(self):
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     def result(self):
-        raise StateMethodError(f'Irrelevant operation on the state: {self!r}')
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
 
 class Initialized(State):
     """The state "initialized", ready to run
@@ -77,29 +92,31 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, statement: Union[str, None], registry: Optional[Registry] = None):
+    def __init__(
+        self, statement: Union[str, None], registry: Optional[Registry] = None
+    ):
 
         if registry:
             self.registry = registry
         else:
             self.registry = Registry()
-            self.registry.open_register('statement')
-            self.registry.open_register('state_name')
-            self.registry.open_register('script_file_name')
-            self.registry.open_register_list('thread_task_ids')
+            self.registry.open_register("statement")
+            self.registry.open_register("state_name")
+            self.registry.open_register("script_file_name")
+            self.registry.open_register_list("thread_task_ids")
 
         if statement:
-            self.registry.register('statement', statement)
-            self.registry.register('script_file_name', SCRIPT_FILE_NAME)
+            self.registry.register("statement", statement)
+            self.registry.register("script_file_name", SCRIPT_FILE_NAME)
         else:
-            statement = self.registry.get('statement')
+            statement = self.registry.get("statement")
 
         if isinstance(statement, str):
-            self._code = compile(statement, SCRIPT_FILE_NAME, 'exec')
+            self._code = compile(statement, SCRIPT_FILE_NAME, "exec")
         else:
             self._code = statement
 
-        self.registry.register('state_name', self.name)
+        self.registry.register("state_name", self.name)
 
     def run(self):
         self.assert_not_obsolete()
@@ -120,6 +137,7 @@ class Initialized(State):
         self.obsolete()
         return closed
 
+
 class Running(State):
     """The state "running", the script is being executed.
 
@@ -139,18 +157,16 @@ class Running(State):
 
         trace = Trace(
             registry=self.registry,
-            modules_to_trace={exec_with_trace.__module__}
+            modules_to_trace={exec_with_trace.__module__},
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
 
-        self.registry.register('state_name', self.name)
+        self.registry.register("state_name", self.name)
 
         self.loop = asyncio.get_running_loop()
 
         self._thread = threading.Thread(
-            target=exec_with_trace,
-            args=(code, trace, self._done),
-            daemon=True
+            target=exec_with_trace, args=(code, trace, self._done), daemon=True
         )
         self._thread.start()
 
@@ -167,7 +183,7 @@ class Running(State):
             self.registry,
             thread=self._thread,
             result=result,
-            exception=exception
+            exception=exception,
         )
 
         self.obsolete()
@@ -179,8 +195,7 @@ class Running(State):
             pass
 
     async def exited(self):
-        """return the exited state after the script exits.
-        """
+        """return the exited state after the script exits."""
         await self._event.wait()
         return self._exited
 
@@ -214,15 +229,13 @@ class Exited(State):
         self._result = result
         self._exception = exception
 
-        self.registry.register('state_name', self.name)
+        self.registry.register("state_name", self.name)
 
     async def finish(self):
         self.assert_not_obsolete()
         await self._join(self._thread)
         finished = Finished(
-            self.registry,
-            result=self._result,
-            exception=self._exception
+            self.registry, result=self._result, exception=self._exception
         )
         self.obsolete()
         return finished
@@ -235,6 +248,7 @@ class Exited(State):
             # to_thread() is new in Python 3.9
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, thread.join)
+
 
 class Finished(State):
     """The state "finished", the script execution has finished
@@ -259,7 +273,7 @@ class Finished(State):
         self._exception = exception
 
         self.registry = registry
-        self.registry.register('state_name', self.name)
+        self.registry.register("state_name", self.name)
 
     def exception(self):
         """Return the exception of the script execution
@@ -304,6 +318,7 @@ class Finished(State):
         self.obsolete()
         return closed
 
+
 class Closed(State):
     """The state "closed"
 
@@ -312,16 +327,17 @@ class Closed(State):
     registry : object
         An instance of Registry
     """
+
     name = "closed"
 
     def __init__(self, registry):
         self.registry = registry
-        self.statement = self.registry.get('statement')
-        self.registry.register('state_name', self.name)
+        self.statement = self.registry.get("statement")
+        self.registry.register("state_name", self.name)
 
     async def _ainit(self):
-        await self.registry.close() # close here because "await" is
-                                    # not allowed in __init__()
+        await self.registry.close()  # close here because "await" is
+        # not allowed in __init__()
 
     def reset(self, statement=None):
         self.assert_not_obsolete()
@@ -337,4 +353,5 @@ class Closed(State):
         self.assert_not_obsolete()
         return self
 
-##__________________________________________________________________||
+
+# __________________________________________________________________||

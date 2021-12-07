@@ -3,28 +3,30 @@ import asyncio
 from collections import namedtuple
 from itertools import count
 
+
 ##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
-    """Compose paris of unique thread Id and async task Id
-    """
+    """Compose paris of unique thread Id and async task Id"""
 
-    ThreadSpecifics = namedtuple('ThreadSpecifics', ['thread_ident', 'task_id_counter', 'task_ids'])
+    ThreadSpecifics = namedtuple(
+        "ThreadSpecifics", ["thread_ident", "task_id_counter", "task_ids"]
+    )
     # thread_ident: threading.get_ident()
     # task_id_counter: count().__next__
     # task_ids: set()
 
     def __init__(self):
 
-        self.non_uniq_id_dict = {} # non_uniq_id -> uniq_id
-        self.uniq_id_dict = {} # uniq_id -> non_uniq_id
+        self.non_uniq_id_dict = {}  # non_uniq_id -> uniq_id
+        self.uniq_id_dict = {}  # uniq_id -> non_uniq_id
         # uniq_id = (thread_id, task_id)
         # non_uniq_id = (threading.get_ident(), id(asyncio.current_task()))
 
-        self.non_uniq_thread_id_dict = {} # threading.get_ident() -> thread_id
-        self.thread_id_dict = {} # thread_id -> ThreadSpecifics
+        self.non_uniq_thread_id_dict = {}  # threading.get_ident() -> thread_id
+        self.thread_id_dict = {}  # thread_id -> ThreadSpecifics
 
         self.thread_id_counter = count().__next__
-        self.thread_id_counter() # consume 0
+        self.thread_id_counter()  # consume 0
 
         self.condition = threading.Condition()
 
@@ -49,7 +51,9 @@ class UniqThreadTaskIdComposer:
     def exited(self, thread_task_id):
         thread_id, task_id = thread_task_id
         with self.condition:
-            non_uniq_thread_id, non_uniq_task_id = self.uniq_id_dict.pop(thread_task_id)
+            non_uniq_thread_id, non_uniq_task_id = self.uniq_id_dict.pop(
+                thread_task_id
+            )
             self.non_uniq_id_dict.pop((non_uniq_thread_id, non_uniq_task_id))
             self.thread_id_dict[thread_id].task_ids.remove(task_id)
             if not self.thread_id_dict[thread_id].task_ids:
@@ -102,19 +106,18 @@ class UniqThreadTaskIdComposer:
         thread_id = self.thread_id_counter()
 
         task_id_counter = count().__next__
-        task_id_counter() # consume 0
+        task_id_counter()  # consume 0
 
         thread_specifics = self.ThreadSpecifics(
-                thread_ident=non_uniq_thread_id,
-                task_id_counter=task_id_counter,
-                task_ids=set()
-            )
+            thread_ident=non_uniq_thread_id,
+            task_id_counter=task_id_counter,
+            task_ids=set(),
+        )
 
         with self.condition:
             self.non_uniq_thread_id_dict[non_uniq_thread_id] = thread_id
             self.thread_id_dict[thread_id] = thread_specifics
         return thread_id
-
 
     def _compose_task_id(self, non_uniq_id):
 
@@ -124,12 +127,13 @@ class UniqThreadTaskIdComposer:
 
         thread_specifics = self.thread_id_dict[thread_id]
 
-        task_id =  None
+        task_id = None
         if non_uniq_task_id:
             task_id = thread_specifics.task_id_counter()
         thread_specifics.task_ids.add(task_id)
 
         return task_id
+
 
 ##__________________________________________________________________||
 2

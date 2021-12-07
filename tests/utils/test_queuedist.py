@@ -1,21 +1,18 @@
 import sys
 import asyncio
-import threading
-from functools import partial
 import time
 
 import pytest
 
-from nextline.utils import (
-    QueueDist,
-    ThreadSafeAsyncioEvent
-)
+from nextline.utils import QueueDist, ThreadSafeAsyncioEvent
+
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_daemon():
     obj = QueueDist()
     # The program shouldn't be blocked even when close() is not called.
+
 
 ##__________________________________________________________________||
 @pytest.fixture()
@@ -24,21 +21,25 @@ async def obj():
     yield y
     await y.close()
 
+
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_open_close(obj):
     assert obj
+
 
 @pytest.mark.asyncio
 async def test_close_multiple_times(obj):
     await obj.close()
     await obj.close()
 
+
 async def async_send(obj, items):
     for i in items:
-        await asyncio.sleep(0) # let other tasks run
+        await asyncio.sleep(0)  # let other tasks run
         obj.put(i)
     obj.put(None)
+
 
 async def async_receive(obj):
     items = []
@@ -47,6 +48,7 @@ async def async_receive(obj):
             break
         items.append(i)
     return items
+
 
 @pytest.mark.asyncio
 async def test_subscribe(obj):
@@ -58,13 +60,14 @@ async def test_subscribe(obj):
     assert items == await task_receive_1
     assert items == await task_receive_2
 
+
 @pytest.mark.asyncio
 async def test_recive_the_most_recent_item(obj):
 
     task_receive_1 = asyncio.create_task(async_receive(obj))
-    await asyncio.sleep(0) # let task_receive_1 start
+    await asyncio.sleep(0)  # let task_receive_1 start
 
-    pre_items = ['A', 'B', 'C']
+    pre_items = ["A", "B", "C"]
     for i in pre_items:
         obj.put(i)
 
@@ -81,6 +84,7 @@ async def test_recive_the_most_recent_item(obj):
     # receive 'C', which was put before task_receive_2 started
     assert [pre_items[-1], *items] == await task_receive_2
 
+
 @pytest.mark.asyncio
 async def test_subscribe_after_end(obj):
     # Note: This test might be unnecessary. It is more useful to test
@@ -93,21 +97,23 @@ async def test_subscribe_after_end(obj):
     task_receive = asyncio.create_task(async_receive(obj))
     await task_receive
 
+
 ##__________________________________________________________________||
 nsubscribers = [0, 1, 2, 5, 50]
 pre_nitems = [0, 1, 2, 50]
 post_nitems = [0, 1, 2, 100]
 
+
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
-@pytest.mark.parametrize('post_nitems', post_nitems)
-@pytest.mark.parametrize('pre_nitems', pre_nitems)
-@pytest.mark.parametrize('nsubscribers', nsubscribers)
+@pytest.mark.parametrize("post_nitems", post_nitems)
+@pytest.mark.parametrize("pre_nitems", pre_nitems)
+@pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.asyncio
 async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
-    '''test if the issue is resovled
+    """test if the issue is resovled
     https://github.com/simonsobs/nextline/issues/2
 
-    '''
+    """
 
     nitems = pre_nitems + post_nitems
 
@@ -140,7 +146,9 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
     event = ThreadSafeAsyncioEvent()
     event_end = ThreadSafeAsyncioEvent()
 
-    coro = asyncio.to_thread(send, obj, pre_items, event, post_items, event_end)
+    coro = asyncio.to_thread(
+        send, obj, pre_items, event, post_items, event_end
+    )
     task_send = asyncio.create_task(coro)
 
     tasks_subscribe = []
@@ -154,12 +162,12 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
 
     results = await asyncio.gather(*tasks_subscribe, task_send, task_close)
     for actual in results[:nsubscribers]:
-        if not actual: # can be empty
+        if not actual:  # can be empty
             continue
         # print(actual[0])
-        expected = items[items.index(actual[0]):] # no missing or duplicate
-                                                  # items from the first
-                                                  # received item
+        expected = items[items.index(actual[0]) :]  # no missing or duplicate
+        # items from the first
+        # received item
         assert actual == expected
 
 

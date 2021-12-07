@@ -6,6 +6,7 @@ from typing import Hashable
 from .coro_runner import CoroutineRunner
 from .queuedist import QueueDist
 
+
 ##__________________________________________________________________||
 class Registry:
     def __init__(self):
@@ -28,7 +29,7 @@ class Registry:
 
     def open_register(self, key: Hashable):
         if key in self._data:
-           raise Exception(f'register key already exists {key!r}')
+            raise Exception(f"register key already exists {key!r}")
         self._data[key] = None
 
         coro = self._create_queue(key)
@@ -38,7 +39,7 @@ class Registry:
 
     def open_register_list(self, key: Hashable):
         if key in self._data:
-           raise Exception(f'register key already exists {key!r}')
+            raise Exception(f"register key already exists {key!r}")
         self._data[key] = []
 
         coro = self._create_queue(key)
@@ -50,7 +51,7 @@ class Registry:
         try:
             del self._data[key]
         except KeyError:
-            warnings.warn(f'key not found: {key}')
+            warnings.warn(f"key not found: {key}")
         coro = self._close_queue(key)
         task = self._runner.run(coro)
         if task:
@@ -59,7 +60,7 @@ class Registry:
     def register(self, key, item):
         # print(f'register({key!r}, {item!r})')
         if key not in self._data:
-            raise Exception(f'register key does not exist {key!r}')
+            raise Exception(f"register key does not exist {key!r}")
 
         self._data[key] = item
 
@@ -70,7 +71,7 @@ class Registry:
 
     def register_list_item(self, key, item):
         if key not in self._data:
-            raise Exception(f'register key does not exist {key!r}')
+            raise Exception(f"register key does not exist {key!r}")
 
         with self._condition:
             self._data[key].append(item)
@@ -83,13 +84,13 @@ class Registry:
 
     def deregister_list_item(self, key, item):
         if key not in self._data:
-            raise Exception(f'register key does not exist {key!r}')
+            raise Exception(f"register key does not exist {key!r}")
 
         with self._condition:
             try:
                 self._data[key].remove(item)
             except ValueError:
-                warnings.warn(f'item not found: {item}')
+                warnings.warn(f"item not found: {item}")
             copy = self._data[key].copy()
 
         coro = self._distribute(key, copy)
@@ -130,5 +131,6 @@ class Registry:
     async def _distribute(self, key, item):
         # print(f'_distribute({key!r}, {item!r})')
         self._queue[key].put(item)
+
 
 ##__________________________________________________________________||

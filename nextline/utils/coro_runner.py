@@ -2,16 +2,17 @@ import asyncio
 import warnings
 from typing import Coroutine
 
+
 ##__________________________________________________________________||
 class CoroutineRunner:
-    """Run a coroutine in the loop.
-    """
+    """Run a coroutine in the loop."""
+
     def __init__(self):
         self.loop = asyncio.get_running_loop()
 
     def __repr__(self):
         # e.g., "<CoroutineRunner loop=<_UnixSelectorEventLoop running=True closed=False debug=False>>"
-        return f'<{self.__class__.__name__} loop={self.loop!r}>'
+        return f"<{self.__class__.__name__} loop={self.loop!r}>"
 
     def run(self, coro: Coroutine):
         """Run a coroutine in the loop.
@@ -28,7 +29,7 @@ class CoroutineRunner:
 
         if self.loop.is_closed():
             # The loop in the main thread is closed.
-            warnings.warn(f'The loop is closed: {self.loop}')
+            warnings.warn(f"The loop is closed: {self.loop}")
             return
 
         fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
@@ -40,5 +41,6 @@ class CoroutineRunner:
         except RuntimeError:
             return False
         return self.loop is loop
+
 
 ##__________________________________________________________________||

@@ -8,10 +8,10 @@ from unittest.mock import Mock
 from nextline.trace import Trace
 from nextline.utils import Registry
 from nextline.pdb.proxy import PdbProxy
-from nextline.pdb.custom import CustomizedPdb
 from nextline.trace import UniqThreadTaskIdComposer
 
 from . import subject
+
 
 ##__________________________________________________________________||
 @pytest.fixture()
@@ -19,19 +19,21 @@ def mock_trace():
     y = Mock(spec=Trace)
     yield y
 
+
 @pytest.fixture()
 def mock_registry():
     y = Mock(spec=Registry)
     yield y
 
+
 @pytest.fixture()
 def proxy(mock_trace, mock_registry):
     thread_asynctask_id = UniqThreadTaskIdComposer().compose()
 
-    modules_to_trace = {'tests.pdb.subject'}
+    modules_to_trace = {"tests.pdb.subject"}
 
     prompting_counter = count().__next__
-    prompting_counter() # consume 0
+    prompting_counter()  # consume 0
 
     y = PdbProxy(
         thread_asynctask_id=thread_asynctask_id,
@@ -39,21 +41,28 @@ def proxy(mock_trace, mock_registry):
         modules_to_trace=modules_to_trace,
         registry=mock_registry,
         ci_registry=Mock(),
-        prompting_counter=prompting_counter
-        )
+        prompting_counter=prompting_counter,
+    )
 
     y.pdb.trace_dispatch = Mock()
 
     yield y
 
+
 ##__________________________________________________________________||
 def unpack_trace_dispatch_call(trace_dispatch):
     trace_results = []
     while trace_dispatch.call_count:
-        trace_results.append([
-            (c.args[0].f_code.co_name, c.args[1], asyncio.isfuture(c.args[2]))
-            for c in trace_dispatch.call_args_list
-        ])
+        trace_results.append(
+            [
+                (
+                    c.args[0].f_code.co_name,
+                    c.args[1],
+                    asyncio.isfuture(c.args[2]),
+                )
+                for c in trace_dispatch.call_args_list
+            ]
+        )
         trace_dispatch = trace_dispatch.return_value
 
     # e.g.,
@@ -66,21 +75,23 @@ def unpack_trace_dispatch_call(trace_dispatch):
 
     return trace_results
 
+
 ##__________________________________________________________________||
 params = [
     pytest.param(subject.f, id="simple"),
     pytest.param(subject.subject, id="nested-func"),
     pytest.param(subject.call_gen, id="yield"),
     pytest.param(subject.run_a, id="asyncio"),
-    pytest.param(subject.call_lambda, id="lambda")
+    pytest.param(subject.call_lambda, id="lambda"),
 ]
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="co_name <lambda> is different ")
-@pytest.mark.parametrize('subject', params)
-def test_proxy(proxy, mock_trace, mock_registry, snapshot, subject):
-    """test PdbProxy
 
-    """
+@pytest.mark.skipif(
+    sys.version_info < (3, 9), reason="co_name <lambda> is different "
+)
+@pytest.mark.parametrize("subject", params)
+def test_proxy(proxy, mock_trace, mock_registry, snapshot, subject):
+    """test PdbProxy"""
     # TODO: the test needs to be restructured so that, for example, a
     # coroutine or a generator can be the outermost scope.
 
@@ -97,5 +108,6 @@ def test_proxy(proxy, mock_trace, mock_registry, snapshot, subject):
 
     trace_results = unpack_trace_dispatch_call(proxy.pdb.trace_dispatch)
     snapshot.assert_match(trace_results)
+
 
 ##__________________________________________________________________||

@@ -6,15 +6,18 @@ from unittest.mock import AsyncMock
 
 from nextline.utils import CoroutineRunner
 
+
 ##__________________________________________________________________||
 @pytest.fixture()
 async def obj():
     y = CoroutineRunner()
     yield y
 
+
 @pytest.mark.asyncio
 async def test_repr(obj):
     repr(obj)
+
 
 @pytest.mark.asyncio
 async def test_async(obj):
@@ -23,6 +26,7 @@ async def test_async(obj):
     task = obj.run(coro)
     await task
     assert 1 == afunc.await_count
+
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
 @pytest.mark.asyncio
@@ -33,6 +37,8 @@ async def test_thread(obj):
         ret = obj.run(coro)
         assert ret is None
         assert 1 == afunc.await_count
+
     await asyncio.to_thread(run)
+
 
 ##__________________________________________________________________||

@@ -2,10 +2,10 @@ import threading
 import asyncio
 import janus
 
+
 ##__________________________________________________________________||
 class QueueDist:
-    """Distribute queue inputs to subscribers
-    """
+    """Distribute queue inputs to subscribers"""
 
     class End:
         pass
@@ -86,5 +86,6 @@ class QueueDist:
 
         self.queue_in.close()
         await self.queue_in.wait_closed()
+
 
 ##__________________________________________________________________||

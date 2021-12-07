@@ -4,6 +4,7 @@ from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
 from .utils import UniqThreadTaskIdComposer
 
+
 ##__________________________________________________________________||
 class Trace:
     """The main trace function
@@ -25,7 +26,7 @@ class Trace:
         self.pdb_ci_registry = PdbCIRegistry()
 
         self.prompting_counter = count().__next__
-        self.prompting_counter() # consume 0
+        self.prompting_counter()  # consume 0
 
         self.pdb_proxies = {}
 
@@ -54,7 +55,7 @@ class Trace:
                 modules_to_trace=self.modules_to_trace,
                 registry=self.registry,
                 ci_registry=self.pdb_ci_registry,
-                prompting_counter=self.prompting_counter
+                prompting_counter=self.prompting_counter,
             )
             self.pdb_proxies[thread_asynctask_id] = pdb_proxy
 
@@ -63,5 +64,6 @@ class Trace:
     def returning(self, thread_asynctask_id):
         self.id_composer.exited(thread_asynctask_id)
         del self.pdb_proxies[thread_asynctask_id]
+
 
 ##__________________________________________________________________||

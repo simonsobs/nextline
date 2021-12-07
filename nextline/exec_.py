@@ -1,6 +1,7 @@
 import sys
 import threading
 
+
 ##__________________________________________________________________||
 def exec_with_trace(code, trace, done=None):
     """execute code with trace
@@ -23,7 +24,7 @@ def exec_with_trace(code, trace, done=None):
     ret = None
     exc = None
 
-    globals_ = {'__name__': __name__}
+    globals_ = {"__name__": __name__}
     # To be given to exec() in order to address the issue
     # https://github.com/simonsobs/nextline/issues/7
     # __name__ is used in modules_to_trace in Trace.
@@ -32,7 +33,7 @@ def exec_with_trace(code, trace, done=None):
     threading.settrace(trace)
     sys.settrace(trace)
     try:
-         ret = exec(code, globals_)
+        ret = exec(code, globals_)
         # ret is always None
     except BaseException as e:
         exc = e
@@ -41,5 +42,6 @@ def exec_with_trace(code, trace, done=None):
         threading.settrace(trace_org)
         if done:
             done(ret, exc)
+
 
 ##__________________________________________________________________||

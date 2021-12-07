@@ -1,12 +1,12 @@
-
 ##__________________________________________________________________||
-__all__ = ['Nextline']
+__all__ = ["Nextline"]
 
 from .main import Nextline
 
 ##__________________________________________________________________||
 from ._version import get_versions
-__version__ = get_versions()['version']
+
+__version__ = get_versions()["version"]
 """str: version
 
 The version string, e.g., "0.1.2", "0.1.2+83.ga093a20.dirty".

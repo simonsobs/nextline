@@ -2,6 +2,7 @@ import sys
 import threading
 import pytest
 
+
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def recover_trace(monkeypatch):
@@ -9,5 +10,6 @@ def recover_trace(monkeypatch):
     yield
     sys.settrace(trace_org)
     threading.settrace(trace_org)
+
 
 ##__________________________________________________________________||
