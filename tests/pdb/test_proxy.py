@@ -80,7 +80,11 @@ def unpack_trace_dispatch_call(trace_dispatch):
 params = [
     pytest.param(subject.f, id="simple"),
     pytest.param(subject.subject, id="nested-func"),
-    pytest.param(subject.call_gen, id="yield"),
+    pytest.param(
+        subject.call_gen,
+        id="yield",
+        marks=pytest.mark.skipif(sys.version_info >= (3, 10), reason="StopIteration won't be raised"),
+    ),
     pytest.param(subject.run_a, id="asyncio"),
     pytest.param(subject.call_lambda, id="lambda"),
 ]
