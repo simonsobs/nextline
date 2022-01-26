@@ -40,7 +40,7 @@ class CustomizedPdb(Pdb):
 
     def _cmdloop(self):
         frame = self.curframe
-        module_name = frame.f_globals.get("__name__")
+        # module_name = frame.f_globals.get("__name__")
         state = {
             "prompting": self._prompting_counter(),
             "file_name": self.canonic(frame.f_code.co_filename),

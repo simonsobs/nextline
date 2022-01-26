@@ -83,7 +83,9 @@ params = [
     pytest.param(
         subject.call_gen,
         id="yield",
-        marks=pytest.mark.skipif(sys.version_info >= (3, 10), reason="StopIteration won't be raised"),
+        marks=pytest.mark.skipif(
+            sys.version_info >= (3, 10), reason="StopIteration won't be raised"
+        ),
     ),
     pytest.param(subject.run_a, id="asyncio"),
     pytest.param(subject.call_lambda, id="lambda"),

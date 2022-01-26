@@ -51,7 +51,7 @@ async def control_execution(nextline):
         done, pending = await asyncio.wait(
             aws, return_when=asyncio.FIRST_COMPLETED
         )
-        results = [
+        results = [  # noqa: F841
             t.result() for t in tasks if t in done
         ]  # re-raise exception
         tasks = tasks & pending

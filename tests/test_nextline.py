@@ -28,7 +28,7 @@ def monkey_patch_trace(monkeypatch):
     mock_instance.return_value = None
     mock_instance.pdb_ci_registry = Mock(spec=PdbCIRegistry)
     mocak_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr('nextline.state.Trace', mocak_class)
+    monkeypatch.setattr("nextline.state.Trace", mocak_class)
     yield mocak_class
 
 
@@ -45,7 +45,8 @@ async def test_state_transitions_single_op():
     nextline = Nextline(SOURCE)
     event_initialized = asyncio.Event()
     task_monitor_state = asyncio.create_task(
-        monitor_state(nextline, event_initialized))
+        monitor_state(nextline, event_initialized)
+    )
     await event_initialized.wait()
 
     nextline.run()
@@ -58,7 +59,7 @@ async def test_state_transitions_single_op():
 
     states, *_ = results
 
-    expectecd = ['initialized', 'running', 'exited', 'finished', 'closed']
+    expectecd = ["initialized", "running", "exited", "finished", "closed"]
     assert expectecd == states
 
 
@@ -77,7 +78,8 @@ async def test_state_transitions_multiple_async_ops():
 
     event_initialized = asyncio.Event()
     task_monitor_state = asyncio.create_task(
-        monitor_state(nextline, event_initialized))
+        monitor_state(nextline, event_initialized)
+    )
     await event_initialized.wait()
 
     nextline.run()
@@ -92,7 +94,7 @@ async def test_state_transitions_multiple_async_ops():
 
     states, *_ = results
 
-    expectecd = ['initialized', 'running', 'exited', 'finished', 'closed']
+    expectecd = ["initialized", "running", "exited", "finished", "closed"]
     assert expectecd == states
 
 
@@ -104,7 +106,7 @@ async def finish_and_close(nextline):
 async def monitor_state(nextline, event_initialized):
     ret = []
     async for s in nextline.subscribe_global_state():
-        if s == 'initialized':
+        if s == "initialized":
             event_initialized.set()
         # print('monitor_state()', s)
         ret.append(s)
@@ -126,13 +128,14 @@ async def test_reset():
 @pytest.mark.asyncio
 async def test_reset_with_statement():
     nextline = Nextline(SOURCE)
-    assert SOURCE.split('\n') == nextline.get_source()
+    assert SOURCE.split("\n") == nextline.get_source()
     nextline.run()
     await nextline.finish()
     nextline.reset(statement=SOURCE_TWO)
-    assert SOURCE_TWO.split('\n') == nextline.get_source()
+    assert SOURCE_TWO.split("\n") == nextline.get_source()
     nextline.run()
     await nextline.finish()
     await nextline.close()
+
 
 # __________________________________________________________________||
