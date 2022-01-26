@@ -10,6 +10,11 @@ class ThreadSafeAsyncioEvent(asyncio.Event):
 
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self._loop is None:  # Python 3.10
+            self._loop = asyncio.get_event_loop()
+
     def set(self):
         self._loop.call_soon_threadsafe(super().set)
 
