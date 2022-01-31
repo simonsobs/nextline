@@ -11,7 +11,37 @@ SCRIPT_FILE_NAME = "<string>"
 
 # __________________________________________________________________||
 class Machine:
-    """State machine"""
+    """State machine
+
+                        .-------------.
+                   .--->| Initialized |---.
+           reset() |    '-------------'   |
+                   |      |   | run()     |
+                   |------'   |           |
+                   |          v           |
+                   |    .-------------.   |
+                   |    |   Running   |   |
+                   |    '-------------'   |
+                   |          | _exited() |
+                   |          |           |
+                   |          v           |
+                   |    .-------------.   |
+                   |    |   Exited    |   |
+                   |    '-------------'   |
+                   |          | finish()  |
+                   |          |           |
+                   |          V           |
+                   |    .-------------.   |
+                   |----|   Finished  |   |
+                   |    '-------------'   |
+                   |          |-----------'
+                   |          | close()
+                   |          V
+                   |    .-------------.
+                   '----|   Closed    |
+                        '-------------'
+
+    """
 
     def __init__(self, statement):
         self._condition_finish = asyncio.Condition()
