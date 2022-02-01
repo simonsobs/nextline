@@ -13,33 +13,33 @@ SCRIPT_FILE_NAME = "<string>"
 class Machine:
     """State machine
 
-                        .-------------.
-                   .--->| Initialized |---.
-           reset() |    '-------------'   |
-                   |      |   | run()     |
-                   |------'   |           |
-                   |          v           |
-                   |    .-------------.   |
-                   |    |   Running   |   |
-                   |    '-------------'   |
-                   |          | _exited() |
-                   |          |           |
-                   |          v           |
-                   |    .-------------.   |
-                   |    |   Exited    |   |
-                   |    '-------------'   |
-                   |          | finish()  |
-                   |          |           |
-                   |          V           |
-                   |    .-------------.   |
-                   |----|   Finished  |   |
-                   |    '-------------'   |
-                   |          |-----------'
-                   |          | close()
-                   |          V
-                   |    .-------------.
-                   '----|   Closed    |
-                        '-------------'
+                 .-------------.
+            .--->| Initialized |---.
+    reset() |    '-------------'   |
+            |      |   | run()     |
+            |------'   |           |
+            |          v           |
+            |    .-------------.   |
+            |    |   Running   |   |
+            |    '-------------'   |
+            |          | _exited() |
+            |          |           |
+            |          v           |
+            |    .-------------.   |
+            |    |   Exited    |   |
+            |    '-------------'   |
+            |          | finish()  |
+            |          |           |
+            |          V           |
+            |    .-------------.   |
+            |----|   Finished  |   |
+            |    '-------------'   |
+            |          |-----------'
+            |          | close()
+            |          V
+            |    .-------------.
+            '----|   Closed    |
+                 '-------------'
 
     """
 
@@ -56,28 +56,30 @@ class Machine:
 
     @property
     def state_name(self) -> str:
-        """state, e.g., "initialized", "running", "exited", "finished", "closed" """
+        """e.g., "initialized", "running","""
         return self._state.name
 
     def run(self):
-        """run the script"""
+        """Enter the running state"""
         self._state = self._state.run()
         self._task_exited = asyncio.create_task(self._exited())
 
     async def _exited(self):
-        """receive the exited state, to be scheduled in run()."""
+        """Enter the exited state
+
+        This method is scheduled as a task in run().
+
+        Bofore changing the state to "exited", this method waits for the script
+        execution (in another thread) to exit.
+        """
+
         self._state = await self._state.exited()
 
     def send_pdb_command(self, thread_asynctask_id, command):
         self._state.send_pdb_command(thread_asynctask_id, command)
 
     async def finish(self):
-        """finish the script execution
-
-        wait for the script execution in another thread to exit and
-        join the thread.
-
-        """
+        """Enter the finished state"""
         await self._task_exited
         async with self._condition_finish:
             self._state = await self._state.finish()
@@ -89,11 +91,11 @@ class Machine:
         self._state.result()
 
     def reset(self, statement=None):
-        """reset the state"""
+        """Enter the initialized state"""
         self._state = self._state.reset(statement=statement)
 
     async def close(self):
-        """close the nextline"""
+        """Enter the closed state"""
         async with self._condition_close:
             self._state = await self._state.close()
 
