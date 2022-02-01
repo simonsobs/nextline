@@ -1,6 +1,6 @@
 import asyncio
 import warnings
-from typing import Coroutine
+from typing import Coroutine, Awaitable, Union
 
 
 ##__________________________________________________________________||
@@ -14,7 +14,7 @@ class CoroutineRunner:
         # e.g., "<CoroutineRunner loop=<_UnixSelectorEventLoop running=True closed=False debug=False>>"
         return f"<{self.__class__.__name__} loop={self.loop!r}>"
 
-    def run(self, coro: Coroutine):
+    def run(self, coro: Coroutine) -> Union[Awaitable, None]:
         """Schedule or execute the coroutine
 
         If this method is called in the same thread as the one in which this
