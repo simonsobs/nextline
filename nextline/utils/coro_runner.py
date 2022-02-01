@@ -1,5 +1,4 @@
 import asyncio
-import warnings
 from typing import Coroutine, Awaitable, Union
 
 
@@ -52,8 +51,7 @@ class CoroutineRunner:
         if self.loop.is_closed():
             # The loop that was running when this class
             # was inntantizted is closed.
-            warnings.warn(f"The loop is closed: {self.loop}")
-            return
+            raise RuntimeError(f"The loop is closed: {self.loop}")
 
         # In another thread
 
