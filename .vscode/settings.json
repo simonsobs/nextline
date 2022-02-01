@@ -12,5 +12,6 @@
   "markdownlint.config": {
     "MD033": { "allowed_elements": ["i", "span", "a", "img"] },
     "MD041": false
-  }
+  },
+  "prettier.printWidth": 70
 }
