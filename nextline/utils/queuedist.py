@@ -7,8 +7,8 @@ import janus
 class QueueDist:
     """Distribute data to subscribers
 
-    Data can be sent from any thread. All subscribers need to be in the same
-    thread as the one in which this class is instantiated.
+    Data can be sent from any thread. All subscribers need to be in the thread
+    in which this class is instantiated.
 
     """
 
