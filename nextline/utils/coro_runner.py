@@ -5,7 +5,19 @@ from typing import Coroutine, Awaitable, Union
 
 ##__________________________________________________________________||
 class CoroutineRunner:
-    """Execute the coroutine in the asyncio event loop at the instantiation"""
+    """Execute the coroutine in the asyncio event loop at the instantiation
+
+    A running asyncio event loop needs to exist in the thread in which this
+    class is instantiated. The method run() can be called in any thread,
+    regardless of whether the same thread in which this class is instantiated or
+    any other thread. In either case, the coroutine given to run() will be
+    executed in the event loop in the thread in which this class is
+    instantiated.
+
+    This class can be useful when you need to run coroutines in the asyncio
+    event loop in a particular thread but events that require the coroutines to
+    run can occur any threads.
+    """
 
     def __init__(self):
         self.loop = asyncio.get_running_loop()
