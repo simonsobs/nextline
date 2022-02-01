@@ -44,11 +44,11 @@ class Machine:
     """
 
     def __init__(self, statement):
-        self._condition_finish = asyncio.Condition()
-        self._condition_close = asyncio.Condition()
+        self.condition_finish = asyncio.Condition()
+        self.condition_close = asyncio.Condition()
 
-        self._state = Initialized(statement)
-        self.registry = self._state.registry
+        self.state = Initialized(statement)
+        self.registry = self.state.registry
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -57,11 +57,11 @@ class Machine:
     @property
     def state_name(self) -> str:
         """e.g., "initialized", "running","""
-        return self._state.name
+        return self.state.name
 
     def run(self):
         """Enter the running state"""
-        self._state = self._state.run()
+        self.state = self.state.run()
         self._task_exited = asyncio.create_task(self._exited())
 
     async def _exited(self):
@@ -73,31 +73,31 @@ class Machine:
         execution (in another thread) to exit.
         """
 
-        self._state = await self._state.exited()
+        self.state = await self.state.exited()
 
     def send_pdb_command(self, thread_asynctask_id, command):
-        self._state.send_pdb_command(thread_asynctask_id, command)
+        self.state.send_pdb_command(thread_asynctask_id, command)
 
     async def finish(self):
         """Enter the finished state"""
         await self._task_exited
-        async with self._condition_finish:
-            self._state = await self._state.finish()
+        async with self.condition_finish:
+            self.state = await self.state.finish()
 
     def exception(self):
-        return self._state.exception()
+        return self.state.exception()
 
     def result(self):
-        self._state.result()
+        self.state.result()
 
     def reset(self, statement=None):
         """Enter the initialized state"""
-        self._state = self._state.reset(statement=statement)
+        self.state = self.state.reset(statement=statement)
 
     async def close(self):
         """Enter the closed state"""
-        async with self._condition_close:
-            self._state = await self._state.close()
+        async with self.condition_close:
+            self.state = await self.state.close()
 
 
 # __________________________________________________________________||
