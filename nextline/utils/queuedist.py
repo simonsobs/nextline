@@ -5,7 +5,12 @@ import janus
 
 ##__________________________________________________________________||
 class QueueDist:
-    """Distribute queue inputs to subscribers"""
+    """Distribute data to subscribers
+
+    Data can be sent from any thread. All subscribers need to be in the same
+    thread as the one in which this class is instantiated.
+
+    """
 
     class End:
         pass
