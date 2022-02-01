@@ -6,6 +6,10 @@ from unittest.mock import Mock
 from nextline import Nextline
 from nextline.registry import PdbCIRegistry
 
+# TODO: Simplify the tests in this module. The module is nearly identical to
+# test_machine.py, which was created based on this module when the class Machine
+# was extracted from the class Nextline.
+
 # __________________________________________________________________||
 SOURCE = """
 import time
