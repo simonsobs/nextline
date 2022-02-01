@@ -5,8 +5,10 @@ import asyncio
 class ThreadSafeAsyncioEvent(asyncio.Event):
     """A thread-safe asyncio event
 
-    Code originally copied from
-    https://stackoverflow.com/a/33006667/7309855
+    The methods set() and clear() can be called from any threads. The method
+    wait() needs to be called in the thread in which this class is instantiated.
+
+    Code originally copied from https://stackoverflow.com/a/33006667/7309855
 
     """
 
