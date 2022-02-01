@@ -5,7 +5,7 @@ from typing import Coroutine
 
 ##__________________________________________________________________||
 class CoroutineRunner:
-    """Run a coroutine in the loop."""
+    """Execute the coroutine in the asyncio event loop at the instantiation"""
 
     def __init__(self):
         self.loop = asyncio.get_running_loop()
@@ -15,22 +15,35 @@ class CoroutineRunner:
         return f"<{self.__class__.__name__} loop={self.loop!r}>"
 
     def run(self, coro: Coroutine):
-        """Run a coroutine in the loop.
+        """Schedule or execute the coroutine
 
-        Return a task if in the loop. If not in the loop, schedule to
-        run in the loop and wait until it exits.
+        If this method is called in the same thread as the one in which this
+        class was instantizted, return the asyncio task for the coroutine. If in
+        a different thread, schedule to run in the thread at the instantiation,
+        wait until it exits, and return None.
 
+        Parameters
+        ----------
+        coro : Coroutine
+            The coroutine to be executed
+
+        Returns
+        -------
+        Task or None
+            The task for the coroutine if in the same thread as of the
+            instantiation of this class. None, otherwise.
         """
 
         if self._is_the_same_running_loop():
             return asyncio.create_task(coro)
 
-        # not in the loop, i.e., in another thread
-
         if self.loop.is_closed():
-            # The loop in the main thread is closed.
+            # The loop that was running when this class
+            # was inntantizted is closed.
             warnings.warn(f"The loop is closed: {self.loop}")
             return
+
+        # In another thread
 
         fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
         fut.result()
