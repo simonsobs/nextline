@@ -10,7 +10,7 @@ from nextline.utils import QueueDist, ThreadSafeAsyncioEvent
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_daemon():
-    obj = QueueDist()
+    _ = QueueDist()
     # The program shouldn't be blocked even when close() is not called.
 
 
