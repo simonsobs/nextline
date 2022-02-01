@@ -1,7 +1,6 @@
 import sys
 import asyncio
 import threading
-import time
 import pytest
 
 from nextline.utils import ThreadSafeAsyncioEvent
@@ -18,10 +17,10 @@ async def test_asyncio():
 
     async def send():
         obj.set()
+        assert obj.is_set()
         await received.wait()
         obj.clear()
-        while obj.is_set():
-            await asyncio.sleep(0.01)
+        assert not obj.is_set()
         cleared.set()
 
     async def receive():
@@ -45,10 +44,10 @@ async def test_thread():
 
     def send():
         obj.set()
+        assert obj.is_set()
         received.wait()
         obj.clear()
-        while obj.is_set():
-            time.sleep(0.01)
+        assert not obj.is_set()
         cleared.set()
 
     async def receive():

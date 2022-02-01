@@ -5,7 +5,7 @@ import asyncio
 class ThreadSafeAsyncioEvent(asyncio.Event):
     """A thread-safe asyncio event
 
-    Code copied from
+    Code originally copied from
     https://stackoverflow.com/a/33006667/7309855
 
     """
@@ -16,10 +16,26 @@ class ThreadSafeAsyncioEvent(asyncio.Event):
             self._loop = asyncio.get_event_loop()
 
     def set(self):
-        self._loop.call_soon_threadsafe(super().set)
+        return self._exec_threadsafe(super().set)
 
     def clear(self):
-        self._loop.call_soon_threadsafe(super().clear)
+        return self._exec_threadsafe(super().clear)
+
+    def _exec_threadsafe(self, func):
+        if self._in_the_same_loop():
+            return func()
+
+        async def afunc(func):
+            return func()
+
+        fut = asyncio.run_coroutine_threadsafe(afunc(func), self._loop)
+        return fut.result()
+
+    def _in_the_same_loop(self):
+        try:
+            return self._loop is asyncio.get_running_loop()
+        except RuntimeError:
+            return False
 
 
 ##__________________________________________________________________||
