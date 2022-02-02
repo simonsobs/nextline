@@ -6,18 +6,7 @@ import pytest
 
 from nextline.utils import QueueDist, ThreadSafeAsyncioEvent
 
-
-##__________________________________________________________________||
-async def aiterable(iterable):
-    '''Wrap iteralbe so can be used with "async for"'''
-    for i in iterable:
-        await asyncio.sleep(0)  # let other tasks run
-        yield i
-
-
-@pytest.mark.asyncio
-async def test_aiterable():
-    assert list(range(10)) == [i async for i in aiterable(range(10))]
+from .aiterable import aiterable
 
 
 ##__________________________________________________________________||
