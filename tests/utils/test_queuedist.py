@@ -63,9 +63,10 @@ async def test_subscribe(obj):
     task_receive_2 = asyncio.create_task(async_receive(obj))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
-    await obj.close()
-    assert items == await task_receive_1
-    assert items == await task_receive_2
+    results = await asyncio.gather(task_receive_1, task_receive_2, obj.close())
+    result1, result2, *_ = results
+    assert items == result1
+    assert items == result2
 
 
 @pytest.mark.asyncio
