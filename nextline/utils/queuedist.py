@@ -19,7 +19,7 @@ class QueueDist:
     class End:
         pass
 
-    class NoLastItem:
+    class Start:
         pass
 
     def __init__(self):
@@ -30,17 +30,24 @@ class QueueDist:
 
         self.subscribers = []
         self._condition_subscribers = threading.Condition()
-        self.last_enumarated = (-1, self.NoLastItem)
+        self.last_enumarated = (-1, self.Start)
 
         self.thread_listen = threading.Thread(target=self._listen, daemon=True)
         self.thread_listen.start()
 
     def put(self, item):
-        """Send data to subscribers"""
+        """Send data to subscribers
+
+        This method can be called in any thread.
+        """
         self.queue_in.sync_q.put(item)
 
     async def subscribe(self):
-        """Asynchronous generator of data"""
+        """Asynchronous generator of data
+
+        This method needs to be called in the thread in which this class
+        is instantiated.
+        """
         q = janus.Queue()
 
         with self._condition_subscribers:
@@ -51,7 +58,7 @@ class QueueDist:
         if last_item is self.End:
             return
 
-        if last_item is not self.NoLastItem:
+        if last_item is not self.Start:
             yield last_item
 
         while True:
@@ -68,7 +75,11 @@ class QueueDist:
         await q.wait_closed()
 
     async def close(self):
-        """End gracefully"""
+        """End gracefully
+
+        This method needs to be called in the thread in which this class
+        is instantiated.
+        """
         async with self._condition_close:
             if self._closed:
                 return
@@ -95,17 +106,15 @@ class QueueDist:
 
         This method runs in a thread.
         """
-        idx = 0
-        while True:
+        idx, item = self.last_enumarated
+        while item is not self.End:
+            idx += 1
             item = self.queue_in.sync_q.get()
             enumarated = (idx, item)
             with self._condition_subscribers:
                 for q in self.subscribers:
                     q.sync_q.put(enumarated)
             self.last_enumarated = enumarated
-            if item is self.End:
-                break
-            idx += 1
 
 
 ##__________________________________________________________________||
