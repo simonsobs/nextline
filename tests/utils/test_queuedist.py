@@ -109,6 +109,29 @@ async def test_subscribe_after_end(obj):
     await task_receive
 
 
+async def async_receive_with_break(obj, at=None):
+    ret = []
+    async for i in obj.subscribe():
+        if i == at:
+            break
+        ret.append(i)
+    return ret
+
+
+@pytest.mark.asyncio
+async def test_break(obj):
+    items = list(range(10))
+    at = 5
+    task_receive_1 = asyncio.create_task(async_receive_with_break(obj, at))
+    task_receive_2 = asyncio.create_task(async_receive(obj))
+    task_send = asyncio.create_task(async_send(obj, items))
+    await task_send
+    assert items[: items.index(at)] == await task_receive_1
+    results = await asyncio.gather(task_receive_2, obj.close())
+    result2, *_ = results
+    assert items == result2
+    assert obj.nsubscriptions == 0
+
 ##__________________________________________________________________||
 nsubscribers = [0, 1, 2, 5, 50]
 pre_nitems = [0, 1, 2, 50]

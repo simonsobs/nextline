@@ -63,21 +63,23 @@ class QueueDist:
         if last_item is self.End:
             return
 
-        if last_item is not self.Start:
-            yield last_item
+        try:
+            if last_item is not self.Start:
+                yield last_item
 
-        while True:
-            idx, item = await q.async_q.get()
-            if item is self.End:
-                break
-            if last_idx < idx:
-                yield item
+            while True:
+                idx, item = await q.async_q.get()
+                if item is self.End:
+                    break
+                if last_idx < idx:
+                    yield item
 
-        with self._lock_out:
-            self._qs_out.remove(q)
+        finally:
+            with self._lock_out:
+                self._qs_out.remove(q)
 
-        q.close()
-        await q.wait_closed()
+            q.close()
+            await q.wait_closed()
 
     async def close(self):
         """End gracefully
