@@ -10,6 +10,10 @@ class QueueDist:
     Data can be sent from any thread. All subscribers need to be in the thread
     in which this class is instantiated.
 
+    A new subscriber immediatly receives the most recent issue of the past data
+    and then wait for future issues.
+
+    The order of the data is preserved.
     """
 
     class End:
