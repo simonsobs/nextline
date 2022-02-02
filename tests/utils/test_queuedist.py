@@ -67,6 +67,7 @@ async def test_subscribe(obj):
     result1, result2, *_ = results
     assert items == result1
     assert items == result2
+    assert obj.nsubscriptions == 0
 
 
 @pytest.mark.asyncio

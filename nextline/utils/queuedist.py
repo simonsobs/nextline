@@ -35,6 +35,11 @@ class QueueDist:
         self._thread = threading.Thread(target=self._listen, daemon=True)
         self._thread.start()
 
+    @property
+    def nsubscriptions(self):
+        """The number of the subscribers"""
+        return len(self._qs_out)
+
     def put(self, item):
         """Send data to subscribers
 
