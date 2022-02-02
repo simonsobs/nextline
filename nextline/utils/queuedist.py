@@ -23,24 +23,24 @@ class QueueDist:
         pass
 
     def __init__(self):
-        self.queue_in = janus.Queue()
+        self._q_in = janus.Queue()
+
+        self._qs_out = []  # list of janus.Queue()
+        self._lock_out = threading.Condition()
+        self._last_enumarated = (-1, self.Start)
 
         self._closed = False
-        self._condition_close = asyncio.Condition()
+        self._lock_close = asyncio.Condition()
 
-        self.subscribers = []
-        self._condition_subscribers = threading.Condition()
-        self.last_enumarated = (-1, self.Start)
-
-        self.thread_listen = threading.Thread(target=self._listen, daemon=True)
-        self.thread_listen.start()
+        self._thread = threading.Thread(target=self._listen, daemon=True)
+        self._thread.start()
 
     def put(self, item):
         """Send data to subscribers
 
         This method can be called in any thread.
         """
-        self.queue_in.sync_q.put(item)
+        self._q_in.sync_q.put(item)
 
     async def subscribe(self):
         """Asynchronous generator of data
@@ -50,10 +50,10 @@ class QueueDist:
         """
         q = janus.Queue()
 
-        with self._condition_subscribers:
-            self.subscribers.append(q)
+        with self._lock_out:
+            self._qs_out.append(q)
 
-        last_idx, last_item = self.last_enumarated
+        last_idx, last_item = self._last_enumarated
 
         if last_item is self.End:
             return
@@ -68,8 +68,8 @@ class QueueDist:
             if last_idx < idx:
                 yield item
 
-        with self._condition_subscribers:
-            self.subscribers.remove(q)
+        with self._lock_out:
+            self._qs_out.remove(q)
 
         q.close()
         await q.wait_closed()
@@ -80,7 +80,7 @@ class QueueDist:
         This method needs to be called in the thread in which this class
         is instantiated.
         """
-        async with self._condition_close:
+        async with self._lock_close:
             if self._closed:
                 return
             await self._close()
@@ -88,33 +88,33 @@ class QueueDist:
 
     async def _close(self):
         """Actual implementation of close()"""
-        self.queue_in.sync_q.put(self.End)
+        self._q_in.sync_q.put(self.End)
 
         try:
-            await asyncio.to_thread(self.thread_listen.join)
+            await asyncio.to_thread(self._thread.join)
         except AttributeError:
             # for Python 3.8
             # to_thread() is new in Python 3.9
             loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, self.thread_listen.join)
+            await loop.run_in_executor(None, self._thread.join)
 
-        self.queue_in.close()
-        await self.queue_in.wait_closed()
+        self._q_in.close()
+        await self._q_in.wait_closed()
 
     def _listen(self):
         """Distribution of data to subscribers
 
         This method runs in a thread.
         """
-        idx, item = self.last_enumarated
+        idx, item = self._last_enumarated
         while item is not self.End:
             idx += 1
-            item = self.queue_in.sync_q.get()
+            item = self._q_in.sync_q.get()
             enumarated = (idx, item)
-            with self._condition_subscribers:
-                for q in self.subscribers:
+            with self._lock_out:
+                for q in self._qs_out:
                     q.sync_q.put(enumarated)
-            self.last_enumarated = enumarated
+            self._last_enumarated = enumarated
 
 
 ##__________________________________________________________________||
