@@ -50,16 +50,10 @@ async def test_close_multiple_times(obj):
 async def async_send(obj, items):
     async for i in aiterable(items):
         obj.put(i)
-    obj.put(None)
 
 
 async def async_receive(obj):
-    items = []
-    async for i in obj.subscribe():
-        if i is None:
-            break
-        items.append(i)
-    return items
+    return [i async for i in obj.subscribe()]
 
 
 @pytest.mark.asyncio
@@ -69,6 +63,7 @@ async def test_subscribe(obj):
     task_receive_2 = asyncio.create_task(async_receive(obj))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
+    await obj.close()
     assert items == await task_receive_1
     assert items == await task_receive_2
 
@@ -91,6 +86,7 @@ async def test_recive_the_most_recent_item(obj):
     task_send = asyncio.create_task(async_send(obj, items))
 
     await task_send
+    await obj.close()
     assert [*pre_items, *items] == await task_receive_1
 
     # receive 'C', which was put before task_receive_2 started
@@ -105,6 +101,7 @@ async def test_subscribe_after_end(obj):
     items = list(range(10))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
+    await obj.close()
 
     task_receive = asyncio.create_task(async_receive(obj))
     await task_receive
