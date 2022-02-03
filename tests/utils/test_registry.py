@@ -5,6 +5,64 @@ import pytest
 
 from nextline.utils import Registry
 
+from .aiterable import aiterable
+
+
+##__________________________________________________________________||
+@pytest.mark.asyncio
+async def test_simple_usage():
+    obj = Registry()
+
+    key = "key_one"
+    items = ["item_one", "item_two", "item_three"]
+
+    async def subscribe():
+        return [y async for y in obj.subscribe(key)]
+
+    async def register():
+        obj.open_register(key)
+        async for i in aiterable(items):
+            obj.register(key, i)
+        obj.close_register(key)
+
+    results = await asyncio.gather(subscribe(), register())
+    assert items == results[0]
+
+    await obj.close()
+
+
+@pytest.mark.asyncio
+async def test_simple_usage_list():
+    obj = Registry()
+
+    key = "key_one"
+    items = ["item_one", "item_two", "item_three"]
+    expected = [
+        ["item_one"],
+        ["item_one", "item_two"],
+        ["item_one", "item_two", "item_three"],
+        ["item_two", "item_three"],
+        ["item_three"],
+        [],
+    ]
+
+    async def subscribe():
+        return [y async for y in obj.subscribe(key)]
+
+    async def register():
+        obj.open_register_list(key)
+        async for i in aiterable(items):
+            obj.register_list_item(key, i)
+        async for i in aiterable(items):
+            obj.deregister_list_item(key, i)
+        obj.close_register(key)
+
+    results = await asyncio.gather(subscribe(), register())
+    assert expected == results[0]
+
+    await obj.close()
+
+
 ##__________________________________________________________________||
 nitems = [0, 1, 2, 50]
 nsubscribers = [0, 1, 2, 70]
