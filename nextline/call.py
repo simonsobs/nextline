@@ -3,11 +3,26 @@ import threading
 from functools import partial
 
 from typing import Callable, Any, Optional, Type
-from types import FrameType
+from types import FrameType, CodeType
 
 
 ##__________________________________________________________________||
-def compose(code) -> Callable:
+def compose(code: CodeType) -> Callable:
+    """Create a function
+
+    Parameters
+    ----------
+    code : object
+        A code to be executed when the returned function is called.
+        This must be an object that can be executed by the Python
+        built-in Function exec().
+
+    Returns
+    -------
+    function
+        A function with no arguments that executes the code
+
+    """
     globals_ = {"__name__": __name__}
     # To be given to exec() in order to address the issue
     # https://github.com/simonsobs/nextline/issues/7
