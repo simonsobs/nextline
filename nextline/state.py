@@ -5,6 +5,7 @@ from typing import Optional, Union
 from .trace import Trace
 from .utils import Registry, ThreadSafeAsyncioEvent
 from .call import exec_with_trace
+from . import wrap
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -248,7 +249,7 @@ class Running(State):
 
         trace = Trace(
             registry=self.registry,
-            modules_to_trace={exec_with_trace.__module__},
+            modules_to_trace={wrap.__name__},
         )
         self.pdb_ci_registry = trace.pdb_ci_registry
 

@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock, call
 
 from nextline.call import exec_with_trace
+from nextline import wrap
 
 
 ##__________________________________________________________________||
@@ -63,7 +64,7 @@ def test_module_name(trace):
     exec_with_trace(code=code, trace=trace, done=done)
 
     frame, *_ = trace.call_args_list[0].args
-    assert exec_with_trace.__module__ == frame.f_globals.get("__name__")
+    assert wrap.__name__ == frame.f_globals.get("__name__")
 
 
 ##__________________________________________________________________||
