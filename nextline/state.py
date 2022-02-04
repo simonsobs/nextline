@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 from .trace import Trace
 from .utils import Registry, ThreadSafeAsyncioEvent
-from .exec_ import exec_with_trace
+from .call import exec_with_trace
 
 SCRIPT_FILE_NAME = "<string>"
 

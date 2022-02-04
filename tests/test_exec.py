@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, call
 
-from nextline.exec_ import exec_with_trace
+from nextline.call import exec_with_trace
 
 
 ##__________________________________________________________________||
