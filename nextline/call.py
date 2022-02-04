@@ -4,33 +4,7 @@ import threading
 from typing import Callable, Any, Optional, Type
 from types import FrameType
 
-from . import wrap
-
-
 ##__________________________________________________________________||
-def exec_with_trace(code, trace, done=None):
-    """Set the trace funciton while running the code
-
-    Parameters
-    ----------
-    code : object
-        A code to be executed. This must be an object that can be
-        executed by the Python built-in Function exec().
-    trace: callable
-        A trace function.
-    done: callable, optional
-        A callable with two arguments. It will to be called after the
-        code exits. The first argument is the return value, which is
-        always None in the current implementation, because the
-        built-in function exec() returns None. The second argument is
-        the exception if an exception occurs or otherwise None.
-    """
-
-    func = wrap.compose(code)
-
-    call_with_trace(func, trace, done)
-
-
 Func = Callable[[], Any]
 
 TraceFunc = Callable[
