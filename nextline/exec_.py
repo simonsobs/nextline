@@ -4,7 +4,7 @@ import threading
 
 ##__________________________________________________________________||
 def exec_with_trace(code, trace, done=None):
-    """execute code with trace
+    """Set the trace funciton while running the code
 
     Parameters
     ----------
