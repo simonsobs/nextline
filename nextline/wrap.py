@@ -1,11 +1,11 @@
 from functools import partial
 
-from typing import Callable
+from typing import Union, Callable
 from types import CodeType
 
 
 ##__________________________________________________________________||
-def compose(code: CodeType) -> Callable:
+def compose(code: Union[CodeType, str]) -> Callable:
     """Create a function
 
     Parameters

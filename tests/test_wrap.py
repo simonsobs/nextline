@@ -8,9 +8,14 @@ x = 0
 """.strip()
 
 
-def test_simple():
+def test_code():
     code = compile(SOURCE, "<string>", "exec")
     func = wrap.compose(code)
+    func()
+
+
+def test_str():
+    func = wrap.compose(SOURCE)
     func()
 
 
