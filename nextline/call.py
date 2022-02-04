@@ -39,7 +39,8 @@ def call_with_trace(func, trace, done=None):
     ----------
     func : callable
         A fucntion to be called without any args. Use
-        functools.partial to provide args.
+        functools.partial to provide args. A return value and an
+        exception will be given to `done`.
     trace: callable
         A trace function.
     done: callable, optional
