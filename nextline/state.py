@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 from .trace import Trace
 from .utils import Registry, ThreadSafeAsyncioEvent
-from .call import exec_with_trace
+from .call import call_with_trace
 from . import wrap
 
 SCRIPT_FILE_NAME = "<string>"
@@ -247,6 +247,8 @@ class Running(State):
         self.registry = registry
         self._event = ThreadSafeAsyncioEvent()
 
+        func = wrap.compose(code)
+
         trace = Trace(
             registry=self.registry,
             modules_to_trace={wrap.__name__},
@@ -258,13 +260,13 @@ class Running(State):
         self.loop = asyncio.get_running_loop()
 
         self._thread = threading.Thread(
-            target=exec_with_trace, args=(code, trace, self._done), daemon=True
+            target=call_with_trace, args=(func, trace, self._done), daemon=True
         )
         self._thread.start()
 
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
-        # end of exec_with_trace()
+        # end of call_with_trace()
 
         if self.loop.is_closed():
             # The exit is not being waited in the main thread, for
