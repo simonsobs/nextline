@@ -55,3 +55,15 @@ def test_raise(trace):
 
 
 ##__________________________________________________________________||
+def test_module_name(trace):
+
+    done = Mock()
+    code = compile(SOURCE, "<string>", "exec")
+
+    exec_with_trace(code=code, trace=trace, done=done)
+
+    frame, *_ = trace.call_args_list[0].args
+    assert exec_with_trace.__module__ == frame.f_globals.get("__name__")
+
+
+##__________________________________________________________________||
