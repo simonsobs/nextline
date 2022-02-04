@@ -51,6 +51,12 @@ def call_with_trace(
 ) -> None:
     """Set the trace funciton while running the funciton
 
+    Notes
+    -----
+    The trace funciton will be used in all new threads created during
+    the funciton execution regardless of whether the threads are
+    creted by the funciton.
+
     Parameters
     ----------
     func : callable
