@@ -22,9 +22,12 @@ def compose(code: CodeType) -> Callable:
 
     """
     globals_ = {"__name__": __name__}
-    # To be given to exec() in order to address the issue
-    # https://github.com/simonsobs/nextline/issues/7
-    # __name__ is used in modules_to_trace in Trace.
+    # The globals, the second arg of exec(), resolves the issue*. An
+    # empty dict would suffice for the issus. The __name__ is given
+    #  for a different purpose; it is used in modules_to_trace in
+    #  Trace.
+    #
+    # [*] https://github.com/simonsobs/nextline/issues/7
 
     func = partial(exec, code, globals_)
     return func
