@@ -2,6 +2,9 @@ import sys
 import threading
 from functools import partial
 
+from typing import Callable, Any, Optional, Type
+from types import FrameType
+
 
 ##__________________________________________________________________||
 def exec_with_trace(code, trace, done=None):
@@ -32,7 +35,20 @@ def exec_with_trace(code, trace, done=None):
     call_with_trace(func, trace, done)
 
 
-def call_with_trace(func, trace, done=None):
+Func = Callable[[], Any]
+
+TraceFunc = Callable[
+    [FrameType, str, Any], Optional[Callable[[FrameType, str, Any], Any]]
+]
+# Copied from (because not sure how to import)
+# https://github.com/python/typeshed/blob/b88a6f19cdcf/stdlib/sys.pyi#L245
+
+DoneFunc = Optional[Callable[[Any, Type[Exception]], None]]
+
+
+def call_with_trace(
+    func: Func, trace: TraceFunc, done: DoneFunc = None
+) -> None:
     """Set the trace funciton while running the funciton
 
     Parameters
