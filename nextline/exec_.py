@@ -1,5 +1,6 @@
 import sys
 import threading
+from functools import partial
 
 
 ##__________________________________________________________________||
@@ -21,20 +22,41 @@ def exec_with_trace(code, trace, done=None):
         the exception if an exception occurs or otherwise None.
     """
 
-    ret = None
-    exc = None
-
     globals_ = {"__name__": __name__}
     # To be given to exec() in order to address the issue
     # https://github.com/simonsobs/nextline/issues/7
     # __name__ is used in modules_to_trace in Trace.
 
+    func = partial(exec, code, globals_)
+
+    call_with_trace(func, trace, done)
+
+
+def call_with_trace(func, trace, done=None):
+    """Set the trace funciton while running the funciton
+
+    Parameters
+    ----------
+    func : callable
+        A fucntion to be called without any args. Use
+        functools.partial to provide args.
+    trace: callable
+        A trace function.
+    done: callable, optional
+        A callable with two arguments. It will to be called after the
+        func exits. The first argument is the return value. The second
+        argument is the exception if an exception occurs or otherwise
+        None.
+    """
+
+    ret = None
+    exc = None
+
     trace_org = sys.gettrace()
     threading.settrace(trace)
     sys.settrace(trace)
     try:
-        ret = exec(code, globals_)
-        # ret is always None
+        ret = func()
     except BaseException as e:
         exc = e
     finally:
