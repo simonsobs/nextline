@@ -7,6 +7,17 @@ from types import FrameType
 
 
 ##__________________________________________________________________||
+def compose(code) -> Callable:
+    globals_ = {"__name__": __name__}
+    # To be given to exec() in order to address the issue
+    # https://github.com/simonsobs/nextline/issues/7
+    # __name__ is used in modules_to_trace in Trace.
+
+    func = partial(exec, code, globals_)
+    return func
+
+
+##__________________________________________________________________||
 def exec_with_trace(code, trace, done=None):
     """Set the trace funciton while running the code
 
@@ -25,12 +36,7 @@ def exec_with_trace(code, trace, done=None):
         the exception if an exception occurs or otherwise None.
     """
 
-    globals_ = {"__name__": __name__}
-    # To be given to exec() in order to address the issue
-    # https://github.com/simonsobs/nextline/issues/7
-    # __name__ is used in modules_to_trace in Trace.
-
-    func = partial(exec, code, globals_)
+    func = compose(code)
 
     call_with_trace(func, trace, done)
 
