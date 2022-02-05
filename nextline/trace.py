@@ -20,7 +20,7 @@ class Trace:
         The names of modules to trace. The module in which the trace
         is first time called will be always traced even if not in the
         set.
-        
+
     """
 
     def __init__(self, registry, modules_to_trace=None):
