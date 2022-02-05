@@ -15,6 +15,11 @@ x = 2
 
 
 class BaseTestState(ABC):
+    """Test state classes of the state machine
+
+    To be inherited by the test class for each state class.
+    """
+
     @pytest.fixture()
     def statement(self):
         yield SOURCE_ONE
@@ -63,7 +68,15 @@ class BaseTestState(ABC):
 
     @abstractmethod
     def state(self, *_, **__):
+        """Yield an instance of the class being tested
+
+        To be overridden as a pytest fixture.
+        """
         pass
+
+    def test_state(self, state):
+        assert isinstance(state, self.state_class)
+        assert "obsolete" not in repr(state)
 
     params = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
 
@@ -76,10 +89,6 @@ class BaseTestState(ABC):
         else:
             expected_statement = old_statement
         yield (expected_statement, statement)
-
-    def test_state(self, state):
-        assert isinstance(state, self.state_class)
-        assert "obsolete" not in repr(state)
 
     async def assert_obsolete(self, state):
         assert "obsolete" in repr(state)
