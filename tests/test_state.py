@@ -50,10 +50,14 @@ def test_monkey_patch_trace(monkey_patch_trace):
 
 
 @pytest.fixture(autouse=True)
-async def wrap_registry(monkeypatch):
+def wrap_registry(monkeypatch):
     mock_class = Mock(side_effect=lambda: Mock(wraps=Registry()))
     monkeypatch.setattr("nextline.state.Registry", mock_class)
     yield
+
+
+def test_wrap_registry(wrap_registry):
+    pass
 
 
 ##__________________________________________________________________||
