@@ -1,3 +1,8 @@
+"""The creation of a callable from code to be traced.
+
+The name of this module becomes the module name of the callable.
+"""
+
 from functools import partial
 
 from typing import Union, Callable
@@ -6,7 +11,7 @@ from types import CodeType
 
 ##__________________________________________________________________||
 def compose(code: Union[CodeType, str]) -> Callable:
-    """Create a function that executs the code
+    """Create a function that executes the code
 
     Parameters
     ----------
