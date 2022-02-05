@@ -43,6 +43,48 @@ async def test_sys_settrace(MockPdbProxy):
 
 
 ##__________________________________________________________________||
+params = [
+    pytest.param(set(), id="empty"),
+    pytest.param({"some_module"}, id="one-value"),
+    pytest.param(None, id="none"),
+    pytest.param(False, id="default"),
+]
+
+
+@pytest.mark.parametrize("modules_to_trace", params)
+@pytest.mark.asyncio
+async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
+    from . import module_a
+    from . import module_b
+
+    registry = Registry()
+
+    kwargs = {}
+    if modules_to_trace is not False:
+        kwargs["modules_to_trace"] = modules_to_trace
+
+    trace = Trace(registry, **kwargs)
+
+    trace_org = sys.gettrace()
+    sys.settrace(trace)
+    module_a.func()
+    sys.settrace(trace_org)
+
+    assert modules_to_trace is not trace.modules_to_trace
+    if modules_to_trace:
+        assert modules_to_trace <= trace.modules_to_trace
+
+    traced_moduled = {
+        c.args[0].f_globals.get("__name__")
+        for c in MockPdbProxy().trace_func.call_args_list
+    }
+
+    # module_b is traced but not in the set modules_to_trace
+    assert module_a.__name__ in trace.modules_to_trace
+    assert {module_a.__name__, module_b.__name__} == traced_moduled
+
+
+##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_return(MockPdbProxy):
     """test if correct trace function is returned"""

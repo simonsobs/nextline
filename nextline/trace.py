@@ -16,11 +16,14 @@ class Trace:
     ----------
     registry : object
         An instance of Registry
-    modules_to_trace : set
-        The names of modules to trace
+    modules_to_trace : set, optional
+        The names of modules to trace. The module in which the trace
+        is first time called will be always traced even if not in the
+        set.
+        
     """
 
-    def __init__(self, registry, modules_to_trace):
+    def __init__(self, registry, modules_to_trace=None):
 
         self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
@@ -30,6 +33,9 @@ class Trace:
 
         self.pdb_proxies = {}
 
+        if modules_to_trace is None:
+            modules_to_trace = set()
+
         self.modules_to_trace = set(modules_to_trace)
         # Make a copy so that the original won't be modified.
         # self.modules_to_trace will be shared and modified by
@@ -37,12 +43,19 @@ class Trace:
 
         self.id_composer = UniqThreadTaskIdComposer()
 
+        self.first = True
+
     def __call__(self, frame, event, arg):
         """Called by the Python interpreter when a new local scope is entered.
 
         https://docs.python.org/3/library/sys.html#sys.settrace
 
         """
+
+        if self.first:
+            module_name = frame.f_globals.get("__name__")
+            self.modules_to_trace.add(module_name)
+            self.first = False
 
         thread_asynctask_id = self.id_composer.compose()
         # print(*thread_asynctask_id)
