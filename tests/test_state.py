@@ -18,7 +18,7 @@ from nextline.state import (
 ##__________________________________________________________________||
 SOURCE_ONE = """
 import time
-time.sleep(0.1)
+time.sleep(0.001)
 """.strip()
 
 SOURCE_TWO = """
