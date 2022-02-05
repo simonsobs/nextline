@@ -5,7 +5,7 @@ from typing import Optional, Union
 from .trace import Trace
 from .utils import Registry, ThreadSafeAsyncioEvent
 from .call import call_with_trace
-from . import wrap
+from . import script
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -247,7 +247,7 @@ class Running(State):
         self.registry = registry
         self._event = ThreadSafeAsyncioEvent()
 
-        func = wrap.compose(code)
+        func = script.compose(code)
 
         trace = Trace(registry=self.registry)
         self.pdb_ci_registry = trace.pdb_ci_registry
