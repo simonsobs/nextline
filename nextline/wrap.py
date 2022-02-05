@@ -6,7 +6,7 @@ from types import CodeType
 
 ##__________________________________________________________________||
 def compose(code: Union[CodeType, str]) -> Callable:
-    """Create a function
+    """Create a function that executs the code
 
     Parameters
     ----------
@@ -23,9 +23,11 @@ def compose(code: Union[CodeType, str]) -> Callable:
     """
     globals_ = {"__name__": __name__}
     # The globals, the second arg of exec(), resolves the issue*. An
-    # empty dict would suffice for the issus. The __name__ is given
-    #  for a different purpose; it is used in modules_to_trace in
-    #  Trace.
+    # empty dict would suffice for the issus.
+    #
+    # The __name__ is given for a different purpose. It becomes the
+    # module name of the returned function. The module name is used in
+    # Trace.
     #
     # [*] https://github.com/simonsobs/nextline/issues/7
 
