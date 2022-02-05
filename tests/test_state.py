@@ -43,21 +43,31 @@ def monkey_patch_trace(monkeypatch):
 
 
 def test_monkey_patch_trace(monkey_patch_trace):
-    Trace = monkey_patch_trace
-    trace = Trace()
+    MockTrace = monkey_patch_trace
+    trace = MockTrace()
     assert trace() is None
     assert isinstance(trace.pdb_ci_registry, PdbCIRegistry)
 
 
 @pytest.fixture(autouse=True)
 def wrap_registry(monkeypatch):
-    mock_class = Mock(side_effect=lambda: Mock(wraps=Registry()))
+    """Wrap instances of the class Registry in nextline.state
+
+    A new instance is acutally created when the mock class is called.
+    """
+    mock_class = Mock(
+        side_effect=lambda: Mock(spec=Registry, wraps=Registry())
+    )
     monkeypatch.setattr("nextline.state.Registry", mock_class)
-    yield
+    yield mock_class
 
 
-def test_wrap_registry(wrap_registry):
-    pass
+@pytest.mark.asyncio
+async def test_wrap_registry(wrap_registry):
+    MockRegistry = wrap_registry
+    registry = MockRegistry()
+    assert isinstance(registry, Registry)
+    assert registry is not MockRegistry()
 
 
 ##__________________________________________________________________||
