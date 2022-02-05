@@ -1,10 +1,8 @@
 import asyncio
 
 import pytest
-from unittest.mock import Mock
 
 from nextline.state import Machine
-from nextline.registry import PdbCIRegistry
 
 # __________________________________________________________________||
 SOURCE = """
@@ -19,17 +17,6 @@ x = 2
 SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
-
-
-# __________________________________________________________________||
-@pytest.fixture(autouse=True)
-def monkey_patch_trace(monkeypatch):
-    mock_instance = Mock()
-    mock_instance.return_value = None
-    mock_instance.pdb_ci_registry = Mock(spec=PdbCIRegistry)
-    mock_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr("nextline.state.Trace", mock_class)
-    yield mock_class
 
 
 # __________________________________________________________________||
