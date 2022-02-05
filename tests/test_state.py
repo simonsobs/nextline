@@ -33,12 +33,20 @@ raise Exception('foo', 'bar')
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def monkey_patch_trace(monkeypatch):
+    """Mock the class Trace in the module nextline.state"""
     mock_instance = Mock()
     mock_instance.return_value = None
     mock_instance.pdb_ci_registry = Mock(spec=PdbCIRegistry)
     mock_class = Mock(return_value=mock_instance)
     monkeypatch.setattr("nextline.state.Trace", mock_class)
     yield mock_class
+
+
+def test_monkey_patch_trace(monkey_patch_trace):
+    Trace = monkey_patch_trace
+    trace = Trace()
+    assert trace() is None
+    assert isinstance(trace.pdb_ci_registry, PdbCIRegistry)
 
 
 @pytest.fixture(autouse=True)
