@@ -84,6 +84,39 @@ async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
     assert {module_a.__name__, module_b.__name__} == traced_moduled
 
 
+@pytest.mark.asyncio
+async def test_modules_to_trace_partial(MockPdbProxy):
+    """
+    This test investigate what happens if a partial is the first
+    function to be called. The module_a still appears to be the first
+    module and added to the set modules_to_trace. It is not clear why
+    partial.__call__() is not traced.
+    """
+    from functools import partial
+    from . import module_a
+    from . import module_b
+
+    registry = Registry()
+
+    trace = Trace(registry)
+
+    func = partial(module_a.func)
+
+    trace_org = sys.gettrace()
+    sys.settrace(trace)
+    func()
+    sys.settrace(trace_org)
+
+    traced_moduled = {
+        c.args[0].f_globals.get("__name__")
+        for c in MockPdbProxy().trace_func.call_args_list
+    }
+
+    # module_b is traced but not in the set modules_to_trace
+    assert module_a.__name__ in trace.modules_to_trace
+    assert {module_a.__name__, module_b.__name__} == traced_moduled
+
+
 ##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_return(MockPdbProxy):
