@@ -249,10 +249,7 @@ class Running(State):
 
         func = wrap.compose(code)
 
-        trace = Trace(
-            registry=self.registry,
-            modules_to_trace={wrap.__name__},
-        )
+        trace = Trace(registry=self.registry)
         self.pdb_ci_registry = trace.pdb_ci_registry
 
         self.registry.register("state_name", self.name)
