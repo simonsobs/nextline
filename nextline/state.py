@@ -200,19 +200,15 @@ class Initialized(State):
         if statement:
             self.registry.register("statement", statement)
             self.registry.register("script_file_name", SCRIPT_FILE_NAME)
-        else:
-            statement = self.registry.get("statement")
-
-        if isinstance(statement, str):
-            self._code = compile(statement, SCRIPT_FILE_NAME, "exec")
-        else:
-            self._code = statement
+        # else:
+        #     statement = self.registry.get("statement")
+        # TODO: check if statement is in the registry
 
         self.registry.register("state_name", self.name)
 
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.registry, self._code)
+        running = Running(self.registry)
         self.obsolete()
         return running
 
@@ -237,17 +233,15 @@ class Running(State):
     ----------
     registry : object
         An instance of Registry
-    code : object
-        The code object to be executed.
     """
 
     name = "running"
 
-    def __init__(self, registry, code):
+    def __init__(self, registry):
         self.registry = registry
         self._event = ThreadSafeAsyncioEvent()
 
-        func = script.compose(code)
+        statement = self.registry.get("statement")
 
         trace = Trace(registry=self.registry)
         self.pdb_ci_registry = trace.pdb_ci_registry
@@ -257,9 +251,22 @@ class Running(State):
         self.loop = asyncio.get_running_loop()
 
         self._thread = threading.Thread(
-            target=call_with_trace, args=(func, trace, self._done), daemon=True
+            target=self._run, args=(statement, trace), daemon=True
         )
         self._thread.start()
+
+    def _run(self, code, trace):
+
+        if isinstance(code, str):
+            try:
+                code = compile(code, SCRIPT_FILE_NAME, "exec")
+            except BaseException as e:
+                self._done(None, e)
+                return
+
+        func = script.compose(code)
+
+        call_with_trace(func, trace, self._done)
 
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the

@@ -8,6 +8,10 @@ SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
 
+SOURCE_INVALID_SYNTAX = """
+def
+""".strip()
+
 
 class TestFinished(BaseTestState):
 
@@ -53,28 +57,35 @@ class TestFinished(BaseTestState):
     async def test_result(self, state):
         assert state.result() is None
 
+    params = [
+        pytest.param(SOURCE_RAISE, Exception, id="raise"),
+        pytest.param(SOURCE_INVALID_SYNTAX, SyntaxError, id="invalid-syntax"),
+    ]
+
+    @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_exception_raise(self):
-        state = Initialized(SOURCE_RAISE)
+    async def test_exception_raise(self, source, exc):
+        state = Initialized(source)
         state = state.run()
 
         state = await state.exited()
         state = await state.finish()
         assert isinstance(state, Finished)
 
-        assert isinstance(state.exception(), Exception)
-        assert ("foo", "bar") == state.exception().args
-        with pytest.raises(Exception):
+        assert isinstance(state.exception(), exc)
+        # assert ("foo", "bar") == state.exception().args
+        with pytest.raises(exc):
             raise state.exception()
 
+    @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_result_raise(self):
-        state = Initialized(SOURCE_RAISE)
+    async def test_result_raise(self, source, exc):
+        state = Initialized(source)
         state = state.run()
 
         state = await state.exited()
         state = await state.finish()
         assert isinstance(state, Finished)
 
-        with pytest.raises(Exception):
+        with pytest.raises(exc):
             state.result()
