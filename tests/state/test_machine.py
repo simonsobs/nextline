@@ -1,8 +1,13 @@
-import asyncio
+"""Test the class Machine
 
+TODO: add a test for the method send_pdb_command()
+
+"""
 import pytest
 
 from nextline.state import Machine
+from nextline.utils import Registry
+
 
 # __________________________________________________________________||
 SOURCE = """
@@ -14,115 +19,68 @@ SOURCE_TWO = """
 x = 2
 """.strip()
 
-SOURCE_RAISE = """
-raise Exception('foo', 'bar')
-""".strip()
-
 
 # __________________________________________________________________||
+@pytest.mark.asyncio
+async def test_init():
+    obj = Machine(SOURCE)
+    assert "initialized" == obj.state_name
+    assert isinstance(obj.registry, Registry)
+
+
+def test_init_sync():
+    # not possible to instantiate without a running asyncio event loop
+    with pytest.raises(RuntimeError):
+        _ = Machine(SOURCE)
+
+
 @pytest.mark.asyncio
 async def test_repr():
-    machine = Machine(SOURCE)
-    repr(machine)
+    obj = Machine(SOURCE)
+    repr(obj)
 
 
 @pytest.mark.asyncio
-async def test_state_transitions_single_op():
-
-    machine = Machine(SOURCE)
-    event_initialized = asyncio.Event()
-    task_monitor_state = asyncio.create_task(
-        monitor_state(machine, event_initialized)
-    )
-    await event_initialized.wait()
-
-    machine.run()
-
-    await machine.finish()
-    await machine.close()
-
-    aws = [task_monitor_state]
-    results = await asyncio.gather(*aws)
-
-    states, *_ = results
-
-    expectecd = ["initialized", "running", "exited", "finished", "closed"]
-    assert expectecd == states
+async def test_state_name_unknown():
+    obj = Machine(SOURCE)
+    obj.state = None
+    assert "unknown" == obj.state_name
+    del obj.state
+    assert "unknown" == obj.state_name
 
 
 @pytest.mark.asyncio
-async def test_state_transitions_multiple_async_ops():
-    """test state transitions with multiple asynchronous operations
-
-    The methods finish() and close() can be called multiple times
-    asynchronously. However, each state transition should occur once.
-
-    """
-
-    nclients = 3
-
-    machine = Machine(SOURCE)
-
-    event_initialized = asyncio.Event()
-    task_monitor_state = asyncio.create_task(
-        monitor_state(machine, event_initialized)
-    )
-    await event_initialized.wait()
-
-    machine.run()
-
-    tasks_finish_and_close = []
-    for _ in range(nclients):
-        task = asyncio.create_task(finish_and_close(machine))
-        tasks_finish_and_close.append(task)
-
-    aws = [task_monitor_state, *tasks_finish_and_close]
-    results = await asyncio.gather(*aws)
-
-    states, *_ = results
-
-    expectecd = ["initialized", "running", "exited", "finished", "closed"]
-    assert expectecd == states
-
-
-async def finish_and_close(machine):
-    await machine.finish()
-    await machine.close()
-
-
-async def monitor_state(machine, event_initialized):
-    ret = []
-    async for s in machine.registry.subscribe("state_name"):
-        if s == "initialized":
-            event_initialized.set()
-        # print('monitor_state()', s)
-        ret.append(s)
-    return ret
-
-
-# __________________________________________________________________||
-@pytest.mark.asyncio
-async def test_reset():
-    machine = Machine(SOURCE)
-    machine.run()
-    await machine.finish()
-    machine.reset()
-    machine.run()
-    await machine.finish()
-    await machine.close()
+async def test_transitions():
+    obj = Machine(SOURCE)
+    assert "initialized" == obj.state_name
+    obj.run()
+    assert "running" == obj.state_name
+    await obj.finish()
+    assert "finished" == obj.state_name
+    obj.result()
+    obj.exception()
+    await obj.close()
+    assert "closed" == obj.state_name
+    obj.reset()
+    assert "initialized" == obj.state_name
+    obj.run()
+    assert "running" == obj.state_name
+    await obj.finish()
+    assert "finished" == obj.state_name
+    obj.reset()
+    assert "initialized" == obj.state_name
+    await obj.close()
+    assert "closed" == obj.state_name
 
 
 @pytest.mark.asyncio
 async def test_reset_with_statement():
-    machine = Machine(SOURCE)
-    assert SOURCE == machine.registry.get("statement")
-    machine.run()
-    await machine.finish()
-    machine.reset(statement=SOURCE_TWO)
-    assert SOURCE_TWO == machine.registry.get("statement")
-    machine.run()
-    await machine.finish()
-    await machine.close()
-
-
-# __________________________________________________________________||
+    obj = Machine(SOURCE)
+    assert SOURCE == obj.registry.get("statement")
+    obj.run()
+    await obj.finish()
+    obj.reset(statement=SOURCE_TWO)
+    assert SOURCE_TWO == obj.registry.get("statement")
+    obj.run()
+    await obj.finish()
+    await obj.close()
