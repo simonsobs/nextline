@@ -78,6 +78,9 @@ class BaseTestState(ABC):
         assert isinstance(state, self.state_class)
         assert "obsolete" not in repr(state)
 
+    def test_registry_state_name(self, state):
+        assert self.state_class.name == state.registry.get("state_name")
+
     params = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
 
     @pytest.fixture(params=params)
