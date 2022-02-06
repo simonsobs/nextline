@@ -13,6 +13,11 @@ class TestInitialized(BaseTestState):
     def state(self, initialized):
         yield initialized
 
+    def test_sync(self, statement):
+        # requires a running asyncio event loop
+        with pytest.raises(RuntimeError):
+            _ = Initialized(statement)
+
     @pytest.mark.asyncio
     async def test_run(self, state):
         running = state.run()
