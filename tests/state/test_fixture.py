@@ -16,4 +16,4 @@ async def test_wrap_registry(wrap_registry):
     MockRegistry = wrap_registry
     registry = MockRegistry()
     assert isinstance(registry, Registry)
-    assert registry is not MockRegistry()
+    assert registry is not MockRegistry()  # new instance
