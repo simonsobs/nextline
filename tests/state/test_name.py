@@ -57,17 +57,3 @@ async def test_register_state_name_reset():
         if c.args[0] == "state_name"
     ]
     assert expected == actual
-
-    state = state.reset()
-    state = state.run()
-    state = await state.exited()
-    state = await state.finish()
-    state = await state.close()
-
-    expected = ["initialized", "running", "exited", "finished", "closed"]
-    actual = [
-        c.args[1]
-        for c in state.registry.register.call_args_list
-        if c.args[0] == "state_name"
-    ]
-    assert expected == actual

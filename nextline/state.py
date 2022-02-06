@@ -33,13 +33,13 @@ class Machine:
             |          |           |
             |          V           |
             |    .-------------.   |
-            |----|  Finished   |   |
-            |    '-------------'   |
-            |          |-----------'
-            |          | close()
-            |          V
-            |    .-------------.
-            '----|   Closed    |
+            '----|  Finished   |   |
+                 '-------------'   |
+                       |-----------'
+                       | close()
+                       V
+                 .-------------.
+                 |   Closed    |
                  '-------------'
 
     """
@@ -439,14 +439,6 @@ class Closed(State):
     async def _ainit(self):
         await self.registry.close()
         # close here because "await" is not allowed in __init__()
-
-    def reset(self, statement=None):
-        self.assert_not_obsolete()
-        if statement is None:
-            statement = self.statement
-        initialized = Initialized(statement=statement)
-        self.obsolete()
-        return initialized
 
     async def close(self):
         # This method can be called when Nextline.close() is

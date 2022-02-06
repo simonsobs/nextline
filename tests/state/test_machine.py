@@ -59,14 +59,6 @@ async def test_transitions():
     assert "finished" == obj.state_name
     obj.result()
     obj.exception()
-    await obj.close()
-    assert "closed" == obj.state_name
-    obj.reset()
-    assert "initialized" == obj.state_name
-    obj.run()
-    assert "running" == obj.state_name
-    await obj.finish()
-    assert "finished" == obj.state_name
     obj.reset()
     assert "initialized" == obj.state_name
     await obj.close()
