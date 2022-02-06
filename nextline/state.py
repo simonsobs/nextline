@@ -434,8 +434,8 @@ class Closed(State):
         self.registry.register("state_name", self.name)
 
     async def _ainit(self):
-        await self.registry.close()  # close here because "await" is
-        # not allowed in __init__()
+        await self.registry.close()
+        # close here because "await" is not allowed in __init__()
 
     def reset(self, statement=None):
         self.assert_not_obsolete()
