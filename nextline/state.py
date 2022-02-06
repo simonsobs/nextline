@@ -58,7 +58,10 @@ class Machine:
     @property
     def state_name(self) -> str:
         """e.g., "initialized", "running","""
-        return self.state.name
+        try:
+            return self.state.name
+        except BaseException:
+            return "unknown"
 
     def run(self):
         """Enter the running state"""
