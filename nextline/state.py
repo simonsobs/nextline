@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import itertools
 from typing import Union
 
 from .trace import Trace
@@ -44,15 +45,20 @@ class Machine:
 
     """
 
-    def __init__(self, statement: str):
+    def __init__(self, statement: str, run_no_start_from=1):
         self.registry = Registry()
         self.registry.open_register("statement")
         self.registry.open_register("state_name")
         self.registry.open_register("script_file_name")
+        self.registry.open_register("run_no")
+        self.registry.open_register("run_no_count")
         self.registry.open_register_list("thread_task_ids")
 
         self.registry.register("statement", statement)
         self.registry.register("script_file_name", SCRIPT_FILE_NAME)
+        self.registry.register(
+            "run_no_count", itertools.count(run_no_start_from).__next__
+        )
 
         self._state = Initialized(self.registry)
 
@@ -195,6 +201,8 @@ class Initialized(State):
 
     def __init__(self, registry: Registry):
         self.registry = registry
+        run_no = self.registry.get("run_no_count")()
+        self.registry.register("run_no", run_no)
         self.registry.register("state_name", self.name)
 
     def run(self):

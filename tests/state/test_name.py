@@ -1,3 +1,5 @@
+import itertools
+
 import pytest
 
 from unittest.mock import Mock
@@ -12,12 +14,21 @@ time.sleep(0.001)
 """.strip()
 
 
+@pytest.fixture()
+async def registry():
+    y = Mock(spec=Registry, wraps=Registry())
+    y.open_register("statement")
+    y.open_register("state_name")
+    y.open_register("run_no")
+    y.open_register("run_no_count")
+    y.register("run_no_count", itertools.count().__next__)
+    y.register("statement", SOURCE)
+    yield y
+    await y.close()
+
+
 @pytest.mark.asyncio
-async def test_register_state_name():
-    registry = Mock(spec=Registry, wraps=Registry())
-    registry.open_register("statement")
-    registry.open_register("state_name")
-    registry.register("statement", SOURCE)
+async def test_register_state_name(registry):
     state = Initialized(registry=registry)
     state = state.run()
     state = await state.exited()
@@ -34,11 +45,7 @@ async def test_register_state_name():
 
 
 @pytest.mark.asyncio
-async def test_register_state_name_reset():
-    registry = Mock(spec=Registry, wraps=Registry())
-    registry.open_register("statement")
-    registry.open_register("state_name")
-    registry.register("statement", SOURCE)
+async def test_register_state_name_reset(registry):
     state = Initialized(registry=registry)
     state = state.reset()
     state = state.run()

@@ -1,7 +1,6 @@
 import pytest
 
 from nextline.state import Initialized, Finished, Closed
-from nextline.utils import Registry
 
 from .base import BaseTestState
 
@@ -58,10 +57,7 @@ class TestFinished(BaseTestState):
 
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_exception_raise(self, source, exc):
-        registry = Registry()
-        registry.open_register("statement")
-        registry.open_register("state_name")
+    async def test_exception_raise(self, registry, source, exc):
         registry.register("statement", source)
 
         state = Initialized(registry=registry)
@@ -78,10 +74,7 @@ class TestFinished(BaseTestState):
 
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_result_raise(self, source, exc):
-        registry = Registry()
-        registry.open_register("statement")
-        registry.open_register("state_name")
+    async def test_result_raise(self, registry, source, exc):
         registry.register("statement", source)
 
         state = Initialized(registry=registry)

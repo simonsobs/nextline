@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import itertools
 
 import pytest
 
@@ -26,7 +27,10 @@ class BaseTestState(ABC):
         y = Registry()
         y.open_register("statement")
         y.open_register("state_name")
+        y.open_register("run_no")
+        y.open_register("run_no_count")
         y.register("statement", statement)
+        y.register("run_no_count", itertools.count().__next__)
         yield y
         await y.close()
 
