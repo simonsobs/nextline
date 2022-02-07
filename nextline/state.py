@@ -1,6 +1,6 @@
 import asyncio
 import threading
-from typing import Optional, Union
+from typing import Union
 
 from .trace import Trace
 from .utils import Registry, ThreadSafeAsyncioEvent
@@ -42,14 +42,29 @@ class Machine:
                  |   Closed    |
                  '-------------'
 
+    Parameters
+    ----------
+    statement : str or None
+        A Python code as a string. None can be given by a state object
+        when the state is reset. If None, the statement will be
+        obtained from the registry.
+
     """
 
-    def __init__(self, statement):
+    def __init__(self, statement: Union[str, None]):
         self.condition_finish = asyncio.Condition()
         self.condition_close = asyncio.Condition()
 
-        self.state = Initialized(statement)
-        self.registry = self.state.registry
+        self.registry = Registry()
+        self.registry.open_register("statement")
+        self.registry.open_register("state_name")
+        self.registry.open_register("script_file_name")
+        self.registry.open_register_list("thread_task_ids")
+
+        self.registry.register("statement", statement)
+        self.registry.register("script_file_name", SCRIPT_FILE_NAME)
+
+        self.state = Initialized(self.registry)
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -94,14 +109,17 @@ class Machine:
     def result(self):
         self.state.result()
 
-    def reset(self, statement=None):
+    def reset(self, statement: Union[str, None] = None):
         """Enter the initialized state"""
-        self.state = self.state.reset(statement=statement)
+        if statement:
+            self.registry.register("statement", statement)
+        self.state = self.state.reset()
 
     async def close(self):
         """Enter the closed state"""
         async with self.condition_close:
-            self.state = await self.state.close()
+            self.state = self.state.close()
+            await self.registry.close()
 
 
 # __________________________________________________________________||
@@ -152,11 +170,11 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self, *_, **__):
+    def reset(self):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    async def close(self):
+    def close(self):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -175,38 +193,15 @@ class Initialized(State):
 
     Parameters
     ----------
-    statement : str or None
-        A Python code as a string. None can be given by a state object
-        when the state is reset. If None, the statement will be
-        obtained from the registry.
-    registry : object, optional
-        An instance of Registry. This parameter will be given by a state
-        object when the state is reset.
+    registry : object
+        An instance of Registry.
 
     """
 
     name = "initialized"
 
-    def __init__(
-        self, statement: Union[str, None], registry: Optional[Registry] = None
-    ):
-
-        if registry:
-            self.registry = registry
-        else:
-            self.registry = Registry()
-            self.registry.open_register("statement")
-            self.registry.open_register("state_name")
-            self.registry.open_register("script_file_name")
-            self.registry.open_register_list("thread_task_ids")
-
-        if statement:
-            self.registry.register("statement", statement)
-            self.registry.register("script_file_name", SCRIPT_FILE_NAME)
-        # else:
-        #     statement = self.registry.get("statement")
-        # TODO: check if statement is in the registry
-
+    def __init__(self, registry: Registry):
+        self.registry = registry
         self.registry.register("state_name", self.name)
 
     def run(self):
@@ -215,16 +210,15 @@ class Initialized(State):
         self.obsolete()
         return running
 
-    def reset(self, statement=None):
+    def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(statement=statement, registry=self.registry)
+        initialized = Initialized(registry=self.registry)
         self.obsolete()
         return initialized
 
-    async def close(self):
+    def close(self):
         self.assert_not_obsolete()
         closed = Closed(self.registry)
-        await closed._ainit()
         self.obsolete()
         return closed
 
@@ -406,16 +400,15 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(self, statement=None):
+    def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(statement=statement, registry=self.registry)
+        initialized = Initialized(registry=self.registry)
         self.obsolete()
         return initialized
 
-    async def close(self):
+    def close(self):
         self.assert_not_obsolete()
         closed = Closed(self.registry)
-        await closed._ainit()
         self.obsolete()
         return closed
 
@@ -433,16 +426,9 @@ class Closed(State):
 
     def __init__(self, registry):
         self.registry = registry
-        self.statement = self.registry.get("statement")
         self.registry.register("state_name", self.name)
 
-    async def _ainit(self):
-        await self.registry.close()
-        # close here because "await" is not allowed in __init__()
-
-    async def close(self):
-        # This method can be called when Nextline.close() is
-        # asynchronously called multiple times.
+    def close(self):
         self.assert_not_obsolete()
         return self
 

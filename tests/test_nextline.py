@@ -71,12 +71,10 @@ async def test_state_transitions_single_op():
 async def test_state_transitions_multiple_async_ops():
     """test state transitions with multiple asynchronous operations
 
-    The methods finish() and close() can be called multiple times
-    asynchronously. However, each state transition should occur once.
+    The method finish() can be called multiple times asynchronously.
+    However, the state transition should occur once.
 
     """
-
-    nclients = 3
 
     nextline = Nextline(SOURCE)
 
@@ -88,12 +86,9 @@ async def test_state_transitions_multiple_async_ops():
 
     nextline.run()
 
-    tasks_finish_and_close = []
-    for _ in range(nclients):
-        task = asyncio.create_task(finish_and_close(nextline))
-        tasks_finish_and_close.append(task)
+    tasks_finish_and_close = asyncio.create_task(finish_and_close(nextline))
 
-    aws = [task_monitor_state, *tasks_finish_and_close]
+    aws = [task_monitor_state, tasks_finish_and_close]
     results = await asyncio.gather(*aws)
 
     states, *_ = results
@@ -103,7 +98,8 @@ async def test_state_transitions_multiple_async_ops():
 
 
 async def finish_and_close(nextline):
-    await nextline.finish()
+    nclients = 3
+    await asyncio.gather(*[nextline.finish() for _ in range(nclients)])
     await nextline.close()
 
 

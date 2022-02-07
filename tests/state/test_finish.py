@@ -1,6 +1,7 @@
 import pytest
 
 from nextline.state import Initialized, Finished, Closed
+from nextline.utils import Registry
 
 from .base import BaseTestState
 
@@ -31,21 +32,14 @@ class TestFinished(BaseTestState):
         assert "obsolete" not in repr(state)
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statements_for_test_reset):
-        expected_statement, statement = statements_for_test_reset
-
-        reset = state.reset(statement=statement)
+    async def test_reset(self, state):
+        reset = state.reset()
         assert isinstance(reset, Initialized)
-
-        assert expected_statement == reset.registry.get("statement")
-
-        assert reset.registry is state.registry
-
         await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
     async def test_close(self, state):
-        closed = await state.close()
+        closed = state.close()
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
 
@@ -65,7 +59,12 @@ class TestFinished(BaseTestState):
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
     async def test_exception_raise(self, source, exc):
-        state = Initialized(source)
+        registry = Registry()
+        registry.open_register("statement")
+        registry.open_register("state_name")
+        registry.register("statement", source)
+
+        state = Initialized(registry=registry)
         state = state.run()
 
         state = await state.exited()
@@ -80,7 +79,12 @@ class TestFinished(BaseTestState):
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
     async def test_result_raise(self, source, exc):
-        state = Initialized(source)
+        registry = Registry()
+        registry.open_register("statement")
+        registry.open_register("state_name")
+        registry.register("statement", source)
+
+        state = Initialized(registry=registry)
         state = state.run()
 
         state = await state.exited()
