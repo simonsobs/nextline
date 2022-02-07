@@ -366,7 +366,7 @@ class Finished(State):
     def exception(self):
         """Return the exception of the script execution
 
-        Return None if no execution has been raised.
+        Return None if no exception has been raised.
 
         """
         return self._exception
