@@ -39,14 +39,12 @@ class Machine:
 
     Parameters
     ----------
-    statement : str or None
-        A Python code as a string. None can be given by a state object
-        when the state is reset. If None, the statement will be
-        obtained from the registry.
+    statement : str
+        A Python code as a string.
 
     """
 
-    def __init__(self, statement: Union[str, None]):
+    def __init__(self, statement: str):
         self.condition_finish = asyncio.Condition()
         self.condition_close = asyncio.Condition()
 
