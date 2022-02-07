@@ -29,6 +29,7 @@ async def test_simple_usage():
         obj.open_register(key)
         async for i in aiterable(items):
             obj.register(key, i)
+            assert i == obj.get(key)
         obj.close_register(key)
 
     results = await asyncio.gather(subscribe(), register())
@@ -57,10 +58,15 @@ async def test_simple_usage_list():
 
     async def register():
         obj.open_register_list(key)
+        iexp = 0
         async for i in aiterable(items):
             obj.register_list_item(key, i)
+            assert expected[iexp] == obj.get(key)
+            iexp += 1
         async for i in aiterable(items):
             obj.deregister_list_item(key, i)
+            assert expected[iexp] == obj.get(key)
+            iexp += 1
         obj.close_register(key)
 
     results = await asyncio.gather(subscribe(), register())
