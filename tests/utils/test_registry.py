@@ -75,6 +75,19 @@ async def test_simple_usage_list():
     await obj.close()
 
 
+@pytest.mark.asyncio
+async def test_get_default():
+    obj = Registry()
+
+    key = "no_such_key"
+    assert obj.get(key) is None
+
+    key = "no_such_key"
+    assert 123 == obj.get(key, 123)
+
+    await obj.close()
+
+
 ##__________________________________________________________________||
 nitems = [0, 1, 2, 50]
 nsubscribers = [0, 1, 2, 70]

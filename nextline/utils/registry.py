@@ -82,9 +82,9 @@ class Registry:
 
         self._distribute(key, copy)
 
-    def get(self, key):
-        """The item in the register"""
-        return self._data[key]
+    def get(self, key, default=None):
+        """The item for the key. The default if the key doesn't exist"""
+        return self._data.get(key, default)
 
     async def subscribe(self, key):
         """Asynchronous generator of items in the register
