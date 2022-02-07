@@ -45,9 +45,6 @@ class Machine:
     """
 
     def __init__(self, statement: str):
-        self._lock_finish = asyncio.Condition()
-        self._lock_close = asyncio.Condition()
-
         self.registry = Registry()
         self.registry.open_register("statement")
         self.registry.open_register("state_name")
@@ -58,6 +55,9 @@ class Machine:
         self.registry.register("script_file_name", SCRIPT_FILE_NAME)
 
         self._state = Initialized(self.registry)
+
+        self._lock_finish = asyncio.Condition()
+        self._lock_close = asyncio.Condition()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
