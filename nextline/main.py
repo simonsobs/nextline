@@ -30,11 +30,6 @@ class Nextline:
         # e.g., "<Nextline 'running'>"
         return f"<{self.__class__.__name__} {self.global_state!r}>"
 
-    @property
-    def global_state(self) -> str:
-        """state, e.g., "initialized", "running", "exited", "finished", "closed" """
-        return self.machine.state_name
-
     def run(self):
         """execute the script"""
         self.machine.run()
@@ -63,6 +58,11 @@ class Nextline:
     async def close(self):
         """end gracefully"""
         await self.machine.close()
+
+    @property
+    def global_state(self) -> str:
+        """state, e.g., "initialized", "running", "exited", "finished", "closed" """
+        return self.machine.state_name
 
     async def subscribe_global_state(self):
         # wish to be able to write with "yield from" but not possible
