@@ -26,6 +26,8 @@ async def test_init():
     obj = Machine(SOURCE)
     assert "initialized" == obj.state_name
     assert isinstance(obj.registry, Registry)
+    assert SOURCE == obj.registry.get("statement")
+    assert "<string>" == obj.registry.get("script_file_name")
 
 
 def test_init_sync():
