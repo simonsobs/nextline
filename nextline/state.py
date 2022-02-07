@@ -260,7 +260,7 @@ class Running(State):
 
     def _done(self, result=None, exception=None):
         # callback function, to be called from another thread at the
-        # end of call_with_trace()
+        # end of _run()
 
         if self.loop.is_closed():
             # The exit is not being waited in the main thread, for
