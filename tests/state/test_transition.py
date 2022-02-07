@@ -7,6 +7,7 @@ from nextline.state import (
     Finished,
     Closed,
 )
+from nextline.utils import Registry
 
 SOURCE = """
 import time
@@ -16,8 +17,12 @@ time.sleep(0.001)
 
 @pytest.mark.asyncio
 async def test_transition():
+    registry = Registry()
+    registry.open_register("statement")
+    registry.open_register("state_name")
+    registry.register("statement", SOURCE)
 
-    state = Initialized(SOURCE)
+    state = Initialized(registry=registry)
     assert isinstance(state, Initialized)
 
     state = state.run()
@@ -29,5 +34,5 @@ async def test_transition():
     state = await state.finish()
     assert isinstance(state, Finished)
 
-    state = await state.close()
+    state = state.close()
     assert isinstance(state, Closed)

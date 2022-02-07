@@ -13,33 +13,24 @@ class TestInitialized(BaseTestState):
     def state(self, initialized):
         yield initialized
 
-    def test_sync(self, statement):
-        # requires a running asyncio event loop
-        with pytest.raises(RuntimeError):
-            _ = Initialized(statement)
-
     @pytest.mark.asyncio
     async def test_run(self, state):
         running = state.run()
         assert isinstance(running, Running)
         await self.assert_obsolete(state)
+        exited = await running.exited()
+        finished = await exited.finish()
+        finished.close()
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statements_for_test_reset):
-        expected_statement, statement = statements_for_test_reset
-
-        reset = state.reset(statement=statement)
+    async def test_reset(self, state):
+        reset = state.reset()
         assert isinstance(reset, Initialized)
-
-        assert expected_statement == reset.registry.get("statement")
-
         assert reset is not state
-        assert reset.registry is state.registry
-
         await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
     async def test_close(self, state):
-        closed = await state.close()
+        closed = state.close()
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)

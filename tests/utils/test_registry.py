@@ -9,6 +9,12 @@ from .aiterable import aiterable
 
 
 ##__________________________________________________________________||
+def test_sync():
+    # requires a running asyncio event loop
+    with pytest.raises(RuntimeError):
+        _ = Registry()
+
+
 @pytest.mark.asyncio
 async def test_simple_usage():
     obj = Registry()

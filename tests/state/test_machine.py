@@ -26,6 +26,8 @@ async def test_init():
     obj = Machine(SOURCE)
     assert "initialized" == obj.state_name
     assert isinstance(obj.registry, Registry)
+    assert SOURCE == obj.registry.get("statement")
+    assert "<string>" == obj.registry.get("script_file_name")
 
 
 def test_init_sync():
@@ -43,9 +45,9 @@ async def test_repr():
 @pytest.mark.asyncio
 async def test_state_name_unknown():
     obj = Machine(SOURCE)
-    obj.state = None
+    obj._state = None
     assert "unknown" == obj.state_name
-    del obj.state
+    del obj._state
     assert "unknown" == obj.state_name
 
 
@@ -59,14 +61,6 @@ async def test_transitions():
     assert "finished" == obj.state_name
     obj.result()
     obj.exception()
-    await obj.close()
-    assert "closed" == obj.state_name
-    obj.reset()
-    assert "initialized" == obj.state_name
-    obj.run()
-    assert "running" == obj.state_name
-    await obj.finish()
-    assert "finished" == obj.state_name
     obj.reset()
     assert "initialized" == obj.state_name
     await obj.close()

@@ -3,14 +3,11 @@ from abc import ABC, abstractmethod
 import pytest
 
 from nextline.state import Initialized, StateObsoleteError, StateMethodError
+from nextline.utils import Registry
 
 SOURCE_ONE = """
 import time
 time.sleep(0.001)
-""".strip()
-
-SOURCE_TWO = """
-x = 2
 """.strip()
 
 
@@ -25,12 +22,21 @@ class BaseTestState(ABC):
         yield SOURCE_ONE
 
     @pytest.fixture()
-    async def initialized(self, statement):
-        y = Initialized(statement)
+    async def registry(self, statement):
+        y = Registry()
+        y.open_register("statement")
+        y.open_register("state_name")
+        y.register("statement", statement)
+        yield y
+        await y.close()
+
+    @pytest.fixture()
+    async def initialized(self, registry):
+        y = Initialized(registry=registry)
         yield y
         if y.is_obsolete():
             return
-        await y.close()
+        y.close()
 
     @pytest.fixture()
     async def running(self, initialized):
@@ -42,7 +48,7 @@ class BaseTestState(ABC):
         if exited.is_obsolete():
             return
         finished = await exited.finish()
-        await finished.close()
+        finished.close()
 
     @pytest.fixture()
     async def exited(self, running):
@@ -51,7 +57,7 @@ class BaseTestState(ABC):
         if y.is_obsolete():
             return
         finished = await y.finish()
-        await finished.close()
+        finished.close()
 
     @pytest.fixture()
     async def finished(self, exited):
@@ -59,11 +65,11 @@ class BaseTestState(ABC):
         yield y
         if y.is_obsolete():
             return
-        await y.close()
+        y.close()
 
     @pytest.fixture()
     async def closed(self, finished):
-        y = await finished.close()
+        y = finished.close()
         yield y
 
     @abstractmethod
@@ -81,18 +87,6 @@ class BaseTestState(ABC):
     def test_registry_state_name(self, state):
         assert self.state_class.name == state.registry.get("state_name")
 
-    params = (pytest.param(SOURCE_TWO, id="SOURCE_TWO"), None)
-
-    @pytest.fixture(params=params)
-    def statements_for_test_reset(self, statement, request):
-        old_statement = statement
-        statement = request.param
-        if statement:
-            expected_statement = statement
-        else:
-            expected_statement = old_statement
-        yield (expected_statement, statement)
-
     async def assert_obsolete(self, state):
         assert "obsolete" in repr(state)
 
@@ -109,7 +103,7 @@ class BaseTestState(ABC):
             state.reset()
 
         with pytest.raises(StateObsoleteError):
-            await state.close()
+            state.close()
 
     def test_run(self, state):
         with pytest.raises(StateMethodError):
@@ -126,11 +120,9 @@ class BaseTestState(ABC):
             await state.finish()
 
     @pytest.mark.asyncio
-    async def test_reset(self, state, statements_for_test_reset):
-        _t, statement = statements_for_test_reset
-
+    async def test_reset(self, state):
         with pytest.raises(StateMethodError):
-            state.reset(statement=statement)
+            state.reset()
 
     def test_send_pdb_command(self, state):
         thread_asynctask_id = (1, None)

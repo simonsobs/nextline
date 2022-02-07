@@ -1,6 +1,9 @@
 import pytest
 
+from unittest.mock import Mock
+
 from nextline.state import Initialized
+from nextline.utils import Registry
 
 
 SOURCE = """
@@ -11,16 +14,20 @@ time.sleep(0.001)
 
 @pytest.mark.asyncio
 async def test_register_state_name():
-    state = Initialized(SOURCE)
+    registry = Mock(spec=Registry, wraps=Registry())
+    registry.open_register("statement")
+    registry.open_register("state_name")
+    registry.register("statement", SOURCE)
+    state = Initialized(registry=registry)
     state = state.run()
     state = await state.exited()
     state = await state.finish()
-    state = await state.close()
+    state = state.close()
 
     expected = ["initialized", "running", "exited", "finished", "closed"]
     actual = [
         c.args[1]
-        for c in state.registry.register.call_args_list
+        for c in registry.register.call_args_list
         if c.args[0] == "state_name"
     ]
     assert expected == actual
@@ -28,7 +35,11 @@ async def test_register_state_name():
 
 @pytest.mark.asyncio
 async def test_register_state_name_reset():
-    state = Initialized(SOURCE)
+    registry = Mock(spec=Registry, wraps=Registry())
+    registry.open_register("statement")
+    registry.open_register("state_name")
+    registry.register("statement", SOURCE)
+    state = Initialized(registry=registry)
     state = state.reset()
     state = state.run()
     state = await state.exited()
@@ -37,7 +48,7 @@ async def test_register_state_name_reset():
     state = state.run()
     state = await state.exited()
     state = await state.finish()
-    state = await state.close()
+    state = state.close()
 
     expected = [
         "initialized",
@@ -53,21 +64,7 @@ async def test_register_state_name_reset():
     ]
     actual = [
         c.args[1]
-        for c in state.registry.register.call_args_list
-        if c.args[0] == "state_name"
-    ]
-    assert expected == actual
-
-    state = state.reset()
-    state = state.run()
-    state = await state.exited()
-    state = await state.finish()
-    state = await state.close()
-
-    expected = ["initialized", "running", "exited", "finished", "closed"]
-    actual = [
-        c.args[1]
-        for c in state.registry.register.call_args_list
+        for c in registry.register.call_args_list
         if c.args[0] == "state_name"
     ]
     assert expected == actual
