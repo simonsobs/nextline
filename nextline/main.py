@@ -71,6 +71,16 @@ class Nextline:
         async for y in agen:
             yield y
 
+    @property
+    def run_no(self):
+        """The current run number"""
+        return self.registry.get("run_no")
+
+    async def subscribe_run_no(self):
+        agen = self.registry.subscribe("run_no")
+        async for y in agen:
+            yield y
+
     async def subscribe_thread_asynctask_ids(self):
         agen = self.registry.subscribe("thread_task_ids")
         async for y in agen:
