@@ -45,9 +45,9 @@ async def test_repr():
 @pytest.mark.asyncio
 async def test_state_name_unknown():
     obj = Machine(SOURCE)
-    obj.state = None
+    obj._state = None
     assert "unknown" == obj.state_name
-    del obj.state
+    del obj._state
     assert "unknown" == obj.state_name
 
 

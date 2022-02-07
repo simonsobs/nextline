@@ -45,8 +45,8 @@ class Machine:
     """
 
     def __init__(self, statement: str):
-        self.condition_finish = asyncio.Condition()
-        self.condition_close = asyncio.Condition()
+        self._lock_finish = asyncio.Condition()
+        self._lock_close = asyncio.Condition()
 
         self.registry = Registry()
         self.registry.open_register("statement")
@@ -57,7 +57,7 @@ class Machine:
         self.registry.register("statement", statement)
         self.registry.register("script_file_name", SCRIPT_FILE_NAME)
 
-        self.state = Initialized(self.registry)
+        self._state = Initialized(self.registry)
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -67,13 +67,13 @@ class Machine:
     def state_name(self) -> str:
         """e.g., "initialized", "running","""
         try:
-            return self.state.name
+            return self._state.name
         except BaseException:
             return "unknown"
 
     def run(self):
         """Enter the running state"""
-        self.state = self.state.run()
+        self._state = self._state.run()
         self._task_exited = asyncio.create_task(self._exited())
 
     async def _exited(self):
@@ -85,33 +85,33 @@ class Machine:
         execution (in another thread) to exit.
         """
 
-        self.state = await self.state.exited()
+        self._state = await self._state.exited()
 
     def send_pdb_command(self, thread_asynctask_id, command):
-        self.state.send_pdb_command(thread_asynctask_id, command)
+        self._state.send_pdb_command(thread_asynctask_id, command)
 
     async def finish(self):
         """Enter the finished state"""
         await self._task_exited
-        async with self.condition_finish:
-            self.state = await self.state.finish()
+        async with self._lock_finish:
+            self._state = await self._state.finish()
 
     def exception(self):
-        return self.state.exception()
+        return self._state.exception()
 
     def result(self):
-        self.state.result()
+        self._state.result()
 
     def reset(self, statement: Union[str, None] = None):
         """Enter the initialized state"""
         if statement:
             self.registry.register("statement", statement)
-        self.state = self.state.reset()
+        self._state = self._state.reset()
 
     async def close(self):
         """Enter the closed state"""
-        async with self.condition_close:
-            self.state = self.state.close()
+        async with self._lock_close:
+            self._state = self._state.close()
             await self.registry.close()
 
 
