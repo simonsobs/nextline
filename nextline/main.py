@@ -60,6 +60,11 @@ class Nextline:
         await self.machine.close()
 
     @property
+    def statement(self) -> str:
+        """The script"""
+        return self.registry.get("statement")
+
+    @property
     def global_state(self) -> str:
         """state, e.g., "initialized", "running", "exited", "finished", "closed" """
         return self.machine.state_name
