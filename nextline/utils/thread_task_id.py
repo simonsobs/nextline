@@ -3,7 +3,7 @@ import asyncio
 from dataclasses import dataclass
 from itertools import count
 
-from typing import Callable, Tuple, Union, Set
+from typing import Callable, Tuple, Union, Set, Dict
 
 
 ##__________________________________________________________________||
@@ -17,14 +17,24 @@ class UniqThreadTaskIdComposer:
         task_ids: Set[int]
 
     def __init__(self):
+        ThreadID = int
+        TaskId = Union[int, None]
+        Id = Tuple[ThreadID, TaskId]
+        ThreadIDMap = Dict[ThreadID, ThreadID]
+        IdMap = Dict[Id, Id]
 
-        self.non_uniq_id_dict = {}  # non_uniq_id -> uniq_id
-        self.uniq_id_dict = {}  # uniq_id -> non_uniq_id
+        self.non_uniq_id_dict: IdMap = {}  # non_uniq_id -> uniq_id
+        self.uniq_id_dict: IdMap = {}  # uniq_id -> non_uniq_id
         # uniq_id = (thread_id, task_id)
         # non_uniq_id = (threading.get_ident(), id(asyncio.current_task()))
 
-        self.non_uniq_thread_id_dict = {}  # threading.get_ident() -> thread_id
-        self.thread_id_dict = {}  # thread_id -> ThreadSpecifics
+        self.non_uniq_thread_id_dict: ThreadIDMap = {}
+        # threading.get_ident() -> thread_id
+
+        self.thread_id_dict: Dict[
+            ThreadID, UniqThreadTaskIdComposer.ThreadSpecifics
+        ] = {}
+        # thread_id -> ThreadSpecifics
 
         self.thread_id_counter = count().__next__
         self.thread_id_counter()  # consume 0
