@@ -145,7 +145,7 @@ class TraceThread:
     def all(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
-        """Every local scopes"""
+        """Every local scope"""
         _, task_id = self.id_composer.compose()
 
         if task_id is None:
@@ -204,6 +204,6 @@ class TraceTask:
     def all(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
-        """Every local scopes"""
+        """Every local scope"""
 
         return self.wrapped(frame, event, arg)
