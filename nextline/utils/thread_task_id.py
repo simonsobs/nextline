@@ -6,15 +6,16 @@ from itertools import count
 from typing import Callable, Tuple, Union, Set, Dict
 
 
+@dataclass
+class ThreadSpecifics:
+    thread_ident: int  # threading.get_ident()
+    task_id_counter: Callable[[], int]  # count(1).__next__
+    task_ids: Set[int]
+
+
 ##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
     """Compose paris of unique thread Id and async task Id"""
-
-    @dataclass
-    class ThreadSpecifics:
-        thread_ident: int  # threading.get_ident()
-        task_id_counter: Callable[[], int]  # count(1).__next__
-        task_ids: Set[int]
 
     def __init__(self):
         ThreadID = int
@@ -31,9 +32,7 @@ class UniqThreadTaskIdComposer:
         self.non_uniq_thread_id_dict: ThreadIDMap = {}
         # threading.get_ident() -> thread_id
 
-        self.thread_id_dict: Dict[
-            ThreadID, UniqThreadTaskIdComposer.ThreadSpecifics
-        ] = {}
+        self.thread_id_dict: Dict[ThreadID, ThreadSpecifics] = {}
         # thread_id -> ThreadSpecifics
 
         self.thread_id_counter = count().__next__
@@ -119,7 +118,7 @@ class UniqThreadTaskIdComposer:
         task_id_counter = count().__next__
         task_id_counter()  # consume 0
 
-        thread_specifics = self.ThreadSpecifics(
+        thread_specifics = ThreadSpecifics(
             thread_ident=non_uniq_thread_id,
             task_id_counter=task_id_counter,
             task_ids=set(),
