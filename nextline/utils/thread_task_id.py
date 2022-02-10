@@ -3,12 +3,10 @@ import asyncio
 from dataclasses import dataclass
 from itertools import count
 
-from typing import Callable, Tuple, Union, Set, Dict, Optional
+from typing import Callable, Set, Dict, Optional
 
+from .types import _ThreadID, _TaskId, _Id
 
-_ThreadID = int
-_TaskId = Union[int, None]
-_Id = Tuple[_ThreadID, _TaskId]
 _ThreadIDMap = Dict[_ThreadID, _ThreadID]
 _IdMap = Dict[_Id, _Id]
 
