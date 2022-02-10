@@ -36,8 +36,7 @@ class Trace:
         self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
 
-        self.prompting_counter = count().__next__
-        self.prompting_counter()  # consume 0
+        self.prompting_counter = count(1).__next__
 
         self.pdb_proxies = {}
 
