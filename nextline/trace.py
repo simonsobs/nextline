@@ -2,7 +2,12 @@ from itertools import count
 
 from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
-from .utils import UniqThreadTaskIdComposer
+from .utils import Registry, UniqThreadTaskIdComposer
+
+from typing import Any, Set, Optional
+from types import FrameType
+
+from .types import TraceFunc
 
 
 ##__________________________________________________________________||
@@ -23,7 +28,9 @@ class Trace:
 
     """
 
-    def __init__(self, registry, modules_to_trace=None):
+    def __init__(
+        self, registry: Registry, modules_to_trace: Optional[Set[str]] = None
+    ):
 
         self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
@@ -45,7 +52,7 @@ class Trace:
 
         self.first = True
 
-    def __call__(self, frame, event, arg):
+    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """Called by the Python interpreter when a new local scope is entered.
 
         https://docs.python.org/3/library/sys.html#sys.settrace
