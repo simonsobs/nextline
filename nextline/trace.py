@@ -8,6 +8,7 @@ from typing import Any, Set, Optional
 from types import FrameType
 
 from .types import TraceFunc
+from .utils.types import ThreadTaskId
 
 
 ##__________________________________________________________________||
@@ -81,7 +82,7 @@ class Trace:
 
         return pdb_proxy.trace_func(frame, event, arg)
 
-    def returning(self, thread_asynctask_id):
+    def returning(self, thread_asynctask_id: ThreadTaskId) -> None:
         self.id_composer.exited(thread_asynctask_id)
         del self.pdb_proxies[thread_asynctask_id]
 
