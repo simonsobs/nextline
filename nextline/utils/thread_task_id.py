@@ -7,9 +7,6 @@ from typing import Callable, Set, Dict, Optional
 
 from .types import _ThreadID, _TaskId, _Id
 
-_ThreadIDMap = Dict[_ThreadID, _ThreadID]
-_IdMap = Dict[_Id, _Id]
-
 
 @dataclass
 class _ThreadSpecifics:
@@ -24,12 +21,12 @@ class UniqThreadTaskIdComposer:
 
     def __init__(self):
 
-        self.non_uniq_id_dict: _IdMap = {}  # non_uniq_id -> uniq_id
-        self.uniq_id_dict: _IdMap = {}  # uniq_id -> non_uniq_id
+        self.non_uniq_id_dict: Dict[_Id, _Id] = {}  # non_uniq_id -> uniq_id
+        self.uniq_id_dict: Dict[_Id, _Id] = {}  # uniq_id -> non_uniq_id
         # uniq_id = (thread_id, task_id)
         # non_uniq_id = (threading.get_ident(), id(asyncio.current_task()))
 
-        self.non_uniq_thread_id_dict: _ThreadIDMap = {}
+        self.non_uniq_thread_id_dict: Dict[_ThreadID, _ThreadID] = {}
         # threading.get_ident() -> thread_id
 
         self.thread_id_dict: Dict[_ThreadID, _ThreadSpecifics] = {}
