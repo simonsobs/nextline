@@ -3,6 +3,8 @@ import asyncio
 from collections import namedtuple
 from itertools import count
 
+from typing import Tuple, Union
+
 
 ##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
@@ -59,7 +61,7 @@ class UniqThreadTaskIdComposer:
             if not self.thread_id_dict[thread_id].task_ids:
                 self.non_uniq_thread_id_dict.pop(non_uniq_thread_id)
 
-    def _compose_non_uniq_id(self):
+    def _compose_non_uniq_id(self) -> Tuple[int, Union[int, None]]:
 
         non_uniq_thread_id = threading.get_ident()
         # the "thread identifier", which can be recycled after a thread exits
@@ -100,7 +102,7 @@ class UniqThreadTaskIdComposer:
         except KeyError:
             return None
 
-    def _compose_thread_id(self, non_uniq_id):
+    def _compose_thread_id(self, non_uniq_id) -> int:
 
         non_uniq_thread_id = non_uniq_id[0]
         thread_id = self.thread_id_counter()
