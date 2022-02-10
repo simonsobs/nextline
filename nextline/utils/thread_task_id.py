@@ -13,16 +13,18 @@ class ThreadSpecifics:
     task_ids: Set[int]
 
 
+ThreadID = int
+TaskId = Union[int, None]
+Id = Tuple[ThreadID, TaskId]
+ThreadIDMap = Dict[ThreadID, ThreadID]
+IdMap = Dict[Id, Id]
+
+
 ##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
     """Compose paris of unique thread Id and async task Id"""
 
     def __init__(self):
-        ThreadID = int
-        TaskId = Union[int, None]
-        Id = Tuple[ThreadID, TaskId]
-        ThreadIDMap = Dict[ThreadID, ThreadID]
-        IdMap = Dict[Id, Id]
 
         self.non_uniq_id_dict: IdMap = {}  # non_uniq_id -> uniq_id
         self.uniq_id_dict: IdMap = {}  # uniq_id -> non_uniq_id
