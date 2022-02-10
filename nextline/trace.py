@@ -1,3 +1,4 @@
+import asyncio
 from itertools import count
 
 from .pdb.proxy import PdbProxy
@@ -110,23 +111,49 @@ class TraceThread:
     def __init__(
         self, trace: TraceFunc, id_composer: UniqThreadTaskIdComposer
     ):
-        self.trace = trace
+        self.wrapped = trace
         self.id_composer = id_composer
         self.trace_task: Dict[TaskId, TraceTask] = {}
+
+        self._outermost = self.all
+
+        self._first = True
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
 
+        if self._first:
+            self._first = False
+            return self.outermost(frame, event, arg)
+        return self.all(frame, event, arg)
+
+    def outermost(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """The first local scope entered"""
+
+        if self._outermost:
+            self._outermost = self._outermost(frame, event, arg)
+
+        if event != "return":
+            return self.outermost
+
+        return
+
+    def all(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """Every local scopes"""
         _, task_id = self.id_composer.compose()
 
         if task_id is None:
-            return self.trace(frame, event, arg)
+            return self.wrapped(frame, event, arg)
 
         trace_task = self.trace_task.get(task_id)
         if not trace_task:
             trace_task = TraceTask(
-                trace=self.trace, id_composer=self.id_composer
+                trace=self.wrapped, id_composer=self.id_composer
             )
             self.trace_task[task_id] = trace_task
 
@@ -137,10 +164,45 @@ class TraceTask:
     def __init__(
         self, trace: TraceFunc, id_composer: UniqThreadTaskIdComposer
     ):
-        self.trace = trace
+        self.wrapped = trace
         self.id_composer = id_composer
+
+        self._outermost = self.all
+
+        self._first = True
+        self._future = False
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
-        return self.trace(frame, event, arg)
+        """The `call` event"""
+
+        if self._first:
+            self._first = False
+            return self.outermost(frame, event, arg)
+        return self.all(frame, event, arg)
+
+    def outermost(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """The first local scope entered"""
+
+        if self._outermost:
+            self._outermost = self._outermost(frame, event, arg)
+
+        if event != "return":
+            return self.outermost
+
+        if asyncio.isfuture(arg):
+            # awaiting. will be called again
+            self._future = True
+            return
+
+        return
+
+    def all(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """Every local scopes"""
+
+        return self.wrapped(frame, event, arg)
