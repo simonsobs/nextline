@@ -100,7 +100,8 @@ class Trace:
 
         # return pdb_proxy.trace_func(frame, event, arg)
 
-    def returning(self, thread_asynctask_id: ThreadTaskId) -> None:
+    def returning(self) -> None:
+        thread_asynctask_id = self.id_composer.compose()
         self.id_composer.exited(thread_asynctask_id)
         # del self.pdb_proxies[thread_asynctask_id]
         del self.trace_thread[thread_asynctask_id]
