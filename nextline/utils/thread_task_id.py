@@ -7,17 +7,17 @@ from typing import Callable, Tuple, Union, Set, Dict
 
 
 @dataclass
-class ThreadSpecifics:
+class _ThreadSpecifics:
     thread_ident: int  # threading.get_ident()
     task_id_counter: Callable[[], int]  # count(1).__next__
     task_ids: Set[int]
 
 
-ThreadID = int
-TaskId = Union[int, None]
-Id = Tuple[ThreadID, TaskId]
-ThreadIDMap = Dict[ThreadID, ThreadID]
-IdMap = Dict[Id, Id]
+_ThreadID = int
+_TaskId = Union[int, None]
+_Id = Tuple[_ThreadID, _TaskId]
+_ThreadIDMap = Dict[_ThreadID, _ThreadID]
+_IdMap = Dict[_Id, _Id]
 
 
 ##__________________________________________________________________||
@@ -26,15 +26,15 @@ class UniqThreadTaskIdComposer:
 
     def __init__(self):
 
-        self.non_uniq_id_dict: IdMap = {}  # non_uniq_id -> uniq_id
-        self.uniq_id_dict: IdMap = {}  # uniq_id -> non_uniq_id
+        self.non_uniq_id_dict: _IdMap = {}  # non_uniq_id -> uniq_id
+        self.uniq_id_dict: _IdMap = {}  # uniq_id -> non_uniq_id
         # uniq_id = (thread_id, task_id)
         # non_uniq_id = (threading.get_ident(), id(asyncio.current_task()))
 
-        self.non_uniq_thread_id_dict: ThreadIDMap = {}
+        self.non_uniq_thread_id_dict: _ThreadIDMap = {}
         # threading.get_ident() -> thread_id
 
-        self.thread_id_dict: Dict[ThreadID, ThreadSpecifics] = {}
+        self.thread_id_dict: Dict[_ThreadID, _ThreadSpecifics] = {}
         # thread_id -> ThreadSpecifics
 
         self.thread_id_counter = count(1).__next__
@@ -118,7 +118,7 @@ class UniqThreadTaskIdComposer:
 
         task_id_counter = count(1).__next__
 
-        thread_specifics = ThreadSpecifics(
+        thread_specifics = _ThreadSpecifics(
             thread_ident=non_uniq_thread_id,
             task_id_counter=task_id_counter,
             task_ids=set(),
