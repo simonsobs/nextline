@@ -6,18 +6,18 @@ from itertools import count
 from typing import Callable, Tuple, Union, Set, Dict, Optional
 
 
-@dataclass
-class _ThreadSpecifics:
-    thread_ident: int  # threading.get_ident()
-    task_id_counter: Callable[[], int]  # count(1).__next__
-    task_ids: Set[int]
-
-
 _ThreadID = int
 _TaskId = Union[int, None]
 _Id = Tuple[_ThreadID, _TaskId]
 _ThreadIDMap = Dict[_ThreadID, _ThreadID]
 _IdMap = Dict[_Id, _Id]
+
+
+@dataclass
+class _ThreadSpecifics:
+    thread_ident: _ThreadID  # threading.get_ident()
+    task_id_counter: Callable[[], _TaskId]  # count(1).__next__
+    task_ids: Set[_TaskId]
 
 
 ##__________________________________________________________________||
