@@ -5,14 +5,14 @@ from itertools import count
 
 from typing import Callable, Set, Dict, Optional
 
-from .types import _ThreadID, _TaskId, _Id
+from .types import ThreadID, TaskId, ThreadTaskId
 
 
 @dataclass
 class _ThreadSpecifics:
-    thread_ident: _ThreadID  # threading.get_ident()
-    task_id_counter: Callable[[], _TaskId]  # count(1).__next__
-    task_ids: Set[_TaskId]
+    thread_ident: ThreadID  # threading.get_ident()
+    task_id_counter: Callable[[], TaskId]  # count(1).__next__
+    task_ids: Set[TaskId]
 
 
 ##__________________________________________________________________||
@@ -21,22 +21,26 @@ class UniqThreadTaskIdComposer:
 
     def __init__(self):
 
-        self.non_uniq_id_dict: Dict[_Id, _Id] = {}  # non_uniq_id -> uniq_id
-        self.uniq_id_dict: Dict[_Id, _Id] = {}  # uniq_id -> non_uniq_id
+        self.non_uniq_id_dict: Dict[ThreadTaskId, ThreadTaskId] = {}
+        # non_uniq_id -> uniq_id
+
+        self.uniq_id_dict: Dict[ThreadTaskId, ThreadTaskId] = {}
+        # uniq_id -> non_uniq_id
+
         # uniq_id = (thread_id, task_id)
         # non_uniq_id = (threading.get_ident(), id(asyncio.current_task()))
 
-        self.non_uniq_thread_id_dict: Dict[_ThreadID, _ThreadID] = {}
+        self.non_uniq_thread_id_dict: Dict[ThreadID, ThreadID] = {}
         # threading.get_ident() -> thread_id
 
-        self.thread_id_dict: Dict[_ThreadID, _ThreadSpecifics] = {}
+        self.thread_id_dict: Dict[ThreadID, _ThreadSpecifics] = {}
         # thread_id -> ThreadSpecifics
 
         self.thread_id_counter = count(1).__next__
 
         self.lock = threading.Condition()
 
-    def compose(self) -> _Id:
+    def compose(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
 
         Returns
@@ -54,7 +58,7 @@ class UniqThreadTaskIdComposer:
 
         return self._compose_uniq_id(non_uniq_id)
 
-    def exited(self, thread_task_id: _Id) -> None:
+    def exited(self, thread_task_id: ThreadTaskId) -> None:
         thread_id, task_id = thread_task_id
         with self.lock:
             non_uniq_thread_id, non_uniq_task_id = self.uniq_id_dict.pop(
@@ -65,7 +69,7 @@ class UniqThreadTaskIdComposer:
             if not self.thread_id_dict[thread_id].task_ids:
                 self.non_uniq_thread_id_dict.pop(non_uniq_thread_id)
 
-    def _compose_non_uniq_id(self) -> _Id:
+    def _compose_non_uniq_id(self) -> ThreadTaskId:
 
         non_uniq_thread_id = threading.get_ident()
         # the "thread identifier", which can be recycled after a thread exits
@@ -83,14 +87,14 @@ class UniqThreadTaskIdComposer:
         return non_uniq_thread_id, non_uniq_task_id
 
     def _find_previsouly_composed_uniq_id(
-        self, non_uniq_id: _Id
-    ) -> Optional[_Id]:
+        self, non_uniq_id: ThreadTaskId
+    ) -> Optional[ThreadTaskId]:
         try:
             return self.non_uniq_id_dict[non_uniq_id]
         except KeyError:
             return None
 
-    def _compose_uniq_id(self, non_uniq_id: _Id) -> _Id:
+    def _compose_uniq_id(self, non_uniq_id: ThreadTaskId) -> ThreadTaskId:
         thread_id = self._find_previsouly_composed_thread_id(non_uniq_id)
         if not thread_id:
             thread_id = self._compose_thread_id(non_uniq_id)
@@ -102,15 +106,15 @@ class UniqThreadTaskIdComposer:
         return uniq_id
 
     def _find_previsouly_composed_thread_id(
-        self, non_uniq_id: _ThreadID
-    ) -> Optional[_ThreadID]:
+        self, non_uniq_id: ThreadID
+    ) -> Optional[ThreadID]:
         non_uniq_thread_id = non_uniq_id[0]
         try:
             return self.non_uniq_thread_id_dict[non_uniq_thread_id]
         except KeyError:
             return None
 
-    def _compose_thread_id(self, non_uniq_id: _ThreadID) -> _ThreadID:
+    def _compose_thread_id(self, non_uniq_id: ThreadID) -> ThreadID:
 
         non_uniq_thread_id = non_uniq_id[0]
         thread_id = self.thread_id_counter()
@@ -128,7 +132,7 @@ class UniqThreadTaskIdComposer:
             self.thread_id_dict[thread_id] = thread_specifics
         return thread_id
 
-    def _compose_task_id(self, non_uniq_id: _Id) -> Optional[_TaskId]:
+    def _compose_task_id(self, non_uniq_id: ThreadTaskId) -> Optional[TaskId]:
 
         non_uniq_thread_id, non_uniq_task_id = non_uniq_id
 
