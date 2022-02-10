@@ -37,7 +37,7 @@ class UniqThreadTaskIdComposer:
 
         self.thread_id_counter = count(1).__next__
 
-        self.condition = threading.Condition()
+        self.lock = threading.Condition()
 
     def compose(self):
         """Return the pair of the current thread ID and async task ID
@@ -59,7 +59,7 @@ class UniqThreadTaskIdComposer:
 
     def exited(self, thread_task_id):
         thread_id, task_id = thread_task_id
-        with self.condition:
+        with self.lock:
             non_uniq_thread_id, non_uniq_task_id = self.uniq_id_dict.pop(
                 thread_task_id
             )
@@ -97,7 +97,7 @@ class UniqThreadTaskIdComposer:
             thread_id = self._compose_thread_id(non_uniq_id)
         task_id = self._compose_task_id(non_uniq_id)
         uniq_id = (thread_id, task_id)
-        with self.condition:
+        with self.lock:
             self.non_uniq_id_dict[non_uniq_id] = uniq_id
             self.uniq_id_dict[uniq_id] = non_uniq_id
         return uniq_id
@@ -122,7 +122,7 @@ class UniqThreadTaskIdComposer:
             task_ids=set(),
         )
 
-        with self.condition:
+        with self.lock:
             self.non_uniq_thread_id_dict[non_uniq_thread_id] = thread_id
             self.thread_id_dict[thread_id] = thread_specifics
         return thread_id
