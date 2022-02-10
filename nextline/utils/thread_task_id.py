@@ -1,21 +1,20 @@
 import threading
 import asyncio
-from collections import namedtuple
+from dataclasses import dataclass
 from itertools import count
 
-from typing import Tuple, Union
+from typing import Callable, Tuple, Union, Set
 
 
 ##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
     """Compose paris of unique thread Id and async task Id"""
 
-    ThreadSpecifics = namedtuple(
-        "ThreadSpecifics", ["thread_ident", "task_id_counter", "task_ids"]
-    )
-    # thread_ident: threading.get_ident()
-    # task_id_counter: count().__next__
-    # task_ids: set()
+    @dataclass
+    class ThreadSpecifics:
+        thread_ident: int  # threading.get_ident()
+        task_id_counter: Callable[[], int]  # count(1).__next__
+        task_ids: Set[int]
 
     def __init__(self):
 
