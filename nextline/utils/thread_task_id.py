@@ -35,8 +35,7 @@ class UniqThreadTaskIdComposer:
         self.thread_id_dict: Dict[ThreadID, ThreadSpecifics] = {}
         # thread_id -> ThreadSpecifics
 
-        self.thread_id_counter = count().__next__
-        self.thread_id_counter()  # consume 0
+        self.thread_id_counter = count(1).__next__
 
         self.condition = threading.Condition()
 
@@ -115,8 +114,7 @@ class UniqThreadTaskIdComposer:
         non_uniq_thread_id = non_uniq_id[0]
         thread_id = self.thread_id_counter()
 
-        task_id_counter = count().__next__
-        task_id_counter()  # consume 0
+        task_id_counter = count(1).__next__
 
         thread_specifics = ThreadSpecifics(
             thread_ident=non_uniq_thread_id,
