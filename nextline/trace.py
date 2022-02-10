@@ -79,7 +79,7 @@ class Trace:
                 prompting_counter=self.prompting_counter,
             )
             trace_thread = TraceThread(
-                pdb_proxy=pdb_proxy, id_composer=self.id_composer
+                trace=pdb_proxy.trace_func, id_composer=self.id_composer
             )
             self.trace_thread[thread_asynctask_id] = trace_thread
 
@@ -108,9 +108,9 @@ class Trace:
 ##__________________________________________________________________||
 class TraceThread:
     def __init__(
-        self, pdb_proxy: PdbProxy, id_composer: UniqThreadTaskIdComposer
+        self, trace: TraceFunc, id_composer: UniqThreadTaskIdComposer
     ):
-        self.pdb_proxy = pdb_proxy
+        self.trace = trace
         self.id_composer = id_composer
         self.trace_task: Dict[TaskId, TraceTask] = {}
 
@@ -121,12 +121,12 @@ class TraceThread:
         _, task_id = self.id_composer.compose()
 
         if task_id is None:
-            return self.pdb_proxy.trace_func(frame, event, arg)
+            return self.trace(frame, event, arg)
 
         trace_task = self.trace_task.get(task_id)
         if not trace_task:
             trace_task = TraceTask(
-                pdb_proxy=self.pdb_proxy, id_composer=self.id_composer
+                trace=self.trace, id_composer=self.id_composer
             )
             self.trace_task[task_id] = trace_task
 
@@ -135,12 +135,12 @@ class TraceThread:
 
 class TraceTask:
     def __init__(
-        self, pdb_proxy: PdbProxy, id_composer: UniqThreadTaskIdComposer
+        self, trace: TraceFunc, id_composer: UniqThreadTaskIdComposer
     ):
-        self.pdb_proxy = pdb_proxy
+        self.trace = trace
         self.id_composer = id_composer
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
-        return self.pdb_proxy.trace_func(frame, event, arg)
+        return self.trace(frame, event, arg)
