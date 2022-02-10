@@ -11,30 +11,12 @@ from nextline.utils import UniqThreadTaskIdComposer
 ##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def wrap_thread(monkeypatch):
-    """Wrap threading.Thread so to raise exception in the caller
+    """Replace threading.Thread with nextline.utils.ExcThread"""
 
-    The implementation based on
-    https://www.geeksforgeeks.org/handling-a-threads-exception-in-the-caller-thread-in-python/
+    from nextline.utils import ExcThread
 
-    """
+    monkeypatch.setattr(threading, "Thread", ExcThread)
 
-    import threading
-
-    class Wrapped(threading.Thread):
-        def run(self):
-            self.exc = None
-            try:
-                return super().run()
-            except BaseException as e:
-                self.exc = e
-
-        def join(self):
-            ret = super().join()
-            if self.exc:
-                raise self.exc
-            return ret
-
-    monkeypatch.setattr(threading, "Thread", Wrapped)
     yield
 
 
