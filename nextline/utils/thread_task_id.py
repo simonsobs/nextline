@@ -66,10 +66,10 @@ class UniqThreadTaskIdComposer:
         """
 
         thread_task_id = self()
-        self.exited(thread_task_id)
+        self._exited(thread_task_id)
         return thread_task_id
 
-    def exited(self, thread_task_id: ThreadTaskId) -> None:
+    def _exited(self, thread_task_id: ThreadTaskId) -> None:
         thread_id, task_id = thread_task_id
         with self.lock:
             non_uniq_thread_id, non_uniq_task_id = self.uniq_id_dict.pop(
