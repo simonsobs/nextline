@@ -80,7 +80,7 @@ class PdbProxy:
         prompting_counter: Callable[[], int],
     ):
         self.id_composer = id_composer
-        self.thread_asynctask_id = self.id_composer.compose()
+        self.thread_asynctask_id = self.id_composer()
         self.trace = trace
         self.modules_to_trace = modules_to_trace
         self.registry = registry
@@ -184,7 +184,7 @@ class PdbProxy:
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        trace_id = self.id_composer.compose()
+        trace_id = self.id_composer()
         self.id_composer.exited(trace_id)
         # self.trace.returning()
         return

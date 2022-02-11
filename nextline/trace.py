@@ -95,7 +95,7 @@ class TraceSingleThreadTask:
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
 
-        trace_id = self._id_composer.compose()
+        trace_id = self._id_composer()
 
         trace = self._trace_map.get(trace_id)
         if not trace:
@@ -108,7 +108,7 @@ class TraceSingleThreadTask:
         return trace(frame, event, arg)
 
     def _returning(self, *_, **__) -> None:
-        trace_id = self._id_composer.compose()
+        trace_id = self._id_composer()
         self._id_composer.exited(trace_id)
         try:
             del self._trace_map[trace_id]

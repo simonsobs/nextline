@@ -23,8 +23,8 @@ def wrap_thread(monkeypatch):
 
 ##__________________________________________________________________||
 def assert_func(obj: UniqThreadTaskIdComposer, expected: ThreadTaskId):
-    assert expected == obj.compose()
-    assert expected == obj.compose()
+    assert expected == obj()
+    assert expected == obj()
 
 
 async def async_assert_func(obj: UniqThreadTaskIdComposer, expected: ThreadTaskId):

@@ -40,7 +40,7 @@ class UniqThreadTaskIdComposer:
 
         self.lock = threading.Condition()
 
-    def compose(self) -> ThreadTaskId:
+    def __call__(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
 
         Returns
