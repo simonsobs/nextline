@@ -39,7 +39,7 @@ async def test_sys_settrace(MockPdbProxy):
     sys.settrace(trace_org)
 
     assert 1 == MockPdbProxy.call_count
-    assert 2 == MockPdbProxy().trace_func.call_count
+    assert 2 == MockPdbProxy().call_count
 
 
 ##__________________________________________________________________||
@@ -76,7 +76,7 @@ async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
 
     traced_moduled = {
         c.args[0].f_globals.get("__name__")
-        for c in MockPdbProxy().trace_func.call_args_list
+        for c in MockPdbProxy().call_args_list
     }
 
     # module_b is traced but not in the set modules_to_trace
@@ -109,7 +109,7 @@ async def test_modules_to_trace_partial(MockPdbProxy):
 
     traced_moduled = {
         c.args[0].f_globals.get("__name__")
-        for c in MockPdbProxy().trace_func.call_args_list
+        for c in MockPdbProxy().call_args_list
     }
 
     # module_b is traced but not in the set modules_to_trace
@@ -125,8 +125,8 @@ async def test_return(MockPdbProxy):
     registry = Registry()
     trace = Trace(registry, modules_to_trace={})
     frame = Mock()
-    assert trace(frame, "call", None) is MockPdbProxy().trace_func()
-    assert trace(frame, "line", None) is MockPdbProxy().trace_func()
+    assert trace(frame, "call", None) is MockPdbProxy()()
+    assert trace(frame, "line", None) is MockPdbProxy()()
 
     assert 1 + 2 == MockPdbProxy.call_count
     # once in trace(), twice in the above lines in the test
@@ -141,9 +141,9 @@ async def test_args(MockPdbProxy):
     trace(frame, "call", None)
     trace(frame, "line", None)
     assert [
-        call.trace_func(frame, "call", None),
-        call.trace_func(frame, "line", None),
-    ] == MockPdbProxy().method_calls
+        call(frame, "call", None),
+        call(frame, "line", None),
+    ] == MockPdbProxy().call_args_list
 
 
 ##__________________________________________________________________||

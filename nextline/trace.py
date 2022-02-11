@@ -78,7 +78,7 @@ class Trace:
                 prompting_counter=self.prompting_counter,
             )
             trace = TraceWithCallback(
-                wrapped=pdb_proxy.trace_func,
+                wrapped=pdb_proxy,
                 returning=self.returning,
             )
             self.trace_map[trace_id] = trace

@@ -104,7 +104,7 @@ class PdbProxy:
         self._first = True
         self._future = False
 
-    def trace_func(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
+    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The main trace function
 
         This method will be called by the instance of Trace.

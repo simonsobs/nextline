@@ -102,7 +102,7 @@ def test_proxy(proxy, mock_trace, mock_registry, snapshot, subject):
     # coroutine or a generator can be the outermost scope.
 
     trace_org = sys.gettrace()
-    sys.settrace(proxy.trace_func)
+    sys.settrace(proxy)
     subject()
     sys.settrace(trace_org)
 
