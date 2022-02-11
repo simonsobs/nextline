@@ -80,7 +80,7 @@ class Trace:
                 prompting_counter=self.prompting_counter,
             )
             trace_thread = TraceTask(
-                trace=pdb_proxy.trace_func,
+                wrapped=pdb_proxy.trace_func,
                 returning=self.returning,
             )
             self.trace_thread[thread_asynctask_id] = trace_thread
@@ -113,10 +113,10 @@ class Trace:
 class TraceTask:
     def __init__(
         self,
-        trace: TraceFunc,
+        wrapped: TraceFunc,
         returning: Optional[TraceFunc] = None,
     ):
-        self.wrapped = trace
+        self.wrapped = wrapped
         self.returning = returning
 
         self._outermost = self.all
