@@ -104,6 +104,8 @@ class Trace:
         thread_asynctask_id = self.id_composer.compose()
         self.id_composer.exited(thread_asynctask_id)
         # del self.pdb_proxies[thread_asynctask_id]
+        if thread_asynctask_id not in self.trace_thread:
+            return
         del self.trace_thread[thread_asynctask_id]
 
 
