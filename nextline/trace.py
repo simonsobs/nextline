@@ -1,16 +1,21 @@
+from __future__ import annotations
+
 import asyncio
 from itertools import count
 from functools import partial
 
 from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
-from .utils import Registry, UniqThreadTaskIdComposer
+from .utils import UniqThreadTaskIdComposer
 
-from typing import Dict, Any, Set, Callable, Optional
+from typing import Dict, Any, Set, Optional, TYPE_CHECKING
 from types import FrameType
 
 from .types import TraceFunc
-from .utils.types import ThreadTaskId, ThreadID, TaskId
+from .utils.types import ThreadTaskId
+
+if TYPE_CHECKING:
+    from .utils import Registry
 
 
 ##__________________________________________________________________||
