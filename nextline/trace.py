@@ -39,7 +39,6 @@ class Trace:
 
         self.prompting_counter = count(1).__next__
 
-        self.pdb_proxies = {}
         self.trace_thread: Dict[ThreadTaskId, TraceWithCallback] = {}
 
         if modules_to_trace is None:
