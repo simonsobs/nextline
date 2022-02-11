@@ -66,7 +66,9 @@ class Trace:
 
         self.trace = TraceSingleThreadTask(wrapped_factory=wrapped_factory)
 
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
+    def __call__(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
         """Called by the Python interpreter when a new local scope is entered.
 
         https://docs.python.org/3/library/sys.html#sys.settrace
@@ -89,7 +91,9 @@ class TraceSingleThreadTask:
 
         self._trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
 
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
+    def __call__(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
 
         trace_id = self._id_composer.compose()
 
