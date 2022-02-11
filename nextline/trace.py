@@ -8,7 +8,7 @@ from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
 from .utils import UniqThreadTaskIdComposer
 
-from typing import Dict, Any, Set, Optional, TYPE_CHECKING
+from typing import Callable, Dict, Any, Set, Optional, TYPE_CHECKING
 from types import FrameType
 
 from .types import TraceFunc
@@ -42,8 +42,6 @@ class Trace:
 
         self.pdb_ci_registry = PdbCIRegistry()
 
-        self.trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
-
         if modules_to_trace is None:
             modules_to_trace = set()
 
@@ -54,7 +52,7 @@ class Trace:
 
         self.id_composer = UniqThreadTaskIdComposer()
 
-        self.wrapped_factory = partial(
+        wrapped_factory = partial(
             PdbProxy,
             trace=self,
             id_composer=self.id_composer,
@@ -65,6 +63,10 @@ class Trace:
         )
 
         self.first = True
+
+        self.trace = TraceSingleThreadTask(
+            wrapped_factory=wrapped_factory, id_composer=self.id_composer
+        )
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """Called by the Python interpreter when a new local scope is entered.
@@ -77,6 +79,23 @@ class Trace:
             module_name = frame.f_globals.get("__name__")
             self.modules_to_trace.add(module_name)
             self.first = False
+
+        return self.trace(frame, event, arg)
+
+
+class TraceSingleThreadTask:
+    def __init__(
+        self,
+        wrapped_factory: Callable[[], TraceFunc],
+        id_composer: UniqThreadTaskIdComposer,
+    ):
+
+        self.wrapped_factory = wrapped_factory
+        self.id_composer = id_composer
+
+        self.trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
+
+    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
 
         trace_id = self.id_composer.compose()
 
