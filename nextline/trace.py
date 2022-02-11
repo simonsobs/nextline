@@ -40,7 +40,7 @@ class Trace:
         self.prompting_counter = count(1).__next__
 
         self.pdb_proxies = {}
-        self.trace_thread: Dict[ThreadTaskId, TraceTask] = {}
+        self.trace_thread: Dict[ThreadTaskId, TraceWithCallback] = {}
 
         if modules_to_trace is None:
             modules_to_trace = set()
@@ -79,7 +79,7 @@ class Trace:
                 ci_registry=self.pdb_ci_registry,
                 prompting_counter=self.prompting_counter,
             )
-            trace_thread = TraceTask(
+            trace_thread = TraceWithCallback(
                 wrapped=pdb_proxy.trace_func,
                 returning=self.returning,
             )
@@ -110,7 +110,7 @@ class Trace:
         del self.trace_thread[thread_asynctask_id]
 
 
-class TraceTask:
+class TraceWithCallback:
     def __init__(
         self,
         wrapped: TraceFunc,
