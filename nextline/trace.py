@@ -40,7 +40,7 @@ class Trace:
         self.prompting_counter = count(1).__next__
 
         self.pdb_proxies = {}
-        self.trace_thread: Dict[ThreadTaskId, TraceThread] = {}
+        self.trace_thread: Dict[ThreadTaskId, TraceTask] = {}
 
         if modules_to_trace is None:
             modules_to_trace = set()
@@ -81,7 +81,6 @@ class Trace:
             )
             trace_thread = TraceTask(
                 trace=pdb_proxy.trace_func,
-                id_composer=self.id_composer,
                 returning=self.returning,
             )
             self.trace_thread[thread_asynctask_id] = trace_thread
@@ -115,11 +114,9 @@ class TraceTask:
     def __init__(
         self,
         trace: TraceFunc,
-        id_composer: UniqThreadTaskIdComposer,
         returning: Optional[Callable[[], None]] = None,
     ):
         self.wrapped = trace
-        self.id_composer = id_composer
         self.returning = returning
 
         self._outermost = self.all
