@@ -87,7 +87,7 @@ class TraceSingleThreadTask:
     def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
 
         self._wrapped_factory = wrapped_factory
-        self._id_composer = UniqThreadTaskIdComposer()
+        self._id = UniqThreadTaskIdComposer()
 
         self._trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
 
@@ -95,7 +95,7 @@ class TraceSingleThreadTask:
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
 
-        trace_id = self._id_composer()
+        trace_id = self._id()
 
         trace = self._trace_map.get(trace_id)
         if not trace:
@@ -108,7 +108,7 @@ class TraceSingleThreadTask:
         return trace(frame, event, arg)
 
     def _returning(self, *_, **__) -> None:
-        trace_id = self._id_composer.exit()
+        trace_id = self._id.exit()
         try:
             del self._trace_map[trace_id]
         except KeyError:
