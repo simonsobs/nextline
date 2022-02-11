@@ -5,7 +5,7 @@ from functools import partial
 
 import pytest
 
-from nextline.utils import UniqThreadTaskIdComposer
+from nextline.utils import UniqThreadTaskIdComposer as IdComposer
 from nextline.utils.types import ThreadTaskId
 
 
@@ -22,48 +22,69 @@ def wrap_thread(monkeypatch):
 
 
 ##__________________________________________________________________||
-def assert_call(obj: UniqThreadTaskIdComposer, expected: ThreadTaskId):
+def assert_call(obj: IdComposer, expected: ThreadTaskId):
     assert expected == obj()
     assert expected == obj()
 
 
-async def async_assert_call(obj: UniqThreadTaskIdComposer, expected: ThreadTaskId):
-    return assert_call(obj, expected)
+def assert_exit(obj: IdComposer, expected: ThreadTaskId):
+    assert expected == obj.exit()
+
+
+def assert_call_exit(obj: IdComposer, expected: ThreadTaskId):
+    assert_call(obj, expected)
+    assert_exit(obj, expected)
+
+
+async def async_assert_call(obj: IdComposer, expected: ThreadTaskId):
+    await asyncio.sleep(0)
+    assert expected == obj()
+    await asyncio.sleep(0)
+    assert expected == obj()
+
+
+async def async_assert_exit(obj: IdComposer, expected: ThreadTaskId):
+    await asyncio.sleep(0)
+    assert expected == obj.exit()
+
+
+async def async_assert_call_exit(obj: IdComposer, expected: ThreadTaskId):
+    await async_assert_call(obj, expected)
+    await async_assert_exit(obj, expected)
 
 
 ##__________________________________________________________________||
 @pytest.fixture()
 def obj():
-    y = UniqThreadTaskIdComposer()
+    y = IdComposer()
     yield y
 
 
 ##__________________________________________________________________||
-def test_compose(obj: UniqThreadTaskIdComposer):
+def test_compose(obj: IdComposer):
     expected = (1, None)
     assert_call(obj, expected)
+    assert_exit(obj, expected)
 
 
-def test_threads(obj: UniqThreadTaskIdComposer):
+def test_threads(obj: IdComposer):
     expected = (1, None)
     assert_call(obj, expected)
 
     expected = (2, None)
-    t = threading.Thread(target=assert_call, args=(obj, expected))
+    t = threading.Thread(target=assert_call_exit, args=(obj, expected))
     t.start()
     t.join()
-    obj.exited(expected)
 
     expected = (3, None)
-    t = threading.Thread(target=assert_call, args=(obj, expected))
+    t = threading.Thread(target=assert_call_exit, args=(obj, expected))
     t.start()
     t.join()
-    obj.exited(expected)
 
 
 ##__________________________________________________________________||
 @pytest.mark.asyncio
-async def test_async_coroutine(obj: UniqThreadTaskIdComposer):
+async def test_async_coroutine(obj: IdComposer):
     expected = (1, 1)
     assert_call(obj, expected)
 
@@ -73,82 +94,79 @@ async def test_async_coroutine(obj: UniqThreadTaskIdComposer):
 
 
 @pytest.mark.asyncio
-async def test_async_tasks(obj: UniqThreadTaskIdComposer):
+async def test_async_tasks(obj: IdComposer):
     expected = (1, 1)
     assert_call(obj, expected)
 
     expected = (1, 2)
-    t = asyncio.create_task(async_assert_call(obj, expected))
+    t = asyncio.create_task(async_assert_call_exit(obj, expected))
     await t
-    obj.exited(expected)
 
     expected = (1, 3)
-    t = asyncio.create_task(async_assert_call(obj, expected))
+    t = asyncio.create_task(async_assert_call_exit(obj, expected))
     await t
-    obj.exited(expected)
 
 
 @pytest.mark.asyncio
-async def test_async_tasks_gather(obj: UniqThreadTaskIdComposer):
+async def test_async_tasks_gather(obj: IdComposer):
     expected = (1, 1)
     assert_call(obj, expected)
 
     expected = (1, 2)
-    t1 = asyncio.create_task(async_assert_call(obj, expected))
+    t1 = asyncio.create_task(async_assert_call_exit(obj, expected))
     expected = (1, 3)
-    t2 = asyncio.create_task(async_assert_call(obj, expected))
+    t2 = asyncio.create_task(async_assert_call_exit(obj, expected))
     aws = {t1, t2}
     await asyncio.gather(*aws)
 
 
-def test_async_asyncio_run(obj: UniqThreadTaskIdComposer):
+def test_async_asyncio_run(obj: IdComposer):
     expected = (1, None)
     assert_call(obj, expected)
 
     expected = (1, 1)
-    asyncio.run(async_assert_call(obj, expected))
+    asyncio.run(async_assert_call_exit(obj, expected))
 
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread()")
 @pytest.mark.asyncio
-async def test_async_asyncio_to_thread(obj: UniqThreadTaskIdComposer):
+async def test_async_asyncio_to_thread(obj: IdComposer):
     expected = (1, 1)
     assert_call(obj, expected)
 
     expected = (2, None)
-    await asyncio.to_thread(partial(assert_call, obj, expected))
-    obj.exited(expected)
+    await asyncio.to_thread(partial(assert_call_exit, obj, expected))
 
     expected = (3, None)
-    await asyncio.to_thread(partial(assert_call, obj, expected))
-    obj.exited(expected)
+    await asyncio.to_thread(partial(assert_call_exit, obj, expected))
 
 
 ##__________________________________________________________________||
-async def async_nested(obj: UniqThreadTaskIdComposer, expected_thread_id):
-    expected = (expected_thread_id, 1)
-    assert_call(obj, expected)
-    await async_assert_call(obj, expected)
+async def async_nested(obj: IdComposer, expected_thread_id):
+    expected1 = (expected_thread_id, 1)
+    assert_call(obj, expected1)
+    await async_assert_call(obj, expected1)
 
-    expected = (expected_thread_id, 2)
-    t1 = asyncio.create_task(async_assert_call(obj, expected))
-    expected = (expected_thread_id, 3)
-    t2 = asyncio.create_task(async_assert_call(obj, expected))
+    expected2 = (expected_thread_id, 2)
+    t1 = asyncio.create_task(async_assert_call_exit(obj, expected2))
+    expected3 = (expected_thread_id, 3)
+    t2 = asyncio.create_task(async_assert_call_exit(obj, expected3))
     aws = {t1, t2}
     await asyncio.gather(*aws)
-    obj.exited((expected_thread_id, 2))
-    obj.exited((expected_thread_id, 3))
+
+    await async_assert_exit(obj, expected1)
 
 
-def nested(obj: UniqThreadTaskIdComposer, expected_thread_id):
+def nested(obj: IdComposer, expected_thread_id):
     expected = (expected_thread_id, None)
     assert_call(obj, expected)
 
     asyncio.run(async_nested(obj, expected_thread_id))
-    obj.exited((expected_thread_id, 1))
+
+    assert_exit(obj, expected)
 
 
-def test_nested(obj: UniqThreadTaskIdComposer):
+def test_nested(obj: IdComposer):
     expected = (1, None)
     assert_call(obj, expected)
 
@@ -156,13 +174,11 @@ def test_nested(obj: UniqThreadTaskIdComposer):
     t = threading.Thread(target=nested, args=(obj, expected_thread_id))
     t.start()
     t.join()
-    obj.exited((expected_thread_id, None))
 
     expected_thread_id = 3
     t = threading.Thread(target=nested, args=(obj, expected_thread_id))
     t.start()
     t.join()
-    obj.exited((expected_thread_id, None))
 
 
 ##__________________________________________________________________||
