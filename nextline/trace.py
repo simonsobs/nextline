@@ -40,10 +40,7 @@ class Trace:
         self, registry: Registry, modules_to_trace: Optional[Set[str]] = None
     ):
 
-        self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
-
-        self.prompting_counter = count(1).__next__
 
         self.trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
 
@@ -62,9 +59,9 @@ class Trace:
             trace=self,
             id_composer=self.id_composer,
             modules_to_trace=self.modules_to_trace,
-            registry=self.registry,
             ci_registry=self.pdb_ci_registry,
-            prompting_counter=self.prompting_counter,
+            registry=registry,
+            prompting_counter=count(1).__next__,
         )
 
         self.first = True
