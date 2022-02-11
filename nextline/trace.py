@@ -101,7 +101,7 @@ class Trace:
 
         # return pdb_proxy.trace_func(frame, event, arg)
 
-    def returning(self) -> None:
+    def returning(self, *_, **__) -> None:
         thread_asynctask_id = self.id_composer.compose()
         self.id_composer.exited(thread_asynctask_id)
         # del self.pdb_proxies[thread_asynctask_id]
@@ -114,7 +114,7 @@ class TraceTask:
     def __init__(
         self,
         trace: TraceFunc,
-        returning: Optional[Callable[[], None]] = None,
+        returning: Optional[TraceFunc] = None,
     ):
         self.wrapped = trace
         self.returning = returning
@@ -151,7 +151,7 @@ class TraceTask:
             return
 
         if self.returning:
-            self.returning()
+            self.returning(frame, event, arg)
 
         return
 
