@@ -5,7 +5,7 @@ from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
 from .utils import Registry, UniqThreadTaskIdComposer
 
-from typing import Dict, Any, Set, Optional, Callable
+from typing import Dict, Any, Set, Callable, Optional
 from types import FrameType
 
 from .types import TraceFunc
