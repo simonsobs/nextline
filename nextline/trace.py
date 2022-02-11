@@ -67,7 +67,6 @@ class Trace:
             self.first = False
 
         thread_asynctask_id = self.id_composer.compose()
-        # print(*thread_asynctask_id)
 
         trace_thread = self.trace_thread.get(thread_asynctask_id)
         if not trace_thread:
@@ -87,24 +86,9 @@ class Trace:
 
         return trace_thread(frame, event, arg)
 
-        # pdb_proxy = self.pdb_proxies.get(thread_asynctask_id)
-        # if not pdb_proxy:
-        #     pdb_proxy = PdbProxy(
-        #         trace=self,
-        #         thread_asynctask_id=thread_asynctask_id,
-        #         modules_to_trace=self.modules_to_trace,
-        #         registry=self.registry,
-        #         ci_registry=self.pdb_ci_registry,
-        #         prompting_counter=self.prompting_counter,
-        #     )
-        #     self.pdb_proxies[thread_asynctask_id] = pdb_proxy
-
-        # return pdb_proxy.trace_func(frame, event, arg)
-
     def returning(self, *_, **__) -> None:
         thread_asynctask_id = self.id_composer.compose()
         self.id_composer.exited(thread_asynctask_id)
-        # del self.pdb_proxies[thread_asynctask_id]
         if thread_asynctask_id not in self.trace_thread:
             return
         del self.trace_thread[thread_asynctask_id]
