@@ -50,12 +50,12 @@ class Trace:
         # self.modules_to_trace will be shared and modified by
         # multiple instances of PdbProxy.
 
-        self.id_composer = UniqThreadTaskIdComposer()
+        # self.id_composer = UniqThreadTaskIdComposer()
 
         wrapped_factory = partial(
             PdbProxy,
             trace=self,
-            id_composer=self.id_composer,
+            id_composer=UniqThreadTaskIdComposer(),
             modules_to_trace=self.modules_to_trace,
             ci_registry=self.pdb_ci_registry,
             registry=registry,
@@ -64,9 +64,7 @@ class Trace:
 
         self.first = True
 
-        self.trace = TraceSingleThreadTask(
-            wrapped_factory=wrapped_factory, id_composer=self.id_composer
-        )
+        self.trace = TraceSingleThreadTask(wrapped_factory=wrapped_factory)
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """Called by the Python interpreter when a new local scope is entered.
@@ -84,14 +82,10 @@ class Trace:
 
 
 class TraceSingleThreadTask:
-    def __init__(
-        self,
-        wrapped_factory: Callable[[], TraceFunc],
-        id_composer: UniqThreadTaskIdComposer,
-    ):
+    def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
 
         self.wrapped_factory = wrapped_factory
-        self.id_composer = id_composer
+        self.id_composer = UniqThreadTaskIdComposer()
 
         self.trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
 
