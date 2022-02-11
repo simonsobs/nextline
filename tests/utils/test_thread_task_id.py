@@ -6,6 +6,7 @@ from functools import partial
 import pytest
 
 from nextline.utils import UniqThreadTaskIdComposer
+from nextline.utils.types import ThreadTaskId
 
 
 ##__________________________________________________________________||
@@ -21,12 +22,12 @@ def wrap_thread(monkeypatch):
 
 
 ##__________________________________________________________________||
-def assert_func(obj: UniqThreadTaskIdComposer, expected):
+def assert_func(obj: UniqThreadTaskIdComposer, expected: ThreadTaskId):
     assert expected == obj.compose()
     assert expected == obj.compose()
 
 
-async def async_assert_func(obj, expected):
+async def async_assert_func(obj: UniqThreadTaskIdComposer, expected: ThreadTaskId):
     return assert_func(obj, expected)
 
 
