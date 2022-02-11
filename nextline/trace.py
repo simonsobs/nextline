@@ -5,7 +5,7 @@ from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
 from .utils import Registry, UniqThreadTaskIdComposer
 
-from typing import Dict, Any, Set, Optional
+from typing import Dict, Any, Set, Optional, Callable
 from types import FrameType
 
 from .types import TraceFunc
@@ -110,10 +110,14 @@ class Trace:
 ##__________________________________________________________________||
 class TraceThread:
     def __init__(
-        self, trace: TraceFunc, id_composer: UniqThreadTaskIdComposer
+        self,
+        trace: TraceFunc,
+        id_composer: UniqThreadTaskIdComposer,
+        returning: Optional[Callable[[], None]] = None,
     ):
         self.wrapped = trace
         self.id_composer = id_composer
+        self.returning = returning
         self.trace_task: Dict[TaskId, TraceTask] = {}
 
         self._outermost = self.all
@@ -140,6 +144,9 @@ class TraceThread:
         if event != "return":
             return self.outermost
 
+        if self.returning:
+            self.returning()
+
         return
 
     def all(
@@ -154,19 +161,29 @@ class TraceThread:
         trace_task = self.trace_task.get(task_id)
         if not trace_task:
             trace_task = TraceTask(
-                trace=self.wrapped, id_composer=self.id_composer
+                trace=self.wrapped,
+                id_composer=self.id_composer,
+                returning=self._task_returning,
             )
             self.trace_task[task_id] = trace_task
 
         return trace_task(frame, event, arg)
 
+    def _task_returning(self) -> None:
+        if self.returning:
+            self.returning()
+
 
 class TraceTask:
     def __init__(
-        self, trace: TraceFunc, id_composer: UniqThreadTaskIdComposer
+        self,
+        trace: TraceFunc,
+        id_composer: UniqThreadTaskIdComposer,
+        returning: Optional[Callable[[], None]] = None,
     ):
         self.wrapped = trace
         self.id_composer = id_composer
+        self.returning = returning
 
         self._outermost = self.all
 
@@ -198,6 +215,9 @@ class TraceTask:
             # awaiting. will be called again
             self._future = True
             return
+
+        if self.returning:
+            self.returning()
 
         return
 
