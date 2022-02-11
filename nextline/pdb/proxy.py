@@ -183,7 +183,7 @@ class PdbProxy:
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        self.trace.returning()
+        # self.trace.returning()
         return
 
     def trace_func_all(

@@ -79,8 +79,10 @@ class Trace:
                 ci_registry=self.pdb_ci_registry,
                 prompting_counter=self.prompting_counter,
             )
-            trace_thread = TraceThread(
-                trace=pdb_proxy.trace_func, id_composer=self.id_composer
+            trace_thread = TraceTask(
+                trace=pdb_proxy.trace_func,
+                id_composer=self.id_composer,
+                returning=self.returning,
             )
             self.trace_thread[thread_asynctask_id] = trace_thread
 
