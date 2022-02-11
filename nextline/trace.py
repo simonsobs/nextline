@@ -39,7 +39,7 @@ class Trace:
 
         self.prompting_counter = count(1).__next__
 
-        self.trace_thread: Dict[ThreadTaskId, TraceWithCallback] = {}
+        self.trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
 
         if modules_to_trace is None:
             modules_to_trace = set()
@@ -65,32 +65,32 @@ class Trace:
             self.modules_to_trace.add(module_name)
             self.first = False
 
-        thread_asynctask_id = self.id_composer.compose()
+        trace_id = self.id_composer.compose()
 
-        trace_thread = self.trace_thread.get(thread_asynctask_id)
-        if not trace_thread:
+        trace = self.trace_map.get(trace_id)
+        if not trace:
             pdb_proxy = PdbProxy(
                 trace=self,
-                thread_asynctask_id=thread_asynctask_id,
+                thread_asynctask_id=trace_id,
                 modules_to_trace=self.modules_to_trace,
                 registry=self.registry,
                 ci_registry=self.pdb_ci_registry,
                 prompting_counter=self.prompting_counter,
             )
-            trace_thread = TraceWithCallback(
+            trace = TraceWithCallback(
                 wrapped=pdb_proxy.trace_func,
                 returning=self.returning,
             )
-            self.trace_thread[thread_asynctask_id] = trace_thread
+            self.trace_map[trace_id] = trace
 
-        return trace_thread(frame, event, arg)
+        return trace(frame, event, arg)
 
     def returning(self, *_, **__) -> None:
-        thread_asynctask_id = self.id_composer.compose()
-        self.id_composer.exited(thread_asynctask_id)
-        if thread_asynctask_id not in self.trace_thread:
+        trace_id = self.id_composer.compose()
+        self.id_composer.exited(trace_id)
+        if trace_id not in self.trace_map:
             return
-        del self.trace_thread[thread_asynctask_id]
+        del self.trace_map[trace_id]
 
 
 class TraceWithCallback:
