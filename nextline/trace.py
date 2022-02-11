@@ -71,7 +71,7 @@ class Trace:
         if not trace:
             pdb_proxy = PdbProxy(
                 trace=self,
-                thread_asynctask_id=trace_id,
+                id_composer=self.id_composer,
                 modules_to_trace=self.modules_to_trace,
                 registry=self.registry,
                 ci_registry=self.pdb_ci_registry,

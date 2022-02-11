@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ..trace import Trace
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
-    from ..utils import Registry
+    from ..utils import Registry, UniqThreadTaskIdComposer
     from ..utils.types import ThreadTaskId
 
 
@@ -57,8 +57,8 @@ class PdbProxy:
 
     Parameters
     ----------
-    thread_asynctask_id : object
-        A thread and async tack ID
+    id_composer : object
+        A unique thread task ID composer
     trace : object
         A in stance of Trace
     modules_to_trace: set
@@ -72,14 +72,14 @@ class PdbProxy:
 
     def __init__(
         self,
-        thread_asynctask_id: ThreadTaskId,
+        id_composer: UniqThreadTaskIdComposer,
         trace: Trace,
         modules_to_trace: Set[str],
         registry: Registry,
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
     ):
-        self.thread_asynctask_id = thread_asynctask_id
+        self.thread_asynctask_id = id_composer.compose()
         self.trace = trace
         self.modules_to_trace = modules_to_trace
         self.registry = registry
