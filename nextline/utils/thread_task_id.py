@@ -58,6 +58,17 @@ class UniqThreadTaskIdComposer:
 
         return self._compose_uniq_id(non_uniq_id)
 
+    def exit(self) -> ThreadTaskId:
+        """To be called when a thread or an async task is about to exit
+
+        This method needs to be called in the thread and the async
+        task that is about to exit.
+        """
+
+        thread_task_id = self()
+        self.exited(thread_task_id)
+        return thread_task_id
+
     def exited(self, thread_task_id: ThreadTaskId) -> None:
         thread_id, task_id = thread_task_id
         with self.lock:
