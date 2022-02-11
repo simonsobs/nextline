@@ -88,9 +88,10 @@ class Trace:
     def returning(self, *_, **__) -> None:
         trace_id = self.id_composer.compose()
         self.id_composer.exited(trace_id)
-        if trace_id not in self.trace_map:
-            return
-        del self.trace_map[trace_id]
+        try:
+            del self.trace_map[trace_id]
+        except KeyError:
+            pass
 
 
 class TraceWithCallback:
