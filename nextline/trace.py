@@ -84,30 +84,30 @@ class Trace:
 class TraceSingleThreadTask:
     def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
 
-        self.wrapped_factory = wrapped_factory
-        self.id_composer = UniqThreadTaskIdComposer()
+        self._wrapped_factory = wrapped_factory
+        self._id_composer = UniqThreadTaskIdComposer()
 
-        self.trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
+        self._trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
 
-        trace_id = self.id_composer.compose()
+        trace_id = self._id_composer.compose()
 
-        trace = self.trace_map.get(trace_id)
+        trace = self._trace_map.get(trace_id)
         if not trace:
             trace = TraceWithCallback(
-                wrapped=self.wrapped_factory(),
-                returning=self.returning,
+                wrapped=self._wrapped_factory(),
+                returning=self._returning,
             )
-            self.trace_map[trace_id] = trace
+            self._trace_map[trace_id] = trace
 
         return trace(frame, event, arg)
 
-    def returning(self, *_, **__) -> None:
-        trace_id = self.id_composer.compose()
-        self.id_composer.exited(trace_id)
+    def _returning(self, *_, **__) -> None:
+        trace_id = self._id_composer.compose()
+        self._id_composer.exited(trace_id)
         try:
-            del self.trace_map[trace_id]
+            del self._trace_map[trace_id]
         except KeyError:
             pass
 
