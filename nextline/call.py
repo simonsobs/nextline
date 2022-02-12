@@ -6,11 +6,11 @@ from typing import Callable, Any, Optional, Type
 from .types import TraceFunc
 
 Func = Callable[[], Any]
-DoneFunc = Optional[Callable[[Any, Type[Exception]], None]]
+DoneFunc = Callable[[Any, Type[Exception]], None]
 
 
 def call_with_trace(
-    func: Func, trace: TraceFunc, done: DoneFunc = None
+    func: Func, trace: TraceFunc, done: Optional[DoneFunc] = None
 ) -> None:
     """Set the trace funciton while running the funciton
 
