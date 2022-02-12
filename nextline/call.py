@@ -10,7 +10,10 @@ DoneFunc = Callable[[Any, Type[Exception]], None]
 
 
 def call_with_trace(
-    func: Func, trace: TraceFunc, done: Optional[DoneFunc] = None
+    func: Func,
+    trace: TraceFunc,
+    done: Optional[DoneFunc] = None,
+    thread: bool = True,
 ) -> None:
     """Set the trace funciton while running the funciton
 
@@ -18,7 +21,8 @@ def call_with_trace(
     -----
     The trace funciton will be used in all new threads created during
     the funciton execution regardless of whether the threads are
-    creted by the funciton.
+    created by the funciton. If the thread option is false, the trace
+    funciton will not be use in any new threads.
 
     Parameters
     ----------
@@ -33,13 +37,16 @@ def call_with_trace(
         func exits. The first argument is the return value. The second
         argument is the exception if an exception occurs or otherwise
         None.
+    thread: bool, default True
+        If False, no new threads will be traced. 
     """
 
     ret = None
     exc = None
 
     trace_org = sys.gettrace()
-    threading.settrace(trace)
+    if thread:
+        threading.settrace(trace)
     sys.settrace(trace)
     try:
         ret = func()
@@ -47,6 +54,7 @@ def call_with_trace(
         exc = e
     finally:
         sys.settrace(trace_org)
-        threading.settrace(trace_org)
+        if thread:
+            threading.settrace(trace_org)
         if done:
             done(ret, exc)

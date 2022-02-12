@@ -49,7 +49,8 @@ def test_raise(trace):
 
 
 ##__________________________________________________________________||
-def test_threading(trace):
+@pytest.mark.parametrize("thread", [True, False])
+def test_threading(trace, thread):
     def f1():
         return
 
@@ -59,7 +60,7 @@ def test_threading(trace):
         t1.join()
 
     done = Mock()
-    call_with_trace(func, trace=trace, done=done)
+    call_with_trace(func, trace=trace, done=done, thread=thread)
     # print(trace.call_args_list)
 
     traced = {
@@ -71,10 +72,10 @@ def test_threading(trace):
     }
     # set: {(<module name>, <func name>)}
 
-    expected_subset = {
-        (f1.__module__, f1.__name__),
-        (func.__module__, func.__name__),
-    }
+    expected_subset = {(func.__module__, func.__name__)}
+
+    if thread:
+        expected_subset.update({(f1.__module__, f1.__name__)})
 
     assert expected_subset <= traced
 
