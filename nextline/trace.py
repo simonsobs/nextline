@@ -141,6 +141,10 @@ class TraceWithCallback:
         if self._first:
             self._first = False
             return self.outermost(frame, event, arg)
+        if self._future:
+            self._future = False
+            self._outermost = self.all
+            return self.outermost(frame, event, arg)
         return self.all(frame, event, arg)
 
     def outermost(
