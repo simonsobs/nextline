@@ -160,6 +160,10 @@ class TraceWithCallback:
 
         if asyncio.isfuture(arg):
             # awaiting. will be called again
+
+            # NOTE: This doesn't detect all `await`. Some `await`
+            # returns without any arg, for example, the sleep with
+            # the delay 0, i.e., asyncio.sleep(0)
             self._future = True
             return
 
