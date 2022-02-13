@@ -40,7 +40,7 @@ class UniqThreadTaskIdComposer:
 
         self.lock = threading.Condition()
 
-    def compose(self) -> ThreadTaskId:
+    def __call__(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
 
         Returns
@@ -58,7 +58,18 @@ class UniqThreadTaskIdComposer:
 
         return self._compose_uniq_id(non_uniq_id)
 
-    def exited(self, thread_task_id: ThreadTaskId) -> None:
+    def exit(self) -> ThreadTaskId:
+        """To be called when a thread or an async task is about to exit
+
+        This method needs to be called in the thread and the async
+        task that is about to exit.
+        """
+
+        thread_task_id = self()
+        self._exited(thread_task_id)
+        return thread_task_id
+
+    def _exited(self, thread_task_id: ThreadTaskId) -> None:
         thread_id, task_id = thread_task_id
         with self.lock:
             non_uniq_thread_id, non_uniq_task_id = self.uniq_id_dict.pop(

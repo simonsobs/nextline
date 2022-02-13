@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ..trace import Trace
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
-    from ..utils import Registry
+    from ..utils import Registry, UniqThreadTaskIdComposer
     from ..utils.types import ThreadTaskId
 
 
@@ -57,8 +57,8 @@ class PdbProxy:
 
     Parameters
     ----------
-    thread_asynctask_id : object
-        A thread and async tack ID
+    id_composer : object
+        A unique thread task ID composer
     trace : object
         A in stance of Trace
     modules_to_trace: set
@@ -72,14 +72,15 @@ class PdbProxy:
 
     def __init__(
         self,
-        thread_asynctask_id: ThreadTaskId,
+        id_composer: UniqThreadTaskIdComposer,
         trace: Trace,
         modules_to_trace: Set[str],
         registry: Registry,
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
     ):
-        self.thread_asynctask_id = thread_asynctask_id
+        self.id_composer = id_composer
+        self.thread_asynctask_id = self.id_composer()
         self.trace = trace
         self.modules_to_trace = modules_to_trace
         self.registry = registry
@@ -104,7 +105,7 @@ class PdbProxy:
         self._first = True
         self._future = False
 
-    def trace_func(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
+    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The main trace function
 
         This method will be called by the instance of Trace.
@@ -179,11 +180,12 @@ class PdbProxy:
             self._future = True
             return
 
-        self.trace.returning(self.thread_asynctask_id)
         self.registry.close_register(self.thread_asynctask_id)
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
+        self.id_composer.exit()
+        # self.trace.returning()
         return
 
     def trace_func_all(

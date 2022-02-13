@@ -1,14 +1,21 @@
+from __future__ import annotations
+
+import asyncio
 from itertools import count
+from functools import partial
 
 from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
-from .utils import Registry, UniqThreadTaskIdComposer
+from .utils import UniqThreadTaskIdComposer
 
-from typing import Any, Set, Optional
+from typing import Callable, Dict, Any, Set, Optional, TYPE_CHECKING
 from types import FrameType
 
 from .types import TraceFunc
 from .utils.types import ThreadTaskId
+
+if TYPE_CHECKING:
+    from .utils import Registry
 
 
 ##__________________________________________________________________||
@@ -33,13 +40,7 @@ class Trace:
         self, registry: Registry, modules_to_trace: Optional[Set[str]] = None
     ):
 
-        self.registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
-
-        self.prompting_counter = count().__next__
-        self.prompting_counter()  # consume 0
-
-        self.pdb_proxies = {}
 
         if modules_to_trace is None:
             modules_to_trace = set()
@@ -49,11 +50,25 @@ class Trace:
         # self.modules_to_trace will be shared and modified by
         # multiple instances of PdbProxy.
 
-        self.id_composer = UniqThreadTaskIdComposer()
+        # self.id_composer = UniqThreadTaskIdComposer()
+
+        wrapped_factory = partial(
+            PdbProxy,
+            trace=self,
+            id_composer=UniqThreadTaskIdComposer(),
+            modules_to_trace=self.modules_to_trace,
+            ci_registry=self.pdb_ci_registry,
+            registry=registry,
+            prompting_counter=count(1).__next__,
+        )
 
         self.first = True
 
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
+        self.trace = TraceSingleThreadTask(wrapped_factory=wrapped_factory)
+
+    def __call__(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
         """Called by the Python interpreter when a new local scope is entered.
 
         https://docs.python.org/3/library/sys.html#sys.settrace
@@ -65,26 +80,101 @@ class Trace:
             self.modules_to_trace.add(module_name)
             self.first = False
 
-        thread_asynctask_id = self.id_composer.compose()
-        # print(*thread_asynctask_id)
+        return self.trace(frame, event, arg)
 
-        pdb_proxy = self.pdb_proxies.get(thread_asynctask_id)
-        if not pdb_proxy:
-            pdb_proxy = PdbProxy(
-                trace=self,
-                thread_asynctask_id=thread_asynctask_id,
-                modules_to_trace=self.modules_to_trace,
-                registry=self.registry,
-                ci_registry=self.pdb_ci_registry,
-                prompting_counter=self.prompting_counter,
+
+class TraceSingleThreadTask:
+    def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
+
+        self._wrapped_factory = wrapped_factory
+        self._id = UniqThreadTaskIdComposer()
+
+        self._trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
+
+    def __call__(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+
+        trace_id = self._id()
+
+        trace = self._trace_map.get(trace_id)
+        if not trace:
+            trace = TraceWithCallback(
+                wrapped=self._wrapped_factory(),
+                returning=self._returning,
             )
-            self.pdb_proxies[thread_asynctask_id] = pdb_proxy
+            self._trace_map[trace_id] = trace
 
-        return pdb_proxy.trace_func(frame, event, arg)
+        return trace(frame, event, arg)
 
-    def returning(self, thread_asynctask_id: ThreadTaskId) -> None:
-        self.id_composer.exited(thread_asynctask_id)
-        del self.pdb_proxies[thread_asynctask_id]
+    def __len__(self) -> int:
+        """The number of active trace functions"""
+        return len(self._trace_map)
+
+    def _returning(self, *_, **__) -> None:
+        trace_id = self._id.exit()
+        try:
+            del self._trace_map[trace_id]
+        except KeyError:
+            pass
 
 
-##__________________________________________________________________||
+class TraceWithCallback:
+    def __init__(
+        self,
+        wrapped: TraceFunc,
+        returning: Optional[TraceFunc] = None,
+    ):
+        self.wrapped = wrapped
+        self.returning = returning
+
+        self._outermost = self.all
+
+        self._first = True
+        self._future = False
+
+    def __call__(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """The `call` event"""
+
+        if self._first:
+            self._first = False
+            return self.outermost(frame, event, arg)
+        if self._future:
+            self._future = False
+            self._outermost = self.all
+            return self.outermost(frame, event, arg)
+        return self.all(frame, event, arg)
+
+    def outermost(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """The first local scope entered"""
+
+        if self._outermost:
+            self._outermost = self._outermost(frame, event, arg)
+
+        if event != "return":
+            return self.outermost
+
+        if asyncio.isfuture(arg):
+            # awaiting. will be called again
+
+            # NOTE: This doesn't detect all `await`. Some `await`
+            # returns without any arg, for example, the sleep with
+            # the delay 0, i.e., asyncio.sleep(0)
+            self._future = True
+            return
+
+        if self.returning:
+            self.returning(frame, event, arg)
+
+        return
+
+    def all(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+        """Every local scope"""
+
+        return self.wrapped(frame, event, arg)
