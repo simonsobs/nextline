@@ -1,6 +1,7 @@
 from threading import Thread, current_thread
 from asyncio import Task, current_task
 from itertools import count
+from weakref import WeakKeyDictionary
 
 from typing import Callable, Set, Dict, Optional, Union
 
@@ -15,10 +16,12 @@ class UniqThreadTaskIdComposer:
 
         self.thread_id_counter = count(1).__next__
 
-        self._map: Dict[Union[Thread, Task], ThreadTaskId] = {}
-        self._thread_id_map: Dict[Thread, ThreadID] = {}
+        self._map: Dict[
+            Union[Thread, Task], ThreadTaskId
+        ] = WeakKeyDictionary()
+        self._thread_id_map: Dict[Thread, ThreadID] = WeakKeyDictionary()
+        self._task_id_map: Dict[Task, TaskId] = WeakKeyDictionary()
         self._task_id_counter_map: Dict[Thread, Callable[[], int]] = {}
-        self._task_id_map: Dict[Task, TaskId] = {}
 
     def __call__(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
