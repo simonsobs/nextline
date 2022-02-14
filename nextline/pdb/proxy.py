@@ -145,8 +145,6 @@ class PdbProxy:
         self.registry.register_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
 
         _, task_id = self.thread_asynctask_id
         if task_id:
@@ -154,6 +152,9 @@ class PdbProxy:
         else:
             self._handle = ThreadDoneCallback(done=self._callback)
         self._handle.register()
+
+        if self._trace_func_all:
+            self._trace_func_all = self._trace_func_all(frame, event, arg)
 
         return self.trace_func_exit_thread_task
 
