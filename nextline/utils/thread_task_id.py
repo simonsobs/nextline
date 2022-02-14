@@ -40,6 +40,8 @@ class UniqThreadTaskIdComposer:
 
         self.lock = threading.Condition()
 
+        self._map = {}
+
     def __call__(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
 
@@ -50,6 +52,26 @@ class UniqThreadTaskIdComposer:
             not in an async task, the async task ID will be None.
         """
 
+        try:
+            task = asyncio.current_task()
+        except RuntimeError:
+            task = None
+
+        thread = threading.current_thread()
+
+        key = task or thread
+
+        ret = self._map.get(key)
+        if ret:
+            return ret
+
+        ret = self._call_org()
+
+        self._map[key] = ret
+
+        return ret
+
+    def _call_org(self) -> ThreadTaskId:
         non_uniq_id = self._compose_non_uniq_id()
 
         uniq_id = self._find_previsouly_composed_uniq_id(non_uniq_id)
