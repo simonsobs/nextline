@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+import threading
 import asyncio
 from itertools import count
 from functools import partial
+from weakref import WeakKeyDictionary
 
 from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
 from .utils import UniqThreadTaskIdComposer
 
-from typing import Callable, Dict, Any, Set, Optional, TYPE_CHECKING
+from typing import Union, Callable, Dict, Any, Set, Optional, TYPE_CHECKING
 from types import FrameType
 
 from .types import TraceFunc
-from .utils.types import ThreadTaskId
 
 if TYPE_CHECKING:
     from .utils import Registry
@@ -84,39 +85,35 @@ class Trace:
 
 
 class TraceSingleThreadTask:
+    """Dispatch a new trace function for each thread or asyncio task"""
+
     def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
 
         self._wrapped_factory = wrapped_factory
-        self._id = UniqThreadTaskIdComposer()
 
-        self._trace_map: Dict[ThreadTaskId, TraceWithCallback] = {}
+        self._trace_map: Dict[
+            Union[threading.Thread, asyncio.Task], TraceFunc
+        ] = WeakKeyDictionary()
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
 
-        trace_id = self._id()
+        key = self._current_task_or_thread()
 
-        trace = self._trace_map.get(trace_id)
+        trace = self._trace_map.get(key)
         if not trace:
-            trace = TraceWithCallback(
-                wrapped=self._wrapped_factory(),
-                returning=self._returning,
-            )
-            self._trace_map[trace_id] = trace
+            trace = self._wrapped_factory()
+            self._trace_map[key] = trace
 
         return trace(frame, event, arg)
 
-    def __len__(self) -> int:
-        """The number of active trace functions"""
-        return len(self._trace_map)
-
-    def _returning(self, *_, **__) -> None:
-        trace_id = self._id.exit()
+    def _current_task_or_thread(self) -> Union[threading.Thread, asyncio.Task]:
         try:
-            del self._trace_map[trace_id]
-        except KeyError:
-            pass
+            task = asyncio.current_task()
+        except RuntimeError:
+            task = None
+        return task or threading.current_thread()
 
 
 class TraceWithCallback:

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import queue
-import asyncio
 import warnings
 import fnmatch
 
+from ..utils import ThreadDoneCallback, TaskDoneCallback
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
     from ..utils import Registry, UniqThreadTaskIdComposer
-    from ..utils.types import ThreadTaskId
 
 
 ##__________________________________________________________________||
@@ -99,11 +98,9 @@ class PdbProxy:
             readrc=False,
         )
 
-        self._trace_func_all = self.trace_func_all
         self._traces = []
 
         self._first = True
-        self._future = False
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The main trace function
@@ -115,7 +112,6 @@ class PdbProxy:
         module_name = frame.f_globals.get("__name__")
         if self.pdb.is_skipped_module(module_name):
             return
-        # print(module_name)
 
         if not event == "call":
             warnings.warn(
@@ -123,8 +119,6 @@ class PdbProxy:
             )
         if self._first:
             return self.trace_func_register_new_thread_task(frame, event, arg)
-        if self._future:
-            return self.trace_func_reentry_after_future(frame, event, arg)
         return self.trace_func_all(frame, event, arg)
 
     def trace_func_register_new_thread_task(
@@ -144,48 +138,24 @@ class PdbProxy:
         self.registry.register_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
-        return self.trace_func_exit_thread_task
 
-    def trace_func_reentry_after_future(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> TraceFunc:
-        """The trace function of reentry after "future" is returned"""
-        module_name = frame.f_globals.get("__name__")
-        if not is_matched_to_any(module_name, self.modules_to_trace):
-            return
-        self._future = False
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
-        return self.trace_func_exit_thread_task
+        _, task_id = self.thread_asynctask_id
+        if task_id:
+            self._handle = TaskDoneCallback(done=self._callback)
+        else:
+            self._handle = ThreadDoneCallback(done=self._callback)
+        self._handle.register()
 
-    def trace_func_exit_thread_task(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> TraceFunc:
-        """The trace function of the outermost scope in the thread or async task
+        return self.trace_func_all(frame, event, arg)
 
-        The trace function to detect the end of the thread or async
-        task.
+    def _callback(self, thread_or_task):
+        self._done()
 
-        """
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
-
-        if event != "return":
-            return self.trace_func_exit_thread_task
-
-        if asyncio.isfuture(arg):
-            # awaiting. will be called again
-            self._future = True
-            return
-
+    def _done(self):
         self.registry.close_register(self.thread_asynctask_id)
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        self.id_composer.exit()
-        # self.trace.returning()
         return
 
     def trace_func_all(
@@ -209,13 +179,7 @@ class PdbProxy:
         # print('{}.{}()'.format(module_name, func_name))
         # self.pdb.set_next(frame)
 
-        trace = TraceBlock(
-            thread_asynctask_id=self.thread_asynctask_id,
-            pdb=self.pdb,
-            registry=self.registry,
-        )
-        self._traces.append(trace)
-        return trace(frame, event, arg)
+        return self.pdb.trace_dispatch(frame, event, arg)
 
     def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
         """called by the customized pdb before it is entering the command loop"""
@@ -234,31 +198,6 @@ class PdbProxy:
         self.ci_registry.remove(self.thread_asynctask_id)
         self.registry.register(self.thread_asynctask_id, state.copy())
         self.pdb_ci.end()
-
-
-##__________________________________________________________________||
-class TraceBlock:
-    def __init__(
-        self,
-        thread_asynctask_id: ThreadTaskId,
-        pdb: CustomizedPdb,
-        registry: Registry,
-    ):
-        self.pdb = pdb
-        self.trace_func = pdb.trace_dispatch
-        self.registry = registry
-        self.thread_asynctask_id = thread_asynctask_id
-
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceBlock:
-
-        # if not frame.f_code.co_name == '<lambda>':
-        #     file_name = self.pdb.canonic(frame.f_code.co_filename)
-        #     line_no = frame.f_lineno
-        #     self.registry.register_thread_task_state(self.thread_asynctask_id, file_name, line_no, event)
-
-        if self.trace_func:
-            self.trace_func = self.trace_func(frame, event, arg)
-        return self
 
 
 ##__________________________________________________________________||
