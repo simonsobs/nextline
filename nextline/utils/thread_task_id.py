@@ -83,6 +83,7 @@ class UniqThreadTaskIdComposer:
     def _compose_non_uniq_id(self) -> ThreadTaskId:
 
         non_uniq_thread_id = threading.get_ident()
+        non_uniq_thread_id = id(threading.current_thread())
         # the "thread identifier", which can be recycled after a thread exits
         # https://docs.python.org/3/library/threading.html#threading.get_ident
 
