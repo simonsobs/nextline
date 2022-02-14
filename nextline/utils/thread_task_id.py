@@ -4,12 +4,11 @@ from itertools import count
 from collections import defaultdict
 from weakref import WeakKeyDictionary
 
-from typing import Callable, Set, Dict, Optional, Union, DefaultDict
+from typing import Union, Callable, Tuple, Dict, DefaultDict
 
 from .types import ThreadID, TaskId, ThreadTaskId
 
 
-##__________________________________________________________________||
 class UniqThreadTaskIdComposer:
     """Compose paris of unique thread Id and async task Id"""
 
@@ -38,29 +37,31 @@ class UniqThreadTaskIdComposer:
             not in an async task, the async task ID will be None.
         """
 
-        try:
-            task = current_task()
-        except RuntimeError:
-            task = None
-
-        thread = current_thread()
+        thread, task = self._current_thread_task()
 
         key = task or thread
 
-        ret = self._map.get(key)
-        if ret:
+        if ret := self._map.get(key):
             return ret
 
-        ret = self._create_id(thread, task)
+        ret = self._compose(thread, task)
 
         self._map[key] = ret
 
         return ret
 
-    def _create_id(self, thread, task) -> ThreadTaskId:
+    def _current_thread_task(self) -> Tuple[Thread, Union[Task, None]]:
+        try:
+            task = current_task()
+        except RuntimeError:
+            task = None
+        return current_thread(), task
+
+    def _compose(
+        self, thread: Thread, task: Union[Task, None]
+    ) -> ThreadTaskId:
 
         thread_id = self._thread_id_map.get(thread)
-
         if not thread_id:
             thread_id = self.thread_id_counter()
             self._thread_id_map[thread] = thread_id
@@ -69,12 +70,8 @@ class UniqThreadTaskIdComposer:
             return thread_id, None
 
         task_id = self._task_id_map.get(task)
-
         if not task_id:
             task_id = self._task_id_counter_map[thread_id]()
             self._task_id_map[task] = task_id
 
         return thread_id, task_id
-
-
-##__________________________________________________________________||
