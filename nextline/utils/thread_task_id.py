@@ -21,7 +21,7 @@ class UniqThreadTaskIdComposer:
         ] = WeakKeyDictionary()
         self._thread_id_map: Dict[Thread, ThreadID] = WeakKeyDictionary()
         self._task_id_map: Dict[Task, TaskId] = WeakKeyDictionary()
-        self._task_id_counter_map: Dict[Thread, Callable[[], int]] = {}
+        self._task_id_counter_map: Dict[ThreadID, Callable[[], int]] = {}
 
     def __call__(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
