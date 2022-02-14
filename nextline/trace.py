@@ -99,10 +99,7 @@ class TraceSingleThreadTask:
 
         trace = self._trace_map.get(trace_id)
         if not trace:
-            trace = TraceWithCallback(
-                wrapped=self._wrapped_factory(),
-                returning=self._returning,
-            )
+            trace = self._wrapped_factory()
             self._trace_map[trace_id] = trace
 
         return trace(frame, event, arg)
@@ -110,13 +107,6 @@ class TraceSingleThreadTask:
     def __len__(self) -> int:
         """The number of active trace functions"""
         return len(self._trace_map)
-
-    def _returning(self, *_, **__) -> None:
-        trace_id = self._id()
-        try:
-            del self._trace_map[trace_id]
-        except KeyError:
-            pass
 
 
 class TraceWithCallback:
