@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
     from ..utils import Registry, UniqThreadTaskIdComposer
-    from ..utils.types import ThreadTaskId
 
 
 ##__________________________________________________________________||
@@ -180,13 +179,7 @@ class PdbProxy:
         # print('{}.{}()'.format(module_name, func_name))
         # self.pdb.set_next(frame)
 
-        trace = TraceBlock(
-            thread_asynctask_id=self.thread_asynctask_id,
-            pdb=self.pdb,
-            registry=self.registry,
-        )
-        self._traces.append(trace)
-        return trace(frame, event, arg)
+        return self.pdb.trace_dispatch(frame, event, arg)
 
     def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
         """called by the customized pdb before it is entering the command loop"""
@@ -205,31 +198,6 @@ class PdbProxy:
         self.ci_registry.remove(self.thread_asynctask_id)
         self.registry.register(self.thread_asynctask_id, state.copy())
         self.pdb_ci.end()
-
-
-##__________________________________________________________________||
-class TraceBlock:
-    def __init__(
-        self,
-        thread_asynctask_id: ThreadTaskId,
-        pdb: CustomizedPdb,
-        registry: Registry,
-    ):
-        self.pdb = pdb
-        self.trace_func = pdb.trace_dispatch
-        self.registry = registry
-        self.thread_asynctask_id = thread_asynctask_id
-
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceBlock:
-
-        # if not frame.f_code.co_name == '<lambda>':
-        #     file_name = self.pdb.canonic(frame.f_code.co_filename)
-        #     line_no = frame.f_lineno
-        #     self.registry.register_thread_task_state(self.thread_asynctask_id, file_name, line_no, event)
-
-        if self.trace_func:
-            self.trace_func = self.trace_func(frame, event, arg)
-        return self
 
 
 ##__________________________________________________________________||
