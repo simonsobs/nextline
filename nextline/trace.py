@@ -104,10 +104,6 @@ class TraceSingleThreadTask:
 
         return trace(frame, event, arg)
 
-    def __len__(self) -> int:
-        """The number of active trace functions"""
-        return len(self._trace_map)
-
 
 class TraceWithCallback:
     def __init__(
