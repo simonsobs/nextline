@@ -85,6 +85,8 @@ class Trace:
 
 
 class TraceSingleThreadTask:
+    """Dispatch a new trace function for each thread or asyncio task"""
+
     def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
 
         self._wrapped_factory = wrapped_factory
