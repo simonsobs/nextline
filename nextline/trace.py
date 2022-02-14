@@ -112,7 +112,7 @@ class TraceSingleThreadTask:
         return len(self._trace_map)
 
     def _returning(self, *_, **__) -> None:
-        trace_id = self._id.exit()
+        trace_id = self._id()
         try:
             del self._trace_map[trace_id]
         except KeyError:

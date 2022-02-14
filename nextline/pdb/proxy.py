@@ -184,7 +184,7 @@ class PdbProxy:
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        self.id_composer.exit()
+        # self.id_composer.exit()
         # self.trace.returning()
         return
 
