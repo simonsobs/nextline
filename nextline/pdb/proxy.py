@@ -5,6 +5,7 @@ import asyncio
 import warnings
 import fnmatch
 
+from ..utils import ThreadDoneCallback, TaskDoneCallback
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -146,7 +147,18 @@ class PdbProxy:
         )
         if self._trace_func_all:
             self._trace_func_all = self._trace_func_all(frame, event, arg)
+
+        _, task_id = self.thread_asynctask_id
+        if task_id:
+            self._handle = TaskDoneCallback(done=self._callback)
+        else:
+            self._handle = ThreadDoneCallback(done=self._callback)
+        self._handle.register()
+
         return self.trace_func_exit_thread_task
+
+    def _callback(self, thread_or_task):
+        self._done()
 
     def trace_func_reentry_after_future(
         self, frame: FrameType, event: str, arg: Any
@@ -180,7 +192,7 @@ class PdbProxy:
             self._future = True
             return
 
-        self._done()
+        # self._done()
         return
 
     def _done(self):
