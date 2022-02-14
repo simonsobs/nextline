@@ -1,9 +1,8 @@
 import threading
 import asyncio
-from dataclasses import dataclass
 from itertools import count
 
-from typing import Callable, Set, Dict, Optional
+from typing import Callable, Set, Dict, Optional, Union
 
 from .types import ThreadID, TaskId, ThreadTaskId
 
@@ -16,10 +15,14 @@ class UniqThreadTaskIdComposer:
 
         self.thread_id_counter = count(1).__next__
 
-        self._map = {}
-        self._thread_id_map = {}
-        self._task_id_counter_map = {}
-        self._task_id_map = {}
+        self._map: Dict[
+            Union[threading.Thread, asyncio.Task], ThreadTaskId
+        ] = {}
+        self._thread_id_map: Dict[threading.Thread, ThreadID] = {}
+        self._task_id_counter_map: Dict[
+            threading.Thread, Callable[[], int]
+        ] = {}
+        self._task_id_map: Dict[asyncio.Task, TaskId] = {}
 
     def __call__(self) -> ThreadTaskId:
         """Return the pair of the current thread ID and async task ID
