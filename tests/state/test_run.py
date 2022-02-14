@@ -28,6 +28,9 @@ class TestRunning(BaseTestState):
         with pytest.raises(StateObsoleteError):
             await state.close()
 
+    def test_registry_state_name(self, state):
+        assert state.registry.get("state_name") in (Running.name, Exited.name)
+
     @pytest.mark.asyncio
     async def test_exited(self, state):
         # exited() can be called multiple times
