@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import queue
-import asyncio
 import warnings
 import fnmatch
 
@@ -100,11 +99,9 @@ class PdbProxy:
             readrc=False,
         )
 
-        self._trace_func_all = self.trace_func_all
         self._traces = []
 
         self._first = True
-        self._future = False
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The main trace function
@@ -116,7 +113,6 @@ class PdbProxy:
         module_name = frame.f_globals.get("__name__")
         if self.pdb.is_skipped_module(module_name):
             return
-        # print(module_name)
 
         if not event == "call":
             warnings.warn(
@@ -124,8 +120,6 @@ class PdbProxy:
             )
         if self._first:
             return self.trace_func_register_new_thread_task(frame, event, arg)
-        if self._future:
-            return self.trace_func_reentry_after_future(frame, event, arg)
         return self.trace_func_all(frame, event, arg)
 
     def trace_func_register_new_thread_task(
@@ -153,56 +147,16 @@ class PdbProxy:
             self._handle = ThreadDoneCallback(done=self._callback)
         self._handle.register()
 
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
-
-        return self.trace_func_exit_thread_task
+        return self.trace_func_all(frame, event, arg)
 
     def _callback(self, thread_or_task):
         self._done()
-
-    def trace_func_reentry_after_future(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> TraceFunc:
-        """The trace function of reentry after "future" is returned"""
-        module_name = frame.f_globals.get("__name__")
-        if not is_matched_to_any(module_name, self.modules_to_trace):
-            return
-        self._future = False
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
-        return self.trace_func_exit_thread_task
-
-    def trace_func_exit_thread_task(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> TraceFunc:
-        """The trace function of the outermost scope in the thread or async task
-
-        The trace function to detect the end of the thread or async
-        task.
-
-        """
-        if self._trace_func_all:
-            self._trace_func_all = self._trace_func_all(frame, event, arg)
-
-        if event != "return":
-            return self.trace_func_exit_thread_task
-
-        if asyncio.isfuture(arg):
-            # awaiting. will be called again
-            self._future = True
-            return
-
-        # self._done()
-        return
 
     def _done(self):
         self.registry.close_register(self.thread_asynctask_id)
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        # self.id_composer.exit()
-        # self.trace.returning()
         return
 
     def trace_func_all(
