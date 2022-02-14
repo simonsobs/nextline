@@ -180,6 +180,10 @@ class PdbProxy:
             self._future = True
             return
 
+        self._done()
+        return
+
+    def _done(self):
         self.registry.close_register(self.thread_asynctask_id)
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
