@@ -98,8 +98,6 @@ class PdbProxy:
             readrc=False,
         )
 
-        self._traces = []
-
         self._first = True
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
