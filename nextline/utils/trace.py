@@ -1,8 +1,8 @@
-import threading
-import asyncio
+from threading import Thread, current_thread
+from asyncio import Task, current_task
 from weakref import WeakKeyDictionary
 
-from typing import Union, Callable, Dict, Any, Optional
+from typing import Optional, Union, Callable, Dict, Any
 from types import FrameType
 
 from ..types import TraceFunc
@@ -16,7 +16,7 @@ class TraceSingleThreadTask:
         self._wrapped_factory = wrapped_factory
 
         self._trace_map: Dict[
-            Union[threading.Thread, asyncio.Task], TraceFunc
+            Union[Thread, Task], TraceFunc
         ] = WeakKeyDictionary()
 
     def __call__(
@@ -32,9 +32,9 @@ class TraceSingleThreadTask:
 
         return trace(frame, event, arg)
 
-    def _current_task_or_thread(self) -> Union[threading.Thread, asyncio.Task]:
+    def _current_task_or_thread(self) -> Union[Thread, Task]:
         try:
-            task = asyncio.current_task()
+            task = current_task()
         except RuntimeError:
             task = None
-        return task or threading.current_thread()
+        return task or current_thread()
