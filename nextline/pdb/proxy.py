@@ -111,6 +111,9 @@ class PdbProxy:
         if self.is_module_to_skip(frame):
             return
 
+        if self.is_lambda(frame):
+            return
+
         if not event == "call":
             warnings.warn(
                 f'The event is not "call": ({frame!r}, {event!r}, {arg!r})'
@@ -131,6 +134,10 @@ class PdbProxy:
     def is_module_to_skip(self, frame):
         module_name = frame.f_globals.get("__name__")
         return self.pdb.is_skipped_module(module_name)
+
+    def is_lambda(self, frame):
+        func_name = frame.f_code.co_name
+        return func_name == "<lambda>"
 
     def _call_once(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function for a new thread or async task
@@ -165,12 +172,6 @@ class PdbProxy:
 
     def _call(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function that calls the trace function of pdb"""
-
-        func_name = frame.f_code.co_name
-        # a function name
-        # Note: '<module>' for the code produced by compile()
-        if func_name == "<lambda>":
-            return
 
         # print('{}.{}()'.format(module_name, func_name))
         # self.pdb.set_next(frame)
