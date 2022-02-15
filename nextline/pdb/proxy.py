@@ -128,7 +128,7 @@ class PdbProxy:
 
     def _is_module_to_skip(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
-        return self.pdb.is_skipped_module(module_name)
+        return is_matched_to_any(module_name, self.skip)
 
     def _is_lambda(self, frame) -> bool:
         func_name = frame.f_code.co_name
