@@ -108,10 +108,10 @@ class PdbProxy:
         The event should be always "call."
         """
 
-        if self.is_module_to_skip(frame):
+        if self._is_module_to_skip(frame):
             return
 
-        if self.is_lambda(frame):
+        if self._is_lambda(frame):
             return
 
         if not event == "call":
@@ -120,22 +120,22 @@ class PdbProxy:
             )
 
         if self._first:
-            if not self.is_first_module_to_trace(frame):
+            if not self._is_first_module_to_trace(frame):
                 return
             self._first = False
             self._call_once()
 
         return self.pdb.trace_dispatch(frame, event, arg)
 
-    def is_first_module_to_trace(self, frame) -> bool:
+    def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return is_matched_to_any(module_name, self.modules_to_trace)
 
-    def is_module_to_skip(self, frame) -> bool:
+    def _is_module_to_skip(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return self.pdb.is_skipped_module(module_name)
 
-    def is_lambda(self, frame) -> bool:
+    def _is_lambda(self, frame) -> bool:
         func_name = frame.f_code.co_name
         return func_name == "<lambda>"
 
