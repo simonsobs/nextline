@@ -13,7 +13,6 @@ from typing import Any, Set, Dict, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
-    from ..trace import Trace
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
     from ..utils import Registry, UniqThreadTaskIdComposer
@@ -59,8 +58,6 @@ class PdbProxy:
     ----------
     id_composer : object
         A unique thread task ID composer
-    trace : object
-        A in stance of Trace
     modules_to_trace: set
         The set of modules to trace. This object is shared by multiple
         instances of this class. Modules in which Pdb commands are
@@ -73,7 +70,6 @@ class PdbProxy:
     def __init__(
         self,
         id_composer: UniqThreadTaskIdComposer,
-        trace: Trace,
         modules_to_trace: Set[str],
         registry: Registry,
         ci_registry: PdbCIRegistry,
@@ -81,7 +77,6 @@ class PdbProxy:
     ):
         self.id_composer = id_composer
         self.thread_asynctask_id = self.id_composer()
-        self.trace = trace
         self.modules_to_trace = modules_to_trace
         self.registry = registry
         self.ci_registry = ci_registry

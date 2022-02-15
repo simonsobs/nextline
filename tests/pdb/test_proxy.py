@@ -5,7 +5,6 @@ from itertools import count
 import pytest
 from unittest.mock import Mock
 
-from nextline.trace import Trace
 from nextline.utils import Registry
 from nextline.pdb.proxy import PdbProxy
 from nextline.trace import UniqThreadTaskIdComposer
@@ -15,19 +14,13 @@ from . import subject
 
 ##__________________________________________________________________||
 @pytest.fixture()
-def mock_trace():
-    y = Mock(spec=Trace)
-    yield y
-
-
-@pytest.fixture()
 def mock_registry():
     y = Mock(spec=Registry)
     yield y
 
 
 @pytest.fixture()
-def proxy(mock_trace, mock_registry):
+def proxy(mock_registry):
     id_composer = UniqThreadTaskIdComposer()
 
     modules_to_trace = {"tests.pdb.subject"}
@@ -37,7 +30,6 @@ def proxy(mock_trace, mock_registry):
 
     y = PdbProxy(
         id_composer=id_composer,
-        trace=mock_trace,
         modules_to_trace=modules_to_trace,
         registry=mock_registry,
         ci_registry=Mock(),
@@ -96,7 +88,7 @@ params = [
     sys.version_info < (3, 9), reason="co_name <lambda> is different "
 )
 @pytest.mark.parametrize("subject", params)
-def test_proxy(proxy, mock_trace, mock_registry, snapshot, subject):
+def test_proxy(proxy, mock_registry, snapshot, subject):
     """test PdbProxy"""
     # TODO: the test needs to be restructured so that, for example, a
     # coroutine or a generator can be the outermost scope.

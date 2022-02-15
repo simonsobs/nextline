@@ -53,7 +53,6 @@ class Trace:
 
         wrapped_factory = partial(
             PdbProxy,
-            trace=self,
             id_composer=UniqThreadTaskIdComposer(),
             modules_to_trace=self.modules_to_trace,
             ci_registry=self.pdb_ci_registry,
