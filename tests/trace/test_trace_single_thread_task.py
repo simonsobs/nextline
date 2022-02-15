@@ -123,7 +123,7 @@ def test_fixture(trace_func_factory: Mock, trace_funcs: List[Mock]):
 
 @pytest.fixture()
 def obj(trace_func_factory: Mock, trace_funcs: List[Mock]):
-    y = TraceSingleThreadTask(wrapped_factory=trace_func_factory)
+    y = TraceSingleThreadTask(factory=trace_func_factory)
     yield y
 
 

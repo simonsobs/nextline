@@ -63,7 +63,7 @@ class Trace:
 
         self.first = True
 
-        self.trace = TraceSingleThreadTask(wrapped_factory=wrapped_factory)
+        self.trace = TraceSingleThreadTask(factory=wrapped_factory)
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any

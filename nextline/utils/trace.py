@@ -11,9 +11,9 @@ from ..types import TraceFunc
 class TraceSingleThreadTask:
     """Dispatch a new trace function for each thread or asyncio task"""
 
-    def __init__(self, wrapped_factory: Callable[[], TraceFunc]):
+    def __init__(self, factory: Callable[[], TraceFunc]):
 
-        self._wrapped_factory = wrapped_factory
+        self._wrapped_factory = factory
 
         self._trace_map: Dict[
             Union[Thread, Task], TraceFunc
