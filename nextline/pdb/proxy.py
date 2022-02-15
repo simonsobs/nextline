@@ -123,9 +123,9 @@ class PdbProxy:
             if not self.is_first_module_to_trace(frame):
                 return
             self._first = False
-            return self._call_once(frame, event, arg)
+            self._call_once()
 
-        return self._call(frame, event, arg)
+        return self.pdb.trace_dispatch(frame, event, arg)
 
     def is_first_module_to_trace(self, frame):
         module_name = frame.f_globals.get("__name__")
@@ -139,13 +139,8 @@ class PdbProxy:
         func_name = frame.f_code.co_name
         return func_name == "<lambda>"
 
-    def _call_once(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
-        """The trace function for a new thread or async task
+    def _call_once(self) -> None:
 
-        The trace function of the first "call" event of the outermost
-        scope of the thread or async task.
-
-        """
         self.registry.open_register(self.thread_asynctask_id)
         self.registry.register_list_item(
             "thread_task_ids", self.thread_asynctask_id
@@ -158,8 +153,6 @@ class PdbProxy:
             self._handle = ThreadDoneCallback(done=self._callback)
         self._handle.register()
 
-        return self._call(frame, event, arg)
-
     def _callback(self, thread_or_task):
         self._done()
 
@@ -169,14 +162,6 @@ class PdbProxy:
             "thread_task_ids", self.thread_asynctask_id
         )
         return
-
-    def _call(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
-        """The trace function that calls the trace function of pdb"""
-
-        # print('{}.{}()'.format(module_name, func_name))
-        # self.pdb.set_next(frame)
-
-        return self.pdb.trace_dispatch(frame, event, arg)
 
     def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
         """called by the customized pdb before it is entering the command loop"""
