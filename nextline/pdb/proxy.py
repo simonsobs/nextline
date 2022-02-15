@@ -43,6 +43,7 @@ MODULES_TO_SKIP = [
     "_pytest.*",
     "pluggy.*",
     "nextline.pdb.*",
+    "nextline.utils.*",
     "nextline.queuedist",
     "nextlinegraphql.schema.bindables",
 ]
