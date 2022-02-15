@@ -1,289 +1,188 @@
 import asyncio
 from threading import Thread
-
-from dataclasses import dataclass
+from itertools import permutations
 
 import pytest
 from unittest.mock import Mock
 
+from typing import List, Tuple, Set, Any
+
 from nextline.call import call_with_trace
 from nextline.trace import TraceSingleThreadTask
 
-from typing import Optional, Callable, Coroutine, List, Set, Any
-
-from textwrap import indent
-from pprint import pformat
-
-pytestmark = pytest.mark.skip(reason="under development")
-
-
-@dataclass
-class call:
-    module: str
-    func: str
-    event: str
-    arg: Any
-
-
-@dataclass
-class trace:
-    funcs: Set[str]
-    calls: List[call]
-
-    def __str__(self) -> str:
-        prefix = " " * 4
-        return "\n".join(
-            (
-                "calls:",
-                indent("\n".join([str(c) for c in self.calls]), prefix),
-            )
-        )
-
-
-@dataclass
-class Result:
-    ntraces: int
-    funcs_each: Set[Set[str]]
-    funcs_union: Set[str]
-    traces: List[trace]
-
-    def __str__(self) -> str:
-        prefix = " " * 4
-        return "\n".join(
-            (
-                "traces:",
-                indent("\n".join([str(t) for t in self.traces]), prefix),
-                "funcs_each:",
-                indent(
-                    "\n".join([pformat(set(s)) for s in self.funcs_each]),
-                    prefix,
-                ),
-                f"ntraces: {self.ntraces}",
-            )
-        )
-
-
-def unpack_(trace_func: Mock) -> List[call]:
-    calls = [
-        call(
-            module=c.args[0].f_globals.get("__name__"),
-            func=c.args[0].f_code.co_name,
-            event=c.args[1],
-            arg=c.args[2],
-        )
-        for c in trace_func.call_args_list
-    ]
-    funcs = {c.func for c in calls}
-    return trace(funcs=funcs, calls=calls)
-
-
-def unpack(trace_funcs: List[Mock]) -> Result:
-    traces = [unpack_(t) for t in trace_funcs]
-    funcs_each = {frozenset(t.funcs) for t in traces}
-    funcs_union = {f for e in funcs_each for f in e}
-    return Result(
-        ntraces=len(traces),
-        funcs_each=funcs_each,
-        funcs_union=funcs_union,
-        traces=traces,
-    )
-
 
 @pytest.fixture()
-def trace_funcs():
-    """Mock objects created by the factory fixture"""
+def created():
+    """List of mock objects created by the factory fixture"""
     yield []
 
 
 @pytest.fixture()
-def trace_func_factory(trace_funcs: List[Mock]):
-    """Function that each time creates a new instance of Mock
+def factory(created: List[Mock]):
+    """Function that creates a Mock object that returns itself
 
-    The fixture trace_funcs will contain the created instances.
+    Created Mock objects are used as trace functions.
+
+    The fixture "created" contains the created objects.
     """
 
     def side_effect():
         trace_func = Mock()
         trace_func.return_value = trace_func
-        trace_funcs.append(trace_func)
+        created.append(trace_func)
         return trace_func
 
-    factory = Mock(side_effect=side_effect)
-    yield factory
-
-
-def test_fixture(trace_func_factory: Mock, trace_funcs: List[Mock]):
-    assert not trace_funcs
-    t1 = trace_func_factory()
-    assert [t1] == trace_funcs
-    t2 = trace_func_factory()
-    assert [t1, t2] == trace_funcs
-    assert t1 is not t2
-
-
-@pytest.fixture()
-def obj(trace_func_factory: Mock, trace_funcs: List[Mock]):
-    y = TraceSingleThreadTask(factory=trace_func_factory)
+    y = Mock(side_effect=side_effect)
     yield y
 
 
-def f_empty():
-    return
+def f_pass():
+    pass
 
 
-def f_func():
-    f_empty()
-    return
+def f_call():
+    return f_pass()
 
 
 def f_thread():
-    t = Thread(target=f_empty)
+    t = Thread(target=f_call)
     t.start()
     t.join()
-    return
-
-
-async def a_empty():
-    return
 
 
 async def a_sleep():
     await asyncio.sleep(0)
+    await asyncio.sleep(0.001)
 
 
-async def a_create_task():
-    await asyncio.create_task(asyncio.sleep(0))
+def a_run():
+    asyncio.run(a_sleep())
 
 
-def f_async_run_a_empty():
-    asyncio.run(a_empty())
+async def a_task():
+    t1 = asyncio.create_task(a_sleep())
+    t2 = asyncio.create_task(a_sleep())
+    await asyncio.gather(t1, t2)
 
 
-def f_thread_async_run_a_empty():
-    t = Thread(target=asyncio.run, args=(a_empty(),))
+def a_run_task():
+    asyncio.run(a_task())
+
+
+def f_thread_run_task():
+    t = Thread(target=a_run_task)
     t.start()
     t.join()
-    return
-
-
-# TODO: exception, generator, async generator, lambda, code
-
-
-@dataclass
-class Expected:
-    ntraces: Optional[int] = None
-    ntraces_min: Optional[int] = None
-    funcs_union: Optional[Set[str]] = None
-    funcs_union_include: Optional[Set[str]] = None
 
 
 params = [
     pytest.param(
-        f_empty,
-        Expected(
-            ntraces=1,
-            funcs_union={"f_empty"},
-        ),
+        f_pass,
+        [{(__name__, f_pass.__name__)}],
     ),
     pytest.param(
-        f_func,
-        Expected(
-            ntraces=1,
-            funcs_union={"f_func", "f_empty"},
-        ),
+        f_call,
+        [{(__name__, f_call.__name__), (__name__, f_pass.__name__)}],
     ),
     pytest.param(
         f_thread,
-        Expected(
-            ntraces=2,
-            funcs_union_include={"f_thread", "f_empty"},
-        ),
+        [
+            {(__name__, f_thread.__name__)},
+            {(__name__, f_call.__name__), (__name__, f_pass.__name__)},
+        ],
     ),
     pytest.param(
-        f_async_run_a_empty,
-        Expected(
-            ntraces_min=3,
-            funcs_union_include={"f_async_run_a_empty", "a_empty"},
-        ),
+        a_run,
+        [{(__name__, a_run.__name__)}, {(__name__, a_sleep.__name__)}],
     ),
     pytest.param(
-        f_thread_async_run_a_empty,
-        Expected(
-            ntraces_min=3,
-            funcs_union_include={"f_thread_async_run_a_empty", "a_empty"},
-        ),
-        marks=pytest.mark.skip(reason="temp"),
+        a_run_task,
+        [
+            {(__name__, a_run_task.__name__)},
+            {(__name__, a_task.__name__)},
+            {(__name__, a_sleep.__name__)},
+            {(__name__, a_sleep.__name__)},
+        ],
+    ),
+    pytest.param(
+        f_thread_run_task,
+        [
+            {(__name__, f_thread_run_task.__name__)},
+            {(__name__, a_run_task.__name__)},
+            {(__name__, a_task.__name__)},
+            {(__name__, a_sleep.__name__)},
+            {(__name__, a_sleep.__name__)},
+        ],
     ),
 ]
 
 
 @pytest.mark.parametrize("func, expected", params)
-def test_one(
-    obj: TraceSingleThreadTask,
-    trace_func_factory: Mock,
-    trace_funcs: List[Mock],
-    func: Callable,
-    expected: Expected,
-):
+def test_one(factory: Mock, created: List[Mock], func, expected):
+    obj = TraceSingleThreadTask(factory=factory)
     call_with_trace(func, obj)
-    result = unpack(trace_funcs)
-    assert 0 == len(obj)
-    # print()
-    # print(result)
-    assert_result(result, expected)
+    print()
+    # print(traced(created))
+    actual = traced(created)
+    # print(actual)
+    # print(len(actual))
+    assert is_unordered_list_of_subsets(expected, actual)
+
+
+def traced(created: List[Mock]) -> List[Set[Tuple[str, str]]]:
+    """A list of sets, each with tuples of traced module and func names
+
+    e.g., [{("module", "func"), ...}, ...]
+    """
+    args_list = [
+        [call.args for call in mock.call_args_list] for mock in created
+    ]
+    return [
+        {
+            (frame.f_globals.get("__name__"), frame.f_code.co_name)
+            for frame, event, _ in args
+            if event == "return"
+        }
+        for args in args_list
+    ]
+
+
+def is_list_of_subsets(sets1: List[Set[Any]], sets2: List[Set[Any]]) -> bool:
+    if not len(sets1) <= len(sets2):
+        return False
+    intersections = [s1 & s2 for s1, s2 in zip(sets1, sets2)]
+    return sets1 == intersections
+
+
+def is_unordered_list_of_subsets(
+    sets1: List[Set[Any]], sets2: List[Set[Any]]
+) -> bool:
+    for p in permutations(sets2):
+        if is_list_of_subsets(sets1, p):
+            return True
+    return False
 
 
 params = [
-    pytest.param(
-        a_empty,
-        Expected(
-            ntraces_min=2,
-            funcs_union_include={"a_empty"},
-        ),
-    ),
-    pytest.param(
-        a_sleep,
-        Expected(
-            ntraces_min=2,
-            funcs_union_include={"a_sleep"},
-        ),
-    ),
-    pytest.param(
-        a_create_task,
-        Expected(
-            ntraces_min=2,
-            funcs_union_include={"a_create_task"},
-        ),
-    ),
+    pytest.param([], [], True),
+    pytest.param([], [set()], True),
+    pytest.param([set()], [], False),
+    pytest.param([set()], [set()], True),
+    pytest.param([{1}], [{1}], True),
+    pytest.param([{1}], [{1}, {2}], True),
+    pytest.param([{1}], [{1, 2}], True),
+    pytest.param([{1}], [{2}], False),
+    pytest.param([{1}, {2}], [{1, 10}, {2, 20}], True),
+    pytest.param([{1}, {2}], [{2, 20}, {1, 10}], True),
+    pytest.param([{1}, {2}], [{1, 10}, {3, 30}], False),
+    pytest.param([{1}, {2}], [{3, 30}, {1, 10}], False),
+    pytest.param([{1}, {1}, {2}], [{1, 10}, {2, 20}], False),
+    pytest.param([{1}, {1}, {2}], [{1, 10}, {1, 30}, {2, 20}], True),
 ]
 
 
-@pytest.mark.parametrize("afunc, expected", params)
-def test_async(
-    obj: TraceSingleThreadTask,
-    trace_func_factory: Mock,
-    trace_funcs: List[Mock],
-    afunc: Callable[[Any, Any], Coroutine[Any, Any, Any]],
-    expected: Expected,
+@pytest.mark.parametrize("sets1, sets2, expected", params)
+def test_is_unordered_list_of_subset(
+    sets1: List[Set[Any]], sets2: List[Set[Any]], expected: bool
 ):
-    def func():
-        asyncio.run(afunc())
-
-    call_with_trace(func, obj)
-    result = unpack(trace_funcs)
-    assert 0 == len(obj)
-    # print()
-    # print(result)
-    assert_result(result, expected)
-
-
-def assert_result(result: Result, expected: Expected) -> None:
-
-    if expected.ntraces is not None:
-        assert expected.ntraces == result.ntraces
-    if expected.ntraces_min is not None:
-        assert expected.ntraces_min <= result.ntraces
-    if expected.funcs_union is not None:
-        assert expected.funcs_union == result.funcs_union
-    if expected.funcs_union_include is not None:
-        assert expected.funcs_union_include <= result.funcs_union
+    assert is_unordered_list_of_subsets(sets1, sets2) is expected
