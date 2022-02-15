@@ -116,9 +116,18 @@ class PdbProxy:
             warnings.warn(
                 f'The event is not "call": ({frame!r}, {event!r}, {arg!r})'
             )
+
         if self._first:
+            if not self.is_first_module_to_trace(frame):
+                return
+            self._first = False
             return self._call_once(frame, event, arg)
+
         return self._call(frame, event, arg)
+
+    def is_first_module_to_trace(self, frame):
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self.modules_to_trace)
 
     def _call_once(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function for a new thread or async task
@@ -127,10 +136,6 @@ class PdbProxy:
         scope of the thread or async task.
 
         """
-        module_name = frame.f_globals.get("__name__")
-        if not is_matched_to_any(module_name, self.modules_to_trace):
-            return
-        self._first = False
         self.registry.open_register(self.thread_asynctask_id)
         self.registry.register_list_item(
             "thread_task_ids", self.thread_asynctask_id
