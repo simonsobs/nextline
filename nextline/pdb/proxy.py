@@ -117,12 +117,10 @@ class PdbProxy:
                 f'The event is not "call": ({frame!r}, {event!r}, {arg!r})'
             )
         if self._first:
-            return self.trace_func_register_new_thread_task(frame, event, arg)
-        return self.trace_func_all(frame, event, arg)
+            return self._call_once(frame, event, arg)
+        return self._call(frame, event, arg)
 
-    def trace_func_register_new_thread_task(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> TraceFunc:
+    def _call_once(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function for a new thread or async task
 
         The trace function of the first "call" event of the outermost
@@ -145,7 +143,7 @@ class PdbProxy:
             self._handle = ThreadDoneCallback(done=self._callback)
         self._handle.register()
 
-        return self.trace_func_all(frame, event, arg)
+        return self._call(frame, event, arg)
 
     def _callback(self, thread_or_task):
         self._done()
@@ -157,9 +155,7 @@ class PdbProxy:
         )
         return
 
-    def trace_func_all(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> TraceFunc:
+    def _call(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function that calls the trace function of pdb"""
 
         module_name = frame.f_globals.get("__name__")
