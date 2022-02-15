@@ -148,20 +148,16 @@ class PdbProxy:
 
         _, task_id = self.thread_asynctask_id
         if task_id:
-            self._handle = TaskDoneCallback(done=self._callback)
+            self._handle = TaskDoneCallback(done=self._done)
         else:
-            self._handle = ThreadDoneCallback(done=self._callback)
+            self._handle = ThreadDoneCallback(done=self._done)
         self._handle.register()
 
-    def _callback(self, thread_or_task):
-        self._done()
-
-    def _done(self):
+    def _done(self, *_, **__):
         self.registry.close_register(self.thread_asynctask_id)
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
         )
-        return
 
     def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
         """called by the customized pdb before it is entering the command loop"""
