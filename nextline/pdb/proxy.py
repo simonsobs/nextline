@@ -108,8 +108,7 @@ class PdbProxy:
         The event should be always "call."
         """
 
-        module_name = frame.f_globals.get("__name__")
-        if self.pdb.is_skipped_module(module_name):
+        if self.is_module_to_skip(frame):
             return
 
         if not event == "call":
@@ -128,6 +127,10 @@ class PdbProxy:
     def is_first_module_to_trace(self, frame):
         module_name = frame.f_globals.get("__name__")
         return is_matched_to_any(module_name, self.modules_to_trace)
+
+    def is_module_to_skip(self, frame):
+        module_name = frame.f_globals.get("__name__")
+        return self.pdb.is_skipped_module(module_name)
 
     def _call_once(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function for a new thread or async task
@@ -162,13 +165,6 @@ class PdbProxy:
 
     def _call(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
         """The trace function that calls the trace function of pdb"""
-
-        module_name = frame.f_globals.get("__name__")
-        # e.g., 'threading', '__main__', 'concurrent.futures.thread', 'asyncio.events'
-
-        if self.pdb.is_skipped_module(module_name):
-            # print(module_name)
-            return
 
         func_name = frame.f_code.co_name
         # a function name
