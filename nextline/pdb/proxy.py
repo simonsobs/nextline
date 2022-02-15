@@ -127,15 +127,15 @@ class PdbProxy:
 
         return self.pdb.trace_dispatch(frame, event, arg)
 
-    def is_first_module_to_trace(self, frame):
+    def is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return is_matched_to_any(module_name, self.modules_to_trace)
 
-    def is_module_to_skip(self, frame):
+    def is_module_to_skip(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return self.pdb.is_skipped_module(module_name)
 
-    def is_lambda(self, frame):
+    def is_lambda(self, frame) -> bool:
         func_name = frame.f_code.co_name
         return func_name == "<lambda>"
 
@@ -179,7 +179,7 @@ class PdbProxy:
 
 
 ##__________________________________________________________________||
-def is_matched_to_any(word: Union[str, None], patterns: Set[str]):
+def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
     """
     based on Bdb.is_skipped_module()
     https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
