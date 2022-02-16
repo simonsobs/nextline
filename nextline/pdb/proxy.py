@@ -75,7 +75,7 @@ class PdbProxy:
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
     ):
-        self.thread_asynctask_id = thread_asynctask_id
+        self.thread_task_id = thread_asynctask_id
         self.modules_to_trace = modules_to_trace
         self.registry = registry
         self.ci_registry = ci_registry
@@ -135,17 +135,17 @@ class PdbProxy:
 
     def _call_once(self) -> None:
 
-        self.registry.open_register(self.thread_asynctask_id)
+        self.registry.open_register(self.thread_task_id)
         self.registry.register_list_item(
-            "thread_task_ids", self.thread_asynctask_id
+            "thread_task_ids", self.thread_task_id
         )
 
     def close(self):
         if self._first:
             return
-        self.registry.close_register(self.thread_asynctask_id)
+        self.registry.close_register(self.thread_task_id)
         self.registry.deregister_list_item(
-            "thread_task_ids", self.thread_asynctask_id
+            "thread_task_ids", self.thread_task_id
         )
 
     def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
@@ -157,13 +157,13 @@ class PdbProxy:
             self.pdb, self.q_stdin, self.q_stdout
         )
         self.pdb_ci.start()
-        self.ci_registry.add(self.thread_asynctask_id, self.pdb_ci)
-        self.registry.register(self.thread_asynctask_id, state.copy())
+        self.ci_registry.add(self.thread_task_id, self.pdb_ci)
+        self.registry.register(self.thread_task_id, state.copy())
 
     def exited_cmdloop(self, state: Dict) -> None:
         """called by the customized pdb after it has exited from the command loop"""
-        self.ci_registry.remove(self.thread_asynctask_id)
-        self.registry.register(self.thread_asynctask_id, state.copy())
+        self.ci_registry.remove(self.thread_task_id)
+        self.registry.register(self.thread_task_id, state.copy())
         self.pdb_ci.end()
 
 
