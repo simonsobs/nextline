@@ -21,7 +21,7 @@ def mock_registry():
 
 @pytest.fixture()
 def proxy(mock_registry):
-    id_composer = UniqThreadTaskIdComposer()
+    thread_asynctask_id = UniqThreadTaskIdComposer()()
 
     modules_to_trace = {"tests.pdb.subject"}
 
@@ -29,7 +29,7 @@ def proxy(mock_registry):
     prompting_counter()  # consume 0
 
     y = PdbProxy(
-        id_composer=id_composer,
+        thread_asynctask_id=thread_asynctask_id,
         modules_to_trace=modules_to_trace,
         registry=mock_registry,
         ci_registry=Mock(),

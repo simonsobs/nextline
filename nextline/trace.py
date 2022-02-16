@@ -74,7 +74,7 @@ class Trace:
 
     def _create_pdbproxy(self):
         return PdbProxy(
-            id_composer=self._id_composer,
+            thread_asynctask_id=self._id_composer(),
             modules_to_trace=self.modules_to_trace,
             ci_registry=self.pdb_ci_registry,
             registry=self._registry,
