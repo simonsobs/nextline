@@ -329,15 +329,12 @@ class Exited(State):
 
     async def finish(self):
         self.assert_not_obsolete()
-        await self._join(self._thread)
+        await to_thread(self._thread.join)
         finished = Finished(
             self.registry, result=self._result, exception=self._exception
         )
         self.obsolete()
         return finished
-
-    async def _join(self, thread):
-        await to_thread(thread.join)
 
 
 class Finished(State):
