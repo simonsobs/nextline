@@ -4,7 +4,7 @@ import itertools
 from typing import Union
 
 from .trace import Trace
-from .utils import Registry, ThreadSafeAsyncioEvent
+from .utils import Registry, ThreadSafeAsyncioEvent, to_thread
 from .call import call_with_trace
 from . import script
 
@@ -337,13 +337,7 @@ class Exited(State):
         return finished
 
     async def _join(self, thread):
-        try:
-            await asyncio.to_thread(thread.join)
-        except AttributeError:
-            # for Python 3.8
-            # to_thread() is new in Python 3.9
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, thread.join)
+        await to_thread(thread.join)
 
 
 class Finished(State):
