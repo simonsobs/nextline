@@ -5,9 +5,9 @@ from .coro_runner import CoroutineRunner  # noqa: F401
 from .registry import Registry  # noqa: F401
 from .thread_exception import ExcThread  # noqa: F401
 from .trace import TraceSingleThreadTask  # noqa: F401
-from .func import current_task_or_thread  # noqa: F401
 from .done_callback import (  # noqa: F401
     ThreadTaskDoneCallback,
     ThreadDoneCallback,
     TaskDoneCallback,
 )
+from .func import current_task_or_thread, to_thread  # noqa: F401
