@@ -8,3 +8,4 @@ from .trace import TraceSingleThreadTask  # noqa: F401
 from .done_callback import ThreadTaskDoneCallback  # noqa: F401
 from .done_callback import ThreadDoneCallback  # noqa: F401
 from .done_callback import TaskDoneCallback  # noqa: F401
+from .func import current_task_or_thread  # noqa: F401

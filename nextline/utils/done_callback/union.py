@@ -1,9 +1,10 @@
-from threading import Thread, current_thread
-from asyncio import Task, current_task, to_thread, get_running_loop
+from threading import Thread
+from asyncio import Task, to_thread, get_running_loop
 
 
 from typing import Union, Callable
 
+from ..func import current_task_or_thread
 from .thread import ThreadDoneCallback
 from .task import TaskDoneCallback
 
@@ -23,7 +24,7 @@ class ThreadTaskDoneCallback:
         self, task_or_thread: Union[Task, Thread, None] = None
     ) -> None:
         if task_or_thread is None:
-            task_or_thread = self._current_task_or_thread()
+            task_or_thread = current_task_or_thread()
         if isinstance(task_or_thread, Task):
             self._task_callback.register(task_or_thread)
             return
@@ -45,10 +46,3 @@ class ThreadTaskDoneCallback:
             # to_thread() is new in Python 3.9
             loop = get_running_loop()
             await loop.run_in_executor(None, func)
-
-    def _current_task_or_thread(self) -> Union[Task, Thread]:
-        try:
-            task = current_task()
-        except RuntimeError:
-            task = None
-        return task or current_thread()
