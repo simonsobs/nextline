@@ -1,5 +1,5 @@
 from threading import Thread
-from asyncio import Task, to_thread, get_running_loop
+from asyncio import Task, get_running_loop
 
 
 from typing import Union, Callable
@@ -7,6 +7,16 @@ from typing import Union, Callable
 from ..func import current_task_or_thread
 from .thread import ThreadDoneCallback
 from .task import TaskDoneCallback
+
+try:
+    from asyncio import to_thread
+except ImportError:
+    # for Python 3.8
+    # to_thread() is new in Python 3.9
+
+    async def to_thread(func):
+        loop = get_running_loop()
+        await loop.run_in_executor(None, func)
 
 
 class ThreadTaskDoneCallback:
@@ -37,12 +47,4 @@ class ThreadTaskDoneCallback:
     async def aclose(self, interval: float = 0.001) -> None:
         """Awaitable version of close()"""
         await self._task_callback.aclose(interval=interval)
-
-        func = self._thread_callback.close
-        try:
-            await to_thread(func)
-        except AttributeError:
-            # for Python 3.8
-            # to_thread() is new in Python 3.9
-            loop = get_running_loop()
-            await loop.run_in_executor(None, func)
+        await to_thread(self._thread_callback.close)
