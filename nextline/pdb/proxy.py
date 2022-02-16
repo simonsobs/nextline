@@ -141,6 +141,9 @@ class PdbProxy:
             "thread_task_ids", self.thread_asynctask_id
         )
 
+        self._register_callback()
+
+    def _register_callback(self):
         _, task_id = self.thread_asynctask_id
         if task_id:
             self._handle = TaskDoneCallback(done=self._done)
@@ -149,6 +152,8 @@ class PdbProxy:
         self._handle.register()
 
     def _done(self, *_, **__):
+        if self._first:
+            return
         self.registry.close_register(self.thread_asynctask_id)
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_asynctask_id
