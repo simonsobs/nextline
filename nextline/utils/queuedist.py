@@ -2,6 +2,8 @@ import threading
 import asyncio
 import janus
 
+from .func import to_thread
+
 
 ##__________________________________________________________________||
 class QueueDist:
@@ -96,14 +98,7 @@ class QueueDist:
     async def _close(self):
         """Actual implementation of close()"""
         self._q_in.sync_q.put(self.End)
-
-        try:
-            await asyncio.to_thread(self._thread.join)
-        except AttributeError:
-            # for Python 3.8
-            # to_thread() is new in Python 3.9
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, self._thread.join)
+        await to_thread(self._thread.join)
 
         self._q_in.close()
         await self._q_in.wait_closed()
