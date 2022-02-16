@@ -38,6 +38,7 @@ class Trace:
         self, registry: Registry, modules_to_trace: Optional[Set[str]] = None
     ):
 
+        self._registry = registry
         self.pdb_ci_registry = PdbCIRegistry()
 
         if modules_to_trace is None:
@@ -51,18 +52,9 @@ class Trace:
         self._id_composer = UniqThreadTaskIdComposer()
         self._prompting_counter = count(1).__next__
 
-        def wrapped_factory():
-            return PdbProxy(
-                id_composer=self._id_composer,
-                modules_to_trace=self.modules_to_trace,
-                ci_registry=self.pdb_ci_registry,
-                registry=registry,
-                prompting_counter=self._prompting_counter,
-            )
-
         self.first = True
 
-        self.trace = TraceSingleThreadTask(factory=wrapped_factory)
+        self.trace = TraceSingleThreadTask(factory=self._create_pdbproxy)
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
@@ -79,6 +71,15 @@ class Trace:
             self.first = False
 
         return self.trace(frame, event, arg)
+
+    def _create_pdbproxy(self):
+        return PdbProxy(
+            id_composer=self._id_composer,
+            modules_to_trace=self.modules_to_trace,
+            ci_registry=self.pdb_ci_registry,
+            registry=self._registry,
+            prompting_counter=self._prompting_counter,
+        )
 
 
 class TraceWithCallback:
