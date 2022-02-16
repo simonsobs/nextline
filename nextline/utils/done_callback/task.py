@@ -1,6 +1,5 @@
 import time
 from asyncio import Task, current_task
-from functools import partial
 
 from typing import Optional, Callable, Type, Set, List
 
@@ -71,8 +70,7 @@ class TaskDoneCallback:
                 raise RuntimeError(
                     "The aclose() cannot be called from a registered task"
                 )
-        func = partial(self._close, interval)
-        await to_thread(func)
+        await to_thread(self._close, interval)
         self.reraise()
 
     def reraise(self) -> None:
