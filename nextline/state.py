@@ -1,5 +1,5 @@
 import asyncio
-import threading
+from threading import Thread
 import itertools
 from typing import Union
 
@@ -248,7 +248,7 @@ class Running(State):
 
         self.loop = asyncio.get_running_loop()
 
-        self._thread = threading.Thread(
+        self._thread = Thread(
             target=self._run, args=(statement, trace), daemon=True
         )
         self._thread.start()
