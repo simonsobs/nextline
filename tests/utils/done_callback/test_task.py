@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 
 async def target(obj: TaskDoneCallback):
-    obj.register()
+    assert asyncio.current_task() == obj.register()
     delay = random.random() * 0.01
     time.sleep(delay)
 
@@ -73,7 +73,7 @@ async def test_register_arg(done: Done):
     t = asyncio.create_task(target())
 
     # manually provide the task object
-    obj.register(t)
+    assert t == obj.register(t)
 
     await t
     await obj.aclose()

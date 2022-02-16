@@ -7,12 +7,12 @@ from asyncio import create_task
 import pytest
 
 
-from nextline.utils import ThreadTaskDoneCallback
+from nextline.utils import ThreadTaskDoneCallback, current_task_or_thread
 
 
 def target(obj: ThreadTaskDoneCallback):
     """To run in a thread or task"""
-    obj.register()
+    assert current_task_or_thread() == obj.register()
     delay = random.random() * 0.01
     time.sleep(delay)
 

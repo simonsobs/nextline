@@ -33,7 +33,7 @@ class ThreadDoneCallback:
         self._t = ExcThread(target=self._monitor, daemon=True)
         self._t.start()
 
-    def register(self, thread: Optional[Thread] = None) -> None:
+    def register(self, thread: Optional[Thread] = None) -> Thread:
         """Add the current thread by default, or the given thread
 
         The callback function `done`, given at the initializaiton,
@@ -42,6 +42,7 @@ class ThreadDoneCallback:
         if thread is None:
             thread = current_thread()
         self._active.add(thread)
+        return thread
 
     def close(self) -> None:
         """To be optionally called after all threades are registered

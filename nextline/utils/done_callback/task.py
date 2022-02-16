@@ -25,7 +25,7 @@ class TaskDoneCallback:
         self._active: Set[Task] = set()
         self._exceptions: List[Type[Exception]] = []
 
-    def register(self, task: Optional[Task] = None) -> None:
+    def register(self, task: Optional[Task] = None) -> Task:
         """Add the current task by default, or the given task
 
         The callback function `done`, given at the initializaiton,
@@ -38,6 +38,7 @@ class TaskDoneCallback:
         if task not in self._active:
             task.add_done_callback(self._callback)
             self._active.add(task)
+        return task
 
     def close(self, interval: float = 0.001) -> None:
         """To be optionally called after all tasks are registered

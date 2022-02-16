@@ -1,6 +1,6 @@
 import time
 import random
-from threading import Thread
+from threading import current_thread
 
 from nextline.utils import ThreadDoneCallback
 from nextline.utils import ExcThread
@@ -11,7 +11,7 @@ from unittest.mock import Mock
 
 def target(obj: ThreadDoneCallback):
     """To run in a thread"""
-    obj.register()
+    assert current_thread() == obj.register()
     delay = random.random() * 0.01
     time.sleep(delay)
 
@@ -34,7 +34,7 @@ def done():
 
 def test_one(done: Done):
     obj = ThreadDoneCallback(done=done)
-    t = Thread(target=target, args=(obj,))
+    t = ExcThread(target=target, args=(obj,))
     t.start()
     obj.close()
     assert {t} == done.args
@@ -47,10 +47,10 @@ def test_register_arg(done: Done):
         time.sleep(delay)
 
     obj = ThreadDoneCallback(done=done)
-    t = Thread(target=target)
+    t = ExcThread(target=target)
 
     # manually provide the thread object
-    obj.register(t)
+    assert t == obj.register(t)
 
     t.start()
     obj.close()
@@ -61,7 +61,7 @@ def test_register_arg(done: Done):
 def test_daemon(done: Done):
     """Not blocked even if close() is not called"""
     obj = ThreadDoneCallback(done=done)
-    t = Thread(target=target, args=(obj,))
+    t = ExcThread(target=target, args=(obj,))
     t.start()
     # obj.close()  # not call closed()
     t.join()
@@ -72,7 +72,7 @@ def test_multiple(nthreads: int, done: Done):
 
     obj = ThreadDoneCallback(done=done)
 
-    threads = {Thread(target=target, args=(obj,)) for _ in range(nthreads)}
+    threads = {ExcThread(target=target, args=(obj,)) for _ in range(nthreads)}
     for t in threads:
         t.start()
 
@@ -101,7 +101,7 @@ def test_raise_close_from_thread(done: Done):
 def test_raise_in_done():
     done = Mock(side_effect=ValueError)
     obj = ThreadDoneCallback(done=done)
-    t = Thread(target=target, args=(obj,))
+    t = ExcThread(target=target, args=(obj,))
     t.start()
 
     with pytest.raises(ValueError):
@@ -113,7 +113,7 @@ def test_raise_in_done():
 def test_interval(done: Done):
     interval = 0.02
     obj = ThreadDoneCallback(done=done, interval=interval)
-    t = Thread(target=target, args=(obj,))
+    t = ExcThread(target=target, args=(obj,))
     t.start()
 
     obj.close()
@@ -123,7 +123,7 @@ def test_interval(done: Done):
 def test_interval_invalid(done: Done):
     interval = "invalid"
     obj = ThreadDoneCallback(done=done, interval=interval)
-    t = Thread(target=target, args=(obj,))
+    t = ExcThread(target=target, args=(obj,))
     t.start()
 
     with pytest.raises(TypeError):
