@@ -1,8 +1,10 @@
 import time
-import asyncio
+from asyncio import Task, current_task
 from functools import partial
 
 from typing import Optional, Callable, Type, Set, List
+
+from ..func import to_thread
 
 
 class TaskDoneCallback:
@@ -18,20 +20,20 @@ class TaskDoneCallback:
 
     def __init__(
         self,
-        done: Callable[[asyncio.Task], None],
+        done: Callable[[Task], None],
     ):
         self._done = done
-        self._active: Set[asyncio.Task] = set()
+        self._active: Set[Task] = set()
         self._exceptions: List[Type[Exception]] = []
 
-    def register(self, task: Optional[asyncio.Task] = None) -> None:
+    def register(self, task: Optional[Task] = None) -> None:
         """Add the current task by default, or the given task
 
         The callback function `done`, given at the initializaiton,
         will be called with the task object when the task ends.
         """
         if task is None:
-            task = asyncio.current_task()
+            task = current_task()
             if task is None:
                 raise RuntimeError("The current task not found")
         if task not in self._active:
@@ -50,7 +52,7 @@ class TaskDoneCallback:
 
         """
         try:
-            task = asyncio.current_task()
+            task = current_task()
         except RuntimeError:
             task = None
         if task is not None:
@@ -63,20 +65,14 @@ class TaskDoneCallback:
 
     async def aclose(self, interval: float = 0.001) -> None:
         """Awaitable version of close()"""
-        task = asyncio.current_task()
+        task = current_task()
         if task is not None:
             if task in self._active:
                 raise RuntimeError(
                     "The aclose() cannot be called from a registered task"
                 )
         func = partial(self._close, interval)
-        try:
-            await asyncio.to_thread(func)
-        except AttributeError:
-            # for Python 3.8
-            # to_thread() is new in Python 3.9
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, func)
+        await to_thread(func)
         self.reraise()
 
     def reraise(self) -> None:
@@ -88,7 +84,7 @@ class TaskDoneCallback:
         while self._active:
             time.sleep(interval)
 
-    def _callback(self, task: asyncio.Task, *_, **__):
+    def _callback(self, task: Task, *_, **__):
         """This method is given to asyncio.Task.add_done_callback()
 
         When called, this method, in turn, calls the callback function
