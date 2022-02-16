@@ -1,9 +1,8 @@
-import sys
 import asyncio
 
 import pytest
 
-from nextline.utils import Registry
+from nextline.utils import Registry, to_thread
 
 from .aiterable import aiterable
 
@@ -93,7 +92,6 @@ nitems = [0, 1, 2, 50]
 nsubscribers = [0, 1, 2, 70]
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
 @pytest.mark.parametrize("nitems", nitems)
 @pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.parametrize("thread", [True, False])
@@ -131,7 +129,7 @@ async def test_one(close_register, thread, nsubscribers, nitems):
 
     # register
     if thread:
-        coro = asyncio.to_thread(register, registry, register_key, items)
+        coro = to_thread(register, registry, register_key, items)
     else:
         coro = aregister(registry, register_key, items)
     task_register = asyncio.create_task(coro)
@@ -152,7 +150,6 @@ nitems = [0, 1, 2, 10]
 nsubscribers = [0, 1, 2, 70]
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
 @pytest.mark.parametrize("nitems", nitems)
 @pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.parametrize("thread", [True, False])
@@ -193,7 +190,7 @@ async def test_list(close_register, thread, nsubscribers, nitems):
 
     # register
     if thread:
-        coro = asyncio.to_thread(register, registry, register_key, items)
+        coro = to_thread(register, registry, register_key, items)
     else:
         coro = aregister(registry, register_key, items)
     task_register = asyncio.create_task(coro)

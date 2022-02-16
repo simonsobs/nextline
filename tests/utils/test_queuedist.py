@@ -1,10 +1,9 @@
-import sys
 import asyncio
 import time
 
 import pytest
 
-from nextline.utils import QueueDist, ThreadSafeAsyncioEvent
+from nextline.utils import QueueDist, ThreadSafeAsyncioEvent, to_thread
 
 from .aiterable import aiterable
 
@@ -121,13 +120,13 @@ async def test_break(obj):
     assert items == result2
     assert obj.nsubscriptions == 0
 
+
 ##__________________________________________________________________||
 nsubscribers = [0, 1, 2, 5, 50]
 pre_nitems = [0, 1, 2, 50]
 post_nitems = [0, 1, 2, 100]
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread() ")
 @pytest.mark.parametrize("post_nitems", post_nitems)
 @pytest.mark.parametrize("pre_nitems", pre_nitems)
 @pytest.mark.parametrize("nsubscribers", nsubscribers)
@@ -169,9 +168,7 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
     event = ThreadSafeAsyncioEvent()
     event_end = ThreadSafeAsyncioEvent()
 
-    coro = asyncio.to_thread(
-        send, obj, pre_items, event, post_items, event_end
-    )
+    coro = to_thread(send, obj, pre_items, event, post_items, event_end)
     task_send = asyncio.create_task(coro)
 
     tasks_subscribe = []
