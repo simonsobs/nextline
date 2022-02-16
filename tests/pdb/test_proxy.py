@@ -36,7 +36,7 @@ def proxy(mock_registry):
         prompting_counter=prompting_counter,
     )
 
-    y.pdb.trace_dispatch = Mock()
+    y._pdb_trace = Mock()
 
     yield y
 
@@ -104,7 +104,7 @@ def test_proxy(proxy, mock_registry, snapshot, subject):
 
     # assert 1 == mock_trace.returning.call_count
 
-    trace_results = unpack_trace_dispatch_call(proxy.pdb.trace_dispatch)
+    trace_results = unpack_trace_dispatch_call(proxy._pdb_trace)
     snapshot.assert_match(trace_results)
 
 

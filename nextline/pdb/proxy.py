@@ -79,19 +79,8 @@ class PdbProxy:
         self.modules_to_trace = modules_to_trace
         self.registry = registry
         self.ci_registry = ci_registry
+        self._prompting_counter = prompting_counter
         self.skip = MODULES_TO_SKIP
-
-        self.q_stdin = queue.Queue()
-        self.q_stdout = queue.Queue()
-
-        self.pdb = CustomizedPdb(
-            proxy=self,
-            prompting_counter=prompting_counter,
-            stdin=StreamIn(self.q_stdin),
-            stdout=StreamOut(self.q_stdout),
-            skip=self.skip,
-            readrc=False,
-        )
 
         self._first = True
 
@@ -119,6 +108,9 @@ class PdbProxy:
             self._first = False
             self._call_once()
 
+        return self._pdb_trace(frame, event, arg)
+
+    def _pdb_trace(self, frame, event, arg):
         return self.pdb.trace_dispatch(frame, event, arg)
 
     def _is_first_module_to_trace(self, frame) -> bool:
@@ -134,6 +126,18 @@ class PdbProxy:
         return func_name == "<lambda>"
 
     def _call_once(self) -> None:
+
+        self.q_stdin = queue.Queue()
+        self.q_stdout = queue.Queue()
+
+        self.pdb = CustomizedPdb(
+            proxy=self,
+            prompting_counter=self._prompting_counter,
+            stdin=StreamIn(self.q_stdin),
+            stdout=StreamOut(self.q_stdout),
+            skip=self.skip,
+            readrc=False,
+        )
 
         self.registry.open_register(self.thread_task_id)
         self.registry.register_list_item(
