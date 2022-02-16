@@ -4,6 +4,6 @@ from .thread_safe_event import ThreadSafeAsyncioEvent  # noqa: F401
 from .coro_runner import CoroutineRunner  # noqa: F401
 from .registry import Registry  # noqa: F401
 from .thread_exception import ExcThread  # noqa: F401
-from .thread_done_callback import ThreadDoneCallback  # noqa: F401
-from .task_done_callback import TaskDoneCallback  # noqa: F401
 from .trace import TraceSingleThreadTask  # noqa: F401
+from .done_callback.thread import ThreadDoneCallback  # noqa: F401
+from .done_callback.task import TaskDoneCallback  # noqa: F401

@@ -3,7 +3,7 @@ from threading import Thread, current_thread
 
 from typing import Optional, Callable, Set
 
-from .thread_exception import ExcThread
+from ..thread_exception import ExcThread
 
 
 class ThreadDoneCallback:
