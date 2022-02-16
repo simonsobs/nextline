@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import asyncio
 from itertools import count
+from threading import Thread
+from weakref import WeakKeyDictionary
 
 from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
-from .utils import UniqThreadTaskIdComposer, TraceSingleThreadTask
+from .utils import (
+    UniqThreadTaskIdComposer,
+    TraceSingleThreadTask,
+    ThreadTaskDoneCallback,
+)
 
-from typing import Any, Set, Optional, TYPE_CHECKING
+from typing import Any, Set, Dict, Optional, Union, TYPE_CHECKING
 from types import FrameType
 
 from .types import TraceFunc
@@ -52,6 +58,12 @@ class Trace:
         self._id_composer = UniqThreadTaskIdComposer()
         self._prompting_counter = count(1).__next__
 
+        self._pdbproxy_map: Dict[
+            Union[asyncio.Task, Thread], PdbProxy
+        ] = WeakKeyDictionary()
+
+        self._handle = ThreadTaskDoneCallback(done=self._callback)
+
         self.first = True
 
         self.trace = TraceSingleThreadTask(factory=self._create_pdbproxy)
@@ -73,13 +85,19 @@ class Trace:
         return self.trace(frame, event, arg)
 
     def _create_pdbproxy(self):
-        return PdbProxy(
+        pdbproxy = PdbProxy(
             thread_asynctask_id=self._id_composer(),
             modules_to_trace=self.modules_to_trace,
             ci_registry=self.pdb_ci_registry,
             registry=self._registry,
             prompting_counter=self._prompting_counter,
         )
+        task_or_thread = self._handle.register()
+        self._pdbproxy_map[task_or_thread] = pdbproxy
+        return pdbproxy
+
+    def _callback(self, task_or_thread: Union[asyncio.Task, Thread]):
+        self._pdbproxy_map[task_or_thread].close()
 
 
 class TraceWithCallback:

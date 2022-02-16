@@ -4,7 +4,6 @@ import queue
 import warnings
 import fnmatch
 
-from ..utils import ThreadTaskDoneCallback
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -141,13 +140,7 @@ class PdbProxy:
             "thread_task_ids", self.thread_asynctask_id
         )
 
-        self._register_callback()
-
-    def _register_callback(self):
-        self._handle = ThreadTaskDoneCallback(done=self._done)
-        self._handle.register()
-
-    def _done(self, *_, **__):
+    def close(self):
         if self._first:
             return
         self.registry.close_register(self.thread_asynctask_id)
