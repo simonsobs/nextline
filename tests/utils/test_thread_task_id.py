@@ -1,10 +1,10 @@
-import sys
 import asyncio
 import threading
 from functools import partial
 
 import pytest
 
+from nextline.utils import to_thread
 from nextline.utils import UniqThreadTaskIdComposer as IdComposer
 from nextline.utils.types import ThreadTaskId
 
@@ -108,17 +108,16 @@ def test_async_asyncio_run(obj: IdComposer):
     asyncio.run(async_assert_call(obj, expected))
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread()")
 @pytest.mark.asyncio
 async def test_async_asyncio_to_thread(obj: IdComposer):
     expected = (1, 1)
     assert_call(obj, expected)
 
     expected = (2, None)
-    await asyncio.to_thread(partial(assert_call, obj, expected))
+    await to_thread(partial(assert_call, obj, expected))
 
     expected = (2, None)
-    await asyncio.to_thread(partial(assert_call, obj, expected))
+    await to_thread(partial(assert_call, obj, expected))
 
 
 ##__________________________________________________________________||

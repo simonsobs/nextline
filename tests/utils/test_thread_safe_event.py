@@ -1,9 +1,8 @@
-import sys
 import asyncio
 import threading
 import pytest
 
-from nextline.utils import ThreadSafeAsyncioEvent
+from nextline.utils import ThreadSafeAsyncioEvent, to_thread
 
 
 ##__________________________________________________________________||
@@ -33,7 +32,6 @@ async def test_asyncio():
 
 
 ##__________________________________________________________________||
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="asyncio.to_thread()")
 @pytest.mark.asyncio
 async def test_thread():
     obj = ThreadSafeAsyncioEvent()
@@ -53,10 +51,10 @@ async def test_thread():
     async def receive():
         await obj.wait()
         received.set()
-        await asyncio.to_thread(cleared.wait)
+        await to_thread(cleared.wait)
         assert not obj.is_set()
 
-    await asyncio.gather(asyncio.to_thread(send), receive())
+    await asyncio.gather(to_thread(send), receive())
 
 
 ##__________________________________________________________________||
