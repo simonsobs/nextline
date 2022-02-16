@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from itertools import count
-from functools import partial
 
 from .pdb.proxy import PdbProxy
 from .registry import PdbCIRegistry
@@ -49,16 +48,17 @@ class Trace:
         # self.modules_to_trace will be shared and modified by
         # multiple instances of PdbProxy.
 
-        # self.id_composer = UniqThreadTaskIdComposer()
+        self._id_composer = UniqThreadTaskIdComposer()
+        self._prompting_counter = count(1).__next__
 
-        wrapped_factory = partial(
-            PdbProxy,
-            id_composer=UniqThreadTaskIdComposer(),
-            modules_to_trace=self.modules_to_trace,
-            ci_registry=self.pdb_ci_registry,
-            registry=registry,
-            prompting_counter=count(1).__next__,
-        )
+        def wrapped_factory():
+            return PdbProxy(
+                id_composer=self._id_composer,
+                modules_to_trace=self.modules_to_trace,
+                ci_registry=self.pdb_ci_registry,
+                registry=registry,
+                prompting_counter=self._prompting_counter,
+            )
 
         self.first = True
 
