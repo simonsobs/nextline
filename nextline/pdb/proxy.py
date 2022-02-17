@@ -212,7 +212,6 @@ class PdbProxy:
 
     def _callback(self, frame, event, arg):
         self._registrar.calling_trace(frame, event, arg)
-        self._current_args = (frame, event, arg)
 
     def entering_cmdloop(self) -> None:
         """called by the customized pdb before it is entering the command loop"""
