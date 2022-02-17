@@ -19,11 +19,7 @@ def getlines(func_org, statement, filename, module_globals=None):
 
 ##__________________________________________________________________||
 class CustomizedPdb(Pdb):
-    """A customized Pdb
-
-    An instance of this class will be created for each thread and async task
-
-    """
+    """A Pdb subclass that calls back PdbProxy"""
 
     def __init__(self, proxy: PdbProxy, *args, **kwargs):
         super().__init__(*args, **kwargs)
