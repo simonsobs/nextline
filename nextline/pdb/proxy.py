@@ -108,16 +108,17 @@ class PdbProxy:
             self._open()
 
         class LocalTrace:
-            def __init__(self, trace):
+            def __init__(self, trace, callback):
                 self._trace = trace
+                self._callback = callback
 
             def __call__(self, frame, event, arg):
                 if self._trace:
-                    # print(frame, event, arg)
+                    self._callback(frame, event, arg)
                     self._trace = self._trace(frame, event, arg)
                 return self
 
-        local_trace = LocalTrace(self._pdb_trace_dispatch)
+        local_trace = LocalTrace(self._pdb_trace_dispatch, self._callback)
         return local_trace(frame, event, arg)
 
     def _open(self) -> None:
@@ -147,6 +148,9 @@ class PdbProxy:
         self.registry.deregister_list_item(
             "thread_task_ids", self.thread_task_id
         )
+
+    def _callback(self, frame, event, arg):
+        self._current_args = (frame, event, arg)
 
     def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
         """called by the customized pdb before it is entering the command loop"""
