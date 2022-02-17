@@ -7,12 +7,14 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.utils import Registry
-from nextline.pdb.proxy import PdbProxy, CustomizedPdb
+from nextline.pdb.proxy import PdbProxy, Registrar
+from nextline.pdb.custom import CustomizedPdb
 from nextline.trace import UniqThreadTaskIdComposer
 
 
 class MockCustomizedPdb(CustomizedPdb):
     """Skip the command loop"""
+
     def trace_dispatch(self, frame, event, arg):
         return super().trace_dispatch(frame, event, arg)
 
@@ -28,25 +30,18 @@ def monkeypatch_customized_pdb(monkeypatch):
 
 
 @pytest.fixture()
-def mock_registry():
-    y = Mock(spec=Registry)
+def mock_registrar():
+    y = Mock(spec=Registrar)
     yield y
 
 
 @pytest.fixture()
-def proxy(mock_registry: Registry):
-    thread_asynctask_id = UniqThreadTaskIdComposer()()
-
+def proxy(mock_registrar: Registrar):
     modules_to_trace = {"tests.pdb.subject", __name__}
 
-    prompting_counter = count(1).__next__
-
     y = PdbProxy(
-        thread_asynctask_id=thread_asynctask_id,
+        registrar=mock_registrar,
         modules_to_trace=modules_to_trace,
-        registry=mock_registry,
-        ci_registry=Mock(),
-        prompting_counter=prompting_counter,
     )
 
     yield y
@@ -73,7 +68,7 @@ params = [
 @pytest.mark.parametrize("subject", params)
 def test_proxy(
     proxy: PdbProxy,
-    mock_registry: Union[Mock, Registry],
+    mock_registrar: Union[Mock, Registrar],
     subject: Callable,
 ):
 
@@ -84,13 +79,14 @@ def test_proxy(
 
     proxy.close()
 
-    assert mock_registry.register.called
-    # print(mock_registry.register.call_args_list)
-    # TODO: Test contents
+    # assert mock_registrar.register.called
+    # # print(mock_registrar.register.call_args_list)
+    # # TODO: Test contents
 
-    assert 1 == mock_registry.open_register.call_count
-    assert 1 == mock_registry.register_list_item.call_count
-    assert 1 == mock_registry.close_register.call_count
-
+    assert 1 == mock_registrar.open.call_count
+    assert 1 == mock_registrar.close.call_count
+    # assert mock_registrar.entering_cmdloop.called
+    # assert mock_registrar.exited_cmdloop.called
+    # print(mock_registrar.method_calls)
 
 ##__________________________________________________________________||
