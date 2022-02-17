@@ -189,17 +189,18 @@ class PdbProxy:
             self._trace = self._registrar.open()
 
         class LocalTrace:
-            def __init__(self, trace, callback):
-                self._trace = trace
-                self._callback = callback
+            def __init__(self, outer: PdbProxy):
+                self._outer = outer
+                self._trace = outer._trace
 
             def __call__(self, frame, event, arg):
                 if self._trace:
-                    self._callback(frame, event, arg)
+                    self._outer._before(frame, event, arg)
                     self._trace = self._trace(frame, event, arg)
+                    self._outer._after()
                 return self
 
-        local_trace = LocalTrace(self._trace, self._callback)
+        local_trace = LocalTrace(self)
         return local_trace(frame, event, arg)
 
     def close(self):
@@ -207,8 +208,11 @@ class PdbProxy:
             return
         self._registrar.close()
 
-    def _callback(self, frame, event, arg):
+    def _before(self, frame, event, arg):
         self._registrar.calling_trace(frame, event, arg)
+
+    def _after(self):
+        self._registrar.exited_trace()
 
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
