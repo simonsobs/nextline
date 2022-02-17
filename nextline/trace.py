@@ -5,7 +5,7 @@ from itertools import count
 from threading import Thread
 from weakref import WeakKeyDictionary
 
-from .pdb.proxy import PdbProxy
+from .pdb.proxy import PdbProxy, Registrar
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
@@ -85,12 +85,19 @@ class Trace:
         return self.trace(frame, event, arg)
 
     def _create_pdbproxy(self):
-        pdbproxy = PdbProxy(
-            thread_asynctask_id=self._id_composer(),
-            modules_to_trace=self.modules_to_trace,
-            ci_registry=self.pdb_ci_registry,
+        registrar = Registrar(
+            trace_id=self._id_composer(),
             registry=self._registry,
+            ci_registry=self.pdb_ci_registry,
             prompting_counter=self._prompting_counter,
+        )
+        pdbproxy = PdbProxy(
+            registrar=registrar,
+            # thread_asynctask_id=self._id_composer(),
+            modules_to_trace=self.modules_to_trace,
+            # ci_registry=self.pdb_ci_registry,
+            # registry=self._registry,
+            # prompting_counter=self._prompting_counter,
         )
         task_or_thread = self._handle.register()
         self._pdbproxy_map[task_or_thread] = pdbproxy

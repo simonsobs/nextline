@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
     from ..utils import Registry
-    from ..utils.types import ThreadTaskId
 
 
 MODULES_TO_SKIP = [
@@ -127,21 +126,13 @@ class PdbProxy:
 
     def __init__(
         self,
-        thread_asynctask_id: ThreadTaskId,
+        registrar: Registrar,
         modules_to_trace: Set[str],
-        registry: Registry,
-        ci_registry: PdbCIRegistry,
-        prompting_counter: Callable[[], int],
     ):
         self.modules_to_trace = modules_to_trace
         self.skip = MODULES_TO_SKIP
 
-        self._registrar = Registrar(
-            prompting_counter=prompting_counter,
-            trace_id=thread_asynctask_id,
-            registry=registry,
-            ci_registry=ci_registry,
-        )
+        self._registrar = registrar
 
         self._first = True
 
