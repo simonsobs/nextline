@@ -80,7 +80,7 @@ class Registrar:
         self.modules_to_trace = modules_to_trace
         self._skip = MODULES_TO_SKIP
 
-    def open(self, proxy: PdbProxy):
+    def open(self):
         self._q_stdin = queue.Queue()
         self._q_stdout = queue.Queue()
 
@@ -203,7 +203,7 @@ class PdbProxy:
         return local_trace(frame, event, arg)
 
     def _open(self) -> None:
-        self._pdb_trace_dispatch = self._registrar.open(proxy=self)
+        self._pdb_trace_dispatch = self._registrar.open()
 
     def close(self):
         if self._first:
