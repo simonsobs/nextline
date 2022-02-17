@@ -213,15 +213,6 @@ class PdbProxy:
     def _callback(self, frame, event, arg):
         self._registrar.calling_trace(frame, event, arg)
 
-    def entering_cmdloop(self) -> None:
-        """called by the customized pdb before it is entering the command loop"""
-
-        self._registrar.entering_cmdloop()
-
-    def exited_cmdloop(self) -> None:
-        """called by the customized pdb after it has exited from the command loop"""
-        self._registrar.exited_cmdloop()
-
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return is_matched_to_any(module_name, self.modules_to_trace)
