@@ -111,9 +111,11 @@ def test_proxy(
     subject()
     sys.settrace(trace_org)
 
+    proxy.close()
+
     assert 1 == mock_registry.open_register.call_count
     assert 1 == mock_registry.register_list_item.call_count
-    # assert 1 == mock_registry.close_register.call_count
+    assert 1 == mock_registry.close_register.call_count
 
     # assert 1 == mock_trace.returning.call_count
 
