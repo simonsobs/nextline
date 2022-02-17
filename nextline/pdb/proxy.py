@@ -7,7 +7,7 @@ from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
-from typing import Any, Set, Dict, Union, Callable, TYPE_CHECKING
+from typing import Any, Set, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
