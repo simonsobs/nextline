@@ -46,6 +46,25 @@ MODULES_TO_SKIP = [
 
 
 class Registrar:
+    """Register Pdb prompts to registries
+
+
+    Parameters
+    ----------
+    trace_id : object
+        The Id to distiugish each instance of Pdb
+    modules_to_trace: set
+        The set of modules to trace. This object is shared by multiple
+        objects. Modules in which Pdb commands are prompted will be
+        added.
+    registry: object
+        A registry
+    ci_registry: object
+        A registry
+    prompting_counter : callable
+        Used to count the Pdb command loops
+    """
+
     def __init__(
         self,
         trace_id,
