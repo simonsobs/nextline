@@ -121,18 +121,6 @@ class PdbProxy:
         local_trace = LocalTrace(self._pdb_trace_dispatch)
         return local_trace(frame, event, arg)
 
-    def _is_first_module_to_trace(self, frame) -> bool:
-        module_name = frame.f_globals.get("__name__")
-        return is_matched_to_any(module_name, self.modules_to_trace)
-
-    def _is_module_to_skip(self, frame) -> bool:
-        module_name = frame.f_globals.get("__name__")
-        return is_matched_to_any(module_name, self.skip)
-
-    def _is_lambda(self, frame) -> bool:
-        func_name = frame.f_code.co_name
-        return func_name == "<lambda>"
-
     def _call_once(self) -> None:
 
         self.q_stdin = queue.Queue()
@@ -178,6 +166,18 @@ class PdbProxy:
         self.ci_registry.remove(self.thread_task_id)
         self.registry.register(self.thread_task_id, state.copy())
         self.pdb_ci.end()
+
+    def _is_first_module_to_trace(self, frame) -> bool:
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self.modules_to_trace)
+
+    def _is_module_to_skip(self, frame) -> bool:
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self.skip)
+
+    def _is_lambda(self, frame) -> bool:
+        func_name = frame.f_code.co_name
+        return func_name == "<lambda>"
 
 
 ##__________________________________________________________________||
