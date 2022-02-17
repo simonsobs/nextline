@@ -17,10 +17,9 @@ class CustomizedPdb(Pdb):
 
     """
 
-    def __init__(self, proxy, prompting_counter, *args, **kwargs):
+    def __init__(self, proxy, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._proxy = proxy
-        self._prompting_counter = prompting_counter
 
         # self.quitting = True # not sure if necessary
 

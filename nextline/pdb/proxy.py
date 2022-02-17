@@ -128,7 +128,6 @@ class PdbProxy:
 
         self.pdb = CustomizedPdb(
             proxy=self,
-            prompting_counter=self._prompting_counter,
             stdin=StreamIn(self.q_stdin),
             stdout=StreamOut(self.q_stdout),
             skip=self.skip,
