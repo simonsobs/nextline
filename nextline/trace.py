@@ -90,6 +90,7 @@ class Trace:
             registry=self._registry,
             ci_registry=self.pdb_ci_registry,
             prompting_counter=self._prompting_counter,
+            modules_to_trace=self.modules_to_trace,
         )
         pdbproxy = PdbProxy(
             registrar=registrar,

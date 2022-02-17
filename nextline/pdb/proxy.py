@@ -71,11 +71,13 @@ class Registrar:
         registry: Registry,
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
+        modules_to_trace: Set[str],
     ):
         self._trace_id = trace_id
         self._registry = registry
         self._ci_registry = ci_registry
         self._prompting_counter = prompting_counter
+        self.modules_to_trace = modules_to_trace
         self._skip = MODULES_TO_SKIP
 
     def open(self, proxy: PdbProxy):
@@ -107,6 +109,10 @@ class Registrar:
 
     def entering_cmdloop(self) -> None:
         frame, event, _ = self._current_trace_args
+
+        module_name = frame.f_globals.get("__name__")
+        self.modules_to_trace.add(module_name)
+
         self._state = {
             "prompting": self._prompting_counter(),
             "file_name": self._pdb.canonic(frame.f_code.co_filename),
@@ -212,11 +218,6 @@ class PdbProxy:
         """called by the customized pdb before it is entering the command loop"""
 
         self._registrar.entering_cmdloop()
-
-        frame, *_ = self._current_args
-
-        module_name = frame.f_globals.get("__name__")
-        self.modules_to_trace.add(module_name)
 
     def exited_cmdloop(self) -> None:
         """called by the customized pdb after it has exited from the command loop"""
