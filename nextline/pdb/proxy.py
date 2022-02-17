@@ -105,7 +105,7 @@ class PdbProxy:
             if not self._is_first_module_to_trace(frame):
                 return
             self._first = False
-            self._call_once()
+            self._open()
 
         class LocalTrace:
             def __init__(self, trace):
@@ -120,7 +120,7 @@ class PdbProxy:
         local_trace = LocalTrace(self._pdb_trace_dispatch)
         return local_trace(frame, event, arg)
 
-    def _call_once(self) -> None:
+    def _open(self) -> None:
 
         self.q_stdin = queue.Queue()
         self.q_stdout = queue.Queue()
