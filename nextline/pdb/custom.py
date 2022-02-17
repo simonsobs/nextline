@@ -29,27 +29,13 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)
 
     def trace_dispatch(self, frame, event, arg):
-        """override trace_dispatch()"""
-        self._trace_event = event
-        # print(event)
-        # if event == 'exception':
-        #     print(arg)
-        #     print(type(arg))
-        #     print([type(e) for e in arg])
+        """The main trace function of Bdb"""
         return super().trace_dispatch(frame, event, arg)
 
     def _cmdloop(self):
-        # frame = self.curframe
-        # # module_name = frame.f_globals.get("__name__")
-        # state = {
-        #     "prompting": self._prompting_counter(),
-        #     "file_name": self.canonic(frame.f_code.co_filename),
-        #     "line_no": frame.f_lineno,
-        #     "trace_event": self._trace_event,
-        # }
+        """Prompt user input"""
         self._proxy.entering_cmdloop()
         super()._cmdloop()
-        # state["prompting"] = 0
         self._proxy.exited_cmdloop()
 
     def set_continue(self):
