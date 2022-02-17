@@ -39,18 +39,18 @@ class CustomizedPdb(Pdb):
         return super().trace_dispatch(frame, event, arg)
 
     def _cmdloop(self):
-        frame = self.curframe
-        # module_name = frame.f_globals.get("__name__")
-        state = {
-            "prompting": self._prompting_counter(),
-            "file_name": self.canonic(frame.f_code.co_filename),
-            "line_no": frame.f_lineno,
-            "trace_event": self._trace_event,
-        }
-        self._proxy.entering_cmdloop(self.curframe, state)
+        # frame = self.curframe
+        # # module_name = frame.f_globals.get("__name__")
+        # state = {
+        #     "prompting": self._prompting_counter(),
+        #     "file_name": self.canonic(frame.f_code.co_filename),
+        #     "line_no": frame.f_lineno,
+        #     "trace_event": self._trace_event,
+        # }
+        self._proxy.entering_cmdloop()
         super()._cmdloop()
-        state["prompting"] = 0
-        self._proxy.exited_cmdloop(state)
+        # state["prompting"] = 0
+        self._proxy.exited_cmdloop()
 
     def set_continue(self):
         """override bdb.set_continue()

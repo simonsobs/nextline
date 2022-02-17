@@ -152,8 +152,18 @@ class PdbProxy:
     def _callback(self, frame, event, arg):
         self._current_args = (frame, event, arg)
 
-    def entering_cmdloop(self, frame: FrameType, state: Dict) -> None:
+    def entering_cmdloop(self) -> None:
         """called by the customized pdb before it is entering the command loop"""
+
+        frame, event, arg = self._current_args
+
+        self._state = {
+            "prompting": self._prompting_counter(),
+            "file_name": self.pdb.canonic(frame.f_code.co_filename),
+            "line_no": frame.f_lineno,
+            "trace_event": event,
+        }
+
         module_name = frame.f_globals.get("__name__")
         self.modules_to_trace.add(module_name)
 
@@ -162,12 +172,13 @@ class PdbProxy:
         )
         self.pdb_ci.start()
         self.ci_registry.add(self.thread_task_id, self.pdb_ci)
-        self.registry.register(self.thread_task_id, state.copy())
+        self.registry.register(self.thread_task_id, self._state.copy())
 
-    def exited_cmdloop(self, state: Dict) -> None:
+    def exited_cmdloop(self) -> None:
         """called by the customized pdb after it has exited from the command loop"""
+        self._state["prompting"] = 0
         self.ci_registry.remove(self.thread_task_id)
-        self.registry.register(self.thread_task_id, state.copy())
+        self.registry.register(self.thread_task_id, self._state.copy())
         self.pdb_ci.end()
 
     def _is_first_module_to_trace(self, frame) -> bool:
