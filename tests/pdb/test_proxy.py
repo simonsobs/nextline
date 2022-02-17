@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.utils import Registry
-from nextline.pdb.proxy import PdbProxy
+from nextline.pdb.proxy import PdbProxy, CustomizedPdb
 from nextline.trace import UniqThreadTaskIdComposer
 
 from . import subject
@@ -14,13 +14,21 @@ from . import subject
 
 ##__________________________________________________________________||
 @pytest.fixture()
+def mock_customized_pdb(monkeypatch):
+    mock_instance = Mock(spec=CustomizedPdb)
+    mocak_class = Mock(return_value=mock_instance)
+    monkeypatch.setattr("nextline.pdb.proxy.CustomizedPdb", mocak_class)
+    yield mock_instance
+
+
+@pytest.fixture()
 def mock_registry():
     y = Mock(spec=Registry)
     yield y
 
 
 @pytest.fixture()
-def proxy(mock_registry):
+def proxy(mock_registry: Registry, mock_customized_pdb: CustomizedPdb):
     thread_asynctask_id = UniqThreadTaskIdComposer()()
 
     modules_to_trace = {"tests.pdb.subject"}
@@ -35,8 +43,6 @@ def proxy(mock_registry):
         ci_registry=Mock(),
         prompting_counter=prompting_counter,
     )
-
-    y._pdb_trace = Mock()
 
     yield y
 
@@ -88,7 +94,7 @@ params = [
     sys.version_info < (3, 9), reason="co_name <lambda> is different "
 )
 @pytest.mark.parametrize("subject", params)
-def test_proxy(proxy, mock_registry, snapshot, subject):
+def test_proxy(proxy, mock_registry, snapshot, subject, mock_customized_pdb: CustomizedPdb):
     """test PdbProxy"""
     # TODO: the test needs to be restructured so that, for example, a
     # coroutine or a generator can be the outermost scope.
@@ -104,7 +110,7 @@ def test_proxy(proxy, mock_registry, snapshot, subject):
 
     # assert 1 == mock_trace.returning.call_count
 
-    trace_results = unpack_trace_dispatch_call(proxy._pdb_trace)
+    trace_results = unpack_trace_dispatch_call(mock_customized_pdb.trace_dispatch)
     snapshot.assert_match(trace_results)
 
 

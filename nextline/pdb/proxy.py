@@ -108,10 +108,18 @@ class PdbProxy:
             self._first = False
             self._call_once()
 
-        return self._pdb_trace(frame, event, arg)
+        class Scope:
+            def __init__(self, trace):
+                self._trace = trace
 
-    def _pdb_trace(self, frame, event, arg):
-        return self.pdb.trace_dispatch(frame, event, arg)
+            def __call__(self, frame, event, arg):
+                if self._trace:
+                    # print(frame, event, arg)
+                    self._trace = self._trace(frame, event, arg)
+                return self
+
+        scope = Scope(self._pdb_trace_dispatch)
+        return scope(frame, event, arg)
 
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
@@ -138,6 +146,7 @@ class PdbProxy:
             skip=self.skip,
             readrc=False,
         )
+        self._pdb_trace_dispatch = self.pdb.trace_dispatch
 
         self.registry.open_register(self.thread_task_id)
         self.registry.register_list_item(
