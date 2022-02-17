@@ -94,11 +94,7 @@ class Trace:
         )
         pdbproxy = PdbProxy(
             registrar=registrar,
-            # thread_asynctask_id=self._id_composer(),
             modules_to_trace=self.modules_to_trace,
-            # ci_registry=self.pdb_ci_registry,
-            # registry=self._registry,
-            # prompting_counter=self._prompting_counter,
         )
         task_or_thread = self._handle.register()
         self._pdbproxy_map[task_or_thread] = pdbproxy
