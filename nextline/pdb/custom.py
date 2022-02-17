@@ -1,5 +1,13 @@
+from __future__ import annotations
+
 from functools import partial
 from pdb import Pdb
+
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from .proxy import PdbProxy
 
 
 ##__________________________________________________________________||
@@ -17,7 +25,7 @@ class CustomizedPdb(Pdb):
 
     """
 
-    def __init__(self, proxy, *args, **kwargs):
+    def __init__(self, proxy: PdbProxy, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._proxy = proxy
 
