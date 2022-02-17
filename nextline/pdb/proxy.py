@@ -80,7 +80,14 @@ class Registrar:
         self._registry.close_register(self._trace_id)
         self._registry.deregister_list_item("thread_task_ids", self._trace_id)
 
-    def entering_cmdloop(self, frame: FrameType, event: str, arg: Any) -> None:
+    def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
+        self._current_trace_args = (frame, event, arg)
+
+    def exited_trace(self) -> None:
+        self._current_trace_args = None
+
+    def entering_cmdloop(self) -> None:
+        frame, event, _ = self._current_trace_args
         self._state = {
             "prompting": self._prompting_counter(),
             "file_name": self._pdb.canonic(frame.f_code.co_filename),
@@ -179,13 +186,15 @@ class PdbProxy:
         self._registrar.close()
 
     def _callback(self, frame, event, arg):
+        self._registrar.calling_trace(frame, event, arg)
         self._current_args = (frame, event, arg)
 
     def entering_cmdloop(self) -> None:
         """called by the customized pdb before it is entering the command loop"""
 
-        frame, event, arg = self._current_args
-        self._registrar.entering_cmdloop(*self._current_args)
+        self._registrar.entering_cmdloop()
+
+        frame, *_ = self._current_args
 
         module_name = frame.f_globals.get("__name__")
         self.modules_to_trace.add(module_name)
