@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import queue
-import warnings
 import fnmatch
 
 from .ci import PdbCommandInterface
@@ -98,8 +97,8 @@ class PdbProxy:
             return
 
         if not event == "call":
-            warnings.warn(
-                f'The event is not "call": ({frame!r}, {event!r}, {arg!r})'
+            raise RuntimeError(
+                f'The event must be "call": ({frame!r}, {event!r}, {arg!r})'
             )
 
         if self._first:
