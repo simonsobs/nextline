@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ..utils.types import ThreadTaskId
 
 
-##__________________________________________________________________||
 MODULES_TO_SKIP = [
     "threading",
     "queue",
@@ -47,7 +46,6 @@ MODULES_TO_SKIP = [
 ]
 
 
-##__________________________________________________________________||
 class PdbProxy:
     """A proxy of Pdb
 
@@ -193,7 +191,6 @@ class PdbProxy:
         return func_name == "<lambda>"
 
 
-##__________________________________________________________________||
 def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
     """
     based on Bdb.is_skipped_module()
@@ -205,6 +202,3 @@ def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
         if fnmatch.fnmatch(word, pattern):
             return True
     return False
-
-
-##__________________________________________________________________||
