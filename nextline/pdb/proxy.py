@@ -85,7 +85,7 @@ class Registrar:
         self._q_stdout = queue.Queue()
 
         self._pdb = CustomizedPdb(
-            proxy=proxy,
+            registrar=self,
             stdin=StreamIn(self._q_stdin),
             stdout=StreamOut(self._q_stdout),
             skip=self._skip,

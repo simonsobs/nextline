@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .proxy import PdbProxy
+    from .proxy import Registrar
 
 
 ##__________________________________________________________________||
@@ -21,9 +21,9 @@ def getlines(func_org, statement, filename, module_globals=None):
 class CustomizedPdb(Pdb):
     """A Pdb subclass that calls back PdbProxy"""
 
-    def __init__(self, proxy: PdbProxy, *args, **kwargs):
+    def __init__(self, registrar: Registrar, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._proxy = proxy
+        self._registrar = registrar
 
         # self.quitting = True # not sure if necessary
 
@@ -37,9 +37,9 @@ class CustomizedPdb(Pdb):
 
     def _cmdloop(self):
         """Prompt user input"""
-        self._proxy.entering_cmdloop()
+        self._registrar.entering_cmdloop()
         super()._cmdloop()
-        self._proxy.exited_cmdloop()
+        self._registrar.exited_cmdloop()
 
     def set_continue(self):
         """override bdb.set_continue()
@@ -63,7 +63,7 @@ class CustomizedPdb(Pdb):
     #     return True
 
     def do_list(self, arg):
-        statement = self._proxy.statement
+        statement = self._registrar.statement
         import linecache
 
         getlines_org = linecache.getlines
