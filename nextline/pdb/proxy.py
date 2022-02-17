@@ -133,15 +133,11 @@ class PdbProxy:
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
     ):
-        self.thread_task_id = thread_asynctask_id
         self.modules_to_trace = modules_to_trace
-        self.registry = registry
-        self.ci_registry = ci_registry
-        self._prompting_counter = prompting_counter
         self.skip = MODULES_TO_SKIP
 
         self._registrar = Registrar(
-            prompting_counter=self._prompting_counter,
+            prompting_counter=prompting_counter,
             trace_id=thread_asynctask_id,
             registry=registry,
             ci_registry=ci_registry,
