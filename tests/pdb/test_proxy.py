@@ -1,6 +1,7 @@
 import sys
 import asyncio
 from itertools import count
+from typing import Callable
 
 import pytest
 from unittest.mock import Mock
@@ -94,7 +95,13 @@ params = [
     sys.version_info < (3, 9), reason="co_name <lambda> is different "
 )
 @pytest.mark.parametrize("subject", params)
-def test_proxy(proxy, mock_registry, snapshot, subject, mock_customized_pdb: CustomizedPdb):
+def test_proxy(
+    proxy: PdbProxy,
+    mock_registry: Registry,
+    mock_customized_pdb: CustomizedPdb,
+    subject: Callable,
+    snapshot,
+):
     """test PdbProxy"""
     # TODO: the test needs to be restructured so that, for example, a
     # coroutine or a generator can be the outermost scope.
@@ -110,7 +117,9 @@ def test_proxy(proxy, mock_registry, snapshot, subject, mock_customized_pdb: Cus
 
     # assert 1 == mock_trace.returning.call_count
 
-    trace_results = unpack_trace_dispatch_call(mock_customized_pdb.trace_dispatch)
+    trace_results = unpack_trace_dispatch_call(
+        mock_customized_pdb.trace_dispatch
+    )
     snapshot.assert_match(trace_results)
 
 
