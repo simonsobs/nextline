@@ -188,20 +188,20 @@ class PdbProxy:
             self._first = False
             self._trace = self._registrar.open()
 
-        class LocalTrace:
-            def __init__(self, outer: PdbProxy):
-                self._outer = outer
-                self._trace = outer._trace
+        def create_local_trace():
+            trace = self._trace
 
-            def __call__(self, frame, event, arg):
-                if self._trace:
-                    self._outer._before(frame, event, arg)
-                    self._trace = self._trace(frame, event, arg)
-                    self._outer._after()
-                return self
+            def local_trace(frame, event, arg):
+                nonlocal trace
+                if trace:
+                    self._before(frame, event, arg)
+                    trace = trace(frame, event, arg)
+                    self._after()
+                return local_trace
 
-        local_trace = LocalTrace(self)
-        return local_trace(frame, event, arg)
+            return local_trace
+
+        return create_local_trace()(frame, event, arg)
 
     def close(self):
         if self._first:
