@@ -46,6 +46,67 @@ MODULES_TO_SKIP = [
 ]
 
 
+class Registrar:
+    def __init__(
+        self,
+        trace_id,
+        registry: Registry,
+        ci_registry: PdbCIRegistry,
+        prompting_counter: Callable[[], int],
+    ):
+        self.thread_task_id = trace_id
+        self.registry = registry
+        self.ci_registry = ci_registry
+        self._prompting_counter = prompting_counter
+        self.skip = MODULES_TO_SKIP
+
+    def open(self, proxy: PdbProxy):
+        self.q_stdin = queue.Queue()
+        self.q_stdout = queue.Queue()
+
+        self.pdb = CustomizedPdb(
+            proxy=proxy,
+            stdin=StreamIn(self.q_stdin),
+            stdout=StreamOut(self.q_stdout),
+            skip=self.skip,
+            readrc=False,
+        )
+
+        self.registry.open_register(self.thread_task_id)
+        self.registry.register_list_item(
+            "thread_task_ids", self.thread_task_id
+        )
+
+        return self.pdb.trace_dispatch
+
+    def close(self):
+        self.registry.close_register(self.thread_task_id)
+        self.registry.deregister_list_item(
+            "thread_task_ids", self.thread_task_id
+        )
+
+    def entering_cmdloop(self, frame: FrameType, event: str, arg: Any) -> None:
+        self._state = {
+            "prompting": self._prompting_counter(),
+            "file_name": self.pdb.canonic(frame.f_code.co_filename),
+            "line_no": frame.f_lineno,
+            "trace_event": event,
+        }
+
+        self.pdb_ci = PdbCommandInterface(
+            self.pdb, self.q_stdin, self.q_stdout
+        )
+        self.pdb_ci.start()
+        self.ci_registry.add(self.thread_task_id, self.pdb_ci)
+        self.registry.register(self.thread_task_id, self._state.copy())
+
+    def exited_cmdloop(self) -> None:
+        self._state["prompting"] = 0
+        self.ci_registry.remove(self.thread_task_id)
+        self.registry.register(self.thread_task_id, self._state.copy())
+        self.pdb_ci.end()
+
+
 class PdbProxy:
     """A proxy of Pdb
 
@@ -78,6 +139,13 @@ class PdbProxy:
         self.ci_registry = ci_registry
         self._prompting_counter = prompting_counter
         self.skip = MODULES_TO_SKIP
+
+        self._registrar = Registrar(
+            prompting_counter=self._prompting_counter,
+            trace_id=thread_asynctask_id,
+            registry=registry,
+            ci_registry=ci_registry,
+        )
 
         self._first = True
 
@@ -120,31 +188,12 @@ class PdbProxy:
         return local_trace(frame, event, arg)
 
     def _open(self) -> None:
-
-        self.q_stdin = queue.Queue()
-        self.q_stdout = queue.Queue()
-
-        self.pdb = CustomizedPdb(
-            proxy=self,
-            stdin=StreamIn(self.q_stdin),
-            stdout=StreamOut(self.q_stdout),
-            skip=self.skip,
-            readrc=False,
-        )
-        self._pdb_trace_dispatch = self.pdb.trace_dispatch
-
-        self.registry.open_register(self.thread_task_id)
-        self.registry.register_list_item(
-            "thread_task_ids", self.thread_task_id
-        )
+        self._pdb_trace_dispatch = self._registrar.open(proxy=self)
 
     def close(self):
         if self._first:
             return
-        self.registry.close_register(self.thread_task_id)
-        self.registry.deregister_list_item(
-            "thread_task_ids", self.thread_task_id
-        )
+        self._registrar.close()
 
     def _callback(self, frame, event, arg):
         self._current_args = (frame, event, arg)
@@ -153,30 +202,14 @@ class PdbProxy:
         """called by the customized pdb before it is entering the command loop"""
 
         frame, event, arg = self._current_args
-
-        self._state = {
-            "prompting": self._prompting_counter(),
-            "file_name": self.pdb.canonic(frame.f_code.co_filename),
-            "line_no": frame.f_lineno,
-            "trace_event": event,
-        }
+        self._registrar.entering_cmdloop(*self._current_args)
 
         module_name = frame.f_globals.get("__name__")
         self.modules_to_trace.add(module_name)
 
-        self.pdb_ci = PdbCommandInterface(
-            self.pdb, self.q_stdin, self.q_stdout
-        )
-        self.pdb_ci.start()
-        self.ci_registry.add(self.thread_task_id, self.pdb_ci)
-        self.registry.register(self.thread_task_id, self._state.copy())
-
     def exited_cmdloop(self) -> None:
         """called by the customized pdb after it has exited from the command loop"""
-        self._state["prompting"] = 0
-        self.ci_registry.remove(self.thread_task_id)
-        self.registry.register(self.thread_task_id, self._state.copy())
-        self.pdb_ci.end()
+        self._registrar.exited_cmdloop()
 
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
