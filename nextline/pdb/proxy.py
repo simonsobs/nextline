@@ -108,7 +108,7 @@ class PdbProxy:
             self._first = False
             self._call_once()
 
-        class Scope:
+        class LocalTrace:
             def __init__(self, trace):
                 self._trace = trace
 
@@ -118,8 +118,8 @@ class PdbProxy:
                     self._trace = self._trace(frame, event, arg)
                 return self
 
-        scope = Scope(self._pdb_trace_dispatch)
-        return scope(frame, event, arg)
+        local_trace = LocalTrace(self._pdb_trace_dispatch)
+        return local_trace(frame, event, arg)
 
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
