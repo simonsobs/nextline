@@ -113,8 +113,7 @@ def Trace(
 
 
 def TraceAddFirstModule(
-    trace: TraceFunc,
-    modules_to_trace: Set[str]
+    trace: TraceFunc, modules_to_trace: Set[str]
 ) -> TraceFunc:
     first = True
 
