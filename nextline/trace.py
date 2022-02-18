@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import asyncio
-from itertools import count
 from threading import Thread
+from asyncio import Task, isfuture
+from itertools import count
 from weakref import WeakKeyDictionary
 
 from .pdb.proxy import PdbProxy, Registrar
@@ -59,7 +59,7 @@ class Trace:
         self._prompting_counter = count(1).__next__
 
         self._trace_map: Dict[
-            Union[asyncio.Task, Thread], PdbProxy
+            Union[Task, Thread], PdbProxy
         ] = WeakKeyDictionary()
 
         self._handle = ThreadTaskDoneCallback(done=self._callback)
@@ -100,7 +100,7 @@ class Trace:
         self._trace_map[task_or_thread] = pdbproxy
         return pdbproxy
 
-    def _callback(self, task_or_thread: Union[asyncio.Task, Thread]):
+    def _callback(self, task_or_thread: Union[Task, Thread]):
         self._trace_map[task_or_thread].close()
 
 
@@ -143,7 +143,7 @@ class TraceWithCallback:
         if event != "return":
             return self.outermost
 
-        if asyncio.isfuture(arg):
+        if isfuture(arg):
             # awaiting. will be called again
 
             # NOTE: This doesn't detect all `await`. Some `await`
