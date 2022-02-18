@@ -41,7 +41,7 @@ def proxy(mock_registrar: Registrar):
 
     y = PdbProxy(
         registrar=mock_registrar,
-        modules_to_trace=modules_to_trace,
+        # modules_to_trace=modules_to_trace,
     )
 
     yield y
@@ -77,14 +77,14 @@ def test_proxy(
     subject()
     sys.settrace(trace_org)
 
-    proxy.close()
+    # proxy.close()
 
     # assert mock_registrar.register.called
     # # print(mock_registrar.register.call_args_list)
     # # TODO: Test contents
 
     assert 1 == mock_registrar.open.call_count
-    assert 1 == mock_registrar.close.call_count
+    # assert 1 == mock_registrar.close.call_count
     # assert mock_registrar.entering_cmdloop.called
     # assert mock_registrar.exited_cmdloop.called
     # print(mock_registrar.method_calls)

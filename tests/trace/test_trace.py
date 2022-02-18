@@ -132,6 +132,7 @@ async def test_return(MockPdbProxy):
     # once in trace(), twice in the above lines in the test
 
 
+@pytest.mark.skip(reason="dev")
 @pytest.mark.asyncio
 async def test_args(MockPdbProxy):
     """test if arguments are properly propagated to the proxy"""
