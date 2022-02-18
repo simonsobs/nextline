@@ -238,20 +238,14 @@ class PdbProxy:
             def local_trace(frame, event, arg):
                 nonlocal trace
                 if trace:
-                    self._before(frame, event, arg)
+                    self._registrar.calling_trace(frame, event, arg)
                     trace = trace(frame, event, arg)
-                    self._after()
+                    self._registrar.exited_trace()
                 return local_trace
 
             return local_trace
 
         return create_local_trace()(frame, event, arg)
-
-    def _before(self, frame, event, arg):
-        self._registrar.calling_trace(frame, event, arg)
-
-    def _after(self):
-        self._registrar.exited_trace()
 
 
 def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
