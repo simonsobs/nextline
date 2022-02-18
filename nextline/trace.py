@@ -66,7 +66,9 @@ class Trace:
 
         self.first = True
 
-        self.trace = TraceDispatchThreadOrTask(factory=self._create_trace)
+        self.trace = TraceSkipModule(
+            trace=TraceDispatchThreadOrTask(factory=self._create_trace)
+        )
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
@@ -102,9 +104,7 @@ class Trace:
         task_or_thread = self._handle.register()
         self._trace_map[task_or_thread] = pdbproxy
 
-        skip_module = TraceSkipModule(trace=pdbproxy)
-
-        return skip_module
+        return pdbproxy
 
     def _callback(self, task_or_thread: Union[Task, Thread]):
         self._trace_map[task_or_thread].close()
