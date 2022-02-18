@@ -68,15 +68,15 @@ class Trace:
             Union[Task, Thread], Registrar
         ] = WeakKeyDictionary()
 
-        self._handle = ThreadTaskDoneCallback(done=self._callback)
-
-        self.first = True
+        self._done_callback = ThreadTaskDoneCallback(done=self._callback)
 
         self.trace = TraceSkipModule(
             trace=TraceSkipLambda(
                 trace=TraceDispatchThreadOrTask(factory=self._create_trace)
             )
         )
+
+        self._first = True
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
@@ -87,10 +87,10 @@ class Trace:
 
         """
 
-        if self.first:
+        if self._first:
             module_name = frame.f_globals.get("__name__")
             self.modules_to_trace.add(module_name)
-            self.first = False
+            self._first = False
 
         return self.trace(frame, event, arg)
 
@@ -106,7 +106,7 @@ class Trace:
 
         pdbproxy = PdbProxy(registrar=registrar)
 
-        task_or_thread = self._handle.register()
+        task_or_thread = self._done_callback.register()
         self._registrar_map[task_or_thread] = registrar
 
         trace = TraceSelectFirstModule(
