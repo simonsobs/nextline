@@ -58,7 +58,7 @@ class Trace:
         self._id_composer = UniqThreadTaskIdComposer()
         self._prompting_counter = count(1).__next__
 
-        self._pdbproxy_map: Dict[
+        self._trace_map: Dict[
             Union[asyncio.Task, Thread], PdbProxy
         ] = WeakKeyDictionary()
 
@@ -97,11 +97,11 @@ class Trace:
             modules_to_trace=self.modules_to_trace,
         )
         task_or_thread = self._handle.register()
-        self._pdbproxy_map[task_or_thread] = pdbproxy
+        self._trace_map[task_or_thread] = pdbproxy
         return pdbproxy
 
     def _callback(self, task_or_thread: Union[asyncio.Task, Thread]):
-        self._pdbproxy_map[task_or_thread].close()
+        self._trace_map[task_or_thread].close()
 
 
 class TraceWithCallback:
