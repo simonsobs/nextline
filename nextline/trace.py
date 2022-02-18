@@ -84,16 +84,17 @@ class Trace:
         self, registry: Registry, modules_to_trace: Optional[Set[str]] = None
     ):
 
-        self._registry = registry
-        self.pdb_ci_registry = PdbCIRegistry()
-
         if modules_to_trace is None:
             modules_to_trace = set()
 
         self.modules_to_trace = set(modules_to_trace)
         # Make a copy so that the original won't be modified.
         # self.modules_to_trace will be shared and modified by
-        # multiple instances of PdbProxy.
+        # multiple objects.
+
+        self.pdb_ci_registry = PdbCIRegistry()
+        # Accessed by Running
+        # TODO: Create in Running and pass it here
 
         self._create_registrar = RegistrarFactory(
             registry=registry,
@@ -109,14 +110,7 @@ class Trace:
 
         self._first = True
 
-    def __call__(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> Optional[TraceFunc]:
-        """Called by the Python interpreter when a new local scope is entered.
-
-        https://docs.python.org/3/library/sys.html#sys.settrace
-
-        """
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
 
         if self._first:
             module_name = frame.f_globals.get("__name__")
