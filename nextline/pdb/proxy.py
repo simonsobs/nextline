@@ -7,7 +7,7 @@ from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
-from typing import Any, Set, Union, Callable, TYPE_CHECKING
+from typing import Any, Optional, Set, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -134,6 +134,23 @@ class Registrar:
         self._pdb_ci.end()
 
 
+class TraceSkipModule:
+    def __init__(self, trace: TraceFunc, skip: Set[str] = MODULES_TO_SKIP):
+        self._trace = trace
+        self._skip = skip
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+
+        if self._is_module_to_skip(frame):
+            return
+
+        return self._trace(frame, event, arg)
+
+    def _is_module_to_skip(self, frame: FrameType) -> bool:
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self._skip)
+
+
 class PdbProxy:
     """A proxy of Pdb
 
@@ -158,7 +175,6 @@ class PdbProxy:
         modules_to_trace: Set[str],
     ):
         self.modules_to_trace = modules_to_trace
-        self.skip = MODULES_TO_SKIP
 
         self._registrar = registrar
 
@@ -170,9 +186,6 @@ class PdbProxy:
         This method will be called by the instance of Trace.
         The event should be always "call."
         """
-
-        if self._is_module_to_skip(frame):
-            return
 
         if self._is_lambda(frame):
             return
@@ -217,10 +230,6 @@ class PdbProxy:
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return is_matched_to_any(module_name, self.modules_to_trace)
-
-    def _is_module_to_skip(self, frame) -> bool:
-        module_name = frame.f_globals.get("__name__")
-        return is_matched_to_any(module_name, self.skip)
 
     def _is_lambda(self, frame) -> bool:
         func_name = frame.f_code.co_name
