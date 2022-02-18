@@ -64,11 +64,7 @@ class Trace:
         self._id_composer = UniqThreadTaskIdComposer()
         self._prompting_counter = count(1).__next__
 
-        self._registrar_map: Dict[
-            Union[Task, Thread], Registrar
-        ] = WeakKeyDictionary()
-
-        self._done_callback = ThreadTaskDoneCallback(done=self._callback)
+        self._start_callback()
 
         self.trace = TraceSkipModule(
             trace=TraceSkipLambda(
@@ -77,6 +73,15 @@ class Trace:
         )
 
         self._first = True
+
+    def _start_callback(self):
+
+        self._callback_map: Dict[Any, Registrar] = WeakKeyDictionary()
+
+        def callback_func(key):
+            self._callback_map[key].close()
+
+        self._callback = ThreadTaskDoneCallback(done=callback_func)
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
@@ -96,18 +101,9 @@ class Trace:
 
     def _create_trace(self):
 
-        registrar = Registrar(
-            trace_id=self._id_composer(),
-            registry=self._registry,
-            ci_registry=self.pdb_ci_registry,
-            prompting_counter=self._prompting_counter,
-            modules_to_trace=self.modules_to_trace,
-        )
+        registrar = self._create_registrar()
 
         pdbproxy = PdbProxy(registrar=registrar)
-
-        task_or_thread = self._done_callback.register()
-        self._registrar_map[task_or_thread] = registrar
 
         trace = TraceSelectFirstModule(
             trace=pdbproxy,
@@ -116,8 +112,17 @@ class Trace:
 
         return trace
 
-    def _callback(self, task_or_thread: Union[Task, Thread]):
-        self._registrar_map[task_or_thread].close()
+    def _create_registrar(self):
+        registrar = Registrar(
+            trace_id=self._id_composer(),
+            registry=self._registry,
+            ci_registry=self.pdb_ci_registry,
+            prompting_counter=self._prompting_counter,
+            modules_to_trace=self.modules_to_trace,
+        )
+        task_or_thread = self._callback.register()
+        self._callback_map[task_or_thread] = registrar
+        return registrar
 
 
 class TraceWithCallback:
