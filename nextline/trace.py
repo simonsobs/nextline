@@ -6,15 +6,15 @@ from weakref import WeakKeyDictionary
 
 import fnmatch
 
-from typing import Any, Set, Dict, Optional, Union, TYPE_CHECKING
+from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
 from .pdb.proxy import PdbProxy, Registrar, MODULES_TO_SKIP
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
-    TraceDispatchThreadOrTask,
     ThreadTaskDoneCallback,
+    current_task_or_thread,
 )
 
 from .types import TraceFunc
@@ -151,6 +151,27 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
         return trace(frame, event, arg)
 
     return ret
+
+
+class TraceDispatchThreadOrTask:
+    """Create a new trace function for each thread or asyncio task"""
+
+    def __init__(self, factory: Callable[[], TraceFunc]):
+        self._factory = factory
+        self._map: Dict[Any, TraceFunc] = WeakKeyDictionary()
+
+    def __call__(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunc]:
+
+        key = current_task_or_thread()
+
+        trace = self._map.get(key)
+        if not trace:
+            trace = self._factory()
+            self._map[key] = trace
+
+        return trace(frame, event, arg)
 
 
 def TraceSelectFirstModule(
