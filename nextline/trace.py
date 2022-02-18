@@ -102,20 +102,16 @@ class Trace:
             modules_to_trace=self.modules_to_trace,
         )
 
-        self.trace = TraceSkipModule(
-            trace=TraceSkipLambda(
-                trace=TraceDispatchThreadOrTask(factory=self._create_trace)
-            )
+        self.trace = TraceAddFirstModule(
+            trace=TraceSkipModule(
+                trace=TraceSkipLambda(
+                    trace=TraceDispatchThreadOrTask(factory=self._create_trace)
+                )
+            ),
+            modules_to_trace=self.modules_to_trace,
         )
 
-        self._first = True
-
     def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-
-        if self._first:
-            module_name = frame.f_globals.get("__name__")
-            self.modules_to_trace.add(module_name)
-            self._first = False
 
         return self.trace(frame, event, arg)
 
@@ -131,6 +127,22 @@ class Trace:
         )
 
         return trace
+
+
+class TraceAddFirstModule:
+    def __init__(self, trace: TraceFunc, modules_to_trace: Set[str]):
+        self._trace = trace
+        self._modules_to_trace = modules_to_trace
+        self._first = True
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+
+        if self._first:
+            module_name = frame.f_globals.get("__name__")
+            self._modules_to_trace.add(module_name)
+            self._first = False
+
+        return self._trace(frame, event, arg)
 
 
 class TraceWithCallback:
