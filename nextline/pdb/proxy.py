@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import queue
-import fnmatch
 
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
-from typing import Any, Optional, Set, Union, Callable, TYPE_CHECKING
+from typing import Any, Optional, Set, Callable, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -142,61 +141,6 @@ class Registrar:
         self._pdb_ci.end()
 
 
-class TraceSkipModule:
-    def __init__(self, trace: TraceFunc, skip: Set[str] = MODULES_TO_SKIP):
-        self._trace = trace
-        self._skip = skip
-
-    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-
-        if self._is_module_to_skip(frame):
-            return
-
-        return self._trace(frame, event, arg)
-
-    def _is_module_to_skip(self, frame: FrameType) -> bool:
-        module_name = frame.f_globals.get("__name__")
-        return is_matched_to_any(module_name, self._skip)
-
-
-class TraceSkipLambda:
-    def __init__(self, trace: TraceFunc):
-        self._trace = trace
-
-    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-
-        if self._is_lambda(frame):
-            return
-
-        return self._trace(frame, event, arg)
-
-    def _is_lambda(self, frame) -> bool:
-        func_name = frame.f_code.co_name
-        return func_name == "<lambda>"
-
-
-class TraceSelectFirstModule:
-    def __init__(
-        self,
-        trace: TraceFunc,
-        modules_to_trace: Set[str],
-    ):
-        self._trace = trace
-        self.modules_to_trace = modules_to_trace
-        self._first = True
-
-    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-        if self._first:
-            if not self._is_first_module_to_trace(frame):
-                return
-            self._first = False
-        return self._trace(frame, event, arg)
-
-    def _is_first_module_to_trace(self, frame: FrameType) -> bool:
-        module_name = frame.f_globals.get("__name__")
-        return is_matched_to_any(module_name, self.modules_to_trace)
-
-
 class PdbProxy:
     """A proxy of Pdb
 
@@ -239,16 +183,3 @@ class PdbProxy:
             return local_trace
 
         return create_local_trace()(frame, event, arg)
-
-
-def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
-    """
-    based on Bdb.is_skipped_module()
-    https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
-    """
-    if word is None:
-        return False
-    for pattern in patterns:
-        if fnmatch.fnmatch(word, pattern):
-            return True
-    return False

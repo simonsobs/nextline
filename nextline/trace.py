@@ -1,26 +1,21 @@
 from __future__ import annotations
 
-from threading import Thread
-from asyncio import Task, isfuture
+from asyncio import isfuture
 from itertools import count
 from weakref import WeakKeyDictionary
 
-from .pdb.proxy import (
-    PdbProxy,
-    Registrar,
-    TraceSkipModule,
-    TraceSkipLambda,
-    TraceSelectFirstModule,
-)
+import fnmatch
+
+from typing import Any, Set, Dict, Optional, Union, TYPE_CHECKING
+from types import FrameType
+
+from .pdb.proxy import PdbProxy, Registrar, MODULES_TO_SKIP
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
     TraceDispatchThreadOrTask,
     ThreadTaskDoneCallback,
 )
-
-from typing import Any, Set, Dict, Optional, TYPE_CHECKING
-from types import FrameType
 
 from .types import TraceFunc
 
@@ -135,6 +130,61 @@ def TraceAddFirstModule(
     return ret
 
 
+class TraceSkipModule:
+    def __init__(self, trace: TraceFunc, skip: Set[str] = MODULES_TO_SKIP):
+        self._trace = trace
+        self._skip = skip
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+
+        if self._is_module_to_skip(frame):
+            return
+
+        return self._trace(frame, event, arg)
+
+    def _is_module_to_skip(self, frame: FrameType) -> bool:
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self._skip)
+
+
+class TraceSkipLambda:
+    def __init__(self, trace: TraceFunc):
+        self._trace = trace
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+
+        if self._is_lambda(frame):
+            return
+
+        return self._trace(frame, event, arg)
+
+    def _is_lambda(self, frame) -> bool:
+        func_name = frame.f_code.co_name
+        return func_name == "<lambda>"
+
+
+class TraceSelectFirstModule:
+    def __init__(
+        self,
+        trace: TraceFunc,
+        modules_to_trace: Set[str],
+    ):
+        self._trace = trace
+        self.modules_to_trace = modules_to_trace
+        self._first = True
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+        if self._first:
+            if not self._is_first_module_to_trace(frame):
+                return
+            self._first = False
+        return self._trace(frame, event, arg)
+
+    def _is_first_module_to_trace(self, frame: FrameType) -> bool:
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self.modules_to_trace)
+
+
 class TraceWithCallback:
     def __init__(
         self,
@@ -194,3 +244,16 @@ class TraceWithCallback:
         """Every local scope"""
 
         return self.wrapped(frame, event, arg)
+
+
+def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
+    """
+    based on Bdb.is_skipped_module()
+    https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
+    """
+    if word is None:
+        return False
+    for pattern in patterns:
+        if fnmatch.fnmatch(word, pattern):
+            return True
+    return False
