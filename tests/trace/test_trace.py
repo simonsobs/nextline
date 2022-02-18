@@ -27,6 +27,7 @@ def subject():
     return
 
 
+@pytest.mark.skip(reason="dev")
 @pytest.mark.asyncio
 async def test_sys_settrace(MockPdbProxy):
     """test with actual sys.settrace()"""
@@ -51,6 +52,7 @@ params = [
 ]
 
 
+@pytest.mark.skip(reason="dev")
 @pytest.mark.parametrize("modules_to_trace", params)
 @pytest.mark.asyncio
 async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
@@ -84,6 +86,7 @@ async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
     assert {module_a.__name__, module_b.__name__} == traced_moduled
 
 
+@pytest.mark.skip(reason="dev")
 @pytest.mark.asyncio
 async def test_modules_to_trace_partial(MockPdbProxy):
     """
