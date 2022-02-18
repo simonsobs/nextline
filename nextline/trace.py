@@ -81,7 +81,10 @@ class Trace:
     """
 
     def __init__(
-        self, registry: Registry, modules_to_trace: Optional[Set[str]] = None
+        self,
+        registry: Registry,
+        pdb_ci_registry: PdbCIRegistry,
+        modules_to_trace: Optional[Set[str]] = None,
     ):
 
         if modules_to_trace is None:
@@ -92,13 +95,9 @@ class Trace:
         # self.modules_to_trace will be shared and modified by
         # multiple objects.
 
-        self.pdb_ci_registry = PdbCIRegistry()
-        # Accessed by Running
-        # TODO: Create in Running and pass it here
-
         self._create_registrar = RegistrarFactory(
             registry=registry,
-            pdb_ci_registry=self.pdb_ci_registry,
+            pdb_ci_registry=pdb_ci_registry,
             modules_to_trace=self.modules_to_trace,
         )
 

@@ -4,6 +4,7 @@ import itertools
 from typing import Union
 
 from .trace import Trace
+from .registry import PdbCIRegistry
 from .utils import Registry, ThreadSafeAsyncioEvent, to_thread
 from .call import call_with_trace
 from . import script
@@ -241,8 +242,12 @@ class Running(State):
 
         statement = self.registry.get("statement")
 
-        trace = Trace(registry=self.registry)
-        self.pdb_ci_registry = trace.pdb_ci_registry
+        self.pdb_ci_registry = PdbCIRegistry()
+        trace = Trace(
+            registry=self.registry,
+            pdb_ci_registry=self.pdb_ci_registry,
+        )
+        # self.pdb_ci_registry = trace.pdb_ci_registry
 
         self.registry.register("state_name", self.name)
 
