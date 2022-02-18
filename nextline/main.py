@@ -44,7 +44,7 @@ class Nextline:
         await self.machine.finish()
 
     def exception(self):
-        """uncaught exeption from the last run"""
+        """uncaught exception from the last run"""
         return self.machine.exception()
 
     def result(self):
