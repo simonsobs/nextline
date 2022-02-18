@@ -9,8 +9,8 @@ from ..types import TraceFunc
 from .func import current_task_or_thread
 
 
-class TraceSingleThreadTask:
-    """Dispatch a new trace function for each thread or asyncio task"""
+class TraceDispatchThreadOrTask:
+    """Create a new trace function for each thread or asyncio task"""
 
     def __init__(self, factory: Callable[[], TraceFunc]):
         self._factory = factory

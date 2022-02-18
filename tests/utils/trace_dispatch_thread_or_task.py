@@ -8,7 +8,7 @@ from unittest.mock import Mock
 from typing import List, Tuple, Set, Any
 
 from nextline.call import call_with_trace
-from nextline.trace import TraceSingleThreadTask
+from nextline.trace import TraceDispatchThreadOrTask
 
 
 @pytest.fixture()
@@ -119,7 +119,7 @@ params = [
 
 @pytest.mark.parametrize("func, expected", params)
 def test_one(factory: Mock, created: List[Mock], func, expected):
-    obj = TraceSingleThreadTask(factory=factory)
+    obj = TraceDispatchThreadOrTask(factory=factory)
     call_with_trace(func, obj)
     print()
     # print(traced(created))

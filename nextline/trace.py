@@ -9,7 +9,7 @@ from .pdb.proxy import PdbProxy, Registrar
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
-    TraceSingleThreadTask,
+    TraceDispatchThreadOrTask,
     ThreadTaskDoneCallback,
 )
 
@@ -66,7 +66,7 @@ class Trace:
 
         self.first = True
 
-        self.trace = TraceSingleThreadTask(factory=self._create_pdbproxy)
+        self.trace = TraceDispatchThreadOrTask(factory=self._create_pdbproxy)
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
