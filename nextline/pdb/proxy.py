@@ -151,6 +151,22 @@ class TraceSkipModule:
         return is_matched_to_any(module_name, self._skip)
 
 
+class TraceSkipLambda:
+    def __init__(self, trace: TraceFunc):
+        self._trace = trace
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+
+        if self._is_lambda(frame):
+            return
+
+        return self._trace(frame, event, arg)
+
+    def _is_lambda(self, frame) -> bool:
+        func_name = frame.f_code.co_name
+        return func_name == "<lambda>"
+
+
 class PdbProxy:
     """A proxy of Pdb
 
@@ -186,9 +202,6 @@ class PdbProxy:
         This method will be called by the instance of Trace.
         The event should be always "call."
         """
-
-        if self._is_lambda(frame):
-            return
 
         if not event == "call":
             raise RuntimeError(
@@ -230,10 +243,6 @@ class PdbProxy:
     def _is_first_module_to_trace(self, frame) -> bool:
         module_name = frame.f_globals.get("__name__")
         return is_matched_to_any(module_name, self.modules_to_trace)
-
-    def _is_lambda(self, frame) -> bool:
-        func_name = frame.f_code.co_name
-        return func_name == "<lambda>"
 
 
 def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:

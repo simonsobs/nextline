@@ -5,7 +5,7 @@ from asyncio import Task, isfuture
 from itertools import count
 from weakref import WeakKeyDictionary
 
-from .pdb.proxy import PdbProxy, Registrar, TraceSkipModule
+from .pdb.proxy import PdbProxy, Registrar, TraceSkipModule, TraceSkipLambda
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
@@ -67,7 +67,9 @@ class Trace:
         self.first = True
 
         self.trace = TraceSkipModule(
-            trace=TraceDispatchThreadOrTask(factory=self._create_trace)
+            trace=TraceSkipLambda(
+                trace=TraceDispatchThreadOrTask(factory=self._create_trace)
+            )
         )
 
     def __call__(
