@@ -117,20 +117,22 @@ def Trace(
     )
 
 
-class TraceAddFirstModule:
-    def __init__(self, trace: TraceFunc, modules_to_trace: Set[str]):
-        self._trace = trace
-        self._modules_to_trace = modules_to_trace
-        self._first = True
+def TraceAddFirstModule(
+    trace: TraceFunc,
+    modules_to_trace: Set[str],
+) -> TraceFunc:
+    first = True
 
-    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-
-        if self._first:
+    def ret(frame, event, arg) -> Optional[TraceFunc]:
+        nonlocal first
+        if first:
             module_name = frame.f_globals.get("__name__")
-            self._modules_to_trace.add(module_name)
-            self._first = False
+            modules_to_trace.add(module_name)
+            first = False
 
-        return self._trace(frame, event, arg)
+        return trace(frame, event, arg)
+
+    return ret
 
 
 class TraceWithCallback:
