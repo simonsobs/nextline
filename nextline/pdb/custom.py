@@ -40,6 +40,8 @@ class CustomizedPdb(Pdb):
         try:
             self._registrar.entering_cmdloop()
         except RuntimeError:
+            # "step" at the last line
+            # https://github.com/simonsobs/nextline/issues/1
             return
         super()._cmdloop()
         self._registrar.exited_cmdloop()
