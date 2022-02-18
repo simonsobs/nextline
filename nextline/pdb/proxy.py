@@ -237,11 +237,11 @@ class PdbProxy:
 
             def local_trace(frame, event, arg):
                 nonlocal trace
+                self._registrar.calling_trace(frame, event, arg)
+                trace = trace(frame, event, arg)
+                self._registrar.exited_trace()
                 if trace:
-                    self._registrar.calling_trace(frame, event, arg)
-                    trace = trace(frame, event, arg)
-                    self._registrar.exited_trace()
-                return local_trace
+                    return local_trace
 
             return local_trace
 
