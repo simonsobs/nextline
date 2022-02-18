@@ -19,7 +19,7 @@ from .utils import (
     ThreadTaskDoneCallback,
 )
 
-from typing import Any, Set, Dict, Optional, Union, TYPE_CHECKING
+from typing import Any, Set, Dict, Optional, TYPE_CHECKING
 from types import FrameType
 
 from .types import TraceFunc
@@ -28,7 +28,41 @@ if TYPE_CHECKING:
     from .utils import Registry
 
 
-##__________________________________________________________________||
+class RegistrarFactory:
+    def __init__(
+        self,
+        registry: Registry,
+        pdb_ci_registry: PdbCIRegistry,
+        modules_to_trace: Set[str],
+    ):
+        self._registry = registry
+        self._pdb_ci_registry = pdb_ci_registry
+        self._modules_to_trace = modules_to_trace
+
+        self._id_composer = UniqThreadTaskIdComposer()
+        self._prompting_counter = count(1).__next__
+
+        self._callback_map: Dict[Any, Registrar] = WeakKeyDictionary()
+
+        def callback_func(key):
+            self._callback_map[key].close()
+
+        self._callback = ThreadTaskDoneCallback(done=callback_func)
+
+    def __call__(self) -> Registrar:
+        # TODO: check if already created for the same thread or task
+        ret = Registrar(
+            trace_id=self._id_composer(),
+            registry=self._registry,
+            ci_registry=self._pdb_ci_registry,
+            prompting_counter=self._prompting_counter,
+            modules_to_trace=self._modules_to_trace,
+        )
+        key = self._callback.register()
+        self._callback_map[key] = ret
+        return ret
+
+
 class Trace:
     """The main trace function
 
@@ -61,10 +95,11 @@ class Trace:
         # self.modules_to_trace will be shared and modified by
         # multiple instances of PdbProxy.
 
-        self._id_composer = UniqThreadTaskIdComposer()
-        self._prompting_counter = count(1).__next__
-
-        self._start_callback()
+        self._create_registrar = RegistrarFactory(
+            registry=registry,
+            pdb_ci_registry=self.pdb_ci_registry,
+            modules_to_trace=self.modules_to_trace,
+        )
 
         self.trace = TraceSkipModule(
             trace=TraceSkipLambda(
@@ -73,27 +108,6 @@ class Trace:
         )
 
         self._first = True
-
-    def _start_callback(self):
-
-        self._callback_map: Dict[Any, Registrar] = WeakKeyDictionary()
-
-        def callback_func(key):
-            self._callback_map[key].close()
-
-        self._callback = ThreadTaskDoneCallback(done=callback_func)
-
-    def _create_registrar(self):
-        registrar = Registrar(
-            trace_id=self._id_composer(),
-            registry=self._registry,
-            ci_registry=self.pdb_ci_registry,
-            prompting_counter=self._prompting_counter,
-            modules_to_trace=self.modules_to_trace,
-        )
-        task_or_thread = self._callback.register()
-        self._callback_map[task_or_thread] = registrar
-        return registrar
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
