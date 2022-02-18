@@ -83,6 +83,18 @@ class Trace:
 
         self._callback = ThreadTaskDoneCallback(done=callback_func)
 
+    def _create_registrar(self):
+        registrar = Registrar(
+            trace_id=self._id_composer(),
+            registry=self._registry,
+            ci_registry=self.pdb_ci_registry,
+            prompting_counter=self._prompting_counter,
+            modules_to_trace=self.modules_to_trace,
+        )
+        task_or_thread = self._callback.register()
+        self._callback_map[task_or_thread] = registrar
+        return registrar
+
     def __call__(
         self, frame: FrameType, event: str, arg: Any
     ) -> Optional[TraceFunc]:
@@ -111,18 +123,6 @@ class Trace:
         )
 
         return trace
-
-    def _create_registrar(self):
-        registrar = Registrar(
-            trace_id=self._id_composer(),
-            registry=self._registry,
-            ci_registry=self.pdb_ci_registry,
-            prompting_counter=self._prompting_counter,
-            modules_to_trace=self.modules_to_trace,
-        )
-        task_or_thread = self._callback.register()
-        self._callback_map[task_or_thread] = registrar
-        return registrar
 
 
 class TraceWithCallback:
