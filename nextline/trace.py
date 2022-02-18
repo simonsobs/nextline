@@ -66,7 +66,7 @@ class Trace:
 
         self.first = True
 
-        self.trace = TraceDispatchThreadOrTask(factory=self._create_pdbproxy)
+        self.trace = TraceDispatchThreadOrTask(factory=self._create_trace)
 
     def __call__(
         self, frame: FrameType, event: str, arg: Any
@@ -84,7 +84,7 @@ class Trace:
 
         return self.trace(frame, event, arg)
 
-    def _create_pdbproxy(self):
+    def _create_trace(self):
         registrar = Registrar(
             trace_id=self._id_composer(),
             registry=self._registry,
