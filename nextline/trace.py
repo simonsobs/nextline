@@ -152,25 +152,20 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
     return ret
 
 
-class TraceDispatchThreadOrTask:
-    """Create a new trace function for each thread or asyncio task"""
+def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
+    """Create a trace that creates a new trace for each thread or asyncio task"""
 
-    def __init__(self, factory: Callable[[], TraceFunc]):
-        self._factory = factory
-        self._map: Dict[Any, TraceFunc] = WeakKeyDictionary()
+    map: Dict[Any, TraceFunc] = WeakKeyDictionary()
 
-    def __call__(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> Optional[TraceFunc]:
-
+    def ret(frame, event, arg) -> Optional[TraceFunc]:
         key = current_task_or_thread()
-
-        trace = self._map.get(key)
+        trace = map.get(key)
         if not trace:
-            trace = self._factory()
-            self._map[key] = trace
-
+            trace = factory()
+            map[key] = trace
         return trace(frame, event, arg)
+
+    return ret
 
 
 def TraceSelectFirstModule(
