@@ -63,11 +63,13 @@ class RegistrarFactory:
         return ret
 
 
-class Trace:
-    """The main trace function
+def Trace(
+    registry: Registry,
+    pdb_ci_registry: PdbCIRegistry,
+    modules_to_trace: Optional[Set[str]] = None,
+) -> TraceFunc:
+    """Create the main trace function
 
-    An instance of this class, which is callable, should be set as the
-    trace function by sys.settrace() and threading.settrace().
 
     Parameters
     ----------
@@ -80,52 +82,38 @@ class Trace:
 
     """
 
-    def __init__(
-        self,
-        registry: Registry,
-        pdb_ci_registry: PdbCIRegistry,
-        modules_to_trace: Optional[Set[str]] = None,
-    ):
+    if modules_to_trace is None:
+        modules_to_trace = set()
 
-        if modules_to_trace is None:
-            modules_to_trace = set()
+    modules_to_trace = set(modules_to_trace)
+    # Make a copy so that the original won't be modified.
+    # modules_to_trace will be shared and modified by
+    # multiple objects.
 
-        self.modules_to_trace = set(modules_to_trace)
-        # Make a copy so that the original won't be modified.
-        # self.modules_to_trace will be shared and modified by
-        # multiple objects.
+    create_registrar = RegistrarFactory(
+        registry=registry,
+        pdb_ci_registry=pdb_ci_registry,
+        modules_to_trace=modules_to_trace,
+    )
 
-        self._create_registrar = RegistrarFactory(
-            registry=registry,
-            pdb_ci_registry=pdb_ci_registry,
-            modules_to_trace=self.modules_to_trace,
-        )
-
-        self.trace = TraceAddFirstModule(
-            trace=TraceSkipModule(
-                trace=TraceSkipLambda(
-                    trace=TraceDispatchThreadOrTask(factory=self._create_trace)
-                )
-            ),
-            modules_to_trace=self.modules_to_trace,
-        )
-
-    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-
-        return self.trace(frame, event, arg)
-
-    def _create_trace(self):
-
-        registrar = self._create_registrar()
-
+    def create_trace_for_single_thread_or_task():
+        registrar = create_registrar()
         pdbproxy = PdbProxy(registrar=registrar)
-
-        trace = TraceSelectFirstModule(
+        return TraceSelectFirstModule(
             trace=pdbproxy,
-            modules_to_trace=self.modules_to_trace,
+            modules_to_trace=modules_to_trace,
         )
 
-        return trace
+    return TraceAddFirstModule(
+        trace=TraceSkipModule(
+            trace=TraceSkipLambda(
+                trace=TraceDispatchThreadOrTask(
+                    factory=create_trace_for_single_thread_or_task
+                )
+            )
+        ),
+        modules_to_trace=modules_to_trace,
+    )
 
 
 class TraceAddFirstModule:
