@@ -64,8 +64,8 @@ class Trace:
         self._id_composer = UniqThreadTaskIdComposer()
         self._prompting_counter = count(1).__next__
 
-        self._trace_map: Dict[
-            Union[Task, Thread], PdbProxy
+        self._registrar_map: Dict[
+            Union[Task, Thread], Registrar
         ] = WeakKeyDictionary()
 
         self._handle = ThreadTaskDoneCallback(done=self._callback)
@@ -107,7 +107,7 @@ class Trace:
         pdbproxy = PdbProxy(registrar=registrar)
 
         task_or_thread = self._handle.register()
-        self._trace_map[task_or_thread] = pdbproxy
+        self._registrar_map[task_or_thread] = registrar
 
         trace = TraceSelectFirstModule(
             trace=pdbproxy,
@@ -117,7 +117,7 @@ class Trace:
         return trace
 
     def _callback(self, task_or_thread: Union[Task, Thread]):
-        self._trace_map[task_or_thread].close()
+        self._registrar_map[task_or_thread].close()
 
 
 class TraceWithCallback:

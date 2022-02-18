@@ -79,6 +79,7 @@ class Registrar:
         self._prompting_counter = prompting_counter
         self.modules_to_trace = modules_to_trace
         self._skip = MODULES_TO_SKIP
+        self._opened = False
 
     def open(self) -> TraceFunc:
         self._q_stdin = queue.Queue()
@@ -95,9 +96,13 @@ class Registrar:
         self._registry.open_register(self._trace_id)
         self._registry.register_list_item("thread_task_ids", self._trace_id)
 
+        self._opened = True
+
         return self._pdb.trace_dispatch
 
     def close(self):
+        if not self._opened:
+            return
         self._registry.close_register(self._trace_id)
         self._registry.deregister_list_item("thread_task_ids", self._trace_id)
 
@@ -241,11 +246,6 @@ class PdbProxy:
             return local_trace
 
         return create_local_trace()(frame, event, arg)
-
-    def close(self):
-        if self._first:
-            return
-        self._registrar.close()
 
     def _before(self, frame, event, arg):
         self._registrar.calling_trace(frame, event, arg)
