@@ -87,7 +87,7 @@ class Machine:
 
         This method is scheduled as a task in run().
 
-        Bofore changing the state to "exited", this method waits for the script
+        Before changing the state to "exited", this method waits for the script
         execution (in another thread) to exit.
         """
 
