@@ -216,17 +216,7 @@ class PdbProxy:
         self._registrar = registrar
         self._first = True
 
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
-        """The main trace function
-
-        This method will be called by the instance of Trace.
-        The event should be always "call."
-        """
-
-        if not event == "call":
-            raise RuntimeError(
-                f'The event must be "call": ({frame!r}, {event!r}, {arg!r})'
-            )
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
 
         if self._first:
             self._first = False
