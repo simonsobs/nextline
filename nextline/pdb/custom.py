@@ -37,7 +37,10 @@ class CustomizedPdb(Pdb):
 
     def _cmdloop(self):
         """Prompt user input"""
-        self._registrar.entering_cmdloop()
+        try:
+            self._registrar.entering_cmdloop()
+        except RuntimeError:
+            return
         super()._cmdloop()
         self._registrar.exited_cmdloop()
 

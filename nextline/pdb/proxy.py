@@ -113,6 +113,9 @@ class Registrar:
         self._current_trace_args = None
 
     def entering_cmdloop(self) -> None:
+        if not self._current_trace_args:
+            raise RuntimeError("calling_trace() must be called first")
+
         frame, event, _ = self._current_trace_args
 
         module_name = frame.f_globals.get("__name__")
