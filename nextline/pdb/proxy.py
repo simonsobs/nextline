@@ -167,6 +167,28 @@ class TraceSkipLambda:
         return func_name == "<lambda>"
 
 
+class TraceSelectFirstModule:
+    def __init__(
+        self,
+        trace: TraceFunc,
+        modules_to_trace: Set[str],
+    ):
+        self._trace = trace
+        self.modules_to_trace = modules_to_trace
+        self._first = True
+
+    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
+        if self._first:
+            if not self._is_first_module_to_trace(frame):
+                return
+            self._first = False
+        return self._trace(frame, event, arg)
+
+    def _is_first_module_to_trace(self, frame: FrameType) -> bool:
+        module_name = frame.f_globals.get("__name__")
+        return is_matched_to_any(module_name, self.modules_to_trace)
+
+
 class PdbProxy:
     """A proxy of Pdb
 
@@ -185,15 +207,8 @@ class PdbProxy:
     prompting_counter : callable
     """
 
-    def __init__(
-        self,
-        registrar: Registrar,
-        modules_to_trace: Set[str],
-    ):
-        self.modules_to_trace = modules_to_trace
-
+    def __init__(self, registrar: Registrar):
         self._registrar = registrar
-
         self._first = True
 
     def __call__(self, frame: FrameType, event: str, arg: Any) -> TraceFunc:
@@ -209,8 +224,6 @@ class PdbProxy:
             )
 
         if self._first:
-            if not self._is_first_module_to_trace(frame):
-                return
             self._first = False
             self._trace = self._registrar.open()
 
@@ -239,10 +252,6 @@ class PdbProxy:
 
     def _after(self):
         self._registrar.exited_trace()
-
-    def _is_first_module_to_trace(self, frame) -> bool:
-        module_name = frame.f_globals.get("__name__")
-        return is_matched_to_any(module_name, self.modules_to_trace)
 
 
 def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
