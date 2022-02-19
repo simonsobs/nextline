@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .utils import Registry
 
 
-class RegistrarFactory:
+class PdbInterfaceFactory:
     def __init__(
         self,
         registry: Registry,
@@ -85,7 +85,7 @@ def Trace(
     # modules_to_trace will be shared and modified by
     # multiple objects.
 
-    create_registrar = RegistrarFactory(
+    create_pdbi = PdbInterfaceFactory(
         registry=registry,
         pdb_ci_registry=pdb_ci_registry,
         modules_to_trace=modules_to_trace,
@@ -93,8 +93,8 @@ def Trace(
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
-        registrar = create_registrar()
-        pdbproxy = PdbProxy(pdbi=registrar)
+        pdbi = create_pdbi()
+        pdbproxy = PdbProxy(pdbi=pdbi)
         return TraceSelectFirstModule(
             trace=pdbproxy,
             modules_to_trace=modules_to_trace,
