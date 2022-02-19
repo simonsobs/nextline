@@ -68,7 +68,7 @@ async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
 
     trace_org = sys.gettrace()
     sys.settrace(trace)
-    module_a.func()
+    module_a.func_a()
     sys.settrace(trace_org)
 
     assert modules_to_trace is not trace.modules_to_trace
@@ -102,7 +102,7 @@ async def test_modules_to_trace_partial(MockPdbProxy):
 
     trace = Trace(registry)
 
-    func = partial(module_a.func)
+    func = partial(module_a.func_a)
 
     trace_org = sys.gettrace()
     sys.settrace(trace)

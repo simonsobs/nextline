@@ -6,6 +6,8 @@ from unittest.mock import Mock
 from typing import Any, Set, List, Tuple, Dict
 from types import FrameType
 
+TraceSummaryType = Dict[str, Dict[str, Set[str]]]
+
 
 def summarize_trace_calls(mock_trace: Mock) -> Dict[str, Dict[str, Set[str]]]:
     """Traced modules and functions for each event
