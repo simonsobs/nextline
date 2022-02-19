@@ -3,9 +3,8 @@ import sys
 import pytest
 from unittest.mock import Mock, call
 
-from nextline.trace import Trace
+from nextline.trace import Trace, TraceCallPdb
 from nextline.utils import Registry
-from nextline.pdb.proxy import TraceCallPdb
 
 
 ##__________________________________________________________________||

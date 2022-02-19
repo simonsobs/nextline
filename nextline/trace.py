@@ -9,7 +9,7 @@ import fnmatch
 from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
-from .pdb.proxy import TraceCallPdb, PdbInterface, MODULES_TO_SKIP
+from .pdb.proxy import PdbInterface, MODULES_TO_SKIP
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
@@ -180,6 +180,36 @@ def TraceSelectFirstModule(
         return trace(frame, event, arg)
 
     return ret
+
+
+def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
+
+    pdb_trace: Union[TraceFunc, None] = None
+    # Instead of calling pdbi.open() here, set initially None so that
+    # pdbi.open() won't be called unless global_trace() is actually
+    # called.
+
+    def global_trace(frame, event, arg) -> Optional[TraceFunc]:
+        nonlocal pdb_trace
+        if not pdb_trace:
+            pdb_trace = pdbi.open()  # Bdb.trace_dispatch
+
+        def create_local_trace():
+            next_trace: Union[TraceFunc, None] = pdb_trace
+
+            def local_trace(frame, event, arg):
+                nonlocal next_trace
+                pdbi.calling_trace(frame, event, arg)
+                next_trace = next_trace(frame, event, arg)
+                pdbi.exited_trace()
+                if next_trace:
+                    return local_trace
+
+            return local_trace
+
+        return create_local_trace()(frame, event, arg)
+
+    return global_trace
 
 
 class TraceWithCallback:

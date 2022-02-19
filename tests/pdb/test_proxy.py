@@ -7,9 +7,9 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.utils import Registry
-from nextline.pdb.proxy import TraceCallPdb, PdbInterface
+from nextline.pdb.proxy import PdbInterface
 from nextline.pdb.custom import CustomizedPdb
-from nextline.trace import UniqThreadTaskIdComposer
+from nextline.trace import UniqThreadTaskIdComposer, TraceCallPdb
 
 
 class MockCustomizedPdb(CustomizedPdb):
@@ -88,5 +88,6 @@ def test_proxy(
     # assert mock_registrar.entering_cmdloop.called
     # assert mock_registrar.exited_cmdloop.called
     # print(mock_registrar.method_calls)
+
 
 ##__________________________________________________________________||
