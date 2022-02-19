@@ -141,7 +141,7 @@ class PdbInterface:
         self._pdb_ci.end()
 
 
-class PdbProxy:
+class TraceCallPdb:
     """A proxy of Pdb
 
     An instance of this class is created for each thread or async task.

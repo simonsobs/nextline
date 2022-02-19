@@ -5,13 +5,13 @@ from unittest.mock import Mock, call
 
 from nextline.trace import Trace
 from nextline.utils import Registry
-from nextline.pdb.proxy import PdbProxy
+from nextline.pdb.proxy import TraceCallPdb
 
 
 ##__________________________________________________________________||
 @pytest.fixture()
 def MockPdbProxy(monkeypatch):
-    mock_instance = Mock(spec=PdbProxy)
+    mock_instance = Mock(spec=TraceCallPdb)
     mock_class = Mock(return_value=mock_instance)
     monkeypatch.setattr("nextline.trace.PdbProxy", mock_class)
     yield mock_class

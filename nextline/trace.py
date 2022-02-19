@@ -9,7 +9,7 @@ import fnmatch
 from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
-from .pdb.proxy import PdbProxy, PdbInterface, MODULES_TO_SKIP
+from .pdb.proxy import TraceCallPdb, PdbInterface, MODULES_TO_SKIP
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
@@ -90,9 +90,9 @@ def Trace(
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
         pdbi = create_pdbi()
-        pdbproxy = PdbProxy(pdbi=pdbi)
+        trace_call_pdb = TraceCallPdb(pdbi=pdbi)
         return TraceSelectFirstModule(
-            trace=pdbproxy,
+            trace=trace_call_pdb,
             modules_to_trace=modules_to_trace,
         )
 

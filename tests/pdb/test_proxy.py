@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.utils import Registry
-from nextline.pdb.proxy import PdbProxy, PdbInterface
+from nextline.pdb.proxy import TraceCallPdb, PdbInterface
 from nextline.pdb.custom import CustomizedPdb
 from nextline.trace import UniqThreadTaskIdComposer
 
@@ -39,7 +39,7 @@ def mock_registrar():
 def proxy(mock_registrar: PdbInterface):
     modules_to_trace = {"tests.pdb.subject", __name__}
 
-    y = PdbProxy(
+    y = TraceCallPdb(
         pdbi=mock_registrar,
         # modules_to_trace=modules_to_trace,
     )
@@ -67,7 +67,7 @@ params = [
 
 @pytest.mark.parametrize("subject", params)
 def test_proxy(
-    proxy: PdbProxy,
+    proxy: TraceCallPdb,
     mock_registrar: Union[Mock, PdbInterface],
     subject: Callable,
 ):
