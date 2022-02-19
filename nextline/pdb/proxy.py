@@ -112,7 +112,6 @@ class PdbInterface:
         self._ci_registry = ci_registry
         self._prompting_counter = prompting_counter
         self.modules_to_trace = modules_to_trace
-        self._skip = MODULES_TO_SKIP
         self._opened = False
 
     def open(self) -> TraceFunc:
@@ -123,7 +122,6 @@ class PdbInterface:
             pdbi=self,
             stdin=StreamIn(self._q_stdin),
             stdout=StreamOut(self._q_stdout),
-            skip=self._skip,
             readrc=False,
         )
 
