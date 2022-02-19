@@ -142,13 +142,11 @@ class PdbInterface:
 
 
 def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
-    _first = True
     _trace = None
 
     def ret(frame, event, arg) -> Optional[TraceFunc]:
-        nonlocal _first, _trace
-        if _first:
-            _first = False
+        nonlocal _trace
+        if not _trace:
             _trace = pdbi.open()
 
         def create_local_trace():
