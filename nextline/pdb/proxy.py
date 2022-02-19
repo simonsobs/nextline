@@ -142,7 +142,11 @@ class PdbInterface:
 
 
 def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
+
     pdb_trace: Union[TraceFunc, None] = None
+    # Instead of calling pdbi.open() here, set initially None so that
+    # pdbi.open() won't be called unless global_trace() is actually
+    # called.
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
         nonlocal pdb_trace
