@@ -141,28 +141,29 @@ class PdbInterface:
         self._pdb_ci.end()
 
 
-class TraceCallPdb:
-    def __init__(self, pdbi: PdbInterface):
-        self._pdbi = pdbi
-        self._first = True
+def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
+    _first = True
+    _trace = None
 
-    def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
-
-        if self._first:
-            self._first = False
-            self._trace = self._pdbi.open()
+    def ret(frame, event, arg) -> Optional[TraceFunc]:
+        nonlocal _first, _trace
+        if _first:
+            _first = False
+            _trace = pdbi.open()
 
         def create_local_trace():
-            trace = self._trace
+            trace = _trace
 
             def local_trace(frame, event, arg):
                 nonlocal trace
-                self._pdbi.calling_trace(frame, event, arg)
+                pdbi.calling_trace(frame, event, arg)
                 trace = trace(frame, event, arg)
-                self._pdbi.exited_trace()
+                pdbi.exited_trace()
                 if trace:
                     return local_trace
 
             return local_trace
 
         return create_local_trace()(frame, event, arg)
+
+    return ret
