@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from asyncio import isfuture
 from weakref import WeakKeyDictionary
 
 import fnmatch
@@ -202,67 +201,6 @@ def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
         return create_local_trace()(frame, event, arg)
 
     return global_trace
-
-
-class TraceWithCallback:
-    def __init__(
-        self,
-        wrapped: TraceFunc,
-        returning: Optional[TraceFunc] = None,
-    ):
-        self.wrapped = wrapped
-        self.returning = returning
-
-        self._outermost = self.all
-
-        self._first = True
-        self._future = False
-
-    def __call__(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> Optional[TraceFunc]:
-        """The `call` event"""
-
-        if self._first:
-            self._first = False
-            return self.outermost(frame, event, arg)
-        if self._future:
-            self._future = False
-            self._outermost = self.all
-            return self.outermost(frame, event, arg)
-        return self.all(frame, event, arg)
-
-    def outermost(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> Optional[TraceFunc]:
-        """The first local scope entered"""
-
-        if self._outermost:
-            self._outermost = self._outermost(frame, event, arg)
-
-        if event != "return":
-            return self.outermost
-
-        if isfuture(arg):
-            # awaiting. will be called again
-
-            # NOTE: This doesn't detect all `await`. Some `await`
-            # returns without any arg, for example, the sleep with
-            # the delay 0, i.e., asyncio.sleep(0)
-            self._future = True
-            return
-
-        if self.returning:
-            self.returning(frame, event, arg)
-
-        return
-
-    def all(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> Optional[TraceFunc]:
-        """Every local scope"""
-
-        return self.wrapped(frame, event, arg)
 
 
 def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
