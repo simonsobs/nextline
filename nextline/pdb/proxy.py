@@ -6,7 +6,7 @@ from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
-from typing import Any, Optional, Set, Callable, TYPE_CHECKING
+from typing import Any, Optional, Set, Callable, Union, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -142,26 +142,26 @@ class PdbInterface:
 
 
 def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
-    _trace = None
+    pdb_trace: Union[TraceFunc, None] = None
 
-    def ret(frame, event, arg) -> Optional[TraceFunc]:
-        nonlocal _trace
-        if not _trace:
-            _trace = pdbi.open()
+    def global_trace(frame, event, arg) -> Optional[TraceFunc]:
+        nonlocal pdb_trace
+        if not pdb_trace:
+            pdb_trace = pdbi.open()  # Bdb.trace_dispatch
 
         def create_local_trace():
-            trace = _trace
+            next_trace: Union[TraceFunc, None] = pdb_trace
 
             def local_trace(frame, event, arg):
-                nonlocal trace
+                nonlocal next_trace
                 pdbi.calling_trace(frame, event, arg)
-                trace = trace(frame, event, arg)
+                next_trace = next_trace(frame, event, arg)
                 pdbi.exited_trace()
-                if trace:
+                if next_trace:
                     return local_trace
 
             return local_trace
 
         return create_local_trace()(frame, event, arg)
 
-    return ret
+    return global_trace
