@@ -9,7 +9,7 @@ from unittest.mock import Mock
 from nextline.utils import Registry
 from nextline.pdb.proxy import PdbInterface
 from nextline.pdb.custom import CustomizedPdb
-from nextline.trace import UniqThreadTaskIdComposer, TraceCallPdb
+from nextline.trace import TraceCallPdb
 
 
 class MockCustomizedPdb(CustomizedPdb):

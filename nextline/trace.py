@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from asyncio import isfuture
-from itertools import count
 from weakref import WeakKeyDictionary
 
 import fnmatch
@@ -9,49 +8,14 @@ import fnmatch
 from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
-from .pdb.proxy import PdbInterface, MODULES_TO_SKIP
+from .pdb.proxy import PdbInterfaceFactory, PdbInterface, MODULES_TO_SKIP
 from .registry import PdbCIRegistry
-from .utils import (
-    UniqThreadTaskIdComposer,
-    ThreadTaskDoneCallback,
-    current_task_or_thread,
-)
+from .utils import current_task_or_thread
 
 from .types import TraceFunc
 
 if TYPE_CHECKING:
     from .utils import Registry
-
-
-def PdbInterfaceFactory(
-    registry: Registry,
-    pdb_ci_registry: PdbCIRegistry,
-    modules_to_trace: Set[str],
-) -> Callable[[], PdbInterface]:
-
-    id_composer = UniqThreadTaskIdComposer()
-    prompting_counter = count(1).__next__
-    callback_map: Dict[Any, PdbInterface] = WeakKeyDictionary()
-
-    def callback_func(key):
-        callback_map[key].close()
-
-    callback = ThreadTaskDoneCallback(done=callback_func)
-
-    def factory() -> PdbInterface:
-        # TODO: check if already created for the same thread or task
-        pbi = PdbInterface(
-            trace_id=id_composer(),
-            registry=registry,
-            ci_registry=pdb_ci_registry,
-            prompting_counter=prompting_counter,
-            modules_to_trace=modules_to_trace,
-        )
-        key = callback.register()
-        callback_map[key] = pbi
-        return pbi
-
-    return factory
 
 
 def Trace(

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import queue
+from itertools import count
+from weakref import WeakKeyDictionary
 
+from ..utils import UniqThreadTaskIdComposer, ThreadTaskDoneCallback
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
-from typing import Any, Set, Callable, TYPE_CHECKING
+
+from typing import Any, Set, Dict, Callable, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -42,6 +46,37 @@ MODULES_TO_SKIP = [
     "nextline.queuedist",
     "nextlinegraphql.schema.bindables",
 ]
+
+
+def PdbInterfaceFactory(
+    registry: Registry,
+    pdb_ci_registry: PdbCIRegistry,
+    modules_to_trace: Set[str],
+) -> Callable[[], PdbInterface]:
+
+    id_composer = UniqThreadTaskIdComposer()
+    prompting_counter = count(1).__next__
+    callback_map: Dict[Any, PdbInterface] = WeakKeyDictionary()
+
+    def callback_func(key):
+        callback_map[key].close()
+
+    callback = ThreadTaskDoneCallback(done=callback_func)
+
+    def factory() -> PdbInterface:
+        # TODO: check if already created for the same thread or task
+        pbi = PdbInterface(
+            trace_id=id_composer(),
+            registry=registry,
+            ci_registry=pdb_ci_registry,
+            prompting_counter=prompting_counter,
+            modules_to_trace=modules_to_trace,
+        )
+        key = callback.register()
+        callback_map[key] = pbi
+        return pbi
+
+    return factory
 
 
 class PdbInterface:
