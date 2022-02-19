@@ -85,7 +85,7 @@ class PdbInterface:
         self._q_stdout = queue.Queue()
 
         self._pdb = CustomizedPdb(
-            pdb_interface=self,
+            pdbi=self,
             stdin=StreamIn(self._q_stdin),
             stdout=StreamOut(self._q_stdout),
             skip=self._skip,
@@ -159,24 +159,24 @@ class PdbProxy:
     prompting_counter : callable
     """
 
-    def __init__(self, pdb_interface: PdbInterface):
-        self._pdb_interface = pdb_interface
+    def __init__(self, pdbi: PdbInterface):
+        self._pdbi = pdbi
         self._first = True
 
     def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
 
         if self._first:
             self._first = False
-            self._trace = self._pdb_interface.open()
+            self._trace = self._pdbi.open()
 
         def create_local_trace():
             trace = self._trace
 
             def local_trace(frame, event, arg):
                 nonlocal trace
-                self._pdb_interface.calling_trace(frame, event, arg)
+                self._pdbi.calling_trace(frame, event, arg)
                 trace = trace(frame, event, arg)
-                self._pdb_interface.exited_trace()
+                self._pdbi.exited_trace()
                 if trace:
                     return local_trace
 

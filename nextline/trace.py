@@ -94,7 +94,7 @@ def Trace(
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
         registrar = create_registrar()
-        pdbproxy = PdbProxy(pdb_interface=registrar)
+        pdbproxy = PdbProxy(pdbi=registrar)
         return TraceSelectFirstModule(
             trace=pdbproxy,
             modules_to_trace=modules_to_trace,

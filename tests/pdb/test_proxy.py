@@ -40,7 +40,7 @@ def proxy(mock_registrar: PdbInterface):
     modules_to_trace = {"tests.pdb.subject", __name__}
 
     y = PdbProxy(
-        pdb_interface=mock_registrar,
+        pdbi=mock_registrar,
         # modules_to_trace=modules_to_trace,
     )
 

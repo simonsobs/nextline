@@ -21,9 +21,9 @@ def getlines(func_org, statement, filename, module_globals=None):
 class CustomizedPdb(Pdb):
     """A Pdb subclass that calls back PdbProxy"""
 
-    def __init__(self, pdb_interface: PdbInterface, *args, **kwargs):
+    def __init__(self, pdbi: PdbInterface, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._pdb_interface = pdb_interface
+        self._pdbi = pdbi
 
         # self.quitting = True # not sure if necessary
 
@@ -38,13 +38,13 @@ class CustomizedPdb(Pdb):
     def _cmdloop(self):
         """Prompt user input"""
         try:
-            self._pdb_interface.entering_cmdloop()
+            self._pdbi.entering_cmdloop()
         except RuntimeError:
             # "step" at the last line
             # https://github.com/simonsobs/nextline/issues/1
             return
         super()._cmdloop()
-        self._pdb_interface.exited_cmdloop()
+        self._pdbi.exited_cmdloop()
 
     def set_continue(self):
         """override bdb.set_continue()
@@ -68,7 +68,7 @@ class CustomizedPdb(Pdb):
     #     return True
 
     def do_list(self, arg):
-        statement = self._pdb_interface.statement
+        statement = self._pdbi.statement
         import linecache
 
         getlines_org = linecache.getlines
