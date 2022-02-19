@@ -9,7 +9,7 @@ import fnmatch
 from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
-from .pdb.proxy import PdbProxy, Registrar, MODULES_TO_SKIP
+from .pdb.proxy import PdbProxy, PdbInterface, MODULES_TO_SKIP
 from .registry import PdbCIRegistry
 from .utils import (
     UniqThreadTaskIdComposer,
@@ -37,16 +37,16 @@ class RegistrarFactory:
         self._id_composer = UniqThreadTaskIdComposer()
         self._prompting_counter = count(1).__next__
 
-        self._callback_map: Dict[Any, Registrar] = WeakKeyDictionary()
+        self._callback_map: Dict[Any, PdbInterface] = WeakKeyDictionary()
 
         def callback_func(key):
             self._callback_map[key].close()
 
         self._callback = ThreadTaskDoneCallback(done=callback_func)
 
-    def __call__(self) -> Registrar:
+    def __call__(self) -> PdbInterface:
         # TODO: check if already created for the same thread or task
-        ret = Registrar(
+        ret = PdbInterface(
             trace_id=self._id_composer(),
             registry=self._registry,
             ci_registry=self._pdb_ci_registry,
@@ -94,7 +94,7 @@ def Trace(
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
         registrar = create_registrar()
-        pdbproxy = PdbProxy(registrar=registrar)
+        pdbproxy = PdbProxy(pdb_interface=registrar)
         return TraceSelectFirstModule(
             trace=pdbproxy,
             modules_to_trace=modules_to_trace,

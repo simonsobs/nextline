@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.utils import Registry
-from nextline.pdb.proxy import PdbProxy, Registrar
+from nextline.pdb.proxy import PdbProxy, PdbInterface
 from nextline.pdb.custom import CustomizedPdb
 from nextline.trace import UniqThreadTaskIdComposer
 
@@ -31,16 +31,16 @@ def monkeypatch_customized_pdb(monkeypatch):
 
 @pytest.fixture()
 def mock_registrar():
-    y = Mock(spec=Registrar)
+    y = Mock(spec=PdbInterface)
     yield y
 
 
 @pytest.fixture()
-def proxy(mock_registrar: Registrar):
+def proxy(mock_registrar: PdbInterface):
     modules_to_trace = {"tests.pdb.subject", __name__}
 
     y = PdbProxy(
-        registrar=mock_registrar,
+        pdb_interface=mock_registrar,
         # modules_to_trace=modules_to_trace,
     )
 
@@ -68,7 +68,7 @@ params = [
 @pytest.mark.parametrize("subject", params)
 def test_proxy(
     proxy: PdbProxy,
-    mock_registrar: Union[Mock, Registrar],
+    mock_registrar: Union[Mock, PdbInterface],
     subject: Callable,
 ):
 

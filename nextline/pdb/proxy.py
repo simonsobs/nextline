@@ -44,8 +44,8 @@ MODULES_TO_SKIP = [
 ]
 
 
-class Registrar:
-    """Register Pdb prompts to registries
+class PdbInterface:
+    """Instantiate Pdb and register its command loops
 
 
     Parameters
@@ -85,7 +85,7 @@ class Registrar:
         self._q_stdout = queue.Queue()
 
         self._pdb = CustomizedPdb(
-            registrar=self,
+            pdb_interface=self,
             stdin=StreamIn(self._q_stdin),
             stdout=StreamOut(self._q_stdout),
             skip=self._skip,
@@ -159,24 +159,24 @@ class PdbProxy:
     prompting_counter : callable
     """
 
-    def __init__(self, registrar: Registrar):
-        self._registrar = registrar
+    def __init__(self, pdb_interface: PdbInterface):
+        self._pdb_interface = pdb_interface
         self._first = True
 
     def __call__(self, frame, event, arg) -> Optional[TraceFunc]:
 
         if self._first:
             self._first = False
-            self._trace = self._registrar.open()
+            self._trace = self._pdb_interface.open()
 
         def create_local_trace():
             trace = self._trace
 
             def local_trace(frame, event, arg):
                 nonlocal trace
-                self._registrar.calling_trace(frame, event, arg)
+                self._pdb_interface.calling_trace(frame, event, arg)
                 trace = trace(frame, event, arg)
-                self._registrar.exited_trace()
+                self._pdb_interface.exited_trace()
                 if trace:
                     return local_trace
 
