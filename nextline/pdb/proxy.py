@@ -142,23 +142,6 @@ class PdbInterface:
 
 
 class TraceCallPdb:
-    """A proxy of Pdb
-
-    An instance of this class is created for each thread or async task.
-
-    Parameters
-    ----------
-    thread_asynctask_id : object
-        A thread and async tack ID
-    modules_to_trace: set
-        The set of modules to trace. This object is shared by multiple
-        instances of this class. Modules in which Pdb commands are
-        prompted will be added.
-    registry: object
-    ci_registry: object
-    prompting_counter : callable
-    """
-
     def __init__(self, pdbi: PdbInterface):
         self._pdbi = pdbi
         self._first = True
