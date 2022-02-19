@@ -8,7 +8,7 @@ import fnmatch
 from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
-from .pdb.proxy import PdbInterfaceFactory, PdbInterface, MODULES_TO_SKIP
+from .pdb.proxy import PdbInterfaceFactory, PdbInterface
 from .registry import PdbCIRegistry
 from .utils import current_task_or_thread
 
@@ -16,6 +16,34 @@ from .types import TraceFunc
 
 if TYPE_CHECKING:
     from .utils import Registry
+
+MODULES_TO_SKIP = [
+    "threading",
+    "queue",
+    "importlib",
+    "asyncio.*",
+    "janus",
+    "codec",
+    "concurrent.futures.*",
+    "selectors",
+    "weakref",
+    "_weakrefset",
+    "socket",
+    "logging",
+    "os",
+    "collections.*",
+    "importlib.*",
+    "pathlib",
+    "typing",
+    "posixpath",
+    "fnmatch",
+    "_pytest.*",
+    "pluggy.*",
+    "nextline.pdb.*",
+    "nextline.utils.*",
+    "nextline.queuedist",
+    "nextlinegraphql.schema.bindables",
+]
 
 
 def Trace(

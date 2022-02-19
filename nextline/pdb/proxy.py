@@ -19,35 +19,6 @@ if TYPE_CHECKING:
     from ..utils import Registry
 
 
-MODULES_TO_SKIP = [
-    "threading",
-    "queue",
-    "importlib",
-    "asyncio.*",
-    "janus",
-    "codec",
-    "concurrent.futures.*",
-    "selectors",
-    "weakref",
-    "_weakrefset",
-    "socket",
-    "logging",
-    "os",
-    "collections.*",
-    "importlib.*",
-    "pathlib",
-    "typing",
-    "posixpath",
-    "fnmatch",
-    "_pytest.*",
-    "pluggy.*",
-    "nextline.pdb.*",
-    "nextline.utils.*",
-    "nextline.queuedist",
-    "nextlinegraphql.schema.bindables",
-]
-
-
 def PdbInterfaceFactory(
     registry: Registry,
     pdb_ci_registry: PdbCIRegistry,
