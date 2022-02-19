@@ -15,19 +15,19 @@ def call_with_trace(
     done: Optional[DoneFunc] = None,
     thread: bool = True,
 ) -> None:
-    """Set the trace funciton while running the funciton
+    """Set the trace function while running the function
 
     Notes
     -----
-    The trace funciton will be used in all new threads created during
-    the funciton execution regardless of whether the threads are
-    created by the funciton. If the thread option is false, the trace
-    funciton will not be use in any new threads.
+    The trace function will be used in all new threads created during
+    the function execution regardless of whether the threads are
+    created by the function. If the thread option is false, the trace
+    function will not be use in any new threads.
 
     Parameters
     ----------
     func : callable
-        A fucntion to be called without any args. Use
+        A function to be called without any args. Use
         functools.partial to provide args. A return value and an
         exception will be given to `done`.
     trace: callable
@@ -38,7 +38,7 @@ def call_with_trace(
         argument is the exception if an exception occurs or otherwise
         None.
     thread: bool, default True
-        If False, no new threads will be traced. 
+        If False, no new threads will be traced.
     """
 
     ret = None
