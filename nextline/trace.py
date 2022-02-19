@@ -23,39 +23,35 @@ if TYPE_CHECKING:
     from .utils import Registry
 
 
-class PdbInterfaceFactory:
-    def __init__(
-        self,
-        registry: Registry,
-        pdb_ci_registry: PdbCIRegistry,
-        modules_to_trace: Set[str],
-    ):
-        self._registry = registry
-        self._pdb_ci_registry = pdb_ci_registry
-        self._modules_to_trace = modules_to_trace
+def PdbInterfaceFactory(
+    registry: Registry,
+    pdb_ci_registry: PdbCIRegistry,
+    modules_to_trace: Set[str],
+) -> Callable[[], PdbInterface]:
 
-        self._id_composer = UniqThreadTaskIdComposer()
-        self._prompting_counter = count(1).__next__
+    id_composer = UniqThreadTaskIdComposer()
+    prompting_counter = count(1).__next__
+    callback_map: Dict[Any, PdbInterface] = WeakKeyDictionary()
 
-        self._callback_map: Dict[Any, PdbInterface] = WeakKeyDictionary()
+    def callback_func(key):
+        callback_map[key].close()
 
-        def callback_func(key):
-            self._callback_map[key].close()
+    callback = ThreadTaskDoneCallback(done=callback_func)
 
-        self._callback = ThreadTaskDoneCallback(done=callback_func)
-
-    def __call__(self) -> PdbInterface:
+    def factory() -> PdbInterface:
         # TODO: check if already created for the same thread or task
-        ret = PdbInterface(
-            trace_id=self._id_composer(),
-            registry=self._registry,
-            ci_registry=self._pdb_ci_registry,
-            prompting_counter=self._prompting_counter,
-            modules_to_trace=self._modules_to_trace,
+        pbi = PdbInterface(
+            trace_id=id_composer(),
+            registry=registry,
+            ci_registry=pdb_ci_registry,
+            prompting_counter=prompting_counter,
+            modules_to_trace=modules_to_trace,
         )
-        key = self._callback.register()
-        self._callback_map[key] = ret
-        return ret
+        key = callback.register()
+        callback_map[key] = pbi
+        return pbi
+
+    return factory
 
 
 def Trace(
