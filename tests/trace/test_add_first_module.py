@@ -22,10 +22,10 @@ def test_one(
         module_a.func_a.__name__,
         module_b.func_b.__name__,
     }
-    assert expected <= obj_call_summary["func"]["call"]
-    assert expected <= trace_call_summary["func"]["return"]
+    assert expected <= obj_call_summary.call.func
+    assert expected <= trace_call_summary.return_.func
 
-    assert "return" not in obj_call_summary["func"]
+    assert not obj_call_summary.return_.func
 
     assert {__name__} == modules_to_trace
 

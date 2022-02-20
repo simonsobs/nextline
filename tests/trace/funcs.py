@@ -1,19 +1,31 @@
+from dataclasses import dataclass, field
 from operator import itemgetter
 from itertools import groupby
+from keyword import iskeyword
 
 from unittest.mock import Mock
 
-from typing import Any, Set, List, Tuple, Dict
+from typing import Any, Set, List, Tuple
 from types import FrameType
 
-TraceSummaryType = Dict[str, Dict[str, Set[str]]]
+
+@dataclass
+class TracedScopeType:
+    module: Set[str] = field(default_factory=set)
+    func: Set[str] = field(default_factory=set)
 
 
-def summarize_trace_calls(mock_trace: Mock) -> Dict[str, Dict[str, Set[str]]]:
-    """Traced modules and functions for each event
+@dataclass
+class TraceSummaryType:
+    call: TracedScopeType = field(default_factory=TracedScopeType)
+    line: TracedScopeType = field(default_factory=TracedScopeType)
+    return_: TracedScopeType = field(default_factory=TracedScopeType)
+    exception: TracedScopeType = field(default_factory=TracedScopeType)
+    opcode: TracedScopeType = field(default_factory=TracedScopeType)
 
-    e.g., {"module": {"call": {modules}, ...}, "func": {...}}
-    """
+
+def summarize_trace_calls(mock_trace: Mock) -> TraceSummaryType:
+    """Traced modules and functions for each event"""
 
     args = trace_call_args(mock_trace)
     # [(frame, event, arg), ...]
@@ -29,17 +41,27 @@ def summarize_trace_calls(mock_trace: Mock) -> Dict[str, Dict[str, Set[str]]]:
     # [{"event": event, "module": module, "func": func}, ...]
 
     args = sorted(args, key=itemgetter("event"))
-    # sorted by event
+    # sorted for groupby()
 
-    ret = {
-        f: {
-            k: set(map(itemgetter(f), g))
-            for k, g in groupby(args, itemgetter("event"))
+    args_by_events = [
+        (
+            event + ("_" if iskeyword(event) else ""),  # "return_"
+            list(args),  # expland to avoid exhaustion below
+        )
+        for event, args in groupby(args, itemgetter("event"))
+    ]
+
+    ret = TraceSummaryType(
+        **{
+            event: TracedScopeType(
+                **{
+                    scope: set(map(itemgetter(scope), args))
+                    for scope in ("module", "func")
+                }
+            )
+            for event, args in args_by_events
         }
-        for f in ("module", "func")
-    }
-    # {"module": {"call": {modules}, ...}, "func": {...}}
-
+    )
     return ret
 
 
