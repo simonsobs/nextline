@@ -16,6 +16,7 @@ def test_one(
     obj_call_summary: TraceSummaryType,
     trace_call_summary: TraceSummaryType,
     modules_to_trace: Set[str],
+    modules_to_trace_init: Set[str],
 ):
     expected = {
         func.__name__,
@@ -27,7 +28,12 @@ def test_one(
 
     assert not obj_call_summary.return_.func
 
-    assert {__name__} == modules_to_trace
+    assert modules_to_trace_init is not modules_to_trace
+    assert {__name__} | modules_to_trace_init == modules_to_trace
+
+
+def func():
+    module_a.func_a()
 
 
 @pytest.fixture()
@@ -37,9 +43,15 @@ def mock_trace():
     yield y
 
 
+@pytest.fixture(params=[set(), {"some_module"}])
+def modules_to_trace_init(request):
+    y = request.param
+    yield y
+
+
 @pytest.fixture()
-def modules_to_trace():
-    y = set()
+def modules_to_trace(modules_to_trace_init):
+    y = set(modules_to_trace_init)
     yield y
 
 
@@ -65,7 +77,3 @@ def trace_call_summary(obj_call_summary, mock_trace: Mock):
     assert obj_call_summary is not None
     y = summarize_trace_calls(mock_trace)
     yield y
-
-
-def func():
-    module_a.func_a()
