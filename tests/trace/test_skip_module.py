@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 
-from typing import Union, Set
+from typing import Callable, Union, Any, Set
 
 from nextline.call import call_with_trace
 from nextline.trace import TraceSkipModule
@@ -26,8 +26,13 @@ def test_one(
     assert ref.call.module - modules_to_skip == probe.return_.module
 
 
-def func():
+def f():
     module_a.func_a()
+
+
+@pytest.fixture()
+def func():
+    yield f
 
 
 @pytest.fixture(params=[set(), {module_a.__name__}])
@@ -37,9 +42,23 @@ def modules_to_skip(request):
 
 
 @pytest.fixture()
-def target(target_trace_func: Union[TraceFunc, Mock], run_target):
+def target_trace_func(probe_trace_func: Mock, modules_to_skip: Set[str]):
+    y = TraceSkipModule(
+        trace=probe_trace_func,
+        skip=modules_to_skip,
+    )
+    yield y
+
+
+@pytest.fixture()
+def thread():
+    yield False
+
+
+@pytest.fixture()
+def target(wrap_target_trace_func: Union[TraceFunc, Mock], run_target):
     _ = run_target
-    y = summarize_trace_calls(target_trace_func)
+    y = summarize_trace_calls(wrap_target_trace_func)
     yield y
 
 
@@ -58,24 +77,24 @@ def ref(ref_trace_func: Mock, run_ref):
 
 
 @pytest.fixture()
-def run_target(target_trace_func: Union[TraceFunc, Mock]):
-    call_with_trace(func=func, trace=target_trace_func, thread=False)
+def run_target(
+    func: Callable[[], Any],
+    wrap_target_trace_func: Union[TraceFunc, Mock],
+    thread: bool,
+):
+    call_with_trace(func=func, trace=wrap_target_trace_func, thread=thread)
     yield
 
 
 @pytest.fixture()
-def run_ref(ref_trace_func: Union[TraceFunc, Mock]):
+def run_ref(func: Callable[[], Any], ref_trace_func: Union[TraceFunc, Mock]):
     call_with_trace(func=func, trace=ref_trace_func, thread=False)
     yield
 
 
 @pytest.fixture()
-def target_trace_func(probe_trace_func: Mock, modules_to_skip: Set[str]):
-    y = TraceSkipModule(
-        trace=probe_trace_func,
-        skip=modules_to_skip,
-    )
-    y = Mock(wraps=y)
+def wrap_target_trace_func(target_trace_func: TraceFunc):
+    y = Mock(wraps=target_trace_func)
     yield y
 
 
