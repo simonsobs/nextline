@@ -34,9 +34,9 @@ def mock_trace():
     yield y
 
 
-@pytest.fixture()
-def modules_to_skip():
-    y = {module_a.__name__}
+@pytest.fixture(params=[set(), {module_a.__name__}])
+def modules_to_skip(request):
+    y = request.param
     yield y
 
 
