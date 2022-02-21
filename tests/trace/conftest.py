@@ -41,8 +41,12 @@ def run_target(
 
 
 @pytest.fixture()
-def run_ref(func: Callable[[], Any], ref_trace_func: Union[TraceFunc, Mock]):
-    call_with_trace(func=func, trace=ref_trace_func, thread=False)
+def run_ref(
+    func: Callable[[], Any],
+    ref_trace_func: Union[TraceFunc, Mock],
+    thread: bool,
+):
+    call_with_trace(func=func, trace=ref_trace_func, thread=thread)
     yield
 
 
