@@ -3,16 +3,12 @@ from unittest.mock import Mock
 
 from nextline.trace import TraceSkipLambda
 
-from .funcs import TraceSummaryType
+from .funcs import TraceSummary
 
 from . import module_a
 
 
-def test_one(
-    target: TraceSummaryType,
-    probe: TraceSummaryType,
-    ref: TraceSummaryType,
-):
+def test_one(target: TraceSummary, probe: TraceSummary, ref: TraceSummary):
     assert ref.call.func
     assert ref.return_.func
     assert ref.call.func == target.call.func

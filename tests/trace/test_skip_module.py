@@ -5,15 +5,15 @@ from typing import Set
 
 from nextline.trace import TraceSkipModule
 
-from .funcs import TraceSummaryType
+from .funcs import TraceSummary
 
 from . import module_a
 
 
 def test_one(
-    target: TraceSummaryType,
-    probe: TraceSummaryType,
-    ref: TraceSummaryType,
+    target: TraceSummary,
+    probe: TraceSummary,
+    ref: TraceSummary,
     modules_to_skip: Set[str],
 ):
     assert ref.call.module

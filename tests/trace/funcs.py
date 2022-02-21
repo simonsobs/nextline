@@ -10,21 +10,21 @@ from types import FrameType
 
 
 @dataclass
-class TracedScopeType:
+class TracedScope:
     module: Set[str] = field(default_factory=set)
     func: Set[str] = field(default_factory=set)
 
 
 @dataclass
-class TraceSummaryType:
-    call: TracedScopeType = field(default_factory=TracedScopeType)
-    line: TracedScopeType = field(default_factory=TracedScopeType)
-    return_: TracedScopeType = field(default_factory=TracedScopeType)
-    exception: TracedScopeType = field(default_factory=TracedScopeType)
-    opcode: TracedScopeType = field(default_factory=TracedScopeType)
+class TraceSummary:
+    call: TracedScope = field(default_factory=TracedScope)
+    line: TracedScope = field(default_factory=TracedScope)
+    return_: TracedScope = field(default_factory=TracedScope)
+    exception: TracedScope = field(default_factory=TracedScope)
+    opcode: TracedScope = field(default_factory=TracedScope)
 
 
-def summarize_trace_calls(mock_trace: Mock) -> TraceSummaryType:
+def summarize_trace_calls(mock_trace: Mock) -> TraceSummary:
     """Traced modules and functions for each event"""
 
     args = trace_call_args(mock_trace)
@@ -51,9 +51,9 @@ def summarize_trace_calls(mock_trace: Mock) -> TraceSummaryType:
         for event, args in groupby(args, itemgetter("event"))
     ]
 
-    ret = TraceSummaryType(
+    ret = TraceSummary(
         **{
-            event: TracedScopeType(
+            event: TracedScope(
                 **{
                     scope: set(map(itemgetter(scope), args))
                     for scope in ("module", "func")
