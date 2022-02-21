@@ -13,11 +13,12 @@
     "MD033": { "allowed_elements": ["i", "span", "a", "img"] },
     "MD041": false
   },
-  "prettier.printWidth": 70,
-  "rewrap.wrappingColumn": 70,
+  "prettier.printWidth": 79,
+  "rewrap.wrappingColumn": 79,
   "python.testing.pytestArgs": [
     "tests"
   ],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "python.testing.pytestEnabled": true,
+  "editor.rulers": [79]
 }
