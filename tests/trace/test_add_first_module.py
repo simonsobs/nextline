@@ -22,7 +22,7 @@ def test_one(
     assert ref.call.module == target.call.module
     assert not target.return_.module
     assert ref.call.module == probe.call.module
-    assert ref.call.module == probe.return_.module
+    assert ref.return_.module == probe.return_.module
 
     assert modules_to_trace_init is not modules_to_trace
     assert {__name__} | modules_to_trace_init == modules_to_trace

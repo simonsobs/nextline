@@ -5,14 +5,14 @@ from keyword import iskeyword
 
 from unittest.mock import Mock
 
-from typing import Any, Set, List, Tuple
+from typing import Any, List, Tuple, Dict
 from types import FrameType
 
 
 @dataclass
 class TracedScope:
-    module: Set[str] = field(default_factory=set)
-    func: Set[str] = field(default_factory=set)
+    module: List[str] = field(default_factory=list)
+    func: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -55,7 +55,7 @@ def summarize_trace_calls(mock_trace: Mock) -> TraceSummary:
         **{
             event: TracedScope(
                 **{
-                    scope: set(map(itemgetter(scope), args))
+                    scope: ordered_uniq_values(args, scope)
                     for scope in ("module", "func")
                 }
             )
@@ -63,6 +63,14 @@ def summarize_trace_calls(mock_trace: Mock) -> TraceSummary:
         }
     )
     return ret
+
+
+def ordered_uniq_values(dicts: List[Dict], key: Any) -> List:
+    """List of unique values of dicts for the key
+
+    Note: The order is preserved while consecutive duplicates are removed.
+    """
+    return [v for v, _ in groupby([d[key] for d in dicts])]
 
 
 def trace_call_args(trace: Mock) -> List[Tuple[FrameType, str, Any]]:

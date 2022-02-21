@@ -13,8 +13,8 @@ def test_one(target: TraceSummary, probe: TraceSummary, ref: TraceSummary):
     assert ref.return_.func
     assert ref.call.func == target.call.func
     assert not target.return_.func
-    assert ref.call.func - {"<lambda>"} == probe.call.func
-    assert ref.call.func - {"<lambda>"} == probe.return_.func
+    assert set(ref.call.func) - {"<lambda>"} == set(probe.call.func)
+    assert set(ref.return_.func) - {"<lambda>"} == set(probe.return_.func)
 
 
 def f():

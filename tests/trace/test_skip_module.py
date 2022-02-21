@@ -20,8 +20,8 @@ def test_one(
     assert ref.return_.module
     assert ref.call.module == target.call.module
     assert not target.return_.module
-    assert ref.call.module - modules_to_skip == probe.call.module
-    assert ref.call.module - modules_to_skip == probe.return_.module
+    assert set(ref.call.module) - modules_to_skip == set(probe.call.module)
+    assert set(ref.call.module) - modules_to_skip == set(probe.return_.module)
 
 
 def f():
