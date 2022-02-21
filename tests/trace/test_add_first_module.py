@@ -3,44 +3,36 @@ from unittest.mock import Mock
 
 from typing import Set
 
-from nextline.call import call_with_trace
 from nextline.trace import TraceAddFirstModule
-from nextline.types import TraceFunc
 
-from .funcs import summarize_trace_calls, TraceSummaryType
+from .funcs import TraceSummaryType
 
-from . import module_a, module_b
+from . import module_a
 
 
 def test_one(
-    obj_call_summary: TraceSummaryType,
-    trace_call_summary: TraceSummaryType,
+    target: TraceSummaryType,
+    probe: TraceSummaryType,
+    ref: TraceSummaryType,
     modules_to_trace: Set[str],
     modules_to_trace_init: Set[str],
 ):
-    expected = {
-        func.__name__,
-        module_a.func_a.__name__,
-        module_b.func_b.__name__,
-    }
-    assert expected <= obj_call_summary.call.func
-    assert expected <= trace_call_summary.return_.func
-
-    assert not obj_call_summary.return_.func
+    assert ref.call.module
+    assert ref.return_.module
+    assert ref.call.module == target.call.module
+    assert not target.return_.module
 
     assert modules_to_trace_init is not modules_to_trace
     assert {__name__} | modules_to_trace_init == modules_to_trace
 
 
-def func():
+def f():
     module_a.func_a()
 
 
 @pytest.fixture()
-def mock_trace():
-    y = Mock()
-    y.return_value = y
-    yield y
+def func():
+    yield f
 
 
 @pytest.fixture(params=[set(), {"some_module"}])
@@ -56,24 +48,14 @@ def modules_to_trace(modules_to_trace_init):
 
 
 @pytest.fixture()
-def obj(mock_trace: Mock, modules_to_trace: Set[str]):
+def target_trace_func(probe_trace_func: Mock, modules_to_trace: Set[str]):
     y = TraceAddFirstModule(
-        trace=mock_trace,
+        trace=probe_trace_func,
         modules_to_trace=modules_to_trace,
     )
-    y = Mock(wraps=y)
     yield y
 
 
 @pytest.fixture()
-def obj_call_summary(obj: TraceFunc):
-    call_with_trace(func=func, trace=obj, thread=False)
-    y = summarize_trace_calls(obj)
-    yield y
-
-
-@pytest.fixture()
-def trace_call_summary(obj_call_summary, mock_trace: Mock):
-    assert obj_call_summary is not None
-    y = summarize_trace_calls(mock_trace)
-    yield y
+def thread():
+    yield False
