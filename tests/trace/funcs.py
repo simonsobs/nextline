@@ -52,7 +52,7 @@ def summarize_trace_calls(
     args_by_events = [
         (
             event + ("_" if iskeyword(event) else ""),  # "return_"
-            list(args),  # expland to avoid exhaustion below
+            list(args),  # expand to avoid exhaustion below
         )
         for event, args in groupby(args, itemgetter("event"))
     ]
