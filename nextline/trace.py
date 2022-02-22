@@ -88,14 +88,15 @@ def Trace(
         )
 
     return TraceAddFirstModule(
+        modules_to_trace=modules_to_trace,
         trace=TraceSkipModule(
+            skip=MODULES_TO_SKIP,
             trace=TraceSkipLambda(
                 trace=TraceDispatchThreadOrTask(
                     factory=create_trace_for_single_thread_or_task
                 )
-            )
+            ),
         ),
-        modules_to_trace=modules_to_trace,
     )
 
 
@@ -116,10 +117,7 @@ def TraceAddFirstModule(
     return ret
 
 
-def TraceSkipModule(
-    trace: TraceFunc,
-    skip: Set[str] = MODULES_TO_SKIP,
-) -> TraceFunc:
+def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         module_name = frame.f_globals.get("__name__")
         if is_matched_to_any(module_name, skip):
