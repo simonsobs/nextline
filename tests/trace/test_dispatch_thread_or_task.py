@@ -106,12 +106,14 @@ def factory(probe_trace_funcs, task_or_threads, probe_trace_func):
     def factory_():
         called_in = set()
 
-        wrap_trace = Mock()
+        wrap_trace = Mock(wraps=probe_trace_func)
 
-        def trace(frame, event, arg):
+        def trace(*a, **k):
             called_in.add(current_task_or_thread())
-            if probe_trace_func(frame, event, arg):
+            local_trace = probe_trace_func(*a, **k)
+            if local_trace is probe_trace_func:
                 return wrap_trace
+            return local_trace
 
         wrap_trace.side_effect = trace
 

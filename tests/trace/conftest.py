@@ -71,9 +71,16 @@ def run_ref(
 
 @pytest.fixture()
 def wrap_target_trace_func(target_trace_func: TraceFunc):
-    y = Mock(wraps=target_trace_func)
-    # Note: If target_trace_func returns itself, it won't be wrapped.
-    yield y
+    wrap = Mock(wraps=target_trace_func)
+
+    def side_effect(*a, **k):
+        local_trace_func = target_trace_func(*a, **k)
+        if local_trace_func is target_trace_func:
+            return wrap
+        return local_trace_func
+
+    wrap.side_effect = side_effect
+    yield wrap
 
 
 @pytest.fixture()
