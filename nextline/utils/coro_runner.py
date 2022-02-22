@@ -29,7 +29,7 @@ class CoroutineRunner:
         """Schedule or execute the coroutine
 
         If this method is called in the same thread as the one in which this
-        class was instantizted, return the asyncio task for the coroutine. If in
+        class was instantiated, return the asyncio task for the coroutine. If in
         a different thread, schedule to run in the thread at the instantiation,
         wait until it exits, and return None.
 
@@ -50,7 +50,7 @@ class CoroutineRunner:
 
         if self.loop.is_closed():
             # The loop that was running when this class
-            # was inntantizted is closed.
+            # was instantiated is closed.
             raise RuntimeError(f"The loop is closed: {self.loop}")
 
         # In another thread

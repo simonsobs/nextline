@@ -147,7 +147,7 @@ class Registry:
         """Schedule the coroutine as an asyncio task
 
         The task will be scheduled to the asyncio event loop in the thread in
-        which this class is instantizted.
+        which this class is instantiated.
         """
         task = self._runner.run(coro)
         if task:
