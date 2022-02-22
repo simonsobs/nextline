@@ -103,7 +103,7 @@ def Trace(
 def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         module_name = frame.f_globals.get("__name__")
-        if is_matched_to_any(module_name, skip):
+        if _is_matched_to_any(module_name, skip):
             return
         return trace(frame, event, arg)
 
@@ -163,7 +163,7 @@ def TraceSelectFirstModule(
         nonlocal first
         if first:
             module_name = frame.f_globals.get("__name__")
-            if not is_matched_to_any(module_name, modules_to_trace):
+            if not _is_matched_to_any(module_name, modules_to_trace):
                 return
             first = False
         return trace(frame, event, arg)
@@ -201,9 +201,10 @@ def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
     return global_trace
 
 
-def is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
-    """
-    based on Bdb.is_skipped_module()
+def _is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
+    """Test if the word matches any of the patterns
+
+    This function is based on Bdb.is_skipped_module():
     https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
     """
     if word is None:
