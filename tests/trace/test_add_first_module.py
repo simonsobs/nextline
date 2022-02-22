@@ -34,6 +34,7 @@ def f():
 
 @pytest.fixture()
 def func():
+    # TODO: Test what happens if functools.partial() is the first call
     yield f
 
 
