@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 
-from typing import Callable, Union, Any
+from typing import Callable, Union, Any, Set
 
 from nextline.call import call_with_trace
 from nextline.types import TraceFunc
@@ -10,24 +10,43 @@ from .funcs import summarize_trace_calls
 
 
 @pytest.fixture()
-def target(wrap_target_trace_func: Union[TraceFunc, Mock], run_target):
+def target(
+    wrap_target_trace_func: Union[TraceFunc, Mock],
+    modules_in_summary: Union[Set[str], None],
+    run_target,
+):
     _ = run_target
-    y = summarize_trace_calls(wrap_target_trace_func)
+    y = summarize_trace_calls(
+        wrap_target_trace_func, modules=modules_in_summary
+    )
     yield y
 
 
 @pytest.fixture()
-def probe(probe_trace_func: Mock, run_target):
+def probe(
+    probe_trace_func: Mock,
+    modules_in_summary: Union[Set[str], None],
+    run_target,
+):
     _ = run_target
-    y = summarize_trace_calls(probe_trace_func)
+    y = summarize_trace_calls(probe_trace_func, modules=modules_in_summary)
     yield y
 
 
 @pytest.fixture()
-def ref(ref_trace_func: Mock, run_ref):
+def ref(
+    ref_trace_func: Mock,
+    modules_in_summary: Union[Set[str], None],
+    run_ref,
+):
     _ = run_ref
-    y = summarize_trace_calls(ref_trace_func)
+    y = summarize_trace_calls(ref_trace_func, modules=modules_in_summary)
     yield y
+
+
+@pytest.fixture()
+def modules_in_summary():
+    yield None
 
 
 @pytest.fixture()

@@ -5,7 +5,7 @@ from keyword import iskeyword
 
 from unittest.mock import Mock
 
-from typing import Any, List, Tuple, Dict
+from typing import Optional, Any, List, Tuple, Set, Dict
 from types import FrameType
 
 
@@ -24,7 +24,10 @@ class TraceSummary:
     opcode: TracedScope = field(default_factory=TracedScope)
 
 
-def summarize_trace_calls(mock_trace: Mock) -> TraceSummary:
+def summarize_trace_calls(
+    mock_trace: Mock,
+    modules: Optional[Set[str]] = None,
+) -> TraceSummary:
     """Traced modules and functions for each event"""
 
     args = trace_call_args(mock_trace)
@@ -39,6 +42,9 @@ def summarize_trace_calls(mock_trace: Mock) -> TraceSummary:
         for frame, event, _ in args
     ]
     # [{"event": event, "module": module, "func": func}, ...]
+
+    if modules is not None:
+        args = [d for d in args if d["module"] in modules]
 
     args = sorted(args, key=itemgetter("event"))
     # sorted for groupby()
