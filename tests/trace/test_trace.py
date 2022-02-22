@@ -1,152 +1,71 @@
-import sys
-
 import pytest
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
-from nextline.trace import Trace, TraceCallPdb
+from typing import Set
+
+from nextline.trace import Trace
+from nextline.pdb.proxy import PdbInterfaceFactory, PdbInterface
 from nextline.utils import Registry
+from nextline.registry import PdbCIRegistry
+
+from .funcs import TraceSummary
+
+from . import module_a
 
 
-##__________________________________________________________________||
-@pytest.fixture()
-def MockPdbProxy(monkeypatch):
-    mock_instance = Mock(spec=TraceCallPdb)
-    mock_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr("nextline.trace.PdbProxy", mock_class)
-    yield mock_class
+def test_one(
+    target: TraceSummary,
+    probe: TraceSummary,
+    ref: TraceSummary,
+):
+    assert ref.call.module
+    assert ref.return_.module
+    assert ref.call == target.call
+    assert not target.return_.module
+
+    assert ref == probe
 
 
-##__________________________________________________________________||
 def f():
-    pass
-
-
-def subject():
-    f()
-    return
-
-
-@pytest.mark.skip(reason="dev")
-@pytest.mark.asyncio
-async def test_sys_settrace(MockPdbProxy):
-    """test with actual sys.settrace()"""
-    registry = Registry()
-    trace = Trace(registry, modules_to_trace={})
-
-    trace_org = sys.gettrace()
-    sys.settrace(trace)
-    subject()
-    sys.settrace(trace_org)
-
-    assert 1 == MockPdbProxy.call_count
-    assert 2 == MockPdbProxy().call_count
-
-
-##__________________________________________________________________||
-params = [
-    pytest.param(set(), id="empty"),
-    pytest.param({"some_module"}, id="one-value"),
-    pytest.param(None, id="none"),
-    pytest.param(False, id="default"),
-]
-
-
-@pytest.mark.skip(reason="dev")
-@pytest.mark.parametrize("modules_to_trace", params)
-@pytest.mark.asyncio
-async def test_modules_to_trace(MockPdbProxy, modules_to_trace):
-    from . import module_a
-    from . import module_b
-
-    registry = Registry()
-
-    kwargs = {}
-    if modules_to_trace is not False:
-        kwargs["modules_to_trace"] = modules_to_trace
-
-    trace = Trace(registry, **kwargs)
-
-    trace_org = sys.gettrace()
-    sys.settrace(trace)
     module_a.func_a()
-    sys.settrace(trace_org)
-
-    assert modules_to_trace is not trace.modules_to_trace
-    if modules_to_trace:
-        assert modules_to_trace <= trace.modules_to_trace
-
-    traced_moduled = {
-        c.args[0].f_globals.get("__name__")
-        for c in MockPdbProxy().call_args_list
-    }
-
-    # module_b is traced but not in the set modules_to_trace
-    assert module_a.__name__ in trace.modules_to_trace
-    assert {module_a.__name__, module_b.__name__} == traced_moduled
 
 
-@pytest.mark.skip(reason="dev")
-@pytest.mark.asyncio
-async def test_modules_to_trace_partial(MockPdbProxy):
-    """
-    This test investigate what happens if a partial is the first
-    function to be called. The module_a still appears to be the first
-    module and added to the set modules_to_trace. It is not clear why
-    partial.__call__() is not traced.
-    """
-    from functools import partial
-    from . import module_a
-    from . import module_b
-
-    registry = Registry()
-
-    trace = Trace(registry)
-
-    func = partial(module_a.func_a)
-
-    trace_org = sys.gettrace()
-    sys.settrace(trace)
-    func()
-    sys.settrace(trace_org)
-
-    traced_moduled = {
-        c.args[0].f_globals.get("__name__")
-        for c in MockPdbProxy().call_args_list
-    }
-
-    # module_b is traced but not in the set modules_to_trace
-    assert module_a.__name__ in trace.modules_to_trace
-    assert {module_a.__name__, module_b.__name__} == traced_moduled
+@pytest.fixture()
+def func():
+    yield f
 
 
-##__________________________________________________________________||
-@pytest.mark.skip(reason="no need to pass")
-@pytest.mark.asyncio
-async def test_return(MockPdbProxy):
-    """test if correct trace function is returned"""
-    registry = Registry()
-    trace = Trace(registry, modules_to_trace={})
-    frame = Mock()
-    assert trace(frame, "call", None) is MockPdbProxy()()
-    assert trace(frame, "line", None) is MockPdbProxy()()
-
-    assert 1 + 2 == MockPdbProxy.call_count
-    # once in trace(), twice in the above lines in the test
+@pytest.fixture()
+def thread():
+    yield False
 
 
-@pytest.mark.skip(reason="dev")
-@pytest.mark.asyncio
-async def test_args(MockPdbProxy):
-    """test if arguments are properly propagated to the proxy"""
-    registry = Registry()
-    trace = Trace(registry, modules_to_trace={})
-    frame = Mock()
-    trace(frame, "call", None)
-    trace(frame, "line", None)
-    assert [
-        call(frame, "call", None),
-        call(frame, "line", None),
-    ] == MockPdbProxy().call_args_list
+@pytest.fixture()
+def target_trace_func(modules_to_trace: Set[str]):
+    y = Trace(
+        registry=Mock(spec=Registry),
+        pdb_ci_registry=Mock(spec=PdbCIRegistry),
+        modules_to_trace=modules_to_trace,
+    )
+    yield y
 
 
-##__________________________________________________________________||
+@pytest.fixture()
+def modules_to_trace():
+    y = set()
+    yield y
+
+
+@pytest.fixture()
+def mock_pdbi(probe_trace_func):
+    y = Mock(spec=PdbInterface)
+    y.open.return_value = probe_trace_func
+    yield y
+
+
+@pytest.fixture(autouse=True)
+def MockPdbInterfaceFactory(mock_pdbi, monkeypatch):
+    mock_create_pdbi = Mock(return_value=mock_pdbi)
+    y = Mock(spec=PdbInterfaceFactory, return_value=mock_create_pdbi)
+    monkeypatch.setattr("nextline.trace.PdbInterfaceFactory", y)
+    yield y
