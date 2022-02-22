@@ -87,14 +87,14 @@ def Trace(
             modules_to_trace=modules_to_trace,
         )
 
-    return TraceAddFirstModule(
-        modules_to_trace=modules_to_trace,
-        trace=TraceSkipModule(
-            skip=MODULES_TO_SKIP,
-            trace=TraceSkipLambda(
+    return TraceSkipModule(
+        skip=MODULES_TO_SKIP,
+        trace=TraceSkipLambda(
+            trace=TraceAddFirstModule(
+                modules_to_trace=modules_to_trace,
                 trace=TraceDispatchThreadOrTask(
                     factory=create_trace_for_single_thread_or_task
-                )
+                ),
             ),
         ),
     )
