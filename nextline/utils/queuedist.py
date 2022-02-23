@@ -12,7 +12,7 @@ class QueueDist:
     Data can be sent from any thread. All subscribers need to be in the thread
     in which this class is instantiated.
 
-    A new subscriber immediatly receives the most recent issue of the past data
+    A new subscriber immediately receives the most recent issue of the past data
     and then wait for future issues.
 
     The order of the data is preserved.
@@ -29,7 +29,7 @@ class QueueDist:
 
         self._qs_out = []  # list of janus.Queue()
         self._lock_out = threading.Condition()
-        self._last_enumarated = (-1, self.Start)
+        self._last_enumerated = (-1, self.Start)
 
         self._closed = False
         self._lock_close = asyncio.Condition()
@@ -60,7 +60,7 @@ class QueueDist:
         with self._lock_out:
             self._qs_out.append(q)
 
-        last_idx, last_item = self._last_enumarated
+        last_idx, last_item = self._last_enumerated
 
         if last_item is self.End:
             return
@@ -108,15 +108,15 @@ class QueueDist:
 
         This method runs in a thread.
         """
-        idx, item = self._last_enumarated
+        idx, item = self._last_enumerated
         while item is not self.End:
             idx += 1
             item = self._q_in.sync_q.get()
-            enumarated = (idx, item)
+            enumerated = (idx, item)
             with self._lock_out:
                 for q in self._qs_out:
-                    q.sync_q.put(enumarated)
-            self._last_enumarated = enumarated
+                    q.sync_q.put(enumerated)
+            self._last_enumerated = enumerated
 
 
 ##__________________________________________________________________||
