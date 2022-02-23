@@ -36,7 +36,7 @@ class ThreadDoneCallback:
     def register(self, thread: Optional[Thread] = None) -> Thread:
         """Add the current thread by default, or the given thread
 
-        The callback function `done`, given at the initializaiton,
+        The callback function `done`, given at the initialization,
         will be called with the thread object when the thread ends.
         """
         if thread is None:
@@ -45,14 +45,14 @@ class ThreadDoneCallback:
         return thread
 
     def close(self) -> None:
-        """To be optionally called after all threades are registered
+        """To be optionally called after all threads are registered
 
         This method returns after all registered threads end.
 
         The method cannot be called from a registered thread.
 
-        If exceptions are raised in the callback funciton, this method
-        reraises the first exception.
+        If exceptions are raised in the callback function, this method
+        re-raises the first exception.
 
         """
         if current_thread() in self._active:
