@@ -107,7 +107,7 @@ class Machine:
         return self._state.exception()
 
     def result(self):
-        self._state.result()
+        return self._state.result()
 
     def reset(self, statement: Union[str, None] = None):
         """Enter the initialized state"""
