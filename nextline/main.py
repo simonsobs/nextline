@@ -61,7 +61,11 @@ class Nextline:
 
     @property
     def state(self) -> str:
-        """State, e.g., "initialized", "running", "exited", "finished", "closed" """
+        """The current condition of the script execution.
+
+        The possible values are "initialized", "running", "exited", "finished",
+        "closed"
+        """
         return self.machine.state_name
 
     async def subscribe_state(self) -> AsyncGenerator[str, None]:
