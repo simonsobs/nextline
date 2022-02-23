@@ -1,7 +1,7 @@
 import asyncio
 from threading import Thread
 import itertools
-from typing import Union
+from typing import Optional, Any
 
 from .trace import Trace
 from .registry import PdbCIRegistry
@@ -78,12 +78,12 @@ class Machine:
         except BaseException:
             return "unknown"
 
-    def run(self):
+    def run(self) -> None:
         """Enter the running state"""
         self._state = self._state.run()
         self._task_exited = asyncio.create_task(self._exited())
 
-    async def _exited(self):
+    async def _exited(self) -> None:
         """Enter the exited state
 
         This method is scheduled as a task in run().
@@ -94,28 +94,28 @@ class Machine:
 
         self._state = await self._state.exited()
 
-    def send_pdb_command(self, thread_asynctask_id, command):
+    def send_pdb_command(self, thread_asynctask_id, command) -> None:
         self._state.send_pdb_command(thread_asynctask_id, command)
 
-    async def finish(self):
+    async def finish(self) -> None:
         """Enter the finished state"""
         await self._task_exited
         async with self._lock_finish:
             self._state = await self._state.finish()
 
-    def exception(self):
+    def exception(self) -> Optional[Exception]:
         return self._state.exception()
 
-    def result(self):
+    def result(self) -> Any:
         return self._state.result()
 
-    def reset(self, statement: Union[str, None] = None):
+    def reset(self, statement: Optional[str] = None) -> None:
         """Enter the initialized state"""
         if statement:
             self.registry.register("statement", statement)
         self._state = self._state.reset()
 
-    async def close(self):
+    async def close(self) -> None:
         """Enter the closed state"""
         async with self._lock_close:
             self._state = self._state.close()
@@ -158,33 +158,33 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
-    def run(self):
+    def run(self) -> None:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    async def exited(self):
+    async def exited(self) -> None:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    async def finish(self):
+    async def finish(self) -> None:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self):
+    def reset(self) -> None:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def close(self):
+    def close(self) -> None:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, *_, **__):
+    def send_pdb_command(self, *_, **__) -> None:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def exception(self):
+    def exception(self) -> Optional[Exception]:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def result(self):
+    def result(self) -> Any:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
 
