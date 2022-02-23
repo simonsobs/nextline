@@ -42,7 +42,7 @@ class Nextline:
 
     def result(self):
         """Return value of the last run. always None"""
-        self.machine.result()
+        return self.machine.result()
 
     def reset(self, statement=None):
         """Prepare for the next run"""
