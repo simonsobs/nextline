@@ -105,7 +105,7 @@ async def finish_and_close(nextline):
 
 async def monitor_state(nextline, event_initialized):
     ret = []
-    async for s in nextline.subscribe_global_state():
+    async for s in nextline.subscribe_state():
         if s == "initialized":
             event_initialized.set()
         # print('monitor_state()', s)

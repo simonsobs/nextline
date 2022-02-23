@@ -37,9 +37,9 @@ def monkey_patch_syspath(monkeypatch):
 
 
 ##__________________________________________________________________||
-async def monitor_global_state(nextline):
-    async for s in nextline.subscribe_global_state():
-        print("monitor_global_state()", s)
+async def monitor_state(nextline):
+    async for s in nextline.subscribe_state():
+        print("monitor_state()", s)
 
 
 async def control_execution(nextline):
@@ -119,20 +119,20 @@ async def test_run():
 
     nextline = Nextline(statement)
 
-    assert nextline.global_state == "initialized"
+    assert nextline.state == "initialized"
 
-    task_monitor_global_state = asyncio.create_task(
-        monitor_global_state(nextline)
+    task_monitor_state = asyncio.create_task(
+        monitor_state(nextline)
     )
 
     task_control_execution = asyncio.create_task(control_execution(nextline))
 
     task_run = asyncio.create_task(run(nextline))
 
-    aws = [task_run, task_monitor_global_state, task_control_execution]
+    aws = [task_run, task_monitor_state, task_control_execution]
     await asyncio.gather(*aws)
 
-    assert nextline.global_state == "closed"
+    assert nextline.state == "closed"
 
 
 ##__________________________________________________________________||

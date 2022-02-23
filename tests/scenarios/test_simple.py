@@ -14,12 +14,12 @@ time.sleep(0.01)
 async def test_run():
 
     nextline = Nextline(statement)
-    assert nextline.global_state == "initialized"
+    assert nextline.state == "initialized"
 
     nextline.run()
 
-    async for global_state in nextline.subscribe_global_state():
-        if global_state == "running":
+    async for state in nextline.subscribe_state():
+        if state == "running":
             break
 
     async for thread_asynctask_ids in nextline.subscribe_thread_asynctask_ids():
@@ -35,9 +35,9 @@ async def test_run():
 
     nextline.send_pdb_command(thread_asynctask_id, "continue")
     await nextline.finish()
-    assert nextline.global_state == "finished"
+    assert nextline.state == "finished"
     await nextline.close()
-    assert nextline.global_state == "closed"
+    assert nextline.state == "closed"
 
 
 ##__________________________________________________________________||

@@ -28,7 +28,7 @@ class Nextline:
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
-        return f"<{self.__class__.__name__} {self.global_state!r}>"
+        return f"<{self.__class__.__name__} {self.state!r}>"
 
     def run(self) -> None:
         """Execute the script"""
@@ -60,11 +60,11 @@ class Nextline:
         return self.registry.get("statement")
 
     @property
-    def global_state(self) -> str:
+    def state(self) -> str:
         """State, e.g., "initialized", "running", "exited", "finished", "closed" """
         return self.machine.state_name
 
-    async def subscribe_global_state(self) -> AsyncGenerator[str, None]:
+    async def subscribe_state(self) -> AsyncGenerator[str, None]:
         # wish to be able to write with "yield from" but not possible
         # https://stackoverflow.com/a/59079548/7309855
         agen = self.registry.subscribe("state_name")
