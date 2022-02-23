@@ -7,14 +7,15 @@ import fnmatch
 from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
-from .pdb.proxy import PdbInterfaceFactory, PdbInterface
-from .registry import PdbCIRegistry
+from .pdb.proxy import PdbInterfaceFactory
 from .utils import current_task_or_thread
 
-from .types import TraceFunc
-
 if TYPE_CHECKING:
+    from .types import TraceFunc
     from .utils import Registry
+    from .pdb.proxy import PdbInterface
+    from .registry import PdbCIRegistry
+
 
 MODULES_TO_SKIP = [
     "threading",
