@@ -3,17 +3,15 @@ import linecache
 from .state import Machine
 
 
-# __________________________________________________________________||
 class Nextline:
     """Nextline allows line-by-line execution of concurrent Python scripts
 
-    Nextline supports concurrency with threading and asyncio. It uses
-    multiple instances of Pdb, one for each thread and async task.
+    Nextline supports concurrency with threading and asyncio. It uses multiple
+    instances of Pdb, one for each thread and async task.
 
     Note
     ----
-    The running asyncio event loop must exists when Nextline is
-    instantiated.
+    The running asyncio event loop must exists when Nextline is instantiated.
 
     Parameters
     ----------
@@ -31,32 +29,27 @@ class Nextline:
         return f"<{self.__class__.__name__} {self.global_state!r}>"
 
     def run(self):
-        """execute the script"""
+        """Execute the script"""
         self.machine.run()
 
     async def finish(self):
-        """wait until the script execution exits
-
-        wait for the script execution in another thread to exit and
-        join the thread.
-
-        """
+        """Wait until the script execution exits"""
         await self.machine.finish()
 
     def exception(self):
-        """uncaught exception from the last run"""
+        """Uncaught exception from the last run"""
         return self.machine.exception()
 
     def result(self):
-        """return value of the last run. always None"""
+        """Return value of the last run. always None"""
         self.machine.result()
 
     def reset(self, statement=None):
-        """prepare for run"""
+        """Prepare for the next run"""
         self.machine.reset(statement=statement)
 
     async def close(self):
-        """end gracefully"""
+        """End gracefully"""
         await self.machine.close()
 
     @property
@@ -66,7 +59,7 @@ class Nextline:
 
     @property
     def global_state(self) -> str:
-        """state, e.g., "initialized", "running", "exited", "finished", "closed" """
+        """State, e.g., "initialized", "running", "exited", "finished", "closed" """
         return self.machine.state_name
 
     async def subscribe_global_state(self):
@@ -113,6 +106,3 @@ class Nextline:
         if 1 <= line_no <= len(lines):
             return lines[line_no - 1]
         return ""
-
-
-# __________________________________________________________________||
