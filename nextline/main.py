@@ -1,5 +1,7 @@
 import linecache
 
+from typing import Any, AsyncGenerator, Optional
+
 from .state import Machine
 
 
@@ -28,27 +30,27 @@ class Nextline:
         # e.g., "<Nextline 'running'>"
         return f"<{self.__class__.__name__} {self.global_state!r}>"
 
-    def run(self):
+    def run(self) -> None:
         """Execute the script"""
         self.machine.run()
 
-    async def finish(self):
+    async def finish(self) -> None:
         """Wait until the script execution exits"""
         await self.machine.finish()
 
-    def exception(self):
+    def exception(self) -> Optional[Exception]:
         """Uncaught exception from the last run"""
         return self.machine.exception()
 
-    def result(self):
+    def result(self) -> Any:
         """Return value of the last run. always None"""
         return self.machine.result()
 
-    def reset(self, statement=None):
+    def reset(self, statement=None) -> None:
         """Prepare for the next run"""
         self.machine.reset(statement=statement)
 
-    async def close(self):
+    async def close(self) -> None:
         """End gracefully"""
         await self.machine.close()
 
@@ -62,7 +64,7 @@ class Nextline:
         """State, e.g., "initialized", "running", "exited", "finished", "closed" """
         return self.machine.state_name
 
-    async def subscribe_global_state(self):
+    async def subscribe_global_state(self) -> AsyncGenerator[str, None]:
         # wish to be able to write with "yield from" but not possible
         # https://stackoverflow.com/a/59079548/7309855
         agen = self.registry.subscribe("state_name")
