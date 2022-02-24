@@ -59,12 +59,11 @@ class Registry:
         self._open_register(key, [])
 
     def _open_register(self, key, init_data):
-        if dq := self._map.get(key):
-            dq.put(init_data, distribute=False)
-            return
-        dq = self._to_loop(DQ)
+        dq = self._map.get(key)
+        if not dq:
+            dq = self._to_loop(DQ)
+            self._map[key] = dq
         dq.put(init_data, distribute=False)
-        self._map[key] = dq
 
     def close_register(self, key: Hashable):
         """
