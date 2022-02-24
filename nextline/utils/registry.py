@@ -9,8 +9,8 @@ from .queuedist import QueueDist
 
 
 class DQ:
-    def __init__(self, data: Any = None):
-        self._data = data
+    def __init__(self):
+        self._data = None
         self._queue = QueueDist()
         self._to_loop = ToLoop()
 
@@ -62,7 +62,8 @@ class Registry:
         if dq := self._map.get(key):
             dq.put(init_data, distribute=False)
             return
-        dq = self._to_loop(DQ, data=init_data)
+        dq = self._to_loop(DQ)
+        dq.put(init_data, distribute=False)
         self._map[key] = dq
 
     def close_register(self, key: Hashable):
