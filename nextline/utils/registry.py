@@ -18,6 +18,7 @@ class DQ:
         return self._data
 
     async def subscribe(self) -> AsyncGenerator[Any, None]:
+        # To be called in the same thread in which __init__() is called
         async for y in self._queue.subscribe():
             yield y
 
