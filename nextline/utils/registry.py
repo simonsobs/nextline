@@ -2,9 +2,10 @@ import threading
 import asyncio
 from dataclasses import dataclass
 import warnings
-from typing import Dict, Hashable, Coroutine, Any
+from typing import Dict, Hashable, Any
 
 from .coro_runner import CoroutineRunner
+from .loop import ToLoop
 from .queuedist import QueueDist
 
 
@@ -21,6 +22,7 @@ class Registry:
     def __init__(self):
         self._loop = asyncio.get_running_loop()
         self._runner = CoroutineRunner()
+        self._to_loop = ToLoop()
         self._lock = threading.Condition()
         self._aws = []
         self._map: Dict[str, DQ] = {}
@@ -44,14 +46,7 @@ class Registry:
     def _open_register(self, key, init_data):
         if key in self._map:
             self._map[key].data = init_data
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-        if self._loop is loop:
-            self._create_queue(key, init_data)
-        else:
-            self._create_queue_from_another_thread(key, init_data)
+        self._to_loop(self._create_queue, key, init_data)
 
     def close_register(self, key: Hashable):
         self._close_queue_from_another_thread(key)
@@ -59,14 +54,14 @@ class Registry:
     def register(self, key, item):
         """Replace the item in the register"""
         self._map[key].data = item
-        self._distribute(key, item)
+        self._to_loop(self._map[key].queue.put, item)
 
     def register_list_item(self, key, item):
         """Add an item to the register"""
         with self._lock:
             self._map[key].data.append(item)
             copy = self._map[key].data.copy()
-        self._distribute(key, copy)
+        self._to_loop(self._map[key].queue.put, copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
@@ -77,7 +72,7 @@ class Registry:
                 warnings.warn(f"item not found: {item}")
             copy = self._map[key].data.copy()
 
-        self._distribute(key, copy)
+        self._to_loop(self._map[key].queue.put, copy)
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
@@ -98,17 +93,6 @@ class Registry:
         async for y in dq.queue.subscribe():
             yield y
 
-    def _create_queue_from_another_thread(self, key, init_data):
-        """Open a queue
-
-        Can be called from any threads
-        """
-
-        async def create():
-            self._create_queue(key, init_data)
-
-        self._run_in_the_initial_thread(create())
-
     def _create_queue(self, key, init_data=None):
         """Open a queue
 
@@ -125,7 +109,9 @@ class Registry:
         Can be called from any threads
         """
         coro = self._close_queue(key)
-        self._run_in_the_initial_thread(coro)
+        task = self._runner.run(coro)
+        if task:
+            self._aws.append(task)
 
     async def _close_queue(self, key):
         """Remove the queue
@@ -135,24 +121,3 @@ class Registry:
         dq = self._map.pop(key, None)
         if dq:
             await dq.queue.close()
-
-    def _distribute(self, key, item):
-        """Send item to subscribers"""
-
-        async def put():
-            self._map[key].queue.put(item)
-
-        self._run_in_the_initial_thread(put())
-
-    def _run_in_the_initial_thread(self, coro: Coroutine):
-        """Schedule the coroutine as an asyncio task
-
-        The task will be scheduled to the asyncio event loop in the thread in
-        which this class is instantiated.
-        """
-        task = self._runner.run(coro)
-        if task:
-            self._aws.append(task)
-
-
-##__________________________________________________________________||
