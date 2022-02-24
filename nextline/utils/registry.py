@@ -83,7 +83,7 @@ class Registry:
         """Add an item to the register"""
         with self._lock:
             dp = self._map[key]
-            copy = dp.get().copy()
+            copy = (dp.get() or []).copy()
             copy.append(item)
             dp.put(copy)
 
