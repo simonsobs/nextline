@@ -27,6 +27,7 @@ class DQ:
     def value(self):
         return self._data
 
+
 class Registry:
     """Subscribable asynchronous thread-safe registers"""
 
