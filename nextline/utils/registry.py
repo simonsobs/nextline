@@ -53,13 +53,10 @@ class Registry:
 
     def open_register(self, key: Hashable):
         """Create a register for an item"""
-        self._open_register(key, None)
+        _ = self._map[key]
 
     def open_register_list(self, key: Hashable):
         """Create a register for an item list"""
-        self._open_register(key, [])
-
-    def _open_register(self, key, init_data):
         _ = self._map[key]
 
     def close_register(self, key: Hashable):
