@@ -2,7 +2,7 @@ import threading
 import asyncio
 from collections import defaultdict
 import warnings
-from typing import DefaultDict, Hashable
+from typing import Awaitable, DefaultDict, Hashable, List
 
 from .coro_runner import CoroutineRunner
 from .loop import ToLoop
@@ -16,7 +16,7 @@ class Registry:
         self._loop = asyncio.get_running_loop()
         self._runner = CoroutineRunner().run
         self._lock = threading.Condition()
-        self._aws = []
+        self._aws: List[Awaitable] = []
 
         to_loop = ToLoop()
         self._map: DefaultDict[str, QueueDist] = defaultdict(
