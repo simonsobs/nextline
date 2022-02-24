@@ -10,7 +10,7 @@ from .queuedist import QueueDist
 
 class DQ:
     def __init__(self, data: Any = None):
-        self.data = data
+        self._data = data
         self._queue = QueueDist()
 
     async def subscribe(self) -> AsyncGenerator[Any, None]:
@@ -23,6 +23,9 @@ class DQ:
     async def close(self):
         await self._queue.close()
 
+    @property
+    def value(self):
+        return self._data
 
 class Registry:
     """Subscribable asynchronous thread-safe registers"""
@@ -53,7 +56,7 @@ class Registry:
 
     def _open_register(self, key, init_data):
         if dq := self._map.get(key):
-            dq.data = init_data
+            dq._data = init_data
             return
         dq = self._to_loop(DQ, data=init_data)
         self._map[key] = dq
@@ -71,31 +74,31 @@ class Registry:
 
     def register(self, key, item):
         """Replace the item in the register"""
-        self._map[key].data = item
+        self._map[key]._data = item
         self._to_loop(self._map[key].put, item)
 
     def register_list_item(self, key, item):
         """Add an item to the register"""
         with self._lock:
-            self._map[key].data.append(item)
-            copy = self._map[key].data.copy()
+            self._map[key]._data.append(item)
+            copy = self._map[key]._data.copy()
         self._to_loop(self._map[key].put, copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
         with self._lock:
             try:
-                self._map[key].data.remove(item)
+                self._map[key]._data.remove(item)
             except ValueError:
                 warnings.warn(f"item not found: {item}")
-            copy = self._map[key].data.copy()
+            copy = self._map[key]._data.copy()
 
         self._to_loop(self._map[key].put, copy)
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
         if dp := self._map.get(key):
-            return dp.data
+            return dp.value
         else:
             return default
 
