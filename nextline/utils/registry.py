@@ -13,6 +13,9 @@ class DQ:
         self._data = data
         self._queue = QueueDist()
 
+    def get(self):
+        return self._data
+
     async def subscribe(self) -> AsyncGenerator[Any, None]:
         async for y in self._queue.subscribe():
             yield y
@@ -22,10 +25,6 @@ class DQ:
 
     async def close(self):
         await self._queue.close()
-
-    @property
-    def value(self):
-        return self._data
 
 
 class Registry:
@@ -81,7 +80,7 @@ class Registry:
     def register_list_item(self, key, item):
         """Add an item to the register"""
         with self._lock:
-            copy = self._map[key].value.copy()
+            copy = self._map[key].get().copy()
             copy.append(item)
             self._map[key]._data = copy
         self._to_loop(self._map[key].put, copy)
@@ -89,7 +88,7 @@ class Registry:
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
         with self._lock:
-            copy = self._map[key].value.copy()
+            copy = self._map[key].get().copy()
             try:
                 copy.remove(item)
             except ValueError:
@@ -101,7 +100,7 @@ class Registry:
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
         if dp := self._map.get(key):
-            return dp.value
+            return dp.get()
         else:
             return default
 
