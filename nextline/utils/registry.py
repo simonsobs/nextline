@@ -12,6 +12,7 @@ class DQ:
     def __init__(self, data: Any = None):
         self._data = data
         self._queue = QueueDist()
+        self._to_loop = ToLoop()
 
     def get(self):
         return self._data
@@ -21,7 +22,7 @@ class DQ:
             yield y
 
     def put(self, item):
-        self._queue.put(item)
+        self._to_loop(self._queue.put, item)
 
     async def close(self):
         await self._queue.close()
@@ -75,7 +76,7 @@ class Registry:
     def register(self, key, item):
         """Replace the item in the register"""
         self._map[key]._data = item
-        self._to_loop(self._map[key].put, item)
+        self._map[key].put(item)
 
     def register_list_item(self, key, item):
         """Add an item to the register"""
@@ -83,7 +84,7 @@ class Registry:
             copy = self._map[key].get().copy()
             copy.append(item)
             self._map[key]._data = copy
-        self._to_loop(self._map[key].put, copy)
+        self._map[key].put(copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
@@ -95,7 +96,7 @@ class Registry:
                 warnings.warn(f"item not found: {item}")
             self._map[key]._data = copy
 
-        self._to_loop(self._map[key].put, copy)
+        self._map[key].put(copy)
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
