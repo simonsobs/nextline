@@ -21,7 +21,7 @@ class Registry:
 
     def __init__(self):
         self._loop = asyncio.get_running_loop()
-        self._runner = CoroutineRunner()
+        self._runner = CoroutineRunner().run
         self._to_loop = ToLoop()
         self._lock = threading.Condition()
         self._aws = []
@@ -44,12 +44,22 @@ class Registry:
         self._open_register(key, [])
 
     def _open_register(self, key, init_data):
-        if key in self._map:
-            self._map[key].data = init_data
-        self._to_loop(self._create_queue, key, init_data)
+        if dq := self._map.get(key):
+            dq.data = init_data
+            return
+        q = self._to_loop(QueueDist)
+        self._map[key] = DQ(data=init_data, queue=q)
 
     def close_register(self, key: Hashable):
-        self._close_queue_from_another_thread(key)
+        """
+
+        Can be called from any threads
+        """
+        dq = self._map.pop(key, None)
+        if dq is None:
+            return
+        if task := self._runner(dq.queue.close()):
+            self._aws.append(task)
 
     def register(self, key, item):
         """Replace the item in the register"""
@@ -88,36 +98,7 @@ class Registry:
         """
         dq = self._map.get(key)
         if not dq:
-            self._create_queue(key)
-            dq = self._map[key]
+            dq = DQ(queue=QueueDist())
+            self._map[key] = dq
         async for y in dq.queue.subscribe():
             yield y
-
-    def _create_queue(self, key, init_data=None):
-        """Open a queue
-
-        To be run in the initial thread
-        """
-        if key in self._map:
-            return
-        q = QueueDist()
-        self._map[key] = DQ(data=init_data, queue=q)
-
-    def _close_queue_from_another_thread(self, key):
-        """Remove the queue
-
-        Can be called from any threads
-        """
-        coro = self._close_queue(key)
-        task = self._runner.run(coro)
-        if task:
-            self._aws.append(task)
-
-    async def _close_queue(self, key):
-        """Remove the queue
-
-        To be run in the initial thread
-        """
-        dq = self._map.pop(key, None)
-        if dq:
-            await dq.queue.close()
