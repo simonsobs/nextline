@@ -27,6 +27,7 @@ class DQ:
         self._queue.put(item)
 
     async def close(self):
+        # To be called in the same thread in which __init__() is called
         await self._queue.close()
 
 
