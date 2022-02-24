@@ -80,18 +80,20 @@ class Registry:
     def register_list_item(self, key, item):
         """Add an item to the register"""
         with self._lock:
-            self._map[key]._data.append(item)
-            copy = self._map[key]._data.copy()
+            copy = self._map[key].value.copy()
+            copy.append(item)
+            self._map[key]._data = copy
         self._to_loop(self._map[key].put, copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
         with self._lock:
+            copy = self._map[key].value.copy()
             try:
-                self._map[key]._data.remove(item)
+                copy.remove(item)
             except ValueError:
                 warnings.warn(f"item not found: {item}")
-            copy = self._map[key]._data.copy()
+            self._map[key]._data = copy
 
         self._to_loop(self._map[key].put, copy)
 
