@@ -9,9 +9,9 @@ from .queuedist import QueueDist
 
 
 class DQ:
-    def __init__(self, data: Any = None, queue: QueueDist = None):
+    def __init__(self, data: Any = None):
         self.data = data
-        self.queue = queue
+        self.queue = QueueDist()
 
 
 class Registry:
@@ -45,8 +45,8 @@ class Registry:
         if dq := self._map.get(key):
             dq.data = init_data
             return
-        q = self._to_loop(QueueDist)
-        self._map[key] = DQ(data=init_data, queue=q)
+        dq = self._to_loop(DQ, data=init_data)
+        self._map[key] = dq
 
     def close_register(self, key: Hashable):
         """
@@ -96,7 +96,7 @@ class Registry:
         """
         dq = self._map.get(key)
         if not dq:
-            dq = DQ(queue=QueueDist())
+            dq = DQ()
             self._map[key] = dq
         async for y in dq.queue.subscribe():
             yield y
