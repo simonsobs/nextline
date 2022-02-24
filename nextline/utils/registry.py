@@ -17,6 +17,9 @@ class DQ:
         async for y in self.queue.subscribe():
             yield y
 
+    def put(self, item):
+        self.queue.put(item)
+
 
 class Registry:
     """Subscribable asynchronous thread-safe registers"""
@@ -66,14 +69,14 @@ class Registry:
     def register(self, key, item):
         """Replace the item in the register"""
         self._map[key].data = item
-        self._to_loop(self._map[key].queue.put, item)
+        self._to_loop(self._map[key].put, item)
 
     def register_list_item(self, key, item):
         """Add an item to the register"""
         with self._lock:
             self._map[key].data.append(item)
             copy = self._map[key].data.copy()
-        self._to_loop(self._map[key].queue.put, copy)
+        self._to_loop(self._map[key].put, copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
@@ -84,7 +87,7 @@ class Registry:
                 warnings.warn(f"item not found: {item}")
             copy = self._map[key].data.copy()
 
-        self._to_loop(self._map[key].queue.put, copy)
+        self._to_loop(self._map[key].put, copy)
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
