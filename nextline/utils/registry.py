@@ -22,6 +22,7 @@ class DQ:
             yield y
 
     def put(self, item):
+        self._data = item
         self._to_loop(self._queue.put, item)
 
     async def close(self):
@@ -75,7 +76,6 @@ class Registry:
 
     def register(self, key, item):
         """Replace the item in the register"""
-        self._map[key]._data = item
         self._map[key].put(item)
 
     def register_list_item(self, key, item):
@@ -84,7 +84,6 @@ class Registry:
             dp = self._map[key]
             copy = dp.get().copy()
             copy.append(item)
-            dp._data = copy
             dp.put(copy)
 
     def deregister_list_item(self, key, item):
@@ -96,7 +95,6 @@ class Registry:
                 copy.remove(item)
             except ValueError:
                 warnings.warn(f"item not found: {item}")
-            dp._data = copy
             dp.put(copy)
 
     def get(self, key, default=None):
