@@ -33,6 +33,8 @@ class QueueDist:
         self._lock_out = threading.Condition()
         self._last_enumerated: Tuple[int, Any] = (-1, self.Start)
 
+        self._last_item: Any = None
+
         self._closed: bool = False
         self._lock_close = asyncio.Condition()
 
@@ -49,7 +51,12 @@ class QueueDist:
 
         This method can be called in any thread.
         """
+        self._last_item = item
         self._q_in.sync_q.put(item)
+
+    def get(self) -> Any:
+        """Most recent data that have been put"""
+        return self._last_item
 
     async def subscribe(self) -> AsyncGenerator[Any, None]:
         """Yield data as they are put

@@ -38,6 +38,7 @@ async def test_close_multiple_times(obj):
 async def async_send(obj, items):
     async for i in aiterable(items):
         obj.put(i)
+        assert i == obj.get()
 
 
 async def async_receive(obj):
@@ -67,6 +68,7 @@ async def test_recive_the_most_recent_item(obj):
     pre_items = ["A", "B", "C"]
     for i in pre_items:
         obj.put(i)
+        assert i == obj.get()
 
     time.sleep(0.1)
 
@@ -152,9 +154,11 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
     def send(obj, pre_items, event, post_items, event_end):
         for i in pre_items:
             obj.put(i)
+            assert i == obj.get()
         event.set()
         for i in post_items:
             obj.put(i)
+            assert i == obj.get()
         event_end.set()
 
     async def close(obj, event_end):
