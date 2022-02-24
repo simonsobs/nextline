@@ -23,10 +23,9 @@ class DQ:
         async for y in self._queue.subscribe():
             yield y
 
-    def put(self, item, distribute=True):
+    def put(self, item):
         self._data = item
-        if distribute:
-            self._to_loop(self._queue.put, item)
+        self._to_loop(self._queue.put, item)
 
     async def close(self):
         await self._queue.close()
@@ -61,8 +60,7 @@ class Registry:
         self._open_register(key, [])
 
     def _open_register(self, key, init_data):
-        dq = self._map[key]
-        dq.put(init_data, distribute=False)
+        _ = self._map[key]
 
     def close_register(self, key: Hashable):
         """
