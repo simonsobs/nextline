@@ -11,11 +11,10 @@ from .queuedist import QueueDist
 
 class DQ:
     def __init__(self):
-        self._data = None
         self._queue = QueueDist()
 
     def get(self):
-        return self._data
+        return self._queue.get()
 
     async def subscribe(self) -> AsyncGenerator[Any, None]:
         # To be called in the same thread in which __init__() is called
@@ -23,7 +22,6 @@ class DQ:
             yield y
 
     def put(self, item):
-        self._data = item
         self._queue.put(item)
 
     async def close(self):
