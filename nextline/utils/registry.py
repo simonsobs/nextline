@@ -1,10 +1,17 @@
 import threading
 import asyncio
+from dataclasses import dataclass
 import warnings
-from typing import Hashable, Coroutine
+from typing import Dict, Hashable, Coroutine, Any
 
 from .coro_runner import CoroutineRunner
 from .queuedist import QueueDist
+
+
+@dataclass
+class DQ:
+    data: Any = None
+    queue: QueueDist = None
 
 
 ##__________________________________________________________________||
@@ -15,16 +22,20 @@ class Registry:
         self._runner = CoroutineRunner()
         self._lock = threading.Condition()
         self._data = {}
-        self._queue = {}
+        # self._queue = {}
         self._aws = []
+        self._map: Dict[str, DQ] = {}
 
     async def close(self):
         """End gracefully"""
         if self._aws:
             await asyncio.gather(*self._aws)
-        while self._queue:
-            _, q = self._queue.popitem()
-            await q.close()
+        while self._map:
+            _, dq = self._map.popitem()
+            await dq.queue.close()
+        # while self._queue:
+        #     _, q = self._queue.popitem()
+        # await q.close()
         self._data.clear()
 
     def open_register(self, key: Hashable):
@@ -39,7 +50,7 @@ class Registry:
         if key in self._data:
             raise Exception(f"register key already exists {key!r}")
         self._data[key] = init_data
-        self._create_queue_from_another_thread(key)
+        self._create_queue_from_another_thread(key, init_data)
 
     def close_register(self, key: Hashable):
         try:
@@ -91,32 +102,42 @@ class Registry:
 
         This method needs to be called in the initial thread.
         """
-        queue = self._queue.get(key)
-        if not queue:
+        # queue = self._queue.get(key)
+        # if not queue:
+        #     self._create_queue(key)
+        #     queue = self._queue.get(key)
+        # async for y in queue.subscribe():
+        #     yield y
+        dq = self._map.get(key)
+        if not dq:
             self._create_queue(key)
-            queue = self._queue.get(key)
-        async for y in queue.subscribe():
+            dq = self._map[key]
+        async for y in dq.queue.subscribe():
             yield y
 
-    def _create_queue_from_another_thread(self, key):
+    def _create_queue_from_another_thread(self, key, init_data):
         """Open a queue
 
         Can be called from any threads
         """
 
         async def create():
-            self._create_queue(key)
+            self._create_queue(key, init_data)
 
         self._run_in_the_initial_thread(create())
 
-    def _create_queue(self, key):
+    def _create_queue(self, key, init_data=None):
         """Open a queue
 
         To be run in the initial thread
         """
-        if key in self._queue:
+        # if key in self._queue:
+        #     return
+        if key in self._map:
             return
-        self._queue[key] = QueueDist()
+        q = QueueDist()
+        # self._queue[key] = q
+        self._map[key] = DQ(data=init_data, queue=q)
 
     def _close_queue_from_another_thread(self, key):
         """Remove the queue
@@ -131,15 +152,19 @@ class Registry:
 
         To be run in the initial thread
         """
-        queue = self._queue.pop(key, None)
-        if queue:
-            await queue.close()
+        # queue = self._queue.pop(key, None)
+        # if queue:
+        #     await queue.close()
+        dq = self._map.pop(key, None)
+        if dq:
+            await dq.queue.close()
 
     def _distribute(self, key, item):
         """Send item to subscribers"""
 
         async def put():
-            self._queue[key].put(item)
+            # self._queue[key].put(item)
+            self._map[key].queue.put(item)
 
         self._run_in_the_initial_thread(put())
 
