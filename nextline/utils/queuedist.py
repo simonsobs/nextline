@@ -52,7 +52,7 @@ class QueueDist:
         self._q_in.sync_q.put(item)
 
     async def subscribe(self) -> AsyncGenerator[Any, None]:
-        """Asynchronous generator of data
+        """Yield data as they are put
 
         This method needs to be called in the thread in which this class
         is instantiated.
