@@ -38,12 +38,11 @@ class Registry:
     def __init__(self):
         self._loop = asyncio.get_running_loop()
         self._runner = CoroutineRunner().run
-        self._to_loop = ToLoop()
         self._lock = threading.Condition()
         self._aws = []
-        self._map: DefaultDict[str, DQ] = defaultdict(
-            lambda: self._to_loop(DQ)
-        )
+
+        to_loop = ToLoop()
+        self._map: DefaultDict[str, DQ] = defaultdict(lambda: to_loop(DQ))
 
     async def close(self):
         """End gracefully"""
