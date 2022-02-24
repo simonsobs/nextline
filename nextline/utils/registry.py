@@ -11,17 +11,17 @@ from .queuedist import QueueDist
 class DQ:
     def __init__(self, data: Any = None):
         self.data = data
-        self.queue = QueueDist()
+        self._queue = QueueDist()
 
     async def subscribe(self) -> AsyncGenerator[Any, None]:
-        async for y in self.queue.subscribe():
+        async for y in self._queue.subscribe():
             yield y
 
     def put(self, item):
-        self.queue.put(item)
+        self._queue.put(item)
 
     async def close(self):
-        await self.queue.close()
+        await self._queue.close()
 
 
 class Registry:
