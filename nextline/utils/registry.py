@@ -1,7 +1,8 @@
 import threading
 import asyncio
+from collections import defaultdict
 import warnings
-from typing import AsyncGenerator, Dict, Hashable, Any
+from typing import AsyncGenerator, DefaultDict, Hashable, Any
 
 from .coro_runner import CoroutineRunner
 from .loop import ToLoop
@@ -40,7 +41,9 @@ class Registry:
         self._to_loop = ToLoop()
         self._lock = threading.Condition()
         self._aws = []
-        self._map: Dict[str, DQ] = {}
+        self._map: DefaultDict[str, DQ] = defaultdict(
+            lambda: self._to_loop(DQ)
+        )
 
     async def close(self):
         """End gracefully"""
@@ -59,10 +62,7 @@ class Registry:
         self._open_register(key, [])
 
     def _open_register(self, key, init_data):
-        dq = self._map.get(key)
-        if not dq:
-            dq = self._to_loop(DQ)
-            self._map[key] = dq
+        dq = self._map[key]
         dq.put(init_data, distribute=False)
 
     def close_register(self, key: Hashable):
@@ -111,9 +111,6 @@ class Registry:
 
         This method needs to be called in the initial thread.
         """
-        dq = self._map.get(key)
-        if not dq:
-            dq = DQ()
-            self._map[key] = dq
+        dq = self._map[key]
         async for y in dq.subscribe():
             yield y
