@@ -20,6 +20,9 @@ class DQ:
     def put(self, item):
         self.queue.put(item)
 
+    async def close(self):
+        await self.queue.close()
+
 
 class Registry:
     """Subscribable asynchronous thread-safe registers"""
@@ -38,7 +41,7 @@ class Registry:
             await asyncio.gather(*self._aws)
         while self._map:
             _, dq = self._map.popitem()
-            await dq.queue.close()
+            await dq.close()
 
     def open_register(self, key: Hashable):
         """Create a register for an item"""
@@ -63,7 +66,7 @@ class Registry:
         dq = self._map.pop(key, None)
         if dq is None:
             return
-        if task := self._runner(dq.queue.close()):
+        if task := self._runner(dq.close()):
             self._aws.append(task)
 
     def register(self, key, item):
