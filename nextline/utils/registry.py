@@ -19,9 +19,10 @@ class Registry:
     """Subscribable asynchronous thread-safe registers"""
 
     def __init__(self):
+        self._loop = asyncio.get_running_loop()
         self._runner = CoroutineRunner()
         self._lock = threading.Condition()
-        self._data = {}
+        # self._data = {}
         # self._queue = {}
         self._aws = []
         self._map: Dict[str, DQ] = {}
@@ -36,7 +37,7 @@ class Registry:
         # while self._queue:
         #     _, q = self._queue.popitem()
         # await q.close()
-        self._data.clear()
+        # self._data.clear()
 
     def open_register(self, key: Hashable):
         """Create a register for an item"""
@@ -47,55 +48,73 @@ class Registry:
         self._open_register(key, [])
 
     def _open_register(self, key, init_data):
-        if key in self._data:
-            raise Exception(f"register key already exists {key!r}")
-        self._data[key] = init_data
-        self._create_queue_from_another_thread(key, init_data)
+        # if key in self._data:
+        #     raise Exception(f"register key already exists {key!r}")
+        # self._data[key] = init_data
+        if key in self._map:
+            self._map[key].data = init_data
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if self._loop is loop:
+            self._create_queue(key, init_data)
+        else:
+            self._create_queue_from_another_thread(key, init_data)
 
     def close_register(self, key: Hashable):
-        try:
-            del self._data[key]
-        except KeyError:
-            warnings.warn(f"key not found: {key}")
+        # try:
+        #     del self._data[key]
+        # except KeyError:
+        #     warnings.warn(f"key not found: {key}")
         self._close_queue_from_another_thread(key)
 
     def register(self, key, item):
         """Replace the item in the register"""
-        if key not in self._data:
-            raise Exception(f"register key does not exist {key!r}")
+        # if key not in self._data:
+        #     raise Exception(f"register key does not exist {key!r}")
 
-        self._data[key] = item
+        # self._data[key] = item
+        self._map[key].data = item
 
         self._distribute(key, item)
 
     def register_list_item(self, key, item):
         """Add an item to the register"""
-        if key not in self._data:
-            raise Exception(f"register key does not exist {key!r}")
+        # if key not in self._data:
+        #     raise Exception(f"register key does not exist {key!r}")
 
         with self._lock:
-            self._data[key].append(item)
-            copy = self._data[key].copy()
+            # self._data[key].append(item)
+            # copy = self._data[key].copy()
+            self._map[key].data.append(item)
+            copy = self._map[key].data.copy()
 
         self._distribute(key, copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
-        if key not in self._data:
-            raise Exception(f"register key does not exist {key!r}")
+        # if key not in self._data:
+        #     raise Exception(f"register key does not exist {key!r}")
 
         with self._lock:
             try:
-                self._data[key].remove(item)
+                # self._data[key].remove(item)
+                self._map[key].data.remove(item)
             except ValueError:
                 warnings.warn(f"item not found: {item}")
-            copy = self._data[key].copy()
+            # copy = self._data[key].copy()
+            copy = self._map[key].data.copy()
 
         self._distribute(key, copy)
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
-        return self._data.get(key, default)
+        # return self._data.get(key, default)
+        if dp := self._map.get(key):
+            return dp.data
+        else:
+            return default
 
     async def subscribe(self, key):
         """Asynchronous generator of items in the register
