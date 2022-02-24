@@ -1,6 +1,5 @@
 import threading
 import asyncio
-from dataclasses import dataclass
 import warnings
 from typing import Dict, Hashable, Any
 
@@ -9,13 +8,12 @@ from .loop import ToLoop
 from .queuedist import QueueDist
 
 
-@dataclass
 class DQ:
-    data: Any = None
-    queue: QueueDist = None
+    def __init__(self, data: Any = None, queue: QueueDist = None):
+        self.data = data
+        self.queue = queue
 
 
-##__________________________________________________________________||
 class Registry:
     """Subscribable asynchronous thread-safe registers"""
 
