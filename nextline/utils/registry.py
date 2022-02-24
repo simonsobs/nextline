@@ -13,7 +13,6 @@ class DQ:
     def __init__(self):
         self._data = None
         self._queue = QueueDist()
-        self._to_loop = ToLoop()
 
     def get(self):
         return self._data
@@ -25,7 +24,7 @@ class DQ:
 
     def put(self, item):
         self._data = item
-        self._to_loop(self._queue.put, item)
+        self._queue.put(item)
 
     async def close(self):
         await self._queue.close()
