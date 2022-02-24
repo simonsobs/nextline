@@ -85,7 +85,7 @@ class Registry:
             copy = dp.get().copy()
             copy.append(item)
             dp._data = copy
-        dp.put(copy)
+            dp.put(copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
@@ -97,8 +97,7 @@ class Registry:
             except ValueError:
                 warnings.warn(f"item not found: {item}")
             dp._data = copy
-
-        dp.put(copy)
+            dp.put(copy)
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
