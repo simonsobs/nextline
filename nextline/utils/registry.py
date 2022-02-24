@@ -2,31 +2,11 @@ import threading
 import asyncio
 from collections import defaultdict
 import warnings
-from typing import AsyncGenerator, DefaultDict, Hashable, Any
+from typing import DefaultDict, Hashable
 
 from .coro_runner import CoroutineRunner
 from .loop import ToLoop
 from .queuedist import QueueDist
-
-
-class DQ:
-    def __init__(self):
-        self._queue = QueueDist()
-
-    def get(self):
-        return self._queue.get()
-
-    async def subscribe(self) -> AsyncGenerator[Any, None]:
-        # To be called in the same thread in which __init__() is called
-        async for y in self._queue.subscribe():
-            yield y
-
-    def put(self, item):
-        self._queue.put(item)
-
-    async def close(self):
-        # To be called in the same thread in which __init__() is called
-        await self._queue.close()
 
 
 class Registry:
@@ -39,7 +19,9 @@ class Registry:
         self._aws = []
 
         to_loop = ToLoop()
-        self._map: DefaultDict[str, DQ] = defaultdict(lambda: to_loop(DQ))
+        self._map: DefaultDict[str, QueueDist] = defaultdict(
+            lambda: to_loop(QueueDist)
+        )
 
     async def close(self):
         """End gracefully"""
