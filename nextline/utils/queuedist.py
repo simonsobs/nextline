@@ -1,6 +1,8 @@
 import threading
 import asyncio
-import janus
+from janus import Queue
+
+from typing import Any, AsyncGenerator, List, Tuple
 
 from .func import to_thread
 
@@ -25,37 +27,37 @@ class QueueDist:
         pass
 
     def __init__(self):
-        self._q_in = janus.Queue()
+        self._q_in = Queue()
 
-        self._qs_out = []  # list of janus.Queue()
+        self._qs_out: List[Queue] = []
         self._lock_out = threading.Condition()
-        self._last_enumerated = (-1, self.Start)
+        self._last_enumerated: Tuple[int, Any] = (-1, self.Start)
 
-        self._closed = False
+        self._closed: bool = False
         self._lock_close = asyncio.Condition()
 
         self._thread = threading.Thread(target=self._listen, daemon=True)
         self._thread.start()
 
     @property
-    def nsubscriptions(self):
+    def nsubscriptions(self) -> int:
         """The number of the subscribers"""
         return len(self._qs_out)
 
-    def put(self, item):
+    def put(self, item: Any) -> None:
         """Send data to subscribers
 
         This method can be called in any thread.
         """
         self._q_in.sync_q.put(item)
 
-    async def subscribe(self):
+    async def subscribe(self) -> AsyncGenerator[Any, None]:
         """Asynchronous generator of data
 
         This method needs to be called in the thread in which this class
         is instantiated.
         """
-        q = janus.Queue()
+        q = Queue()
 
         with self._lock_out:
             self._qs_out.append(q)
@@ -83,7 +85,7 @@ class QueueDist:
             q.close()
             await q.wait_closed()
 
-    async def close(self):
+    async def close(self) -> None:
         """End gracefully
 
         This method needs to be called in the thread in which this class
@@ -95,7 +97,7 @@ class QueueDist:
             await self._close()
             self._closed = True
 
-    async def _close(self):
+    async def _close(self) -> None:
         """Actual implementation of close()"""
         self._q_in.sync_q.put(self.End)
         await to_thread(self._thread.join)
@@ -103,7 +105,7 @@ class QueueDist:
         self._q_in.close()
         await self._q_in.wait_closed()
 
-    def _listen(self):
+    def _listen(self) -> None:
         """Distribution of data to subscribers
 
         This method runs in a thread.
