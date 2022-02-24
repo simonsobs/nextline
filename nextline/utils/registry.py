@@ -1,7 +1,7 @@
 import threading
 import asyncio
 import warnings
-from typing import Dict, Hashable, Any
+from typing import AsyncGenerator, Dict, Hashable, Any
 
 from .coro_runner import CoroutineRunner
 from .loop import ToLoop
@@ -12,6 +12,10 @@ class DQ:
     def __init__(self, data: Any = None):
         self.data = data
         self.queue = QueueDist()
+
+    async def subscribe(self) -> AsyncGenerator[Any, None]:
+        async for y in self.queue.subscribe():
+            yield y
 
 
 class Registry:
@@ -98,5 +102,5 @@ class Registry:
         if not dq:
             dq = DQ()
             self._map[key] = dq
-        async for y in dq.queue.subscribe():
+        async for y in dq.subscribe():
             yield y
