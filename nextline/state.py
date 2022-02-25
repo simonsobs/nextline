@@ -53,7 +53,7 @@ class Machine:
         self.registry.open_register("script_file_name")
         self.registry.open_register("run_no")
         self.registry.open_register("run_no_count")
-        self.registry.open_register_list("thread_task_ids")
+        self.registry.open_register("thread_task_ids")
 
         self.registry.register("statement", statement)
         self.registry.register("script_file_name", SCRIPT_FILE_NAME)
@@ -119,7 +119,7 @@ class Machine:
         """Enter the closed state"""
         async with self._lock_close:
             self._state = self._state.close()
-            await self.registry.close()
+            await to_thread(self.registry.close)
 
 
 # __________________________________________________________________||

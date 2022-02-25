@@ -28,6 +28,12 @@ class TestRunning(BaseTestState):
         with pytest.raises(StateObsoleteError):
             await state.close()
 
+    def test_state(self, state):
+        assert isinstance(state, self.state_class)
+        assert ("obsolete" not in repr(state)) or (
+            "obsolete" not in repr(state._exited)
+        )
+
     def test_registry_state_name(self, state):
         assert state.registry.get("state_name") in (Running.name, Exited.name)
 
@@ -40,6 +46,10 @@ class TestRunning(BaseTestState):
         assert exited is await state.exited()
 
         await self.assert_obsolete(state)
+
+    @pytest.mark.asyncio
+    async def test_reset(self, state):
+        pass
 
     def test_send_pdb_command(self, state):
         pass

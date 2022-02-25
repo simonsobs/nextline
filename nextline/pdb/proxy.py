@@ -97,7 +97,8 @@ class PdbInterface:
         )
 
         self._registry.open_register(self._trace_id)
-        self._registry.register_list_item("thread_task_ids", self._trace_id)
+        ids = (self._registry.get("thread_task_ids") or ()) + (self._trace_id,)
+        self._registry.register("thread_task_ids", ids)
 
         self._opened = True
 
@@ -107,7 +108,10 @@ class PdbInterface:
         if not self._opened:
             return
         self._registry.close_register(self._trace_id)
-        self._registry.deregister_list_item("thread_task_ids", self._trace_id)
+        ids = list(self._registry.get("thread_task_ids"))
+        ids.remove(self._trace_id)
+        ids = tuple(ids)
+        self._registry.register("thread_task_ids", ids)
 
     def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
         self._current_trace_args = (frame, event, arg)

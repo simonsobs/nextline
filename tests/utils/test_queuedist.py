@@ -8,36 +8,31 @@ from nextline.utils import QueueDist, ThreadSafeAsyncioEvent, to_thread
 from .aiterable import aiterable
 
 
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_daemon():
+def test_daemon():
     _ = QueueDist()
     # The program shouldn't be blocked even when close() is not called.
 
 
-##__________________________________________________________________||
 @pytest.fixture()
-async def obj():
+def obj():
     y = QueueDist()
     yield y
-    await y.close()
+    y.close()
 
 
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_open_close(obj):
+def test_open_close(obj):
     assert obj
 
 
-@pytest.mark.asyncio
-async def test_close_multiple_times(obj):
-    await obj.close()
-    await obj.close()
+def test_close_multiple_times(obj):
+    obj.close()
+    obj.close()
 
 
 async def async_send(obj, items):
     async for i in aiterable(items):
         obj.put(i)
+        assert i == obj.get()
 
 
 async def async_receive(obj):
@@ -51,7 +46,9 @@ async def test_subscribe(obj):
     task_receive_2 = asyncio.create_task(async_receive(obj))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
-    results = await asyncio.gather(task_receive_1, task_receive_2, obj.close())
+    results = await asyncio.gather(
+        task_receive_1, task_receive_2, to_thread(obj.close)
+    )
     result1, result2, *_ = results
     assert items == result1
     assert items == result2
@@ -59,7 +56,7 @@ async def test_subscribe(obj):
 
 
 @pytest.mark.asyncio
-async def test_recive_the_most_recent_item(obj):
+async def test_receive_the_most_recent_item(obj):
 
     task_receive_1 = asyncio.create_task(async_receive(obj))
     await asyncio.sleep(0)  # let task_receive_1 start
@@ -67,6 +64,7 @@ async def test_recive_the_most_recent_item(obj):
     pre_items = ["A", "B", "C"]
     for i in pre_items:
         obj.put(i)
+        assert i == obj.get()
 
     time.sleep(0.1)
 
@@ -76,7 +74,7 @@ async def test_recive_the_most_recent_item(obj):
     task_send = asyncio.create_task(async_send(obj, items))
 
     await task_send
-    await obj.close()
+    obj.close()
     assert [*pre_items, *items] == await task_receive_1
 
     # receive 'C', which was put before task_receive_2 started
@@ -91,7 +89,7 @@ async def test_subscribe_after_end(obj):
     items = list(range(10))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
-    await obj.close()
+    obj.close()
 
     task_receive = asyncio.create_task(async_receive(obj))
     await task_receive
@@ -115,13 +113,12 @@ async def test_break(obj):
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
     assert items[: items.index(at)] == await task_receive_1
-    results = await asyncio.gather(task_receive_2, obj.close())
+    results = await asyncio.gather(task_receive_2, to_thread(obj.close))
     result2, *_ = results
     assert items == result2
     assert obj.nsubscriptions == 0
 
 
-##__________________________________________________________________||
 nsubscribers = [0, 1, 2, 5, 50]
 pre_nitems = [0, 1, 2, 50]
 post_nitems = [0, 1, 2, 100]
@@ -132,7 +129,7 @@ post_nitems = [0, 1, 2, 100]
 @pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.asyncio
 async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
-    """test if the issue is resovled
+    """test if the issue is resolved
     https://github.com/simonsobs/nextline/issues/2
 
     """
@@ -152,14 +149,16 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
     def send(obj, pre_items, event, post_items, event_end):
         for i in pre_items:
             obj.put(i)
+            assert i == obj.get()
         event.set()
         for i in post_items:
             obj.put(i)
+            assert i == obj.get()
         event_end.set()
 
     async def close(obj, event_end):
         await event_end.wait()
-        await obj.close()
+        obj.close()
 
     items = list(range(nitems))
     pre_items = items[:pre_nitems]
@@ -189,6 +188,3 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
         # items from the first
         # received item
         assert actual == expected
-
-
-##__________________________________________________________________||

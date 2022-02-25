@@ -30,12 +30,6 @@ async def test_init():
     assert "<string>" == obj.registry.get("script_file_name")
 
 
-def test_init_sync():
-    # not possible to instantiate without a running asyncio event loop
-    with pytest.raises(RuntimeError):
-        _ = Machine(SOURCE)
-
-
 @pytest.mark.asyncio
 async def test_repr():
     obj = Machine(SOURCE)

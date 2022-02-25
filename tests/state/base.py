@@ -23,7 +23,7 @@ class BaseTestState(ABC):
         yield SOURCE_ONE
 
     @pytest.fixture()
-    async def registry(self, statement):
+    def registry(self, statement):
         y = Registry()
         y.open_register("statement")
         y.open_register("state_name")
@@ -32,7 +32,7 @@ class BaseTestState(ABC):
         y.register("statement", statement)
         y.register("run_no_count", itertools.count().__next__)
         yield y
-        await y.close()
+        y.close()
 
     @pytest.fixture()
     async def initialized(self, registry):
