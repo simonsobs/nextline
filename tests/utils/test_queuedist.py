@@ -60,7 +60,7 @@ async def test_subscribe(obj):
 
 
 @pytest.mark.asyncio
-async def test_recive_the_most_recent_item(obj):
+async def test_receive_the_most_recent_item(obj):
 
     task_receive_1 = asyncio.create_task(async_receive(obj))
     await asyncio.sleep(0)  # let task_receive_1 start
@@ -134,7 +134,7 @@ post_nitems = [0, 1, 2, 100]
 @pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.asyncio
 async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
-    """test if the issue is resovled
+    """test if the issue is resolved
     https://github.com/simonsobs/nextline/issues/2
 
     """
