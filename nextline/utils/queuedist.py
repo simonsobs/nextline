@@ -1,14 +1,10 @@
 import threading
-import asyncio
 import queue
 from janus import Queue
 
 from typing import Any, AsyncGenerator, List, Tuple
 
-from .func import to_thread
 
-
-##__________________________________________________________________||
 class QueueDist:
     """Distribute data to subscribers
 
@@ -37,7 +33,7 @@ class QueueDist:
         self._last_item: Any = None
 
         self._closed: bool = False
-        self._lock_close = asyncio.Condition()
+        self._lock_close = threading.Condition()
 
         self._thread = threading.Thread(target=self._listen, daemon=True)
         self._thread.start()
@@ -93,18 +89,14 @@ class QueueDist:
             q.close()
             await q.wait_closed()
 
-    async def close(self) -> None:
-        """End gracefully
-
-        This method needs to be called in the thread in which this class
-        is instantiated.
-        """
-        async with self._lock_close:
+    def close(self) -> None:
+        """End gracefully"""
+        with self._lock_close:
             if self._closed:
                 return
             self._closed = True
             self._q_in.put(self.End)
-            await to_thread(self._thread.join)
+            self._thread.join()
             self._q_in.join()
 
     def _listen(self) -> None:
@@ -122,6 +114,3 @@ class QueueDist:
                 for q in self._qs_out:
                     q.sync_q.put(enumerated)
             self._last_enumerated = enumerated
-
-
-##__________________________________________________________________||

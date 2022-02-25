@@ -29,7 +29,7 @@ class Registry:
             await asyncio.gather(*self._aws)
         while self._map:
             _, dq = self._map.popitem()
-            await dq.close()
+            dq.close()
 
     def open_register(self, key: Hashable):
         """Create a register for an item"""
@@ -47,8 +47,7 @@ class Registry:
         dq = self._map.pop(key, None)
         if dq is None:
             return
-        if task := self._runner(dq.close()):
-            self._aws.append(task)
+        dq.close()
 
     def register(self, key, item):
         """Replace the item in the register"""

@@ -20,7 +20,7 @@ async def test_daemon():
 async def obj():
     y = QueueDist()
     yield y
-    await y.close()
+    y.close()
 
 
 ##__________________________________________________________________||
@@ -31,8 +31,8 @@ async def test_open_close(obj):
 
 @pytest.mark.asyncio
 async def test_close_multiple_times(obj):
-    await obj.close()
-    await obj.close()
+    obj.close()
+    obj.close()
 
 
 async def async_send(obj, items):
@@ -52,7 +52,8 @@ async def test_subscribe(obj):
     task_receive_2 = asyncio.create_task(async_receive(obj))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
-    results = await asyncio.gather(task_receive_1, task_receive_2, obj.close())
+    obj.close()
+    results = await asyncio.gather(task_receive_1, task_receive_2)
     result1, result2, *_ = results
     assert items == result1
     assert items == result2
@@ -78,7 +79,7 @@ async def test_receive_the_most_recent_item(obj):
     task_send = asyncio.create_task(async_send(obj, items))
 
     await task_send
-    await obj.close()
+    obj.close()
     assert [*pre_items, *items] == await task_receive_1
 
     # receive 'C', which was put before task_receive_2 started
@@ -93,7 +94,7 @@ async def test_subscribe_after_end(obj):
     items = list(range(10))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
-    await obj.close()
+    obj.close()
 
     task_receive = asyncio.create_task(async_receive(obj))
     await task_receive
@@ -117,7 +118,8 @@ async def test_break(obj):
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
     assert items[: items.index(at)] == await task_receive_1
-    results = await asyncio.gather(task_receive_2, obj.close())
+    obj.close()
+    results = await asyncio.gather(task_receive_2)
     result2, *_ = results
     assert items == result2
     assert obj.nsubscriptions == 0
@@ -163,7 +165,7 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
 
     async def close(obj, event_end):
         await event_end.wait()
-        await obj.close()
+        obj.close()
 
     items = list(range(nitems))
     pre_items = items[:pre_nitems]
