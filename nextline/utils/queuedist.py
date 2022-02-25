@@ -103,14 +103,9 @@ class QueueDist:
             if self._closed:
                 return
             self._closed = True
-            await self._close()
-
-    async def _close(self) -> None:
-        """Actual implementation of close()"""
-        self._q_in.put(self.End)
-        await to_thread(self._thread.join)
-
-        self._q_in.join()
+            self._q_in.put(self.End)
+            await to_thread(self._thread.join)
+            self._q_in.join()
 
     def _listen(self) -> None:
         """Distribution of data to subscribers
