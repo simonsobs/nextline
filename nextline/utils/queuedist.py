@@ -1,18 +1,18 @@
 import threading
 import queue
-from janus import Queue
+import janus
 
-from typing import Any, AsyncGenerator, List, Tuple
+from typing import Any, AsyncIterable, List, Tuple
 
 
 class QueueDist:
     """Distribute data to subscribers
 
-    Data can be sent from any thread. All subscribers need to be in the thread
-    in which this class is instantiated.
+    Data can be sent from any thread. Asynchronous subscriptions don't need to
+    be all in the same thread.
 
-    A new subscriber immediately receives the most recent issue of the past data
-    and then wait for future issues.
+    A new subscriber immediately receives the most recent issue of the past
+    data and then wait for future issues.
 
     The order of the data is preserved.
     """
@@ -26,7 +26,7 @@ class QueueDist:
     def __init__(self):
         self._q_in = queue.Queue()
 
-        self._qs_out: List[Queue] = []
+        self._qs_out: List[janus.Queue] = []
         self._lock_out = threading.Condition()
         self._last_enumerated: Tuple[int, Any] = (-1, self.Start)
 
@@ -55,13 +55,9 @@ class QueueDist:
         """Most recent data that have been put"""
         return self._last_item
 
-    async def subscribe(self) -> AsyncGenerator[Any, None]:
-        """Yield data as they are put
-
-        This method needs to be called in the thread in which this class
-        is instantiated.
-        """
-        q = Queue()
+    async def subscribe(self) -> AsyncIterable:
+        """Yield data as they are put"""
+        q = janus.Queue()
 
         with self._lock_out:
             self._qs_out.append(q)
