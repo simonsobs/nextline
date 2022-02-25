@@ -1,5 +1,6 @@
 import threading
 import asyncio
+import queue
 from janus import Queue
 
 from typing import Any, AsyncGenerator, List, Tuple
@@ -27,7 +28,7 @@ class QueueDist:
         pass
 
     def __init__(self):
-        self._q_in = Queue()
+        self._q_in = queue.Queue()
 
         self._qs_out: List[Queue] = []
         self._lock_out = threading.Condition()
@@ -52,7 +53,7 @@ class QueueDist:
         This method can be called in any thread.
         """
         self._last_item = item
-        self._q_in.sync_q.put(item)
+        self._q_in.put(item)
 
     def get(self) -> Any:
         """Most recent data that have been put"""
@@ -101,16 +102,15 @@ class QueueDist:
         async with self._lock_close:
             if self._closed:
                 return
-            await self._close()
             self._closed = True
+            await self._close()
 
     async def _close(self) -> None:
         """Actual implementation of close()"""
-        self._q_in.sync_q.put(self.End)
+        self._q_in.put(self.End)
         await to_thread(self._thread.join)
 
-        self._q_in.close()
-        await self._q_in.wait_closed()
+        self._q_in.join()
 
     def _listen(self) -> None:
         """Distribution of data to subscribers
@@ -120,7 +120,8 @@ class QueueDist:
         idx, item = self._last_enumerated
         while item is not self.End:
             idx += 1
-            item = self._q_in.sync_q.get()
+            item = self._q_in.get()
+            self._q_in.task_done()
             enumerated = (idx, item)
             with self._lock_out:
                 for q in self._qs_out:
