@@ -8,29 +8,23 @@ from nextline.utils import QueueDist, ThreadSafeAsyncioEvent, to_thread
 from .aiterable import aiterable
 
 
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_daemon():
+def test_daemon():
     _ = QueueDist()
     # The program shouldn't be blocked even when close() is not called.
 
 
-##__________________________________________________________________||
 @pytest.fixture()
-async def obj():
+def obj():
     y = QueueDist()
     yield y
     y.close()
 
 
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_open_close(obj):
+def test_open_close(obj):
     assert obj
 
 
-@pytest.mark.asyncio
-async def test_close_multiple_times(obj):
+def test_close_multiple_times(obj):
     obj.close()
     obj.close()
 
@@ -52,8 +46,9 @@ async def test_subscribe(obj):
     task_receive_2 = asyncio.create_task(async_receive(obj))
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
-    obj.close()
-    results = await asyncio.gather(task_receive_1, task_receive_2)
+    results = await asyncio.gather(
+        task_receive_1, task_receive_2, to_thread(obj.close)
+    )
     result1, result2, *_ = results
     assert items == result1
     assert items == result2
@@ -118,14 +113,12 @@ async def test_break(obj):
     task_send = asyncio.create_task(async_send(obj, items))
     await task_send
     assert items[: items.index(at)] == await task_receive_1
-    obj.close()
-    results = await asyncio.gather(task_receive_2)
+    results = await asyncio.gather(task_receive_2, to_thread(obj.close))
     result2, *_ = results
     assert items == result2
     assert obj.nsubscriptions == 0
 
 
-##__________________________________________________________________||
 nsubscribers = [0, 1, 2, 5, 50]
 pre_nitems = [0, 1, 2, 50]
 post_nitems = [0, 1, 2, 100]
@@ -195,6 +188,3 @@ async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
         # items from the first
         # received item
         assert actual == expected
-
-
-##__________________________________________________________________||
