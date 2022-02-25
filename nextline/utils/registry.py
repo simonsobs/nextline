@@ -1,11 +1,8 @@
 import threading
-import asyncio
 from collections import defaultdict
 import warnings
-from typing import Awaitable, DefaultDict, Hashable, List
+from typing import DefaultDict
 
-from .coro_runner import CoroutineRunner
-from .loop import ToLoop
 from .queuedist import QueueDist
 
 
@@ -13,33 +10,25 @@ class Registry:
     """Subscribable asynchronous thread-safe registers"""
 
     def __init__(self):
-        self._loop = asyncio.get_running_loop()
-        self._runner = CoroutineRunner().run
         self._lock = threading.Condition()
-        self._aws: List[Awaitable] = []
 
-        to_loop = ToLoop()
-        self._map: DefaultDict[str, QueueDist] = defaultdict(
-            lambda: to_loop(QueueDist)
-        )
+        self._map: DefaultDict[str, QueueDist] = defaultdict(QueueDist)
 
     async def close(self):
         """End gracefully"""
-        if self._aws:
-            await asyncio.gather(*self._aws)
         while self._map:
             _, dq = self._map.popitem()
             dq.close()
 
-    def open_register(self, key: Hashable):
+    def open_register(self, key):
         """Create a register for an item"""
         _ = self._map[key]
 
-    def open_register_list(self, key: Hashable):
+    def open_register_list(self, key):
         """Create a register for an item list"""
         _ = self._map[key]
 
-    def close_register(self, key: Hashable):
+    def close_register(self, key):
         """
 
         Can be called from any threads
@@ -80,10 +69,6 @@ class Registry:
             return default
 
     async def subscribe(self, key):
-        """Asynchronous generator of items in the register
-
-        This method needs to be called in the initial thread.
-        """
         dq = self._map[key]
         async for y in dq.subscribe():
             yield y
