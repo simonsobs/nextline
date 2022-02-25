@@ -46,19 +46,19 @@ class Registry:
         """Add an item to the register"""
         with self._lock:
             dp = self._map[key]
-            copy = (dp.get() or []).copy()
-            copy.append(item)
+            copy = (dp.get() or ()) + (item,)
             dp.put(copy)
 
     def deregister_list_item(self, key, item):
         """Remove the item from the register"""
         with self._lock:
             dp = self._map[key]
-            copy = dp.get().copy()
+            copy = list(dp.get())
             try:
                 copy.remove(item)
             except ValueError:
                 warnings.warn(f"item not found: {item}")
+            copy = tuple(copy)
             dp.put(copy)
 
     def get(self, key, default=None):

@@ -35,14 +35,14 @@ async def test_simple_usage_list():
     obj = Registry()
 
     key = "key_one"
-    items = ["item_one", "item_two", "item_three"]
+    items = ("item_one", "item_two", "item_three")
     expected = [
-        ["item_one"],
-        ["item_one", "item_two"],
-        ["item_one", "item_two", "item_three"],
-        ["item_two", "item_three"],
-        ["item_three"],
-        [],
+        ("item_one",),
+        ("item_one", "item_two"),
+        ("item_one", "item_two", "item_three"),
+        ("item_two", "item_three"),
+        ("item_three",),
+        (),
     ]
 
     async def subscribe():
@@ -160,10 +160,10 @@ async def test_list(close_register, thread, nsubscribers, nitems):
         # assert registry.get(register_key) == []
         for i, item in enumerate(items):
             registry.register_list_item(register_key, item)
-            assert registry.get(register_key) == items[: i + 1]
+            assert registry.get(register_key) == tuple(items[: i + 1])
         for i, item in enumerate(items):
             registry.deregister_list_item(register_key, item)
-            assert registry.get(register_key) == items[i + 1 :]
+            assert registry.get(register_key) == tuple(items[i + 1 :])
         if close_register:
             registry.close_register(register_key)
 
@@ -193,8 +193,8 @@ async def test_list(close_register, thread, nsubscribers, nitems):
     task_close = to_thread(registry.close)
 
     results = await asyncio.gather(*tasks_subscribe, task_close)
-    expected = [items[: i + 1] for i in range(len(items))]
-    expected.extend([items[i + 1 :] for i in range(len(items))])
+    expected = [tuple(items[: i + 1]) for i in range(len(items))]
+    expected.extend([tuple(items[i + 1 :]) for i in range(len(items))])
     actuals = results[:nsubscribers]
     for actual in actuals:
         assert actual == expected
