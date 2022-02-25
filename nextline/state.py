@@ -119,7 +119,7 @@ class Machine:
         """Enter the closed state"""
         async with self._lock_close:
             self._state = self._state.close()
-            await self.registry.close()
+            await to_thread(self.registry.close)
 
 
 # __________________________________________________________________||

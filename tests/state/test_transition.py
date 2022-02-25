@@ -18,7 +18,7 @@ time.sleep(0.001)
 
 
 @pytest.fixture()
-async def registry():
+def registry():
     y = Registry()
     y.open_register("statement")
     y.open_register("state_name")
@@ -26,7 +26,7 @@ async def registry():
     y.open_register("run_no_count")
     y.register("run_no_count", itertools.count().__next__)
     yield y
-    await y.close()
+    y.close()
 
 
 @pytest.mark.asyncio

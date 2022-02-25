@@ -14,7 +14,7 @@ class Registry:
 
         self._map: DefaultDict[str, QueueDist] = defaultdict(QueueDist)
 
-    async def close(self):
+    def close(self):
         """End gracefully"""
         while self._map:
             _, dq = self._map.popitem()

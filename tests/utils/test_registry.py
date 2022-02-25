@@ -27,7 +27,7 @@ async def test_simple_usage():
     results = await asyncio.gather(subscribe(), register())
     assert items == results[0]
 
-    await obj.close()
+    obj.close()
 
 
 @pytest.mark.asyncio
@@ -64,7 +64,7 @@ async def test_simple_usage_list():
     results = await asyncio.gather(subscribe(), register())
     assert expected == results[0]
 
-    await obj.close()
+    obj.close()
 
 
 @pytest.mark.asyncio
@@ -77,7 +77,7 @@ async def test_get_default():
     key = "no_such_key"
     assert 123 == obj.get(key, 123)
 
-    await obj.close()
+    obj.close()
 
 
 ##__________________________________________________________________||
@@ -129,7 +129,7 @@ async def test_one(close_register, thread, nsubscribers, nitems):
 
     await asyncio.gather(task_register)
 
-    task_close = asyncio.create_task(registry.close())
+    task_close = to_thread(registry.close)
 
     results = await asyncio.gather(*tasks_subscribe, task_close)
     expected = items
@@ -190,7 +190,7 @@ async def test_list(close_register, thread, nsubscribers, nitems):
 
     await asyncio.gather(task_register)
 
-    task_close = asyncio.create_task(registry.close())
+    task_close = to_thread(registry.close)
 
     results = await asyncio.gather(*tasks_subscribe, task_close)
     expected = [items[: i + 1] for i in range(len(items))]
