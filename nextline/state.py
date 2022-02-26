@@ -288,8 +288,6 @@ class Running(State):
             exception=exception,
         )
 
-        self.obsolete()
-
         try:
             self._event.set()
         except RuntimeError:
@@ -299,6 +297,7 @@ class Running(State):
     async def exited(self):
         """return the exited state after the script exits."""
         await self._event.wait()
+        self.obsolete()
         return self._exited
 
     def send_pdb_command(self, thread_asynctask_id, command):
