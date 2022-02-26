@@ -270,15 +270,21 @@ class Running(State):
 
         func = script.compose(code)
 
-        call_with_trace(func, trace, self._done)
+        result = None
+        exception = None
+
+        try:
+            result = call_with_trace(func, trace)
+        except BaseException as e:
+            exception = e
+
+        self._done(result, exception)
 
     def _done(self, result=None, exception=None):
-        # callback function, to be called from another thread at the
-        # end of _run()
 
         if self.loop.is_closed():
-            # The exit is not being waited in the main thread, for
-            # example, neither exited() of finish() is called.
+            # The exit is not being waited in the main thread, for example,
+            # exited() is not called.
             return
 
         self._exited = Exited(

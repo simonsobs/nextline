@@ -1,7 +1,7 @@
 import sys
 import threading
 
-from typing import Callable, Any, Optional, Type
+from typing import Callable, Any, Type
 
 from .types import TraceFunc
 
@@ -12,33 +12,37 @@ DoneFunc = Callable[[Any, Type[Exception]], None]
 def call_with_trace(
     func: Func,
     trace: TraceFunc,
-    done: Optional[DoneFunc] = None,
     thread: bool = True,
-) -> None:
+) -> Any:
     """Set the trace function while running the function
 
     Notes
     -----
-    The trace function will be used in all new threads created during
-    the function execution regardless of whether the threads are
-    created by the function. If the thread option is false, the trace
-    function will not be use in any new threads.
+    The trace function will be used in all new threads created during the
+    function execution regardless of whether the threads are created by the
+    function. If the thread option is false, the trace function will not be use
+    in any new threads.
 
     Parameters
     ----------
     func : callable
-        A function to be called without any args. Use
-        functools.partial to provide args. A return value and an
-        exception will be given to `done`.
+        A function to be called without any args. Use functools.partial to
+        provide args. A return value and an exception will be given to `done`.
     trace: callable
         A trace function.
-    done: callable, optional
-        A callable with two arguments. It will to be called after the
-        func exits. The first argument is the return value. The second
-        argument is the exception if an exception occurs or otherwise
-        None.
     thread: bool, default True
         If False, no new threads will be traced.
+
+    Returns
+    -------
+    any
+        The return value of func().
+
+    Raises
+    ------
+    any
+        An exception raised in func(). The exception is re-raised after the
+        original trace function is put back.
     """
 
     ret = None
@@ -56,5 +60,6 @@ def call_with_trace(
         sys.settrace(trace_org)
         if thread:
             threading.settrace(trace_org)
-        if done:
-            done(ret, exc)
+        if exc:
+            raise exc
+        return ret

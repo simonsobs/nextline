@@ -1,11 +1,12 @@
+import sys
 from threading import Thread
+
 import pytest
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 from nextline.call import call_with_trace
 
 
-##__________________________________________________________________||
 @pytest.fixture()
 def trace():
     f = Mock()
@@ -13,42 +14,35 @@ def trace():
     yield f
 
 
-##__________________________________________________________________||
 def test_simple(trace):
     def func():
         x = 123
         return x
 
-    done = Mock()
-    call_with_trace(func, trace=trace, done=done)
+    trace_org = sys.gettrace()
+    ret = call_with_trace(func, trace=trace)
+    assert trace_org == sys.gettrace()
+    assert 123 == ret
     # print(trace.call_args_list)
     assert 4 == trace.call_count  # "call", "line", "line", "return"
-    assert [call(123, None)] == done.call_args_list
 
 
-##__________________________________________________________________||
 def test_raise(trace):
     def func():
         raise Exception("foo", "bar")
 
-    done = Mock()
+    trace_org = sys.gettrace()
 
-    call_with_trace(func, trace=trace, done=done)
+    with pytest.raises(Exception) as exc:
+        call_with_trace(func, trace=trace)
+
+    assert trace_org == sys.gettrace()
+
+    assert ("foo", "bar") == exc.value.args
 
     assert 4 == trace.call_count  # "call", "line", "exception", "return"
 
-    # print(trace.call_args_list)
 
-    assert 1 == done.call_count
-    ret, exc = done.call_args.args
-    assert ret is None
-    assert isinstance(exc, Exception)
-    assert ("foo", "bar") == exc.args
-    with pytest.raises(Exception):
-        raise exc
-
-
-##__________________________________________________________________||
 @pytest.mark.parametrize("thread", [True, False])
 def test_threading(trace, thread):
     def f1():
@@ -59,9 +53,11 @@ def test_threading(trace, thread):
         t1.start()
         t1.join()
 
-    done = Mock()
-    call_with_trace(func, trace=trace, done=done, thread=thread)
-    # print(trace.call_args_list)
+    trace_org = sys.gettrace()
+
+    call_with_trace(func, trace=trace, thread=thread)
+
+    assert trace_org == sys.gettrace()
 
     traced = {
         (
@@ -78,8 +74,3 @@ def test_threading(trace, thread):
         expected_subset.update({(f1.__module__, f1.__name__)})
 
     assert expected_subset <= traced
-
-    assert [call(None, None)] == done.call_args_list
-
-
-##__________________________________________________________________||
