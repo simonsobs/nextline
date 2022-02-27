@@ -56,9 +56,7 @@ async def test_run():
 
     assert nextline.state == "initialized"
 
-    task_monitor_state = asyncio.create_task(
-        monitor_state(nextline)
-    )
+    task_monitor_state = asyncio.create_task(monitor_state(nextline))
     # await asyncio.sleep(0)
 
     task_control_execution = asyncio.create_task(control_execution(nextline))
