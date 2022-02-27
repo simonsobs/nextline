@@ -254,31 +254,25 @@ class Running(State):
 
         self.loop = asyncio.get_running_loop()
 
-        self._thread = Thread(
-            target=self._run, args=(statement, trace), daemon=True
-        )
-        self._thread.start()
-
-    def _run(self, code, trace):
-
-        if isinstance(code, str):
+        def run():
+            code = statement
+            if isinstance(code, str):
+                try:
+                    code = compile(code, SCRIPT_FILE_NAME, "exec")
+                except BaseException as e:
+                    self._done(None, e)
+                    return
+            func = script.compose(code)
+            result = None
+            exception = None
             try:
-                code = compile(code, SCRIPT_FILE_NAME, "exec")
+                result = call_with_trace(func, trace)
             except BaseException as e:
-                self._done(None, e)
-                return
+                exception = e
+            self._done(result, exception)
 
-        func = script.compose(code)
-
-        result = None
-        exception = None
-
-        try:
-            result = call_with_trace(func, trace)
-        except BaseException as e:
-            exception = e
-
-        self._done(result, exception)
+        self._thread = Thread(target=run, daemon=True)
+        self._thread.start()
 
     def _done(self, result=None, exception=None):
 
