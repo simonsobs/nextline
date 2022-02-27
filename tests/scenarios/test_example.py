@@ -8,7 +8,7 @@ from nextline import Nextline
 ##__________________________________________________________________||
 statement = """
 import time
-time.sleep(0.1)
+time.sleep(0.001)
 
 def f():
     for _ in range(10):
