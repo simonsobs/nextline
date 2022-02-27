@@ -5,7 +5,6 @@ import pytest
 
 from nextline import Nextline
 
-##__________________________________________________________________||
 statement = """
 import script
 script.run()
@@ -13,21 +12,19 @@ script.run()
 """.strip()
 
 
-##__________________________________________________________________||
-@pytest.fixture(autouse=True)
 def monkey_patch_syspath(monkeypatch):
     this_dir = Path(__file__).resolve().parent
     monkeypatch.syspath_prepend(str(this_dir))
     yield
 
 
-##__________________________________________________________________||
-async def monitor_state(nextline):
+async def monitor_state(nextline: Nextline):
     async for s in nextline.subscribe_state():
-        print(s)
+        # print(s)
+        pass
 
 
-async def control_execution(nextline):
+async def control_execution(nextline: Nextline):
     controllers = {}
     async for ids in nextline.subscribe_thread_asynctask_ids():
         prev_ids = list(controllers.keys())
@@ -40,15 +37,14 @@ async def control_execution(nextline):
             del controllers[id_]
 
 
-async def control_thread_task(nextline, thread_task_id):
-    print(thread_task_id)
+async def control_thread_task(nextline: Nextline, thread_task_id):
+    # print(thread_task_id)
     async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
-        print(s)
+        # print(s)
         if s["prompting"]:
             nextline.send_pdb_command(thread_task_id, "next")
 
 
-##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_run():
 
@@ -67,6 +63,4 @@ async def test_run():
     assert nextline.state == "finished"
     await nextline.close()
     assert nextline.state == "closed"
-
-
-##__________________________________________________________________||
+    await asyncio.gather(task_monitor_state, task_control_execution)
