@@ -37,12 +37,12 @@ def monkey_patch_syspath(monkeypatch):
 
 
 ##__________________________________________________________________||
-async def monitor_state(nextline):
+async def monitor_state(nextline: Nextline):
     async for s in nextline.subscribe_state():
         print("monitor_state()", s)
 
 
-async def control_execution(nextline):
+async def control_execution(nextline: Nextline):
     prev_ids = set()
     tasks = set()
 
@@ -83,7 +83,7 @@ async def control_execution(nextline):
         prev_ids = ids
 
 
-async def control_thread_task(nextline, thread_task_id):
+async def control_thread_task(nextline: Nextline, thread_task_id):
     to_step = ["script_threading.run()", "script_asyncio.run()"]
     print(f"control_thread_task({thread_task_id})")
     file_name = ""
@@ -104,7 +104,7 @@ async def control_thread_task(nextline, thread_task_id):
             nextline.send_pdb_command(thread_task_id, command)
 
 
-async def run(nextline):
+async def run(nextline: Nextline):
     await asyncio.sleep(0.1)
     nextline.run()
     await nextline.finish()
