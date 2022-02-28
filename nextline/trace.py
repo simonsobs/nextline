@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from .registry import PdbCIRegistry
 
 
-MODULES_TO_SKIP = [
+MODULES_TO_SKIP = {
     "threading",
     "queue",
     "importlib",
@@ -43,7 +43,7 @@ MODULES_TO_SKIP = [
     "nextline.utils.*",
     "nextline.queuedist",
     "nextlinegraphql.schema.bindables",
-]
+}
 
 
 def Trace(
