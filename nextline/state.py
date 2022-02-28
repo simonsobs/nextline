@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from threading import Thread
 import itertools
@@ -62,7 +64,7 @@ class Machine:
         )
         self.registry.register("thread_task_ids", ())
 
-        self._state = Initialized(self.registry)
+        self._state: State = Initialized(self.registry)
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
@@ -152,6 +154,8 @@ class ObsoleteMixin:
 class State(ObsoleteMixin):
     """The base state class in the Nextline state machine"""
 
+    name = "state"
+
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
@@ -159,23 +163,23 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
-    def run(self) -> None:
+    def run(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    async def exited(self) -> None:
+    async def exited(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    async def finish(self) -> None:
+    async def finish(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self) -> None:
+    def reset(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def close(self) -> None:
+    def close(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
