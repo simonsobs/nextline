@@ -10,7 +10,7 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 
-from typing import Any, Set, Dict, Callable, TYPE_CHECKING
+from typing import Any, Set, Callable, TYPE_CHECKING
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ def PdbInterfaceFactory(
 
     id_composer = UniqThreadTaskIdComposer()
     prompting_counter = count(1).__next__
-    callback_map: Dict[Any, PdbInterface] = WeakKeyDictionary()
+    callback_map: WeakKeyDictionary[Any, PdbInterface] = WeakKeyDictionary()
 
     def callback_func(key):
         callback_map[key].close()
