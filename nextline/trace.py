@@ -126,16 +126,29 @@ def TraceAddFirstModule(
 ) -> TraceFunc:
     first = True
 
-    def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        nonlocal first
-        if first:
-            module_name = frame.f_globals.get("__name__")
-            modules_to_trace.add(module_name)
-            first = False
+    def global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        if not first:
+            return trace(frame, event, arg)
 
-        return trace(frame, event, arg)
+        def create_local_trace():
+            next_trace: Union[TraceFunc, None] = trace
 
-    return ret
+            def local_trace(frame, event, arg):
+                nonlocal first, next_trace
+
+                if module_name := frame.f_globals.get("__name__"):
+                    first = False
+                    modules_to_trace.add(module_name)
+                    return trace(frame, event, arg)
+
+                next_trace = next_trace(frame, event, arg)
+                return local_trace
+
+            return local_trace
+
+        return create_local_trace()(frame, event, arg)
+
+    return global_trace
 
 
 def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:

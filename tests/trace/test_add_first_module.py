@@ -1,3 +1,5 @@
+from functools import partial
+
 import pytest
 from unittest.mock import Mock
 
@@ -16,6 +18,7 @@ def test_one(
     ref: TraceSummary,
     modules_to_trace: Set[str],
     modules_to_trace_init: Set[str],
+    module_name: str,
 ):
     assert ref.call.module
     assert ref.return_.module
@@ -24,17 +27,43 @@ def test_one(
     assert ref == probe
 
     assert modules_to_trace_init is not modules_to_trace
-    assert {__name__} | modules_to_trace_init == modules_to_trace
+    assert {module_name} | modules_to_trace_init == modules_to_trace
 
 
-def f():
+def f1():
     module_a.func_a()
 
 
+f2 = partial(f1)
+
+statement = """
+module_a.func_a()
+"""
+
+code = compile(statement, "<string>", "exec")
+globals_ = {"module_a": module_a}  # without __name__
+f3 = partial(exec, code, globals_)
+
+
+@pytest.fixture(
+    params=[
+        (f1, __name__),
+        (f2, __name__),
+        (f3, module_a.__name__),
+    ]
+)
+def func_and_module_name(request):
+    yield request.param
+
+
 @pytest.fixture()
-def func():
-    # TODO: Test what happens if functools.partial() is the first call
-    yield f
+def func(func_and_module_name):
+    yield func_and_module_name[0]
+
+
+@pytest.fixture()
+def module_name(func_and_module_name):
+    yield func_and_module_name[1]
 
 
 @pytest.fixture(params=[set(), {"some_module"}])
