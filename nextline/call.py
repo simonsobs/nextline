@@ -59,7 +59,7 @@ def call_with_trace(
     finally:
         sys.settrace(trace_org)
         if thread:
-            threading.settrace(trace_org)
+            threading.settrace(trace_org)  # type: ignore
         if exc:
             raise exc
         return ret
