@@ -105,7 +105,7 @@ def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         module_name = frame.f_globals.get("__name__")
         if _is_matched_to_any(module_name, skip):
-            return
+            return None
         return trace(frame, event, arg)
 
     return ret
@@ -115,7 +115,7 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         func_name = frame.f_code.co_name
         if func_name == "<lambda>":
-            return
+            return None
         return trace(frame, event, arg)
 
     return ret
@@ -165,7 +165,7 @@ def TraceSelectFirstModule(
         if first:
             module_name = frame.f_globals.get("__name__")
             if not _is_matched_to_any(module_name, modules_to_trace):
-                return
+                return None
             first = False
         return trace(frame, event, arg)
 
