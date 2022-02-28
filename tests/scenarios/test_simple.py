@@ -27,7 +27,7 @@ async def test_run():
             thread_asynctask_id = thread_asynctask_ids[0]
             break
 
-    async for state in nextline.subscribe_thread_asynctask_state(
+    async for state in nextline.subscribe_trace_state(
         thread_asynctask_id
     ):
         if state["prompting"]:

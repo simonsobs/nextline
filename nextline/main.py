@@ -90,7 +90,7 @@ class Nextline:
         async for y in agen:
             yield y
 
-    async def subscribe_thread_asynctask_state(self, thread_asynctask_id):
+    async def subscribe_trace_state(self, thread_asynctask_id):
         agen = self.registry.subscribe(thread_asynctask_id)
         async for y in agen:
             yield y

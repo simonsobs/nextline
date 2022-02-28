@@ -39,7 +39,7 @@ async def control_execution(nextline: Nextline):
 
 async def control_thread_task(nextline: Nextline, thread_task_id):
     # print(thread_task_id)
-    async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
+    async for s in nextline.subscribe_trace_state(thread_task_id):
         # print(s)
         if s["prompting"]:
             nextline.send_pdb_command(thread_task_id, "next")

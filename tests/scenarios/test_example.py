@@ -87,7 +87,7 @@ async def control_thread_task(nextline: Nextline, thread_task_id):
     to_step = ["script_threading.run()", "script_asyncio.run()"]
     print(f"control_thread_task({thread_task_id})")
     file_name = ""
-    async for s in nextline.subscribe_thread_asynctask_state(thread_task_id):
+    async for s in nextline.subscribe_trace_state(thread_task_id):
         # print(s)
         if not file_name == s["file_name"]:
             file_name = s["file_name"]
