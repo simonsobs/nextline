@@ -30,7 +30,7 @@ def summarize_trace_calls(
 ) -> TraceSummary:
     """Traced modules and functions for each event"""
 
-    args = trace_call_args(mock_trace)
+    args_ = trace_call_args(mock_trace)  # type: ignore
     # [(frame, event, arg), ...]
 
     args = [
@@ -39,7 +39,7 @@ def summarize_trace_calls(
             "module": frame.f_globals.get("__name__"),
             "func": frame.f_code.co_name,
         }
-        for frame, event, _ in args
+        for frame, event, _ in args_
     ]
     # [{"event": event, "module": module, "func": func}, ...]
 
