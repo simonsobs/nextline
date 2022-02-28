@@ -4,7 +4,7 @@ from weakref import WeakKeyDictionary
 
 import fnmatch
 
-from typing import Any, Set, Dict, Optional, Union, Callable, TYPE_CHECKING
+from typing import Any, Set, Optional, Union, Callable, TYPE_CHECKING
 from types import FrameType
 
 from .pdb.proxy import PdbInterfaceFactory
@@ -141,7 +141,7 @@ def TraceAddFirstModule(
 def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
     """Create a trace that creates a new trace for each thread or asyncio task"""
 
-    map: Dict[Any, TraceFunc] = WeakKeyDictionary()
+    map: WeakKeyDictionary[Any, TraceFunc] = WeakKeyDictionary()
 
     def ret(frame, event, arg) -> Optional[TraceFunc]:
         key = current_task_or_thread()
