@@ -10,7 +10,7 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 
-from typing import Any, Set, Callable, TYPE_CHECKING
+from typing import Any, Optional, Set, Callable, TYPE_CHECKING, Tuple
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -86,8 +86,8 @@ class PdbInterface:
         self._opened = False
 
     def open(self) -> TraceFunc:
-        self._q_stdin = queue.Queue()
-        self._q_stdout = queue.Queue()
+        self._q_stdin: queue.Queue = queue.Queue()
+        self._q_stdout: queue.Queue = queue.Queue()
 
         self._pdb = CustomizedPdb(
             pdbi=self,
@@ -114,7 +114,7 @@ class PdbInterface:
         self._registry.register("thread_task_ids", ids)
 
     def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
-        self._current_trace_args = (frame, event, arg)
+        self._current_trace_args: Optional[Tuple] = (frame, event, arg)
 
     def exited_trace(self) -> None:
         self._current_trace_args = None
