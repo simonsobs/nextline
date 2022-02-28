@@ -85,7 +85,7 @@ class Nextline:
         async for y in agen:
             yield y
 
-    async def subscribe_thread_asynctask_ids(self):
+    async def subscribe_trace_ids(self):
         agen = self.registry.subscribe("thread_task_ids")
         async for y in agen:
             yield y

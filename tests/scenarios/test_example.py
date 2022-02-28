@@ -48,11 +48,11 @@ async def control_execution(nextline: Nextline):
 
     # The lines of code between ============= can be rewritten with
     # one line of code as
-    #   async for ids in nextline.subscribe_thread_asynctask_ids():
+    #   async for ids in nextline.subscribe_trace_ids():
     # if exceptions occurred in tasks don't need to be re-raised.
 
     # ==================================================
-    subscription = nextline.subscribe_thread_asynctask_ids()
+    subscription = nextline.subscribe_trace_ids()
     task_anext = asyncio.create_task(subscription.__anext__())
     while True:
         aws = {task_anext, *tasks}

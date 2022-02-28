@@ -26,7 +26,7 @@ async def monitor_state(nextline: Nextline):
 
 async def control_execution(nextline: Nextline):
     controllers = {}
-    async for ids in nextline.subscribe_thread_asynctask_ids():
+    async for ids in nextline.subscribe_trace_ids():
         prev_ids = list(controllers.keys())
         new_ids = [id_ for id_ in ids if id_ not in prev_ids]
         ended_ids = [id_ for id_ in prev_ids if id_ not in ids]

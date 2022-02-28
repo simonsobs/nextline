@@ -22,7 +22,7 @@ async def test_run():
         if state == "running":
             break
 
-    async for thread_asynctask_ids in nextline.subscribe_thread_asynctask_ids():
+    async for thread_asynctask_ids in nextline.subscribe_trace_ids():
         if thread_asynctask_ids:
             thread_asynctask_id = thread_asynctask_ids[0]
             break
