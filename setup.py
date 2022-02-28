@@ -29,9 +29,9 @@ setup(
     install_requires=["janus>=0.6"],
     extras_require={
         "tests": [
-            "pytest>=5.4",
-            "pytest-cov>=2.8",
-            "pytest-asyncio>=0.14",
+            "pytest>=7.0",
+            "pytest-cov>=3.0",
+            "pytest-asyncio>=0.18",
             "snapshottest>0.5",
         ],
         "dev": [
