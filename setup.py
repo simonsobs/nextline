@@ -38,6 +38,7 @@ setup(
             "twine",
             "flake8",
             "black",
+            "mypy",
         ],
     },
 )
