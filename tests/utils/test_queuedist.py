@@ -1,5 +1,6 @@
 import asyncio
 import time
+from typing import Iterable
 
 import pytest
 
@@ -29,18 +30,18 @@ def test_close_multiple_times(obj):
     obj.close()
 
 
-async def async_send(obj, items):
+async def async_send(obj: QueueDist, items: Iterable):
     async for i in aiterable(items):
         obj.put(i)
         assert i == obj.get()
 
 
-async def async_receive(obj):
+async def async_receive(obj: QueueDist):
     return [i async for i in obj.subscribe()]
 
 
 @pytest.mark.asyncio
-async def test_subscribe(obj):
+async def test_subscribe(obj: QueueDist):
     items = list(range(10))
     task_receive_1 = asyncio.create_task(async_receive(obj))
     task_receive_2 = asyncio.create_task(async_receive(obj))
@@ -56,7 +57,7 @@ async def test_subscribe(obj):
 
 
 @pytest.mark.asyncio
-async def test_receive_the_most_recent_item(obj):
+async def test_receive_the_most_recent_item(obj: QueueDist):
 
     task_receive_1 = asyncio.create_task(async_receive(obj))
     await asyncio.sleep(0)  # let task_receive_1 start
@@ -82,7 +83,7 @@ async def test_receive_the_most_recent_item(obj):
 
 
 @pytest.mark.asyncio
-async def test_subscribe_after_end(obj):
+async def test_subscribe_after_end(obj: QueueDist):
     # Note: This test might be unnecessary. It is more useful to test
     # what happens if subscribed after closed.
 
@@ -105,7 +106,7 @@ async def async_receive_with_break(obj, at=None):
 
 
 @pytest.mark.asyncio
-async def test_break(obj):
+async def test_break(obj: QueueDist):
     items = list(range(10))
     at = 5
     task_receive_1 = asyncio.create_task(async_receive_with_break(obj, at))
@@ -128,7 +129,12 @@ post_nitems = [0, 1, 2, 100]
 @pytest.mark.parametrize("pre_nitems", pre_nitems)
 @pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.asyncio
-async def test_thread(obj, nsubscribers, pre_nitems, post_nitems):
+async def test_thread(
+    obj: QueueDist,
+    nsubscribers: int,
+    pre_nitems: int,
+    post_nitems: int,
+):
     """test if the issue is resolved
     https://github.com/simonsobs/nextline/issues/2
 
