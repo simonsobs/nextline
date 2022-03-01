@@ -25,18 +25,16 @@ async def test_run():
         if state == "running":
             break
 
-    async for thread_asynctask_ids in nextline.subscribe_trace_ids():
-        if thread_asynctask_ids:
-            thread_asynctask_id = thread_asynctask_ids[0]
+    async for trace_ids in nextline.subscribe_trace_ids():
+        if trace_ids:
+            trace_id = trace_ids[0]
             break
 
-    async for state in nextline.subscribe_trace_state(
-        thread_asynctask_id
-    ):
+    async for state in nextline.subscribe_trace_state(trace_id):
         if state["prompting"]:
             break
 
-    nextline.send_pdb_command(thread_asynctask_id, "continue")
+    nextline.send_pdb_command(trace_id, "continue")
     await nextline.finish()
     assert nextline.state == "finished"
     await nextline.close()

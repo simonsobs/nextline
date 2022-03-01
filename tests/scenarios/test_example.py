@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from typing import Set
 
 import pytest
 
@@ -39,12 +40,13 @@ def monkey_patch_syspath(monkeypatch):
 ##__________________________________________________________________||
 async def monitor_state(nextline: Nextline):
     async for s in nextline.subscribe_state():
-        print("monitor_state()", s)
+        # print("monitor_state()", s)
+        pass
 
 
 async def control_execution(nextline: Nextline):
-    prev_ids = set()
-    tasks = set()
+    prev_ids: Set[int] = set()
+    tasks: Set[asyncio.Task] = set()
 
     # The lines of code between ============= can be rewritten with
     # one line of code as
@@ -66,28 +68,28 @@ async def control_execution(nextline: Nextline):
         if not task_anext.done():
             continue
         try:
-            ids = task_anext.result()
+            ids_ = task_anext.result()
         except StopAsyncIteration:
             break
         task_anext = asyncio.create_task(subscription.__anext__())
         # ===============================================
 
-        ids = set(ids)
+        ids = set(ids_)
 
         new_ids = ids - prev_ids
 
         for id_ in new_ids:
-            task = asyncio.create_task(control_thread_task(nextline, id_))
+            task = asyncio.create_task(control_trace(nextline, id_))
             tasks.add(task)
 
         prev_ids = ids
 
 
-async def control_thread_task(nextline: Nextline, thread_task_id):
+async def control_trace(nextline: Nextline, trace_id):
     to_step = ["script_threading.run()", "script_asyncio.run()"]
-    print(f"control_thread_task({thread_task_id})")
+    # print(f"control_trace({trace_id})")
     file_name = ""
-    async for s in nextline.subscribe_trace_state(thread_task_id):
+    async for s in nextline.subscribe_trace_state(trace_id):
         # print(s)
         if not file_name == s["file_name"]:
             file_name = s["file_name"]
@@ -101,7 +103,7 @@ async def control_thread_task(nextline: Nextline, thread_task_id):
                 if line in to_step:
                     # print(line)
                     command = "step"
-            nextline.send_pdb_command(thread_task_id, command)
+            nextline.send_pdb_command(trace_id, command)
 
 
 async def run(nextline: Nextline):

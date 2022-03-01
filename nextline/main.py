@@ -1,6 +1,6 @@
 import linecache
 
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Optional, List
 
 from .state import Machine
 
@@ -85,18 +85,18 @@ class Nextline:
         async for y in agen:
             yield y
 
-    async def subscribe_trace_ids(self):
-        agen = self.registry.subscribe("thread_task_ids")
+    async def subscribe_trace_ids(self) -> AsyncGenerator[List[int], None]:
+        agen = self.registry.subscribe("trace_ids")
         async for y in agen:
             yield y
 
-    async def subscribe_trace_state(self, thread_asynctask_id):
-        agen = self.registry.subscribe(thread_asynctask_id)
+    async def subscribe_trace_state(self, trace_id: int):
+        agen = self.registry.subscribe(trace_id)
         async for y in agen:
             yield y
 
-    def send_pdb_command(self, thread_asynctask_id, command):
-        self.machine.send_pdb_command(thread_asynctask_id, command)
+    def send_pdb_command(self, trace_id: int, command: str):
+        self.machine.send_pdb_command(trace_id, command)
 
     def get_source(self, file_name=None):
         if not file_name or file_name == self.registry.get("script_file_name"):
