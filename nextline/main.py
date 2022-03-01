@@ -1,6 +1,6 @@
 import linecache
 
-from typing import Any, AsyncGenerator, Optional, List
+from typing import Any, AsyncGenerator, Optional, Tuple
 
 from .state import Machine
 
@@ -85,7 +85,7 @@ class Nextline:
         async for y in agen:
             yield y
 
-    async def subscribe_trace_ids(self) -> AsyncGenerator[List[int], None]:
+    async def subscribe_trace_ids(self) -> AsyncGenerator[Tuple[int], None]:
         agen = self.registry.subscribe("trace_ids")
         async for y in agen:
             yield y
