@@ -25,7 +25,8 @@ def PdbInterfaceFactory(
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
-    id_composer = UniqThreadTaskIdComposer()
+    thread_task_id_composer = UniqThreadTaskIdComposer()
+    trace_id_counter = count(1).__next__
     prompting_counter = count(1).__next__
     callback_map: WeakKeyDictionary[Any, PdbInterface] = WeakKeyDictionary()
 
@@ -37,7 +38,8 @@ def PdbInterfaceFactory(
     def factory() -> PdbInterface:
         # TODO: check if already created for the same thread or task
         pbi = PdbInterface(
-            trace_id=id_composer(),
+            trace_id_counter=trace_id_counter,
+            thread_task_id_composer=thread_task_id_composer,
             registry=registry,
             ci_registry=pdb_ci_registry,
             prompting_counter=prompting_counter,
@@ -53,6 +55,7 @@ def PdbInterfaceFactory(
 class PdbInterface:
     """Instantiate Pdb and register its command loops
 
+    TODO: Update parameters
 
     Parameters
     ----------
@@ -72,13 +75,15 @@ class PdbInterface:
 
     def __init__(
         self,
-        trace_id,
+        trace_id_counter: Callable[[], int],
+        thread_task_id_composer: UniqThreadTaskIdComposer,
         registry: Registry,
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
-        self._trace_id = trace_id
+        self._trace_id_counter = trace_id_counter
+        self._thread_task_id_composer = thread_task_id_composer
         self._registry = registry
         self._ci_registry = ci_registry
         self._prompting_counter = prompting_counter
@@ -96,8 +101,16 @@ class PdbInterface:
             readrc=False,
         )
 
+        self._trace_id = self._trace_id_counter()
         self._registry.open_register(self._trace_id)
-        ids = (self._registry.get("thread_task_ids") or ()) + (self._trace_id,)
+        ids = (self._registry.get("trace_ids") or ()) + (self._trace_id,)
+        self._registry.register("trace_ids", ids)
+
+        self._thread_task_id = self._thread_task_id_composer()
+        self._registry.open_register(self._thread_task_id)
+        ids = (self._registry.get("thread_task_ids") or ()) + (
+            self._thread_task_id,
+        )
         self._registry.register("thread_task_ids", ids)
 
         self._opened = True
@@ -108,8 +121,14 @@ class PdbInterface:
         if not self._opened:
             return
         self._registry.close_register(self._trace_id)
-        ids = list(self._registry.get("thread_task_ids"))
+        ids = list(self._registry.get("trace_ids"))
         ids.remove(self._trace_id)
+        ids = tuple(ids)
+        self._registry.register("trace_ids", ids)
+
+        self._registry.close_register(self._thread_task_id)
+        ids = list(self._registry.get("thread_task_ids"))
+        ids.remove(self._thread_task_id)
         ids = tuple(ids)
         self._registry.register("thread_task_ids", ids)
 
@@ -139,11 +158,22 @@ class PdbInterface:
             self._pdb, self._q_stdin, self._q_stdout
         )
         self._pdb_ci.start()
+
         self._ci_registry.add(self._trace_id, self._pdb_ci)
-        self._registry.register(self._trace_id, self._state.copy())
+        self._ci_registry.add(self._thread_task_id, self._pdb_ci)
+
+        copy = self._state.copy()
+        self._registry.register(self._trace_id, copy)
+        self._registry.register(self._thread_task_id, copy)
 
     def exited_cmdloop(self) -> None:
         self._state["prompting"] = 0
+
         self._ci_registry.remove(self._trace_id)
-        self._registry.register(self._trace_id, self._state.copy())
+        self._ci_registry.remove(self._thread_task_id)
+
+        copy = self._state.copy()
+        self._registry.register(self._trace_id, copy)
+        self._registry.register(self._thread_task_id, copy)
+
         self._pdb_ci.end()

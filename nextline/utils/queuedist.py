@@ -57,7 +57,7 @@ class QueueDist:
 
     async def subscribe(self) -> AsyncIterable:
         """Yield data as they are put"""
-        q = janus.Queue()
+        q: janus.Queue = janus.Queue()
 
         with self._lock_out:
             self._qs_out.append(q)
@@ -105,8 +105,7 @@ class QueueDist:
             idx += 1
             item = self._q_in.get()
             self._q_in.task_done()
-            enumerated = (idx, item)
+            self._last_enumerated = (idx, item)
             with self._lock_out:
                 for q in self._qs_out:
-                    q.sync_q.put(enumerated)
-            self._last_enumerated = enumerated
+                    q.sync_q.put(self._last_enumerated)
