@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 
 from nextline import Nextline
@@ -17,6 +18,8 @@ async def test_run():
     assert nextline.state == "initialized"
 
     nextline.run()
+
+    await asyncio.sleep(0.01)
 
     async for state in nextline.subscribe_state():
         if state == "running":
