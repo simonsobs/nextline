@@ -57,7 +57,7 @@ class QueueDist:
 
     async def subscribe(self) -> AsyncIterable:
         """Yield data as they are put"""
-        q = janus.Queue()
+        q: janus.Queue = janus.Queue()
 
         with self._lock_out:
             self._qs_out.append(q)
