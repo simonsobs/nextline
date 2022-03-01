@@ -67,7 +67,7 @@ async def test_receive_the_most_recent_item(obj: QueueDist):
         obj.put(i)
         assert i == obj.get()
 
-    time.sleep(0.1)
+    time.sleep(0.01)
 
     task_receive_2 = asyncio.create_task(async_receive(obj))
 
