@@ -102,7 +102,7 @@ class PdbInterface:
         )
 
         self._trace_id = self._trace_id_counter()
-        self._registry.open_register(self._trace_id)
+        self._registry.register(self._trace_id, None)
         ids = (self._registry.get("trace_ids") or ()) + (self._trace_id,)
         self._registry.register("trace_ids", ids)
 

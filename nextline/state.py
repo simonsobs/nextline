@@ -50,12 +50,6 @@ class Machine:
 
     def __init__(self, statement: str, run_no_start_from=1):
         self.registry = Registry()
-        # self.registry.open_register("statement")
-        # self.registry.open_register("state_name")
-        # self.registry.open_register("script_file_name")
-        # self.registry.open_register("run_no")
-        # self.registry.open_register("run_no_count")
-        # self.registry.open_register("thread_task_ids")
 
         self.registry.register("statement", statement)
         self.registry.register("script_file_name", SCRIPT_FILE_NAME)

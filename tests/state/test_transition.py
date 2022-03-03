@@ -20,10 +20,6 @@ time.sleep(0.001)
 @pytest.fixture()
 def registry():
     y = Registry()
-    y.open_register("statement")
-    y.open_register("state_name")
-    y.open_register("run_no")
-    y.open_register("run_no_count")
     y.register("run_no_count", itertools.count().__next__)
     yield y
     y.close()
