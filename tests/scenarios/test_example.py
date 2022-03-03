@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Set
+from typing import Optional, Set
 
 import pytest
 
@@ -17,23 +17,28 @@ def monkey_patch_syspath(monkeypatch):
 
 statement = """
 import time
+
 time.sleep(0.001)
+
 
 def f():
     for _ in range(10):
         pass
     return
 
+
 f()
 f()
 
-print('here!')
+print("here!")
 
 import script_threading
-script_threading.run()
+
+script_threading.run()  # step
 
 import script_asyncio
-script_asyncio.run()
+
+script_asyncio.run()  # step
 """.strip()
 
 
@@ -80,7 +85,6 @@ async def control_execution(nextline: Nextline):
 
 
 async def control_trace(nextline: Nextline, trace_id):
-    to_step = ["script_threading.run()", "script_asyncio.run()"]
     # print(f"control_trace({trace_id})")
     file_name = ""
     async for s in nextline.subscribe_trace_state(trace_id):
@@ -92,9 +96,40 @@ async def control_trace(nextline: Nextline, trace_id):
             command = "next"
             if s["trace_event"] == "line":
                 line = nextline.get_source_line(
-                    line_no=s["line_no"], file_name=s["file_name"]
+                    line_no=s["line_no"],
+                    file_name=s["file_name"],
                 )
-                if line in to_step:
-                    # print(line)
-                    command = "step"
+                command = find_command(line) or command
             nextline.send_pdb_command(trace_id, command)
+
+
+def find_command(line: str) -> Optional[str]:
+    """The Pdb command indicated in a comment
+
+    For example, returns "step" for the line "func()  # step"
+    """
+    import re
+
+    if not (comment := extract_comment(line)):
+        return None
+    regex = re.compile(r"^# +(\w+) *$")
+    match = regex.search(comment)
+    if match:
+        return match.group(1)
+    return None
+
+
+def extract_comment(line: str) -> Optional[str]:
+    import io
+    import tokenize
+
+    comments = [
+        val
+        for type, val, *_ in tokenize.generate_tokens(
+            io.StringIO(line).readline
+        )
+        if type == tokenize.COMMENT
+    ]
+    if comments:
+        return comments[0]
+    return None
