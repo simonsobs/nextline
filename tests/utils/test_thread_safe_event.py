@@ -5,7 +5,6 @@ import pytest
 from nextline.utils import ThreadSafeAsyncioEvent, to_thread
 
 
-##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_asyncio():
     obj = ThreadSafeAsyncioEvent()
@@ -31,7 +30,6 @@ async def test_asyncio():
     await asyncio.gather(send(), receive())
 
 
-##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_thread():
     obj = ThreadSafeAsyncioEvent()
@@ -55,6 +53,3 @@ async def test_thread():
         assert not obj.is_set()
 
     await asyncio.gather(to_thread(send), receive())
-
-
-##__________________________________________________________________||
