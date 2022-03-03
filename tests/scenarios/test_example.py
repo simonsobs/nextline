@@ -5,6 +5,7 @@ from typing import Set
 import pytest
 
 from nextline import Nextline
+from nextline.utils import agen_with_wait
 
 ##__________________________________________________________________||
 statement = """
@@ -46,43 +47,18 @@ async def monitor_state(nextline: Nextline):
 
 async def control_execution(nextline: Nextline):
     prev_ids: Set[int] = set()
-    tasks: Set[asyncio.Task] = set()
-
-    # The lines of code between ============= can be rewritten with
-    # one line of code as
-    #   async for ids in nextline.subscribe_trace_ids():
-    # if exceptions occurred in tasks don't need to be re-raised.
-
-    # ==================================================
-    subscription = nextline.subscribe_trace_ids()
-    task_anext = asyncio.create_task(subscription.__anext__())
-    while True:
-        aws = {task_anext, *tasks}
-        done, pending = await asyncio.wait(
-            aws, return_when=asyncio.FIRST_COMPLETED
-        )
-        results = [  # noqa: F841
-            t.result() for t in tasks if t in done
-        ]  # re-raise exception
-        tasks = tasks & pending
-        if not task_anext.done():
-            continue
-        try:
-            ids_ = task_anext.result()
-        except StopAsyncIteration:
-            break
-        task_anext = asyncio.create_task(subscription.__anext__())
-        # ===============================================
-
+    agen = agen_with_wait(nextline.subscribe_trace_ids())
+    async for ids_ in agen:
         ids = set(ids_)
+        new_ids, prev_ids = ids - prev_ids, ids
 
-        new_ids = ids - prev_ids
+        tasks = {
+            asyncio.create_task(control_trace(nextline, id_))
+            for id_ in new_ids
+        }
+        _, pending = await agen.asend(tasks)
 
-        for id_ in new_ids:
-            task = asyncio.create_task(control_trace(nextline, id_))
-            tasks.add(task)
-
-        prev_ids = ids
+    await asyncio.gather(*pending)
 
 
 async def control_trace(nextline: Nextline, trace_id):
