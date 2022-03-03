@@ -7,7 +7,14 @@ import pytest
 from nextline import Nextline
 from nextline.utils import agen_with_wait
 
-##__________________________________________________________________||
+
+@pytest.fixture(autouse=True)
+def monkey_patch_syspath(monkeypatch):
+    this_dir = Path(__file__).resolve().parent
+    monkeypatch.syspath_prepend(str(this_dir))
+    yield
+
+
 statement = """
 import time
 time.sleep(0.001)
@@ -30,19 +37,30 @@ script_asyncio.run()
 """.strip()
 
 
-##__________________________________________________________________||
-@pytest.fixture(autouse=True)
-def monkey_patch_syspath(monkeypatch):
-    this_dir = Path(__file__).resolve().parent
-    monkeypatch.syspath_prepend(str(this_dir))
-    yield
+@pytest.mark.asyncio
+async def test_run():
+    nextline = Nextline(statement)
+    assert nextline.state == "initialized"
+    task_monitor_state = asyncio.create_task(monitor_state(nextline))
+    task_control_execution = asyncio.create_task(control_execution(nextline))
+    task_run = asyncio.create_task(run(nextline))
+    await asyncio.gather(task_run, task_monitor_state, task_control_execution)
+    assert nextline.state == "closed"
 
 
-##__________________________________________________________________||
 async def monitor_state(nextline: Nextline):
     async for s in nextline.subscribe_state():
         # print("monitor_state()", s)
         pass
+
+
+async def run(nextline: Nextline):
+    await asyncio.sleep(0.01)
+    nextline.run()
+    await nextline.finish()
+    nextline.exception()
+    nextline.result()  # raise exception
+    await nextline.close()
 
 
 async def control_execution(nextline: Nextline):
@@ -80,35 +98,3 @@ async def control_trace(nextline: Nextline, trace_id):
                     # print(line)
                     command = "step"
             nextline.send_pdb_command(trace_id, command)
-
-
-async def run(nextline: Nextline):
-    await asyncio.sleep(0.01)
-    nextline.run()
-    await nextline.finish()
-    nextline.exception()
-    nextline.result()  # raise exception
-    await nextline.close()
-
-
-##__________________________________________________________________||
-@pytest.mark.asyncio
-async def test_run():
-
-    nextline = Nextline(statement)
-
-    assert nextline.state == "initialized"
-
-    task_monitor_state = asyncio.create_task(monitor_state(nextline))
-
-    task_control_execution = asyncio.create_task(control_execution(nextline))
-
-    task_run = asyncio.create_task(run(nextline))
-
-    aws = [task_run, task_monitor_state, task_control_execution]
-    await asyncio.gather(*aws)
-
-    assert nextline.state == "closed"
-
-
-##__________________________________________________________________||
