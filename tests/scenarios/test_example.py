@@ -107,7 +107,7 @@ async def control_trace(nextline: Nextline, trace_id):
 
 
 async def run(nextline: Nextline):
-    await asyncio.sleep(0.1)
+    await asyncio.sleep(0.01)
     nextline.run()
     await nextline.finish()
     nextline.exception()
