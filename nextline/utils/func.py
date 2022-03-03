@@ -6,6 +6,7 @@ from typing import Union
 
 
 def current_task_or_thread() -> Union[Task, Thread]:
+    """The asyncio task object if in a task, else the thread object"""
     try:
         task = current_task()
     except RuntimeError:
