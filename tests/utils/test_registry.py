@@ -72,45 +72,40 @@ nsubscribers = [0, 1, 2, 70]
 @pytest.mark.parametrize("close_register", [True, False])
 @pytest.mark.asyncio
 async def test_matrix(close_register, thread, nsubscribers, nitems):
-    async def subscribe(registry, register_key):
-        ret = []
-        async for y in registry.subscribe(register_key):
-            ret.append(y)
-        return ret
+    async def subscribe():
+        return [y async for y in obj.subscribe(key)]
 
-    def register(registry, register_key, items):
-        registry.open_register(register_key)
-        assert registry.get(register_key) is None
+    def register():
         for item in items:
-            registry.register(register_key, item)
-            assert registry.get(register_key) == item
+            obj[key] = item
+            assert obj[key] == item
         if close_register:
-            registry.close_register(register_key)
+            del obj[key]
 
-    async def aregister(registry, register_key, items):
-        return register(registry, register_key, items)
+    async def aregister():
+        return register()
 
-    registry = Registry()
+    obj = Registry()
 
-    register_key = "item"
-    items = [f"{register_key}-{i+1}" for i in range(nitems)]
+    key = "item"
+    items = [f"{key}-{i+1}" for i in range(nitems)]
 
     # subscribe
     tasks_subscribe = []
     for i in range(nsubscribers):
-        task = asyncio.create_task(subscribe(registry, register_key))
+        task = asyncio.create_task(subscribe())
         tasks_subscribe.append(task)
 
     # register
     if thread:
-        coro = to_thread(register, registry, register_key, items)
+        coro = to_thread(register)
     else:
-        coro = aregister(registry, register_key, items)
+        coro = aregister()
     task_register = asyncio.create_task(coro)
 
     await asyncio.gather(task_register)
 
-    task_close = to_thread(registry.close)
+    task_close = to_thread(obj.close)
 
     results = await asyncio.gather(*tasks_subscribe, task_close)
     expected = items
