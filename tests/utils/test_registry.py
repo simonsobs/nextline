@@ -8,7 +8,7 @@ from .aiterable import aiterable
 
 
 @pytest.mark.asyncio
-async def test_simple_usage():
+async def test_one():
     obj = Registry()
 
     key = "key_one"
@@ -17,21 +17,37 @@ async def test_simple_usage():
     async def subscribe():
         return [y async for y in obj.subscribe(key)]
 
-    async def register():
-        obj.open_register(key)
+    async def send():
         async for i in aiterable(items):
-            obj.register(key, i)
-            assert i == obj.get(key)
-        obj.close_register(key)
+            obj[key] = i
+            assert i == obj[key]
+        assert 1 == len(obj)
+        assert [key] == list(obj)
+        del obj[key]
+        assert 0 == len(obj)
+        assert [] == list(obj)
 
-    results = await asyncio.gather(subscribe(), register())
+    results = await asyncio.gather(subscribe(), subscribe(), send())
     assert items == results[0]
+    assert items == results[1]
 
     obj.close()
 
 
-@pytest.mark.asyncio
-async def test_get_default():
+def test_key_error():
+    obj = Registry()
+
+    key = "no_such_key"
+    with pytest.raises(KeyError):
+        obj[key]
+
+    assert 0 == len(obj)
+    assert not obj
+
+    obj.close()
+
+
+def test_get():
     obj = Registry()
 
     key = "no_such_key"
@@ -40,10 +56,12 @@ async def test_get_default():
     key = "no_such_key"
     assert 123 == obj.get(key, 123)
 
+    assert 0 == len(obj)
+    assert not obj
+
     obj.close()
 
 
-##__________________________________________________________________||
 nitems = [0, 1, 2, 50]
 nsubscribers = [0, 1, 2, 70]
 
@@ -53,7 +71,7 @@ nsubscribers = [0, 1, 2, 70]
 @pytest.mark.parametrize("thread", [True, False])
 @pytest.mark.parametrize("close_register", [True, False])
 @pytest.mark.asyncio
-async def test_one(close_register, thread, nsubscribers, nitems):
+async def test_matrix(close_register, thread, nsubscribers, nitems):
     async def subscribe(registry, register_key):
         ret = []
         async for y in registry.subscribe(register_key):
