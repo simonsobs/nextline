@@ -3,14 +3,13 @@ import pytest
 
 from nextline import Nextline
 
-##__________________________________________________________________||
 statement = """
 import time
+
 time.sleep(0.01)
 """
 
 
-##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_run():
 
@@ -30,15 +29,14 @@ async def test_run():
             trace_id = trace_ids[0]
             break
 
+    n_prompting = 0
     async for state in nextline.subscribe_trace_state(trace_id):
         if state["prompting"]:
-            break
+            n_prompting += 1
+            nextline.send_pdb_command(trace_id, "next")
+    assert 3 == n_prompting
 
-    nextline.send_pdb_command(trace_id, "continue")
     await nextline.finish()
     assert nextline.state == "finished"
     await nextline.close()
     assert nextline.state == "closed"
-
-
-##__________________________________________________________________||
