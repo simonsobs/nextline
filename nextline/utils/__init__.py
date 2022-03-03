@@ -10,4 +10,8 @@ from .done_callback import (  # noqa: F401
     ThreadDoneCallback,
     TaskDoneCallback,
 )
-from .func import current_task_or_thread, to_thread  # noqa: F401
+from .func import (  # noqa: F401
+    current_task_or_thread,
+    to_thread,
+    agen_with_wait,
+)
