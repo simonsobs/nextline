@@ -52,3 +52,18 @@ async def test_raise():
             _, pending = await obj.asend(tasks)
 
     assert ("foo", "bar") == exc.value.args
+
+
+@pytest.mark.asyncio
+async def test_without_send():
+    async def agen():
+        for i in range(3):
+            yield i
+            await asyncio.sleep(0)
+
+    items = []
+    async for i in agen_with_wait(agen()):
+        # print(i)
+        items.append(i)
+
+    assert [0, 1, 2] == items

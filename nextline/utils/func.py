@@ -70,7 +70,8 @@ async def agen_with_wait(
             continue
         pending &= pending_
         new = yield item
-        pending |= set(new)
-        yield tuple(done), tuple(pending)
-        done.clear()
+        if new is not None:
+            pending |= set(new)
+            yield tuple(done), tuple(pending)
+            done.clear()
         anext = asyncio.create_task(agen.__anext__())
