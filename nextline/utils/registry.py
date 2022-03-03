@@ -38,10 +38,6 @@ class Registry(MutableMapping):
             _, dq = self._map.popitem()
             dq.close()
 
-    def open_register(self, key):
-        """Create a register for an item"""
-        _ = self._map[key]
-
     def close_register(self, key):
         """
 
