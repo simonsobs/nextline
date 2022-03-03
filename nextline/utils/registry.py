@@ -1,14 +1,36 @@
+from collections.abc import MutableMapping
 from collections import defaultdict
-from typing import DefaultDict
+from typing import Any, DefaultDict, Iterator
 
 from .queuedist import QueueDist
 
 
-class Registry:
+class Registry(MutableMapping):
     """Subscribable asynchronous thread-safe registers"""
 
     def __init__(self):
         self._map: DefaultDict[str, QueueDist] = defaultdict(QueueDist)
+
+    def __getitem__(self, key) -> Any:
+        if dp := self._map.get(key):
+            return dp.get()
+        else:
+            raise KeyError
+
+    def __setitem__(self, key, value) -> None:
+        self._map[key].put(value)
+
+    def __delitem__(self, key) -> None:
+        dq = self._map.pop(key, None)
+        if dq is None:
+            return
+        dq.close()
+
+    def __iter__(self) -> Iterator[Any]:
+        return iter(self._map)
+
+    def __len__(self) -> int:
+        return len(self._map)
 
     def close(self):
         """End gracefully"""
@@ -25,14 +47,11 @@ class Registry:
 
         Can be called from any threads
         """
-        dq = self._map.pop(key, None)
-        if dq is None:
-            return
-        dq.close()
+        del self[key]
 
     def register(self, key, item):
         """Replace the item in the register"""
-        self._map[key].put(item)
+        self[key] = item
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
