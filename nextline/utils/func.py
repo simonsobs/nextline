@@ -19,7 +19,7 @@ except ImportError:
     # for Python 3.8
     # to_thread() is new in Python 3.9
 
-    async def to_thread(func, /, *args, **kwargs):
+    async def to_thread(func, /, *args, **kwargs):  # type: ignore
         loop = get_running_loop()
         func_call = partial(func, *args, **kwargs)
-        await loop.run_in_executor(None, func_call)
+        return await loop.run_in_executor(None, func_call)
