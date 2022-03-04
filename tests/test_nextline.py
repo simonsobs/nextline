@@ -31,9 +31,9 @@ def monkey_patch_trace(monkeypatch):
     mock_instance = Mock()
     mock_instance.return_value = None
     mock_instance.pdb_ci_registry = Mock(spec=PdbCIRegistry)
-    mocak_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr("nextline.state.Trace", mocak_class)
-    yield mocak_class
+    mock_class = Mock(return_value=mock_instance)
+    monkeypatch.setattr("nextline.state.Trace", mock_class)
+    yield mock_class
 
 
 # __________________________________________________________________||
