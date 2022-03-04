@@ -34,9 +34,8 @@ class Registry(MutableMapping):
 
     def close(self):
         """End gracefully"""
-        while self._map:
-            _, dq = self._map.popitem()
-            dq.close()
+        for key in list(self):
+            del self[key]
 
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
