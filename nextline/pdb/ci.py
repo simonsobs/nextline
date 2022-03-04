@@ -47,11 +47,11 @@ class PdbCommandInterface:
 
         This method runs in its own thread during pdb._cmdloop()
         """
-        while out := self._read_uptp_prompt(self.queue_out, self.pdb.prompt):
+        while out := self._read_until_prompt(self.queue_out, self.pdb.prompt):
             self.nprompts += 1
             self.stdout = out
 
-    def _read_uptp_prompt(self, queue, prompt):
+    def _read_until_prompt(self, queue, prompt):
         """read the queue up to the prompt"""
         out = ""
         while True:
