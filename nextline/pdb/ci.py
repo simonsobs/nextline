@@ -1,4 +1,12 @@
+from __future__ import annotations
+
 import threading
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pdb import Pdb
+    from queue import Queue
 
 
 class PdbCommandInterface:
@@ -18,24 +26,24 @@ class PdbCommandInterface:
 
     """
 
-    def __init__(self, pdb, queue_in, queue_out):
+    def __init__(self, pdb: Pdb, queue_in: Queue, queue_out: Queue):
         self.pdb = pdb
         self.queue_in = queue_in
         self.queue_out = queue_out
         self.ended = False
         self.nprompts = 0
 
-    def send_pdb_command(self, command):
+    def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
         self.command = command
         self.queue_in.put(command)
 
-    def start(self):
+    def start(self) -> None:
         """start interfacing the pdb"""
         self.thread = threading.Thread(target=self._receive_pdb_stdout)
         self.thread.start()
 
-    def end(self):
+    def end(self) -> None:
         """end interfacing the pdb"""
         self.ended = True
         self.queue_out.put(None)  # end the thread
