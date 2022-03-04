@@ -48,7 +48,7 @@ MODULES_TO_SKIP = {
 
 def Trace(
     registry: SubscribableDict,
-    pdb_ci_registry: Dict[int, PdbCommandInterface],
+    pdb_ci_map: Dict[int, PdbCommandInterface],
     modules_to_trace: Optional[Set[str]] = None,
 ) -> TraceFunc:
     """Create the main trace function
@@ -75,7 +75,7 @@ def Trace(
 
     create_pdbi = PdbInterfaceFactory(
         registry=registry,
-        pdb_ci_registry=pdb_ci_registry,
+        pdb_ci_map=pdb_ci_map,
         modules_to_trace=modules_to_trace,
     )
 

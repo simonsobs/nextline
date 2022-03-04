@@ -241,10 +241,10 @@ class Running(State):
 
         statement = self.registry.get("statement")
 
-        self.pdb_ci_registry: Dict[int, PdbCommandInterface] = {}
+        self._pdb_ci_map: Dict[int, PdbCommandInterface] = {}
         trace = Trace(
             registry=self.registry,
-            pdb_ci_registry=self.pdb_ci_registry,
+            pdb_ci_map=self._pdb_ci_map,
         )
 
         self.registry["state_name"] = self.name
@@ -298,7 +298,7 @@ class Running(State):
         return self._exited
 
     def send_pdb_command(self, trace_id: int, command: str) -> None:
-        pdb_ci = self.pdb_ci_registry[trace_id]
+        pdb_ci = self._pdb_ci_map[trace_id]
         pdb_ci.send_pdb_command(command)
 
 
