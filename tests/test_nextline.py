@@ -4,7 +4,6 @@ import pytest
 from unittest.mock import Mock
 
 from nextline import Nextline
-from nextline.registry import PdbCIRegistry
 
 # TODO: Simplify the tests in this module. The module is nearly identical to
 # test_machine.py, which was created based on this module when the class Machine
@@ -30,7 +29,6 @@ raise Exception('foo', 'bar')
 def monkey_patch_trace(monkeypatch):
     mock_instance = Mock()
     mock_instance.return_value = None
-    mock_instance.pdb_ci_registry = Mock(spec=PdbCIRegistry)
     mock_class = Mock(return_value=mock_instance)
     monkeypatch.setattr("nextline.state.Trace", mock_class)
     yield mock_class
