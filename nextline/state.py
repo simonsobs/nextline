@@ -177,7 +177,8 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, *_, **__) -> None:
+    def send_pdb_command(self, trace_id: int, command: str) -> None:
+        del trace_id, command
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def exception(self) -> Optional[Exception]:
@@ -298,8 +299,8 @@ class Running(State):
         self.obsolete()
         return self._exited
 
-    def send_pdb_command(self, thread_asynctask_id, command):
         pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
+    def send_pdb_command(self, trace_id: int, command: str) -> None:
         pdb_ci.send_pdb_command(command)
 
 
