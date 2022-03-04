@@ -20,14 +20,14 @@ time.sleep(0.001)
 @pytest.fixture()
 def registry():
     y = Registry()
-    y.register("run_no_count", itertools.count().__next__)
+    y["run_no_count"] = itertools.count().__next__
     yield y
     y.close()
 
 
 @pytest.mark.asyncio
 async def test_transition(registry):
-    registry.register("statement", SOURCE)
+    registry["statement"] = SOURCE
 
     state = Initialized(registry=registry)
     assert isinstance(state, Initialized)

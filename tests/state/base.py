@@ -25,8 +25,8 @@ class BaseTestState(ABC):
     @pytest.fixture()
     def registry(self, statement):
         y = Registry()
-        y.register("statement", statement)
-        y.register("run_no_count", itertools.count().__next__)
+        y["statement"] = statement
+        y["run_no_count"] = itertools.count().__next__
         yield y
         y.close()
 
