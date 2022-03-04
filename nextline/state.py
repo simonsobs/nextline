@@ -235,7 +235,7 @@ class Running(State):
 
     name = "running"
 
-    def __init__(self, registry):
+    def __init__(self, registry: Registry):
         self.registry = registry
         self._event = ThreadSafeAsyncioEvent()
 
@@ -322,7 +322,7 @@ class Exited(State):
 
     name = "exited"
 
-    def __init__(self, registry, thread, result, exception):
+    def __init__(self, registry: Registry, thread, result, exception):
         self.registry = registry
         self._thread = thread
         self._result = result
@@ -358,7 +358,7 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry, result, exception):
+    def __init__(self, registry: Registry, result, exception):
         self._result = result
         self._exception = exception
 
@@ -419,7 +419,7 @@ class Closed(State):
 
     name = "closed"
 
-    def __init__(self, registry):
+    def __init__(self, registry: Registry):
         self.registry = registry
         self.registry.register("state_name", self.name)
 
