@@ -3,18 +3,19 @@ from __future__ import annotations
 import asyncio
 from threading import Thread
 import itertools
-from typing import Optional, Any
+from typing import TYPE_CHECKING, Dict, Optional, Any
 
 from .trace import Trace
-from .registry import PdbCIRegistry
 from .utils import SubscribableDict, ThreadSafeAsyncioEvent, to_thread
 from .call import call_with_trace
 from . import script
 
+if TYPE_CHECKING:
+    from .pdb.ci import PdbCommandInterface
+
 SCRIPT_FILE_NAME = "<string>"
 
 
-# __________________________________________________________________||
 class Machine:
     """State machine
 
@@ -119,7 +120,6 @@ class Machine:
             await to_thread(self.registry.close)
 
 
-# __________________________________________________________________||
 class StateObsoleteError(Exception):
     """Operation on an obsolete state object."""
 
@@ -132,7 +132,6 @@ class StateMethodError(Exception):
     pass
 
 
-# __________________________________________________________________||
 class ObsoleteMixin:
     def assert_not_obsolete(self):
         if self.is_obsolete():
@@ -177,7 +176,8 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, *_, **__) -> None:
+    def send_pdb_command(self, trace_id: int, command: str) -> None:
+        del trace_id, command
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def exception(self) -> Optional[Exception]:
@@ -241,12 +241,11 @@ class Running(State):
 
         statement = self.registry.get("statement")
 
-        self.pdb_ci_registry = PdbCIRegistry()
+        self._pdb_ci_map: Dict[int, PdbCommandInterface] = {}
         trace = Trace(
             registry=self.registry,
-            pdb_ci_registry=self.pdb_ci_registry,
+            pdb_ci_map=self._pdb_ci_map,
         )
-        # self.pdb_ci_registry = trace.pdb_ci_registry
 
         self.registry["state_name"] = self.name
 
@@ -298,8 +297,8 @@ class Running(State):
         self.obsolete()
         return self._exited
 
-    def send_pdb_command(self, thread_asynctask_id, command):
-        pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
+    def send_pdb_command(self, trace_id: int, command: str) -> None:
+        pdb_ci = self._pdb_ci_map[trace_id]
         pdb_ci.send_pdb_command(command)
 
 
@@ -426,6 +425,3 @@ class Closed(State):
     def close(self):
         self.assert_not_obsolete()
         return self
-
-
-# __________________________________________________________________||

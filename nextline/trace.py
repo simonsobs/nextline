@@ -4,7 +4,7 @@ from weakref import WeakKeyDictionary
 
 import fnmatch
 
-from typing import Any, Set, Optional, Union, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Set, Dict, Optional, Union, Callable
 from types import FrameType
 
 from .pdb.proxy import PdbInterfaceFactory
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .types import TraceFunc
     from .utils import SubscribableDict
     from .pdb.proxy import PdbInterface
-    from .registry import PdbCIRegistry
+    from .pdb.ci import PdbCommandInterface
 
 
 MODULES_TO_SKIP = {
@@ -48,7 +48,7 @@ MODULES_TO_SKIP = {
 
 def Trace(
     registry: SubscribableDict,
-    pdb_ci_registry: PdbCIRegistry,
+    pdb_ci_map: Dict[int, PdbCommandInterface],
     modules_to_trace: Optional[Set[str]] = None,
 ) -> TraceFunc:
     """Create the main trace function
@@ -75,7 +75,7 @@ def Trace(
 
     create_pdbi = PdbInterfaceFactory(
         registry=registry,
-        pdb_ci_registry=pdb_ci_registry,
+        pdb_ci_map=pdb_ci_map,
         modules_to_trace=modules_to_trace,
     )
 
