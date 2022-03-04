@@ -93,6 +93,8 @@ class Nextline:
     async def subscribe_trace_state(self, trace_id: int):
         agen = self.registry.subscribe(trace_id)
         async for y in agen:
+            if y is None:
+                continue
             yield y
 
     def send_pdb_command(self, trace_id: int, command: str):
