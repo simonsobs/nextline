@@ -27,7 +27,7 @@ class CustomizedPdb(Pdb):
 
         # stop at the first line
         self.botframe = None
-        self._set_stopinfo(None, None)
+        self._set_stopinfo(None, None)  # type: ignore
 
     def trace_dispatch(self, frame, event, arg):
         """The main trace function of Bdb"""
