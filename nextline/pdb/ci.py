@@ -1,7 +1,6 @@
 import threading
 
 
-##__________________________________________________________________||
 class PdbCommandInterface:
     """Relay pdb command prompts and commands
 
@@ -62,6 +61,3 @@ class PdbCommandInterface:
             if prompt == m:
                 break
         return out
-
-
-##__________________________________________________________________||
