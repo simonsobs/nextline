@@ -6,7 +6,6 @@ from typing import Set
 from nextline.trace import Trace
 from nextline.pdb.proxy import PdbInterfaceFactory, PdbInterface
 from nextline.utils import SubscribableDict
-from nextline.registry import PdbCIRegistry
 
 from .funcs import TraceSummary
 
@@ -44,7 +43,7 @@ def thread():
 def target_trace_func(modules_to_trace: Set[str]):
     y = Trace(
         registry=Mock(spec=SubscribableDict),
-        pdb_ci_registry=Mock(spec=PdbCIRegistry),
+        pdb_ci_registry={},
         modules_to_trace=modules_to_trace,
     )
     yield y
