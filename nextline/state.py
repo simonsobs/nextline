@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 SCRIPT_FILE_NAME = "<string>"
 
 
-# __________________________________________________________________||
 class Machine:
     """State machine
 
@@ -121,7 +120,6 @@ class Machine:
             await to_thread(self.registry.close)
 
 
-# __________________________________________________________________||
 class StateObsoleteError(Exception):
     """Operation on an obsolete state object."""
 
@@ -134,7 +132,6 @@ class StateMethodError(Exception):
     pass
 
 
-# __________________________________________________________________||
 class ObsoleteMixin:
     def assert_not_obsolete(self):
         if self.is_obsolete():
@@ -428,6 +425,3 @@ class Closed(State):
     def close(self):
         self.assert_not_obsolete()
         return self
-
-
-# __________________________________________________________________||
