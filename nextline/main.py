@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import linecache
 
-from typing import Any, AsyncGenerator, Optional, Tuple
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional, Tuple
 
 from .state import Machine
+
+if TYPE_CHECKING:
+    from .pdb.proxy import PdbCIState
 
 
 class Nextline:
@@ -90,7 +95,10 @@ class Nextline:
         async for y in agen:
             yield y
 
-    async def subscribe_trace_state(self, trace_id: int):
+    async def subscribe_trace_state(
+        self,
+        trace_id: int,
+    ) -> AsyncGenerator[PdbCIState, None]:
         agen = self.registry.subscribe(trace_id)
         async for y in agen:
             if y is None:

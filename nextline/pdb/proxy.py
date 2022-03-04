@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import queue
 from itertools import count
 from weakref import WeakKeyDictionary
@@ -16,6 +17,14 @@ from types import FrameType
 if TYPE_CHECKING:
     from ..types import TraceFunc
     from ..utils import SubscribableDict
+
+
+@dataclasses.dataclass(frozen=True)
+class PdbCIState:
+    prompting: int
+    file_name: str
+    line_no: int
+    trace_event: str
 
 
 def PdbInterfaceFactory(
@@ -133,12 +142,12 @@ class PdbInterface:
         module_name = frame.f_globals.get("__name__")
         self.modules_to_trace.add(module_name)
 
-        self._state = {
-            "prompting": self._prompting_counter(),
-            "file_name": self._pdb.canonic(frame.f_code.co_filename),
-            "line_no": frame.f_lineno,
-            "trace_event": event,
-        }
+        self._state = PdbCIState(
+            prompting=self._prompting_counter(),
+            file_name=self._pdb.canonic(frame.f_code.co_filename),
+            line_no=frame.f_lineno,
+            trace_event=event,
+        )
 
         self._pdb_ci = PdbCommandInterface(
             self._pdb, self._q_stdin, self._q_stdout
@@ -147,15 +156,13 @@ class PdbInterface:
 
         self._ci_map[self._trace_id] = self._pdb_ci
 
-        copy = self._state.copy()
-        self._registry[self._trace_id] = copy
+        self._registry[self._trace_id] = self._state
 
     def exited_cmdloop(self) -> None:
-        self._state["prompting"] = 0
 
         del self._ci_map[self._trace_id]
 
-        copy = self._state.copy()
-        self._registry[self._trace_id] = copy
+        self._state = dataclasses.replace(self._state, prompting=0)
+        self._registry[self._trace_id] = self._state
 
         self._pdb_ci.end()

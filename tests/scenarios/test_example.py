@@ -89,15 +89,15 @@ async def control_trace(nextline: Nextline, trace_id):
     file_name = ""
     async for s in nextline.subscribe_trace_state(trace_id):
         # print(s)
-        if not file_name == s["file_name"]:
-            file_name = s["file_name"]
+        if not file_name == s.file_name:
+            file_name = s.file_name
             assert nextline.get_source(file_name)
-        if s["prompting"]:
+        if s.prompting:
             command = "next"
-            if s["trace_event"] == "line":
+            if s.trace_event == "line":
                 line = nextline.get_source_line(
-                    line_no=s["line_no"],
-                    file_name=s["file_name"],
+                    line_no=s.line_no,
+                    file_name=s.file_name,
                 )
                 command = find_command(line) or command
             nextline.send_pdb_command(trace_id, command)

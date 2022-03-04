@@ -31,7 +31,7 @@ async def test_run():
 
     n_prompting = 0
     async for state in nextline.subscribe_trace_state(trace_id):
-        if state["prompting"]:
+        if state.prompting:
             n_prompting += 1
             nextline.send_pdb_command(trace_id, "next")
     assert 3 == n_prompting
