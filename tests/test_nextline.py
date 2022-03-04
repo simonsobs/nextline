@@ -63,8 +63,8 @@ async def test_state_transitions_single_op():
 
     states, *_ = results
 
-    expectecd = ["initialized", "running", "exited", "finished", "closed"]
-    assert expectecd == states
+    expected = ["initialized", "running", "exited", "finished", "closed"]
+    assert expected == states
 
 
 @pytest.mark.asyncio
@@ -93,8 +93,8 @@ async def test_state_transitions_multiple_async_ops():
 
     states, *_ = results
 
-    expectecd = ["initialized", "running", "exited", "finished", "closed"]
-    assert expectecd == states
+    expected = ["initialized", "running", "exited", "finished", "closed"]
+    assert expected == states
 
 
 async def finish_and_close(nextline):
