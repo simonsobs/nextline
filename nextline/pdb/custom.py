@@ -10,14 +10,12 @@ if TYPE_CHECKING:
     from .proxy import PdbInterface
 
 
-##__________________________________________________________________||
 def getlines(func_org, statement, filename, module_globals=None):
     if filename == "<string>":
         return statement.split("\n")
     return func_org(filename, module_globals)
 
 
-##__________________________________________________________________||
 class CustomizedPdb(Pdb):
     """A Pdb subclass that calls back PdbProxy"""
 
@@ -77,6 +75,3 @@ class CustomizedPdb(Pdb):
             return super().do_list(arg)
         finally:
             linecache.getlines = getlines_org
-
-
-##__________________________________________________________________||
