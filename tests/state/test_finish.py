@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 import pytest
+from typing import TYPE_CHECKING
 
 from nextline.state import Initialized, Finished, Closed
+
+if TYPE_CHECKING:
+    from nextline.utils import SubscribableDict
 
 from .base import BaseTestState
 
@@ -57,8 +63,8 @@ class TestFinished(BaseTestState):
 
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_exception_raise(self, registry, source, exc):
-        registry.register("statement", source)
+    async def test_exception_raise(self, registry: SubscribableDict, source, exc):
+        registry["statement"] = source
 
         state = Initialized(registry=registry)
         state = state.run()
@@ -74,8 +80,8 @@ class TestFinished(BaseTestState):
 
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_result_raise(self, registry, source, exc):
-        registry.register("statement", source)
+    async def test_result_raise(self, registry: SubscribableDict, source, exc):
+        registry["statement"] = source
 
         state = Initialized(registry=registry)
         state = state.run()

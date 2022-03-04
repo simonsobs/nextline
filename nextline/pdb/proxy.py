@@ -16,11 +16,11 @@ from types import FrameType
 if TYPE_CHECKING:
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
-    from ..utils import Registry
+    from ..utils import SubscribableDict
 
 
 def PdbInterfaceFactory(
-    registry: Registry,
+    registry: SubscribableDict,
     pdb_ci_registry: PdbCIRegistry,
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
@@ -77,7 +77,7 @@ class PdbInterface:
         self,
         trace_id_counter: Callable[[], int],
         thread_task_id_composer: UniqThreadTaskIdComposer,
-        registry: Registry,
+        registry: SubscribableDict,
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
@@ -102,16 +102,9 @@ class PdbInterface:
         )
 
         self._trace_id = self._trace_id_counter()
-        self._registry.open_register(self._trace_id)
+        self._registry[self._trace_id] = None
         ids = (self._registry.get("trace_ids") or ()) + (self._trace_id,)
-        self._registry.register("trace_ids", ids)
-
-        self._thread_task_id = self._thread_task_id_composer()
-        self._registry.open_register(self._thread_task_id)
-        ids = (self._registry.get("thread_task_ids") or ()) + (
-            self._thread_task_id,
-        )
-        self._registry.register("thread_task_ids", ids)
+        self._registry["trace_ids"] = ids
 
         self._opened = True
 
@@ -120,17 +113,11 @@ class PdbInterface:
     def close(self):
         if not self._opened:
             return
-        self._registry.close_register(self._trace_id)
+        del self._registry[self._trace_id]
         ids = list(self._registry.get("trace_ids"))
         ids.remove(self._trace_id)
         ids = tuple(ids)
-        self._registry.register("trace_ids", ids)
-
-        self._registry.close_register(self._thread_task_id)
-        ids = list(self._registry.get("thread_task_ids"))
-        ids.remove(self._thread_task_id)
-        ids = tuple(ids)
-        self._registry.register("thread_task_ids", ids)
+        self._registry["trace_ids"] = ids
 
     def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
         self._current_trace_args: Optional[Tuple] = (frame, event, arg)
@@ -160,20 +147,16 @@ class PdbInterface:
         self._pdb_ci.start()
 
         self._ci_registry.add(self._trace_id, self._pdb_ci)
-        self._ci_registry.add(self._thread_task_id, self._pdb_ci)
 
         copy = self._state.copy()
-        self._registry.register(self._trace_id, copy)
-        self._registry.register(self._thread_task_id, copy)
+        self._registry[self._trace_id] = copy
 
     def exited_cmdloop(self) -> None:
         self._state["prompting"] = 0
 
         self._ci_registry.remove(self._trace_id)
-        self._ci_registry.remove(self._thread_task_id)
 
         copy = self._state.copy()
-        self._registry.register(self._trace_id, copy)
-        self._registry.register(self._thread_task_id, copy)
+        self._registry[self._trace_id] = copy
 
         self._pdb_ci.end()

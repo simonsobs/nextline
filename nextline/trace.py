@@ -12,7 +12,7 @@ from .utils import current_task_or_thread
 
 if TYPE_CHECKING:
     from .types import TraceFunc
-    from .utils import Registry
+    from .utils import SubscribableDict
     from .pdb.proxy import PdbInterface
     from .registry import PdbCIRegistry
 
@@ -47,7 +47,7 @@ MODULES_TO_SKIP = {
 
 
 def Trace(
-    registry: Registry,
+    registry: SubscribableDict,
     pdb_ci_registry: PdbCIRegistry,
     modules_to_trace: Optional[Set[str]] = None,
 ) -> TraceFunc:

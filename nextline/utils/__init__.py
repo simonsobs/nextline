@@ -2,7 +2,7 @@ from .queuedist import QueueDist  # noqa: F401
 from .thread_task_id import UniqThreadTaskIdComposer  # noqa: F401
 from .thread_safe_event import ThreadSafeAsyncioEvent  # noqa: F401
 from .loop import ToLoop  # noqa: F401
-from .registry import Registry  # noqa: F401
+from .subscribabledict import SubscribableDict  # noqa: F401
 from .thread_exception import ExcThread  # noqa: F401
 from .done_callback import (  # noqa: F401
     ThreadTaskDoneCallback,

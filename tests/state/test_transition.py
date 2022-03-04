@@ -9,7 +9,7 @@ from nextline.state import (
     Finished,
     Closed,
 )
-from nextline.utils import Registry
+from nextline.utils import SubscribableDict
 
 SOURCE = """
 import time
@@ -19,19 +19,15 @@ time.sleep(0.001)
 
 @pytest.fixture()
 def registry():
-    y = Registry()
-    y.open_register("statement")
-    y.open_register("state_name")
-    y.open_register("run_no")
-    y.open_register("run_no_count")
-    y.register("run_no_count", itertools.count().__next__)
+    y = SubscribableDict()
+    y["run_no_count"] = itertools.count().__next__
     yield y
     y.close()
 
 
 @pytest.mark.asyncio
 async def test_transition(registry):
-    registry.register("statement", SOURCE)
+    registry["statement"] = SOURCE
 
     state = Initialized(registry=registry)
     assert isinstance(state, Initialized)
