@@ -113,7 +113,7 @@ class PdbInterface:
     def close(self):
         if not self._opened:
             return
-        self._registry.close_register(self._trace_id)
+        del self._registry[self._trace_id]
         ids = list(self._registry.get("trace_ids"))
         ids.remove(self._trace_id)
         ids = tuple(ids)

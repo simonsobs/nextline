@@ -38,17 +38,6 @@ class Registry(MutableMapping):
             _, dq = self._map.popitem()
             dq.close()
 
-    def close_register(self, key):
-        """
-
-        Can be called from any threads
-        """
-        del self[key]
-
-    def register(self, key, item):
-        """Replace the item in the register"""
-        self[key] = item
-
     def get(self, key, default=None):
         """The item for the key. The default if the key doesn't exist"""
         if dp := self._map.get(key):
