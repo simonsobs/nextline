@@ -4,7 +4,7 @@ import itertools
 import pytest
 
 from nextline.state import Initialized
-from nextline.utils import Registry
+from nextline.utils import SubscribableDict
 
 
 SOURCE = """
@@ -15,7 +15,7 @@ time.sleep(0.001)
 
 @pytest.fixture()
 def registry():
-    y = Registry()
+    y = SubscribableDict()
     y["run_no_count"] = itertools.count().__next__
     y["statement"] = SOURCE
     yield y

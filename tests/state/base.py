@@ -4,7 +4,7 @@ import itertools
 import pytest
 
 from nextline.state import Initialized, StateObsoleteError, StateMethodError
-from nextline.utils import Registry
+from nextline.utils import SubscribableDict
 
 SOURCE_ONE = """
 import time
@@ -24,7 +24,7 @@ class BaseTestState(ABC):
 
     @pytest.fixture()
     def registry(self, statement):
-        y = Registry()
+        y = SubscribableDict()
         y["statement"] = statement
         y["run_no_count"] = itertools.count().__next__
         yield y

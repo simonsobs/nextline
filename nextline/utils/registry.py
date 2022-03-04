@@ -5,8 +5,9 @@ from typing import Any, DefaultDict, Iterator
 from .queuedist import QueueDist
 
 
-class Registry(MutableMapping):
-    """Subscribable asynchronous thread-safe registers"""
+class SubscribableDict(MutableMapping):
+    """Dict with async generator that yields changes
+    """
 
     def __init__(self):
         self._map: DefaultDict[str, QueueDist] = defaultdict(QueueDist)

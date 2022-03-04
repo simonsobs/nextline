@@ -6,7 +6,7 @@ from typing import Callable, Union
 import pytest
 from unittest.mock import Mock
 
-from nextline.utils import Registry
+from nextline.utils import SubscribableDict
 from nextline.pdb.proxy import PdbInterface
 from nextline.pdb.custom import CustomizedPdb
 from nextline.trace import TraceCallPdb

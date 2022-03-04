@@ -16,11 +16,11 @@ from types import FrameType
 if TYPE_CHECKING:
     from ..types import TraceFunc
     from ..registry import PdbCIRegistry
-    from ..utils import Registry
+    from ..utils import SubscribableDict
 
 
 def PdbInterfaceFactory(
-    registry: Registry,
+    registry: SubscribableDict,
     pdb_ci_registry: PdbCIRegistry,
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
@@ -77,7 +77,7 @@ class PdbInterface:
         self,
         trace_id_counter: Callable[[], int],
         thread_task_id_composer: UniqThreadTaskIdComposer,
-        registry: Registry,
+        registry: SubscribableDict,
         ci_registry: PdbCIRegistry,
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],

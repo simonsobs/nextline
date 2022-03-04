@@ -6,7 +6,7 @@ TODO: add a test for the method send_pdb_command()
 import pytest
 
 from nextline.state import Machine
-from nextline.utils import Registry
+from nextline.utils import SubscribableDict
 
 
 # __________________________________________________________________||
@@ -25,7 +25,7 @@ x = 2
 async def test_init():
     obj = Machine(SOURCE)
     assert "initialized" == obj.state_name
-    assert isinstance(obj.registry, Registry)
+    assert isinstance(obj.registry, SubscribableDict)
     assert SOURCE == obj.registry.get("statement")
     assert "<string>" == obj.registry.get("script_file_name")
 

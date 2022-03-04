@@ -9,7 +9,7 @@ from nextline.state import (
     Finished,
     Closed,
 )
-from nextline.utils import Registry
+from nextline.utils import SubscribableDict
 
 SOURCE = """
 import time
@@ -19,7 +19,7 @@ time.sleep(0.001)
 
 @pytest.fixture()
 def registry():
-    y = Registry()
+    y = SubscribableDict()
     y["run_no_count"] = itertools.count().__next__
     yield y
     y.close()

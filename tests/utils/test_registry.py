@@ -2,14 +2,14 @@ import asyncio
 
 import pytest
 
-from nextline.utils import Registry, to_thread
+from nextline.utils import SubscribableDict, to_thread
 
 from .aiterable import aiterable
 
 
 @pytest.mark.asyncio
 async def test_one():
-    obj = Registry()
+    obj = SubscribableDict()
 
     key = "key_one"
     items = ["item_one", "item_two", "item_three"]
@@ -35,7 +35,7 @@ async def test_one():
 
 
 def test_key_error():
-    obj = Registry()
+    obj = SubscribableDict()
 
     key = "no_such_key"
     with pytest.raises(KeyError):
@@ -48,7 +48,7 @@ def test_key_error():
 
 
 def test_get():
-    obj = Registry()
+    obj = SubscribableDict()
 
     key = "no_such_key"
     assert obj.get(key) is None
@@ -85,7 +85,7 @@ async def test_matrix(close_register, thread, nsubscribers, nitems):
     async def aregister():
         return register()
 
-    obj = Registry()
+    obj = SubscribableDict()
 
     key = "item"
     items = [f"{key}-{i+1}" for i in range(nitems)]

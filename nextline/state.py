@@ -7,7 +7,7 @@ from typing import Optional, Any
 
 from .trace import Trace
 from .registry import PdbCIRegistry
-from .utils import Registry, ThreadSafeAsyncioEvent, to_thread
+from .utils import SubscribableDict, ThreadSafeAsyncioEvent, to_thread
 from .call import call_with_trace
 from . import script
 
@@ -49,7 +49,7 @@ class Machine:
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
-        self.registry = Registry()
+        self.registry = SubscribableDict()
 
         self.registry["statement"] = statement
         self.registry["script_file_name"] = SCRIPT_FILE_NAME
@@ -199,7 +199,7 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, registry: Registry):
+    def __init__(self, registry: SubscribableDict):
         self.registry = registry
         run_no = self.registry.get("run_no_count")()
         self.registry["run_no"] = run_no
@@ -235,7 +235,7 @@ class Running(State):
 
     name = "running"
 
-    def __init__(self, registry: Registry):
+    def __init__(self, registry: SubscribableDict):
         self.registry = registry
         self._event = ThreadSafeAsyncioEvent()
 
@@ -322,7 +322,7 @@ class Exited(State):
 
     name = "exited"
 
-    def __init__(self, registry: Registry, thread, result, exception):
+    def __init__(self, registry: SubscribableDict, thread, result, exception):
         self.registry = registry
         self._thread = thread
         self._result = result
@@ -358,7 +358,7 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry: Registry, result, exception):
+    def __init__(self, registry: SubscribableDict, result, exception):
         self._result = result
         self._exception = exception
 
@@ -419,7 +419,7 @@ class Closed(State):
 
     name = "closed"
 
-    def __init__(self, registry: Registry):
+    def __init__(self, registry: SubscribableDict):
         self.registry = registry
         self.registry["state_name"] = self.name
 
