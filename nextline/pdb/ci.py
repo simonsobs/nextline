@@ -27,36 +27,38 @@ class PdbCommandInterface:
     """
 
     def __init__(self, pdb: Pdb, queue_in: Queue, queue_out: Queue):
-        self.pdb = pdb
-        self.queue_in = queue_in
-        self.queue_out = queue_out
-        self.ended = False
-        self.nprompts = 0
+        self._pdb = pdb
+        self._queue_in = queue_in
+        self._queue_out = queue_out
+        self._ended = False
+        self._nprompts = 0
 
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
-        self.command = command
-        self.queue_in.put(command)
+        self._command = command
+        self._queue_in.put(command)
 
     def start(self) -> None:
         """start interfacing the pdb"""
-        self.thread = threading.Thread(target=self._receive_pdb_stdout)
-        self.thread.start()
+        self._thread = threading.Thread(target=self._receive_pdb_stdout)
+        self._thread.start()
 
     def end(self) -> None:
         """end interfacing the pdb"""
-        self.ended = True
-        self.queue_out.put(None)  # end the thread
-        self.thread.join()
+        self._ended = True
+        self._queue_out.put(None)  # end the thread
+        self._thread.join()
 
     def _receive_pdb_stdout(self):
         """receive stdout from pdb
 
         This method runs in its own thread during pdb._cmdloop()
         """
-        while out := self._read_until_prompt(self.queue_out, self.pdb.prompt):
-            self.nprompts += 1
-            self.stdout = out
+        while out := self._read_until_prompt(
+            self._queue_out, self._pdb.prompt
+        ):
+            self._nprompts += 1
+            self._stdout = out
 
     def _read_until_prompt(self, queue, prompt):
         """read the queue up to the prompt"""
