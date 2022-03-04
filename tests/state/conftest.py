@@ -21,7 +21,7 @@ def monkey_patch_trace(monkeypatch):
 def wrap_registry(monkeypatch):
     """Wrap instances of the class Registry in nextline.state
 
-    A new instance is acutally created when the mock class is called.
+    A new instance is actually created when the mock class is called.
     """
     mock_class = Mock(
         side_effect=lambda: Mock(spec=Registry, wraps=Registry())
