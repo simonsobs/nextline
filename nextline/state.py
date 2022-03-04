@@ -3,13 +3,15 @@ from __future__ import annotations
 import asyncio
 from threading import Thread
 import itertools
-from typing import Optional, Any
+from typing import TYPE_CHECKING, Dict, Optional, Any
 
 from .trace import Trace
-from .registry import PdbCIRegistry
 from .utils import SubscribableDict, ThreadSafeAsyncioEvent, to_thread
 from .call import call_with_trace
 from . import script
+
+if TYPE_CHECKING:
+    from .pdb.ci import PdbCommandInterface
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -242,12 +244,11 @@ class Running(State):
 
         statement = self.registry.get("statement")
 
-        self.pdb_ci_registry = PdbCIRegistry()
+        self.pdb_ci_registry: Dict[int, PdbCommandInterface] = {}
         trace = Trace(
             registry=self.registry,
             pdb_ci_registry=self.pdb_ci_registry,
         )
-        # self.pdb_ci_registry = trace.pdb_ci_registry
 
         self.registry["state_name"] = self.name
 
@@ -299,8 +300,8 @@ class Running(State):
         self.obsolete()
         return self._exited
 
-        pdb_ci = self.pdb_ci_registry.get_ci(thread_asynctask_id)
     def send_pdb_command(self, trace_id: int, command: str) -> None:
+        pdb_ci = self.pdb_ci_registry[trace_id]
         pdb_ci.send_pdb_command(command)
 
 

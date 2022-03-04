@@ -10,18 +10,17 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 
-from typing import Any, Optional, Set, Callable, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Callable, Optional, Any, Set, Dict, Tuple
 from types import FrameType
 
 if TYPE_CHECKING:
     from ..types import TraceFunc
-    from ..registry import PdbCIRegistry
     from ..utils import SubscribableDict
 
 
 def PdbInterfaceFactory(
     registry: SubscribableDict,
-    pdb_ci_registry: PdbCIRegistry,
+    pdb_ci_registry: Dict[int, PdbCommandInterface],
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
@@ -78,7 +77,7 @@ class PdbInterface:
         trace_id_counter: Callable[[], int],
         thread_task_id_composer: UniqThreadTaskIdComposer,
         registry: SubscribableDict,
-        ci_registry: PdbCIRegistry,
+        ci_registry: Dict[int, PdbCommandInterface],
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
@@ -146,7 +145,7 @@ class PdbInterface:
         )
         self._pdb_ci.start()
 
-        self._ci_registry.add(self._trace_id, self._pdb_ci)
+        self._ci_registry[self._trace_id] = self._pdb_ci
 
         copy = self._state.copy()
         self._registry[self._trace_id] = copy
@@ -154,7 +153,7 @@ class PdbInterface:
     def exited_cmdloop(self) -> None:
         self._state["prompting"] = 0
 
-        self._ci_registry.remove(self._trace_id)
+        del self._ci_registry[self._trace_id]
 
         copy = self._state.copy()
         self._registry[self._trace_id] = copy
