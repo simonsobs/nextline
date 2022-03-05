@@ -159,8 +159,8 @@ class PdbInterface:
 
         frame, event, _ = self._current_trace_args
 
-        module_name = frame.f_globals.get("__name__")
-        self.modules_to_trace.add(module_name)
+        if module_name := frame.f_globals.get("__name__"):
+            self.modules_to_trace.add(module_name)
 
         self._state = PdbCIState(
             prompting=self._prompting_counter(),
