@@ -24,12 +24,8 @@ def test_one(
 
     assert ref == probe
 
-    assert 1 == mock_pdbi.open.call_count
-
-    assert probe == summarize_trace_calls(mock_pdbi.calling_trace)
-    assert (
-        mock_pdbi.exited_trace.call_count == mock_pdbi.calling_trace.call_count
-    )
+    assert probe == summarize_trace_calls(mock_pdbi.calling_trace)  # type: ignore
+    assert mock_pdbi.exited_trace.call_count == mock_pdbi.calling_trace.call_count  # type: ignore
 
 
 def f():
@@ -48,15 +44,20 @@ def modules_to_skip(request):
 
 
 @pytest.fixture()
-def target_trace_func(mock_pdbi: Union[Mock, PdbInterface]):
-    y = TraceCallPdb(pdbi=mock_pdbi)
+def target_trace_func(mock_pdbi_factory):
+    y = TraceCallPdb(pdbi_factory=mock_pdbi_factory)
     yield y
+
+
+@pytest.fixture()
+def mock_pdbi_factory(mock_pdbi):
+    return lambda: mock_pdbi
 
 
 @pytest.fixture()
 def mock_pdbi(probe_trace_func):
     y = Mock(spec=PdbInterface)
-    y.open.return_value = probe_trace_func
+    y.trace = probe_trace_func
     yield y
 
 
