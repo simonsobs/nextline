@@ -144,7 +144,11 @@ class PdbInterface:
         return create_local_trace()(frame, event, arg)
 
     def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
-        self._current_trace_args: Optional[Tuple] = (frame, event, arg)
+        self._current_trace_args: Optional[Tuple[FrameType, str, Any]] = (
+            frame,
+            event,
+            arg,
+        )
 
     def exited_trace(self) -> None:
         self._current_trace_args = None
