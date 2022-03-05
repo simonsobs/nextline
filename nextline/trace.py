@@ -188,7 +188,10 @@ def TraceSelectFirstModule(
 def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     """Create a trace that creates a trace first time called
 
-    To be used when desirable to defer the creation until actually called
+    Useful when desirable to defer the creation until actually called
+
+    It is used to avoid creating instances of Pdb in threads or async tasks
+    that are not traced.
     """
     trace: Union[TraceFunc, None] = None
 
