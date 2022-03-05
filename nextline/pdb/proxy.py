@@ -127,6 +127,8 @@ class PdbInterface:
         self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
     def trace(self, frame, event, arg) -> Optional[TraceFunc]:
+        """Call Pdb while storing trace args"""
+
         def calling_trace(frame, event, arg) -> None:
             self._trace_args = (frame, event, arg)
 
@@ -152,6 +154,8 @@ class PdbInterface:
         return create_local_trace()(frame, event, arg)
 
     def entering_cmdloop(self) -> None:
+        """To be called by the custom Pdb before _cmdloop()"""
+
         if not self._trace_args:
             raise RuntimeError("calling_trace() must be called first")
 
@@ -177,6 +181,7 @@ class PdbInterface:
         self._registry[self._trace_id] = self._state
 
     def exited_cmdloop(self) -> None:
+        """To be called by the custom Pdb after _cmdloop()"""
 
         del self._ci_map[self._trace_id]
 
