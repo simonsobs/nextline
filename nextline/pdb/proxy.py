@@ -44,13 +44,20 @@ def PdbInterfaceFactory(
     callback = ThreadTaskDoneCallback(done=callback_func)
 
     def factory() -> PdbInterface:
+        trace_id = trace_id_counter()
+
+        registry[trace_id] = None
+        ids = (registry.get("trace_ids") or ()) + (trace_id,)
+        registry["trace_ids"] = ids
+
         pbi = PdbInterface(
-            trace_id=trace_id_counter(),
+            trace_id=trace_id,
             registry=registry,
             ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
             modules_to_trace=modules_to_trace,
         )
+
         key = callback.register()
         callback_map[key] = pbi
         return pbi
@@ -87,6 +94,7 @@ class PdbInterface:
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
+        self._trace_id = trace_id
         self._registry = registry
         self._ci_map = ci_map
         self._prompting_counter = prompting_counter
@@ -102,11 +110,6 @@ class PdbInterface:
             stdout=StreamOut(self._q_stdout),
             readrc=False,
         )
-
-        self._trace_id = trace_id
-        self._registry[self._trace_id] = None
-        ids = (self._registry.get("trace_ids") or ()) + (self._trace_id,)
-        self._registry["trace_ids"] = ids
 
     @property
     def trace(self) -> TraceFunc:
