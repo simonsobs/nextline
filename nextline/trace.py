@@ -192,7 +192,6 @@ def TraceCallPdb(pdbi_factory: Callable[[], PdbInterface]) -> TraceFunc:
         nonlocal pdbi
         if not pdbi:
             pdbi = pdbi_factory()
-            pdbi.open()
         pdb_trace = pdbi.trace  # Bdb.trace_dispatch
 
         def create_local_trace():

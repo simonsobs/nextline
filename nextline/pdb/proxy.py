@@ -98,7 +98,6 @@ class PdbInterface:
         self.modules_to_trace = modules_to_trace
         self._opened = False
 
-    def open(self) -> TraceFunc:
         self._q_stdin: queue.Queue = queue.Queue()
         self._q_stdout: queue.Queue = queue.Queue()
 
@@ -115,8 +114,6 @@ class PdbInterface:
         self._registry["trace_ids"] = ids
 
         self._opened = True
-
-        return self._pdb.trace_dispatch
 
     @property
     def trace(self) -> TraceFunc:
