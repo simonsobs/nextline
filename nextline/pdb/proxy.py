@@ -124,6 +124,8 @@ class PdbInterface:
             readrc=False,
         )
 
+        self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
+
     def trace(self, frame, event, arg) -> Optional[TraceFunc]:
         def create_local_trace() -> TraceFunc:
             pdb_trace: Union[TraceFunc, None] = self._pdb.trace_dispatch
@@ -143,21 +145,17 @@ class PdbInterface:
 
         return create_local_trace()(frame, event, arg)
 
-    def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
-        self._current_trace_args: Optional[Tuple[FrameType, str, Any]] = (
-            frame,
-            event,
-            arg,
-        )
+    def calling_trace(self, frame, event, arg) -> None:
+        self._trace_args = (frame, event, arg)
 
     def exited_trace(self) -> None:
-        self._current_trace_args = None
+        self._trace_args = None
 
     def entering_cmdloop(self) -> None:
-        if not self._current_trace_args:
+        if not self._trace_args:
             raise RuntimeError("calling_trace() must be called first")
 
-        frame, event, _ = self._current_trace_args
+        frame, event, _ = self._trace_args
 
         if module_name := frame.f_globals.get("__name__"):
             self.modules_to_trace.add(module_name)
