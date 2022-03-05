@@ -58,7 +58,7 @@ def mock_pdbi_factory(mock_pdbi):
 @pytest.fixture()
 def mock_pdbi(probe_trace_func):
     y = Mock(spec=PdbInterface)
-    y.open.return_value = probe_trace_func
+    y.trace = probe_trace_func
     yield y
 
 

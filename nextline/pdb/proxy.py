@@ -118,6 +118,10 @@ class PdbInterface:
 
         return self._pdb.trace_dispatch
 
+    @property
+    def trace(self) -> TraceFunc:
+        return self._pdb.trace_dispatch
+
     def close(self):
         if not self._opened:
             return
