@@ -129,10 +129,10 @@ def TraceAddFirstModule(
         if not first:
             return trace(frame, event, arg)
 
-        def create_local_trace():
+        def create_local_trace() -> TraceFunc:
             next_trace: Union[TraceFunc, None] = trace
 
-            def local_trace(frame, event, arg):
+            def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal first, next_trace
 
                 if module_name := frame.f_globals.get("__name__"):
@@ -140,7 +140,7 @@ def TraceAddFirstModule(
                     modules_to_trace.add(module_name)
                     return trace(frame, event, arg)
 
-                if next_trace := next_trace(frame, event, arg):
+                if next_trace := next_trace(frame, event, arg):  # type: ignore
                     return local_trace
                 return None
 
