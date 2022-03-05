@@ -45,7 +45,7 @@ def PdbInterfaceFactory(
 
     def factory() -> PdbInterface:
         pbi = PdbInterface(
-            trace_id_counter=trace_id_counter,
+            trace_id=trace_id_counter(),
             registry=registry,
             ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
@@ -81,7 +81,7 @@ class PdbInterface:
 
     def __init__(
         self,
-        trace_id_counter: Callable[[], int],
+        trace_id: int,
         registry: SubscribableDict,
         ci_map: Dict[int, PdbCommandInterface],
         prompting_counter: Callable[[], int],
@@ -103,7 +103,7 @@ class PdbInterface:
             readrc=False,
         )
 
-        self._trace_id = trace_id_counter()
+        self._trace_id = trace_id
         self._registry[self._trace_id] = None
         ids = (self._registry.get("trace_ids") or ()) + (self._trace_id,)
         self._registry["trace_ids"] = ids
