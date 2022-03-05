@@ -33,7 +33,7 @@ def PdbInterfaceFactory(
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
-    thread_task_id_composer = UniqThreadTaskIdComposer()
+    _ = UniqThreadTaskIdComposer()
     trace_id_counter = count(1).__next__
     prompting_counter = count(1).__next__
     callback_map: WeakKeyDictionary[Any, PdbInterface] = WeakKeyDictionary()
@@ -44,10 +44,8 @@ def PdbInterfaceFactory(
     callback = ThreadTaskDoneCallback(done=callback_func)
 
     def factory() -> PdbInterface:
-        # TODO: check if already created for the same thread or task
         pbi = PdbInterface(
             trace_id_counter=trace_id_counter,
-            thread_task_id_composer=thread_task_id_composer,
             registry=registry,
             ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
@@ -84,13 +82,11 @@ class PdbInterface:
     def __init__(
         self,
         trace_id_counter: Callable[[], int],
-        thread_task_id_composer: UniqThreadTaskIdComposer,
         registry: SubscribableDict,
         ci_map: Dict[int, PdbCommandInterface],
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
-        self._thread_task_id_composer = thread_task_id_composer
         self._registry = registry
         self._ci_map = ci_map
         self._prompting_counter = prompting_counter
