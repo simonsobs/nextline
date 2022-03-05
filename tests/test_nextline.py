@@ -5,9 +5,6 @@ from unittest.mock import Mock
 
 from nextline import Nextline
 
-# TODO: Simplify the tests in this module. The module is nearly identical to
-# test_machine.py, which was created based on this module when the class Machine
-# was extracted from the class Nextline.
 
 SOURCE = """
 import time
@@ -32,80 +29,47 @@ def monkey_patch_trace(monkeypatch):
     yield mock_class
 
 
-@pytest.mark.asyncio
-async def test_repr():
+def test_repr():
     nextline = Nextline(SOURCE)
     repr(nextline)
 
 
 @pytest.mark.asyncio
-async def test_state_transitions_single_op():
+async def test_states():
+    async def initialized(nextline: Nextline):
+        async for s in nextline.subscribe_state():
+            if s == "initialized":
+                break
+
+    async def subscribe_state(nextline: Nextline):
+        return [s async for s in nextline.subscribe_state()]
 
     nextline = Nextline(SOURCE)
-    event_initialized = asyncio.Event()
-    task_monitor_state = asyncio.create_task(
-        monitor_state(nextline, event_initialized)
-    )
-    await event_initialized.wait()
+    task_monitor_state = asyncio.create_task(subscribe_state(nextline))
+
+    await initialized(nextline)
 
     nextline.run()
 
     await nextline.finish()
     await nextline.close()
 
-    aws = [task_monitor_state]
-    results = await asyncio.gather(*aws)
-
-    states, *_ = results
+    states = await task_monitor_state
 
     expected = ["initialized", "running", "exited", "finished", "closed"]
     assert expected == states
 
 
 @pytest.mark.asyncio
-async def test_state_transitions_multiple_async_ops():
-    """test state transitions with multiple asynchronous operations
-
-    The method finish() can be called multiple times asynchronously.
-    However, the state transition should occur once.
-
-    """
-
-    nextline = Nextline(SOURCE)
-
-    event_initialized = asyncio.Event()
-    task_monitor_state = asyncio.create_task(
-        monitor_state(nextline, event_initialized)
-    )
-    await event_initialized.wait()
-
+async def test_raise():
+    nextline = Nextline(SOURCE_RAISE)
     nextline.run()
-
-    tasks_finish_and_close = asyncio.create_task(finish_and_close(nextline))
-
-    aws = [task_monitor_state, tasks_finish_and_close]
-    results = await asyncio.gather(*aws)
-
-    states, *_ = results
-
-    expected = ["initialized", "running", "exited", "finished", "closed"]
-    assert expected == states
-
-
-async def finish_and_close(nextline):
-    nclients = 3
-    await asyncio.gather(*[nextline.finish() for _ in range(nclients)])
+    await nextline.finish()
+    with pytest.raises(Exception) as exc:
+        nextline.result()
+    assert ("foo", "bar") == exc.value.args
+    assert ("foo", "bar") == nextline.exception().args
     await nextline.close()
-
-
-async def monitor_state(nextline, event_initialized):
-    ret = []
-    async for s in nextline.subscribe_state():
-        if s == "initialized":
-            event_initialized.set()
-        # print('monitor_state()', s)
-        ret.append(s)
-    return ret
 
 
 @pytest.mark.asyncio
