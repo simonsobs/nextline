@@ -17,7 +17,7 @@ def target(
 ):
     _ = run_target
     y = summarize_trace_calls(
-        wrap_target_trace_func, modules=modules_in_summary
+        wrap_target_trace_func, modules=modules_in_summary  # type: ignore
     )
     yield y
 

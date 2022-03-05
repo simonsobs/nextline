@@ -134,13 +134,14 @@ def TraceAddFirstModule(
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal first, next_trace
+                assert next_trace
 
                 if module_name := frame.f_globals.get("__name__"):
                     first = False
                     modules_to_trace.add(module_name)
                     return trace(frame, event, arg)
 
-                if next_trace := next_trace(frame, event, arg):  # type: ignore
+                if next_trace := next_trace(frame, event, arg):
                     return local_trace
                 return None
 
@@ -195,16 +196,19 @@ def TraceCallPdb(pdbi_factory: Callable[[], PdbInterface]) -> TraceFunc:
             pdbi = pdbi_factory()
         pdb_trace = pdbi.trace  # Bdb.trace_dispatch
 
-        def create_local_trace():
+        def create_local_trace() -> TraceFunc:
             next_trace: Union[TraceFunc, None] = pdb_trace
 
-            def local_trace(frame, event, arg):
+            def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal next_trace
+                assert pdbi
+                assert next_trace
                 pdbi.calling_trace(frame, event, arg)
                 next_trace = next_trace(frame, event, arg)
                 pdbi.exited_trace()
                 if next_trace:
                     return local_trace
+                return None
 
             return local_trace
 
