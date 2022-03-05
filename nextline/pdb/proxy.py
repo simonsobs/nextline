@@ -162,6 +162,7 @@ class PdbInterface:
         frame, event, _ = self._trace_args
 
         if module_name := frame.f_globals.get("__name__"):
+            # TODO: This should be done somewhere else
             self.modules_to_trace.add(module_name)
 
         self._state = PdbCIState(
