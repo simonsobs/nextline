@@ -12,7 +12,7 @@ from nextline import Nextline
 # __________________________________________________________________||
 SOURCE = """
 import time
-time.sleep(0.1)
+time.sleep(0.001)
 """.strip()
 
 SOURCE_TWO = """
