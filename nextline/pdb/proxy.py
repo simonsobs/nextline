@@ -10,7 +10,16 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 
-from typing import TYPE_CHECKING, Callable, Optional, Any, Set, Dict, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Optional,
+    Union,
+    Any,
+    Set,
+    Dict,
+    Tuple,
+)
 from types import FrameType
 
 if TYPE_CHECKING:
@@ -115,9 +124,23 @@ class PdbInterface:
             readrc=False,
         )
 
-    @property
-    def trace(self) -> TraceFunc:
-        return self._pdb.trace_dispatch
+    def trace(self, frame, event, arg) -> Optional[TraceFunc]:
+        def create_local_trace() -> TraceFunc:
+            pdb_trace: Union[TraceFunc, None] = self._pdb.trace_dispatch
+
+            def local_trace(frame, event, arg) -> Optional[TraceFunc]:
+                nonlocal pdb_trace
+                assert pdb_trace
+                self.calling_trace(frame, event, arg)
+                pdb_trace = pdb_trace(frame, event, arg)
+                self.exited_trace()
+                if pdb_trace:
+                    return local_trace
+                return None
+
+            return local_trace
+
+        return create_local_trace()(frame, event, arg)
 
     def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
         self._current_trace_args: Optional[Tuple] = (frame, event, arg)

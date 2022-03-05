@@ -1,12 +1,10 @@
 import pytest
 from unittest.mock import Mock
 
-from typing import Union
-
 from nextline.trace import TraceCallPdb
 from nextline.pdb.proxy import PdbInterface
 
-from .funcs import TraceSummary, summarize_trace_calls
+from .funcs import TraceSummary
 
 from . import module_a
 
@@ -15,17 +13,12 @@ def test_one(
     target: TraceSummary,
     probe: TraceSummary,
     ref: TraceSummary,
-    mock_pdbi: Union[Mock, PdbInterface],
 ):
     assert ref.call.module
     assert ref.return_.module
     assert ref.call == target.call
     assert not target.return_.module
-
     assert ref == probe
-
-    assert probe == summarize_trace_calls(mock_pdbi.calling_trace)  # type: ignore
-    assert mock_pdbi.exited_trace.call_count == mock_pdbi.calling_trace.call_count  # type: ignore
 
 
 def f():

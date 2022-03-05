@@ -187,32 +187,12 @@ def TraceSelectFirstModule(
 
 
 def TraceCallPdb(pdbi_factory: Callable[[], PdbInterface]) -> TraceFunc:
-
     pdbi: Union[PdbInterface, None] = None
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
         nonlocal pdbi
-        if not pdbi:
-            pdbi = pdbi_factory()
-        pdb_trace = pdbi.trace  # Bdb.trace_dispatch
-
-        def create_local_trace() -> TraceFunc:
-            next_trace: Union[TraceFunc, None] = pdb_trace
-
-            def local_trace(frame, event, arg) -> Optional[TraceFunc]:
-                nonlocal next_trace
-                assert pdbi
-                assert next_trace
-                pdbi.calling_trace(frame, event, arg)
-                next_trace = next_trace(frame, event, arg)
-                pdbi.exited_trace()
-                if next_trace:
-                    return local_trace
-                return None
-
-            return local_trace
-
-        return create_local_trace()(frame, event, arg)
+        pdbi = pdbi or pdbi_factory()
+        return pdbi.trace(frame, event, arg)
 
     return global_trace
 
