@@ -140,8 +140,9 @@ def TraceAddFirstModule(
                     modules_to_trace.add(module_name)
                     return trace(frame, event, arg)
 
-                next_trace = next_trace(frame, event, arg)
-                return local_trace
+                if next_trace := next_trace(frame, event, arg):
+                    return local_trace
+                return None
 
             return local_trace
 
