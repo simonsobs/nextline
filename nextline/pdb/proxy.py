@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 import queue
 from itertools import count
-from weakref import WeakKeyDictionary
 
 from ..utils import UniqThreadTaskIdComposer, ThreadTaskDoneCallback
 from .ci import PdbCommandInterface
@@ -36,10 +35,15 @@ def PdbInterfaceFactory(
     _ = UniqThreadTaskIdComposer()
     trace_id_counter = count(1).__next__
     prompting_counter = count(1).__next__
-    callback_map: WeakKeyDictionary[Any, PdbInterface] = WeakKeyDictionary()
+    callback_map: Dict[Any, int] = {}
 
     def callback_func(key):
-        callback_map[key].close()
+        trace_id = callback_map[key]
+        del registry[trace_id]
+        ids = list(registry.get("trace_ids"))
+        ids.remove(trace_id)
+        ids = tuple(ids)
+        registry["trace_ids"] = ids
 
     callback = ThreadTaskDoneCallback(done=callback_func)
 
@@ -50,6 +54,9 @@ def PdbInterfaceFactory(
         ids = (registry.get("trace_ids") or ()) + (trace_id,)
         registry["trace_ids"] = ids
 
+        key = callback.register()
+        callback_map[key] = trace_id
+
         pbi = PdbInterface(
             trace_id=trace_id,
             registry=registry,
@@ -57,9 +64,6 @@ def PdbInterfaceFactory(
             prompting_counter=prompting_counter,
             modules_to_trace=modules_to_trace,
         )
-
-        key = callback.register()
-        callback_map[key] = pbi
         return pbi
 
     return factory
@@ -114,13 +118,6 @@ class PdbInterface:
     @property
     def trace(self) -> TraceFunc:
         return self._pdb.trace_dispatch
-
-    def close(self):
-        del self._registry[self._trace_id]
-        ids = list(self._registry.get("trace_ids"))
-        ids.remove(self._trace_id)
-        ids = tuple(ids)
-        self._registry["trace_ids"] = ids
 
     def calling_trace(self, frame: FrameType, event: str, arg: Any) -> None:
         self._current_trace_args: Optional[Tuple] = (frame, event, arg)
