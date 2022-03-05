@@ -35,12 +35,9 @@ class Nextline:
         # e.g., "<Nextline 'running'>"
         return f"<{self.__class__.__name__} {self.state!r}>"
 
-    def run(self) -> None:
-        """Execute the script"""
+    async def run(self) -> None:
+        """Execute the script and wait until it exits"""
         self.machine.run()
-
-    async def finish(self) -> None:
-        """Wait until the script execution exits"""
         await self.machine.finish()
 
     def exception(self) -> Optional[Exception]:

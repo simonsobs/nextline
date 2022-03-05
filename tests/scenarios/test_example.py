@@ -61,8 +61,7 @@ async def monitor_state(nextline: Nextline):
 
 async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
-    nextline.run()
-    await nextline.finish()
+    await nextline.run()
     nextline.exception()
     nextline.result()  # raise exception
     await nextline.close()

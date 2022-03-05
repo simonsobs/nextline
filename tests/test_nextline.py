@@ -49,9 +49,8 @@ async def test_states():
 
     await initialized(nextline)
 
-    nextline.run()
+    await nextline.run()
 
-    await nextline.finish()
     await nextline.close()
 
     states = await task_monitor_state
@@ -63,8 +62,7 @@ async def test_states():
 @pytest.mark.asyncio
 async def test_raise():
     nextline = Nextline(SOURCE_RAISE)
-    nextline.run()
-    await nextline.finish()
+    await nextline.run()
     with pytest.raises(Exception) as exc:
         nextline.result()
     assert ("foo", "bar") == exc.value.args
@@ -75,11 +73,9 @@ async def test_raise():
 @pytest.mark.asyncio
 async def test_reset():
     nextline = Nextline(SOURCE)
-    nextline.run()
-    await nextline.finish()
+    await nextline.run()
     nextline.reset()
-    nextline.run()
-    await nextline.finish()
+    await nextline.run()
     await nextline.close()
 
 
@@ -87,10 +83,8 @@ async def test_reset():
 async def test_reset_with_statement():
     nextline = Nextline(SOURCE)
     assert SOURCE.split("\n") == nextline.get_source()
-    nextline.run()
-    await nextline.finish()
+    await nextline.run()
     nextline.reset(statement=SOURCE_TWO)
     assert SOURCE_TWO.split("\n") == nextline.get_source()
-    nextline.run()
-    await nextline.finish()
+    await nextline.run()
     await nextline.close()
