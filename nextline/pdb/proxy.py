@@ -132,11 +132,12 @@ class PdbInterface:
                 nonlocal pdb_trace
                 assert pdb_trace
                 self.calling_trace(frame, event, arg)
-                pdb_trace = pdb_trace(frame, event, arg)
-                self.exited_trace()
-                if pdb_trace:
-                    return local_trace
-                return None
+                try:
+                    if pdb_trace := pdb_trace(frame, event, arg):
+                        return local_trace
+                    return None
+                finally:
+                    self.exited_trace()
 
             return local_trace
 
