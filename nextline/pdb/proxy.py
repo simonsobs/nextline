@@ -90,7 +90,6 @@ class PdbInterface:
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
-        self._trace_id_counter = trace_id_counter
         self._thread_task_id_composer = thread_task_id_composer
         self._registry = registry
         self._ci_map = ci_map
@@ -108,20 +107,16 @@ class PdbInterface:
             readrc=False,
         )
 
-        self._trace_id = self._trace_id_counter()
+        self._trace_id = trace_id_counter()
         self._registry[self._trace_id] = None
         ids = (self._registry.get("trace_ids") or ()) + (self._trace_id,)
         self._registry["trace_ids"] = ids
-
-        self._opened = True
 
     @property
     def trace(self) -> TraceFunc:
         return self._pdb.trace_dispatch
 
     def close(self):
-        if not self._opened:
-            return
         del self._registry[self._trace_id]
         ids = list(self._registry.get("trace_ids"))
         ids.remove(self._trace_id)
