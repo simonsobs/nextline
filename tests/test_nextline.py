@@ -9,7 +9,6 @@ from nextline import Nextline
 # test_machine.py, which was created based on this module when the class Machine
 # was extracted from the class Nextline.
 
-# __________________________________________________________________||
 SOURCE = """
 import time
 time.sleep(0.001)
@@ -24,7 +23,6 @@ raise Exception('foo', 'bar')
 """.strip()
 
 
-# __________________________________________________________________||
 @pytest.fixture(autouse=True)
 def monkey_patch_trace(monkeypatch):
     mock_instance = Mock()
@@ -34,7 +32,6 @@ def monkey_patch_trace(monkeypatch):
     yield mock_class
 
 
-# __________________________________________________________________||
 @pytest.mark.asyncio
 async def test_repr():
     nextline = Nextline(SOURCE)
@@ -111,7 +108,6 @@ async def monitor_state(nextline, event_initialized):
     return ret
 
 
-# __________________________________________________________________||
 @pytest.mark.asyncio
 async def test_reset():
     nextline = Nextline(SOURCE)
@@ -134,6 +130,3 @@ async def test_reset_with_statement():
     nextline.run()
     await nextline.finish()
     await nextline.close()
-
-
-# __________________________________________________________________||
