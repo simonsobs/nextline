@@ -73,7 +73,7 @@ def Trace(
     # modules_to_trace will be shared and modified by
     # multiple objects.
 
-    create_pdbi = PdbInterfaceFactory(
+    pdbi_factory = PdbInterfaceFactory(
         registry=registry,
         pdb_ci_map=pdb_ci_map,
         modules_to_trace=modules_to_trace,
@@ -81,8 +81,7 @@ def Trace(
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
-        pdbi = create_pdbi()
-        trace_call_pdb = TraceCallPdb(pdbi=pdbi)
+        trace_call_pdb = TraceCallPdb(pdbi_factory=pdbi_factory)
         return TraceSelectFirstModule(
             trace=trace_call_pdb,
             modules_to_trace=modules_to_trace,
@@ -185,16 +184,16 @@ def TraceSelectFirstModule(
     return ret
 
 
-def TraceCallPdb(pdbi: PdbInterface) -> TraceFunc:
+def TraceCallPdb(pdbi_factory: Callable[[], PdbInterface]) -> TraceFunc:
 
+    pdbi: Union[PdbInterface, None] = None
     pdb_trace: Union[TraceFunc, None] = None
-    # Instead of calling pdbi.open() here, set initially None so that
-    # pdbi.open() won't be called unless global_trace() is actually
-    # called.
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
+        nonlocal pdbi
         nonlocal pdb_trace
-        if not pdb_trace:
+        if not pdbi:
+            pdbi = pdbi_factory()
             pdb_trace = pdbi.open()  # Bdb.trace_dispatch
 
         def create_local_trace():

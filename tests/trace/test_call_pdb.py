@@ -45,9 +45,14 @@ def modules_to_skip(request):
 
 
 @pytest.fixture()
-def target_trace_func(mock_pdbi: Union[Mock, PdbInterface]):
-    y = TraceCallPdb(pdbi=mock_pdbi)
+def target_trace_func(mock_pdbi_factory):
+    y = TraceCallPdb(pdbi_factory=mock_pdbi_factory)
     yield y
+
+
+@pytest.fixture()
+def mock_pdbi_factory(mock_pdbi):
+    return lambda: mock_pdbi
 
 
 @pytest.fixture()

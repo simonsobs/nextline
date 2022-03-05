@@ -30,17 +30,17 @@ def monkeypatch_customized_pdb(monkeypatch):
 
 
 @pytest.fixture()
-def mock_registrar():
+def mock_pdbi():
     y = Mock(spec=PdbInterface)
     yield y
 
 
 @pytest.fixture()
-def proxy(mock_registrar: PdbInterface):
-    modules_to_trace = {"tests.pdb.subject", __name__}
+def proxy(mock_pdbi: PdbInterface):
+    # modules_to_trace = {"tests.pdb.subject", __name__}
 
     y = TraceCallPdb(
-        pdbi=mock_registrar,
+        pdbi_factory=lambda: mock_pdbi,
         # modules_to_trace=modules_to_trace,
     )
 
@@ -68,7 +68,7 @@ params = [
 @pytest.mark.parametrize("subject", params)
 def test_proxy(
     proxy: TraceCallPdb,
-    mock_registrar: Union[Mock, PdbInterface],
+    mock_pdbi: Union[Mock, PdbInterface],
     subject: Callable,
 ):
 
@@ -83,7 +83,7 @@ def test_proxy(
     # # print(mock_registrar.register.call_args_list)
     # # TODO: Test contents
 
-    assert 1 == mock_registrar.open.call_count
+    assert 1 == mock_pdbi.open.call_count
     # assert 1 == mock_registrar.close.call_count
     # assert mock_registrar.entering_cmdloop.called
     # assert mock_registrar.exited_cmdloop.called
