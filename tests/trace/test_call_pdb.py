@@ -24,12 +24,9 @@ def test_one(
 
     assert ref == probe
 
-    assert 1 == mock_pdbi.open.call_count
-
-    assert probe == summarize_trace_calls(mock_pdbi.calling_trace)
-    assert (
-        mock_pdbi.exited_trace.call_count == mock_pdbi.calling_trace.call_count
-    )
+    assert 1 == mock_pdbi.open.call_count  # type: ignore
+    assert probe == summarize_trace_calls(mock_pdbi.calling_trace)  # type: ignore
+    assert mock_pdbi.exited_trace.call_count == mock_pdbi.calling_trace.call_count  # type: ignore
 
 
 def f():
