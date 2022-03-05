@@ -13,7 +13,6 @@ from .utils import current_task_or_thread
 if TYPE_CHECKING:
     from .types import TraceFunc
     from .utils import SubscribableDict
-    from .pdb.proxy import PdbInterface
     from .pdb.ci import PdbCommandInterface
 
 
@@ -81,7 +80,7 @@ def Trace(
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
-        trace_call_pdb = TraceCallPdb(pdbi_factory=pdbi_factory)
+        trace_call_pdb = TraceFromFactory(factory=lambda: pdbi_factory().trace)
         return TraceSelectFirstModule(
             trace=trace_call_pdb,
             modules_to_trace=modules_to_trace,
@@ -186,13 +185,17 @@ def TraceSelectFirstModule(
     return ret
 
 
-def TraceCallPdb(pdbi_factory: Callable[[], PdbInterface]) -> TraceFunc:
-    pdbi: Union[PdbInterface, None] = None
+def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
+    """Create a trace that creates a trace first time called
+
+    To be used when desirable to defer the creation until actually called
+    """
+    trace: Union[TraceFunc, None] = None
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
-        nonlocal pdbi
-        pdbi = pdbi or pdbi_factory()
-        return pdbi.trace(frame, event, arg)
+        nonlocal trace
+        trace = trace or factory()
+        return trace(frame, event, arg)
 
     return global_trace
 

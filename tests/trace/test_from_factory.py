@@ -1,8 +1,6 @@
 import pytest
-from unittest.mock import Mock
 
-from nextline.trace import TraceCallPdb
-from nextline.pdb.proxy import PdbInterface
+from nextline.trace import TraceFromFactory
 
 from .funcs import TraceSummary
 
@@ -37,21 +35,14 @@ def modules_to_skip(request):
 
 
 @pytest.fixture()
-def target_trace_func(mock_pdbi_factory):
-    y = TraceCallPdb(pdbi_factory=mock_pdbi_factory)
+def target_trace_func(mock_factory):
+    y = TraceFromFactory(factory=mock_factory)
     yield y
 
 
 @pytest.fixture()
-def mock_pdbi_factory(mock_pdbi):
-    return lambda: mock_pdbi
-
-
-@pytest.fixture()
-def mock_pdbi(probe_trace_func):
-    y = Mock(spec=PdbInterface)
-    y.trace = probe_trace_func
-    yield y
+def mock_factory(probe_trace_func):
+    return lambda: probe_trace_func
 
 
 @pytest.fixture()
