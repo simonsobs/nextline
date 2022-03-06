@@ -8,38 +8,16 @@ from nextline import Nextline
 from nextline.utils import agen_with_wait
 
 
+this_dir = Path(__file__).resolve().parent
+
+
 @pytest.fixture(autouse=True)
 def monkey_patch_syspath(monkeypatch):
-    this_dir = Path(__file__).resolve().parent
     monkeypatch.syspath_prepend(str(this_dir))
     yield
 
 
-statement = """
-import time
-
-time.sleep(0.001)
-
-
-def f():
-    for _ in range(10):
-        pass
-    return
-
-
-f()
-f()
-
-print("here!")
-
-import script_threading
-
-script_threading.run()  # step
-
-import script_asyncio
-
-script_asyncio.run()  # step
-""".strip()
+statement = this_dir.joinpath("script.py").read_text()
 
 
 @pytest.mark.asyncio
