@@ -92,7 +92,7 @@ class Nextline:
         async for y in agen:
             yield y
 
-    async def subscribe_trace_state(
+    async def subscribe_prompting(
         self,
         trace_id: int,
     ) -> AsyncGenerator[PdbCIState, None]:

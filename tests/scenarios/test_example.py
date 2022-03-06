@@ -64,7 +64,7 @@ async def control_execution(nextline: Nextline):
 async def control_trace(nextline: Nextline, trace_id):
     # print(f"control_trace({trace_id})")
     file_name = ""
-    async for s in nextline.subscribe_trace_state(trace_id):
+    async for s in nextline.subscribe_prompting(trace_id):
         # print(s)
         if not file_name == s.file_name:
             file_name = s.file_name
