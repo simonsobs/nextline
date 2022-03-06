@@ -24,24 +24,24 @@ statement = this_dir.joinpath("script.py").read_text()
 async def test_run():
     nextline = Nextline(statement)
     assert nextline.state == "initialized"
-    task_monitor_state = asyncio.create_task(monitor_state(nextline))
+    task_subscribe_state = asyncio.create_task(subscribe_state(nextline))
     task_control_execution = asyncio.create_task(control_execution(nextline))
     task_run = asyncio.create_task(run(nextline))
-    await asyncio.gather(task_run, task_monitor_state, task_control_execution)
+    await asyncio.gather(
+        task_run, task_subscribe_state, task_control_execution
+    )
     assert nextline.state == "closed"
 
 
-async def monitor_state(nextline: Nextline):
-    async for s in nextline.subscribe_state():
-        # print("monitor_state()", s)
-        pass
+async def subscribe_state(nextline: Nextline):
+    return [s async for s in nextline.subscribe_state()]
 
 
 async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
     await nextline.run()
     nextline.exception()
-    nextline.result()  # raise exception
+    nextline.result()
     await nextline.close()
 
 
