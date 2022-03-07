@@ -2,7 +2,9 @@ import threading
 import queue
 import janus
 
-from typing import Any, AsyncIterable, List, Tuple
+from typing import AsyncGenerator, List, Tuple, TypeVar
+
+_ItemType = TypeVar("_ItemType")
 
 
 class QueueDist:
@@ -28,9 +30,9 @@ class QueueDist:
 
         self._qs_out: List[janus.Queue] = []
         self._lock_out = threading.Condition()
-        self._last_enumerated: Tuple[int, Any] = (-1, self.Start)
+        self._last_enumerated: Tuple[int, _ItemType] = (-1, self.Start)
 
-        self._last_item: Any = None
+        self._last_item: _ItemType = None
 
         self._closed: bool = False
         self._lock_close = threading.Condition()
@@ -43,7 +45,7 @@ class QueueDist:
         """The number of the subscribers"""
         return len(self._qs_out)
 
-    def put(self, item: Any) -> None:
+    def put(self, item: _ItemType) -> None:
         """Send data to subscribers
 
         This method can be called in any thread.
@@ -51,11 +53,11 @@ class QueueDist:
         self._last_item = item
         self._q_in.put(item)
 
-    def get(self) -> Any:
+    def get(self) -> _ItemType:
         """Most recent data that have been put"""
         return self._last_item
 
-    async def subscribe(self) -> AsyncIterable:
+    async def subscribe(self) -> AsyncGenerator[_ItemType, None]:
         """Yield data as they are put"""
         q: janus.Queue = janus.Queue()
 
