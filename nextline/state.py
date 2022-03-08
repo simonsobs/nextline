@@ -247,8 +247,6 @@ class Running(State):
             pdb_ci_map=self._pdb_ci_map,
         )
 
-        self.registry["state_name"] = self.name
-
         self.loop = asyncio.get_running_loop()
 
         def run():
@@ -270,6 +268,8 @@ class Running(State):
 
         self._thread = Thread(target=run, daemon=True)
         self._thread.start()
+
+        self.registry["state_name"] = self.name
 
     def _done(self, result=None, exception=None):
 
