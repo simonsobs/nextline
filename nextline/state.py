@@ -57,7 +57,6 @@ class Machine:
         self.registry["run_no_count"] = itertools.count(
             run_no_start_from
         ).__next__
-        self.registry["thread_task_ids"] = ()
 
         self._state: State = Initialized(self.registry)
 
