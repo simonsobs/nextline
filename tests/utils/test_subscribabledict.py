@@ -44,6 +44,9 @@ def test_key_error():
     assert 0 == len(obj)
     assert not obj
 
+    with pytest.raises(KeyError):
+        del obj[key]
+
     obj.close()
 
 
@@ -80,7 +83,8 @@ async def test_matrix(close_register, thread, nsubscribers, nitems):
             obj[key] = item
             assert obj[key] == item
         if close_register:
-            del obj[key]
+            if key in obj:
+                del obj[key]
 
     async def aregister():
         return register()

@@ -47,11 +47,10 @@ class SubscribableDict(MutableMapping):
 
         The async generators returned by the method `subscribe()` for the key
         will return.
+
+        KeyError will be raised if the key doesn't exist
         """
-        q = self._map.pop(key, None)
-        if q is None:
-            return
-        q.close()
+        self._map.pop(key).close()
 
     def close(self):
         """Remove all keys, ending all subscriptions for all keys"""
