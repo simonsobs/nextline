@@ -47,7 +47,6 @@ class SubscribableDict(MutableMapping):
         else:
             return default
 
-    async def subscribe(self, key: _KT) -> AsyncGenerator[_VT, None]:
+    def subscribe(self, key: _KT) -> AsyncGenerator[_VT, None]:
         q = self._map[key]
-        async for y in q.subscribe():  # type: ignore
-            yield y
+        return q.subscribe()
