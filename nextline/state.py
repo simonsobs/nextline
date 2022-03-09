@@ -200,7 +200,7 @@ class Initialized(State):
 
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
-        run_no = self.registry.get("run_no_count")()
+        run_no = self.registry.get("run_no_count")()  # type: ignore
         self.registry["run_no"] = run_no
         self.registry["state_name"] = self.name
 
