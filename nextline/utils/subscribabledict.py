@@ -54,8 +54,9 @@ class SubscribableDict(MutableMapping):
 
     def close(self):
         """Remove all keys, ending all subscriptions for all keys"""
-        for key in list(self):
-            del self[key]
+        while self._map:
+            _, q = self._map.popitem()
+            q.close()
 
     def __iter__(self) -> Iterator[_KT]:
         return iter(self._map)
