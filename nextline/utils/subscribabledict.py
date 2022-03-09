@@ -15,8 +15,8 @@ class SubscribableDict(MutableMapping):
         self._map: DefaultDict[_KT, QueueDist] = defaultdict(QueueDist)
 
     def __getitem__(self, key: _KT) -> _VT:
-        if dp := self._map.get(key):
-            return dp.get()
+        if q := self._map.get(key):
+            return q.get()
         else:
             raise KeyError
 
@@ -24,10 +24,10 @@ class SubscribableDict(MutableMapping):
         self._map[key].put(value)
 
     def __delitem__(self, key: _KT) -> None:
-        dq = self._map.pop(key, None)
-        if dq is None:
+        q = self._map.pop(key, None)
+        if q is None:
             return
-        dq.close()
+        q.close()
 
     def __iter__(self) -> Iterator[_KT]:
         return iter(self._map)
@@ -42,12 +42,12 @@ class SubscribableDict(MutableMapping):
 
     def get(self, key: _KT, default: Optional[_VT] = None) -> Optional[_VT]:
         """The item for the key. The default if the key doesn't exist"""
-        if dp := self._map.get(key):
-            return dp.get()
+        if q := self._map.get(key):
+            return q.get()
         else:
             return default
 
     async def subscribe(self, key: _KT) -> AsyncGenerator[_VT, None]:
-        dq = self._map[key]
-        async for y in dq.subscribe():  # type: ignore
+        q = self._map[key]
+        async for y in q.subscribe():  # type: ignore
             yield y
