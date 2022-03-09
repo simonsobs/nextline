@@ -21,8 +21,7 @@ class SubscribableDict(MutableMapping):
         and yield them as they are set. Wait for the first value for the key,
         if the key doesn't exist; KeyError won't be raised.
         """
-        q = self._map[key]
-        return q.subscribe()
+        return self._map[key].subscribe()
 
     def __getitem__(self, key: _KT) -> _VT:
         """The current value for the key. KeyError if the key doesn't exist."""
