@@ -3,6 +3,7 @@
 TODO: add a test for the method send_pdb_command()
 
 """
+import asyncio
 import pytest
 
 from nextline.state import Machine
@@ -47,7 +48,13 @@ async def test_state_name_unknown():
 
 @pytest.mark.asyncio
 async def test_transitions():
+    async def subscribe():
+        return [y async for y in registry.subscribe("state_name")]
+
     obj = Machine(SOURCE)
+    registry = obj.registry
+    t = asyncio.create_task(subscribe())
+    await asyncio.sleep(0)
     assert "initialized" == obj.state_name
     obj.run()
     assert "running" == obj.state_name
@@ -59,11 +66,26 @@ async def test_transitions():
     assert "initialized" == obj.state_name
     await obj.close()
     assert "closed" == obj.state_name
+    expected = [
+        "initialized",
+        "running",
+        "exited",
+        "finished",
+        "initialized",
+        "closed",
+    ]
+    assert expected == await t
 
 
 @pytest.mark.asyncio
 async def test_reset_with_statement():
+    async def subscribe():
+        return [y async for y in registry.subscribe("state_name")]
+
     obj = Machine(SOURCE)
+    registry = obj.registry
+    t = asyncio.create_task(subscribe())
+    await asyncio.sleep(0)
     assert SOURCE == obj.registry.get("statement")
     obj.run()
     await obj.finish()
@@ -72,3 +94,15 @@ async def test_reset_with_statement():
     obj.run()
     await obj.finish()
     await obj.close()
+    expected = [
+        "initialized",
+        "running",
+        "exited",
+        "finished",
+        "initialized",
+        "running",
+        "exited",
+        "finished",
+        "closed",
+    ]
+    assert expected == await t

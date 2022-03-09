@@ -84,9 +84,6 @@ class BaseTestState(ABC):
         assert isinstance(state, self.state_class)
         assert "obsolete" not in repr(state)
 
-    def test_registry_state_name(self, state):
-        assert self.state_class.name == state.registry.get("state_name")
-
     async def assert_obsolete(self, state):
         assert "obsolete" in repr(state)
 

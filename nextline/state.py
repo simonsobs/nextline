@@ -58,14 +58,18 @@ class Machine:
             run_no_start_from
         ).__next__
 
-        self._state: State = Initialized(self.registry)
-
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
+
+        self._state: State = Initialized(self.registry)
+        self._state_changed()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
         return f"<{self.__class__.__name__} {self.state_name!r}>"
+
+    def _state_changed(self) -> None:
+        self.registry["state_name"] = self.state_name
 
     @property
     def state_name(self) -> str:
@@ -78,6 +82,7 @@ class Machine:
     def run(self) -> None:
         """Enter the running state"""
         self._state = self._state.run()
+        self._state_changed()
         self._task_exited = asyncio.create_task(self._exited())
 
     async def _exited(self) -> None:
@@ -90,6 +95,7 @@ class Machine:
         """
 
         self._state = await self._state.exited()
+        self._state_changed()
 
     def send_pdb_command(self, thread_asynctask_id, command) -> None:
         self._state.send_pdb_command(thread_asynctask_id, command)
@@ -99,6 +105,7 @@ class Machine:
         await self._task_exited
         async with self._lock_finish:
             self._state = await self._state.finish()
+            self._state_changed()
 
     def exception(self) -> Optional[Exception]:
         return self._state.exception()
@@ -111,11 +118,13 @@ class Machine:
         if statement:
             self.registry["statement"] = statement
         self._state = self._state.reset()
+        self._state_changed()
 
     async def close(self) -> None:
         """Enter the closed state"""
         async with self._lock_close:
             self._state = self._state.close()
+            self._state_changed()
             await to_thread(self.registry.close)
 
 
@@ -202,7 +211,6 @@ class Initialized(State):
         self.registry = registry
         run_no = self.registry.get("run_no_count")()  # type: ignore
         self.registry["run_no"] = run_no
-        self.registry["state_name"] = self.name
 
     def run(self):
         self.assert_not_obsolete()
@@ -268,8 +276,6 @@ class Running(State):
         self._thread = Thread(target=run, daemon=True)
         self._thread.start()
 
-        self.registry["state_name"] = self.name
-
     def _done(self, result=None, exception=None):
 
         if self.loop.is_closed():
@@ -326,8 +332,6 @@ class Exited(State):
         self._result = result
         self._exception = exception
 
-        self.registry["state_name"] = self.name
-
     async def finish(self):
         self.assert_not_obsolete()
         await to_thread(self._thread.join)
@@ -361,7 +365,6 @@ class Finished(State):
         self._exception = exception
 
         self.registry = registry
-        self.registry["state_name"] = self.name
 
     def exception(self):
         """Return the exception of the script execution
@@ -419,7 +422,6 @@ class Closed(State):
 
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
-        self.registry["state_name"] = self.name
 
     def close(self):
         self.assert_not_obsolete()
