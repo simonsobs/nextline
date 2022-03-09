@@ -70,27 +70,19 @@ class Nextline:
         """
         return self.machine.state_name
 
-    async def subscribe_state(self) -> AsyncGenerator[str, None]:
-        # wish to be able to write with "yield from" but not possible
-        # https://stackoverflow.com/a/59079548/7309855
-        agen = self.registry.subscribe("state_name")
-        async for y in agen:
-            yield y
+    def subscribe_state(self) -> AsyncGenerator[str, None]:
+        return self.registry.subscribe("state_name")
 
     @property
     def run_no(self):
         """The current run number"""
         return self.registry.get("run_no")
 
-    async def subscribe_run_no(self):
-        agen = self.registry.subscribe("run_no")
-        async for y in agen:
-            yield y
+    def subscribe_run_no(self) -> AsyncGenerator[int, None]:
+        return self.registry.subscribe("run_no")
 
-    async def subscribe_trace_ids(self) -> AsyncGenerator[Tuple[int], None]:
-        agen = self.registry.subscribe("trace_ids")
-        async for y in agen:
-            yield y
+    def subscribe_trace_ids(self) -> AsyncGenerator[Tuple[int], None]:
+        return self.registry.subscribe("trace_ids")
 
     async def subscribe_prompting(
         self,
