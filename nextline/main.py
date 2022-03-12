@@ -111,6 +111,13 @@ class Nextline:
         if 1 <= line_no <= len(lines):
             return lines[line_no - 1]
         return ""
+
+    def subscribe_run_info(self) -> AsyncGenerator[RunInfo, None]:
+        return self.subscribe("run_info")
+
+    def subscribe_trace_info(self) -> AsyncGenerator[TraceInfo, None]:
+        return self.subscribe("trace_info")
+
     def get(self, key) -> Any:
         return self.registry.get(key)
 
