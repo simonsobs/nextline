@@ -34,6 +34,11 @@ def test_repr():
     repr(nextline)
 
 
+def test_statement():
+    nextline = Nextline(SOURCE)
+    assert SOURCE == nextline.statement
+
+
 @pytest.mark.asyncio
 async def test_states():
     async def initialized(nextline: Nextline):
