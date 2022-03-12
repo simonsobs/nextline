@@ -59,7 +59,7 @@ class Nextline:
     @property
     def statement(self) -> str:
         """The script"""
-        return self.registry.get("statement")
+        return self.get("statement")
 
     @property
     def state(self) -> str:
@@ -71,24 +71,24 @@ class Nextline:
         return self.machine.state_name
 
     def subscribe_state(self) -> AsyncGenerator[str, None]:
-        return self.registry.subscribe("state_name")
+        return self.subscribe("state_name")
 
     @property
     def run_no(self):
         """The current run number"""
-        return self.registry.get("run_no")
+        return self.get("run_no")
 
     def subscribe_run_no(self) -> AsyncGenerator[int, None]:
-        return self.registry.subscribe("run_no")
+        return self.subscribe("run_no")
 
     def subscribe_trace_ids(self) -> AsyncGenerator[Tuple[int], None]:
-        return self.registry.subscribe("trace_ids")
+        return self.subscribe("trace_ids")
 
     async def subscribe_prompting(
         self,
         trace_id: int,
     ) -> AsyncGenerator[PdbCIState, None]:
-        agen = self.registry.subscribe(trace_id)
+        agen = self.subscribe(trace_id)
         async for y in agen:
             if y is None:
                 continue
@@ -99,7 +99,7 @@ class Nextline:
 
     def get_source(self, file_name=None):
         if not file_name or file_name == self.registry.get("script_file_name"):
-            return self.registry.get("statement").split("\n")
+            return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
     def get_source_line(self, line_no, file_name=None):
@@ -111,3 +111,8 @@ class Nextline:
         if 1 <= line_no <= len(lines):
             return lines[line_no - 1]
         return ""
+    def get(self, key) -> Any:
+        return self.registry.get(key)
+
+    def subscribe(self, key) -> AsyncGenerator[Any, None]:
+        return self.registry.subscribe(key)
