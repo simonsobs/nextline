@@ -26,3 +26,16 @@ class TraceInfo:
     trace_no: int
     thread_no: int
     task_no: Optional[int] = None
+
+
+@dataclasses.dataclass(frozen=True)
+class PromptInfo:
+    run_no: int
+    trace_no: int
+    prompt_no: int
+    open: bool
+    event: Optional[str] = None
+    file_name: Optional[str] = None
+    line_no: Optional[int] = None
+    stdout: Optional[str] = None
+    command: Optional[str] = None

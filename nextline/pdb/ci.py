@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import threading
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Tuple, Any
+
+from ..types import PromptInfo
 
 if TYPE_CHECKING:
+    from types import FrameType
     from pdb import Pdb
     from queue import Queue
+    from ..utils import SubscribableDict
 
 
 class PdbCommandInterface:
@@ -26,15 +30,40 @@ class PdbCommandInterface:
 
     """
 
-    def __init__(self, pdb: Pdb, queue_in: Queue, queue_out: Queue):
+    def __init__(
+        self,
+        pdb: Pdb,
+        queue_in: Queue,
+        queue_out: Queue,
+        counter: Callable[[], int],
+        trace_id: int,
+        registry: SubscribableDict,
+        trace_args: Tuple[FrameType, str, Any],
+    ):
         self._pdb = pdb
         self._queue_in = queue_in
         self._queue_out = queue_out
+        self._counter = counter
+        self._trace_id = trace_id
+        self._registry = registry
         self._ended = False
         self._nprompts = 0
 
+        frame, event, _ = trace_args
+        self._event = event
+        self._file_name = pdb.canonic(frame.f_code.co_filename)
+        self._line_no = frame.f_lineno
+        self._prompt_no = -1
+
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
+        self._registry["prompt_info"] = PromptInfo(
+            run_no=self._registry["run_no"],
+            trace_no=self._trace_id,
+            prompt_no=self._prompt_no,
+            open=False,
+            command=command,
+        )
         self._command = command
         self._queue_in.put(command)
 
@@ -58,7 +87,18 @@ class PdbCommandInterface:
             self._queue_out, self._pdb.prompt
         ):
             self._nprompts += 1
+            self._prompt_no = self._counter()
             self._stdout = out
+            self._registry["prompt_info"] = PromptInfo(
+                run_no=self._registry["run_no"],
+                trace_no=self._trace_id,
+                prompt_no=self._prompt_no,
+                open=True,
+                event=self._event,
+                file_name=self._file_name,
+                line_no=self._line_no,
+                stdout=out,
+            )
 
     def _read_until_prompt(self, queue, prompt):
         """read the queue up to the prompt"""

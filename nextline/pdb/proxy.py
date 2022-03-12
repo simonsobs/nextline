@@ -188,7 +188,13 @@ class PdbInterface:
         )
 
         self._pdb_ci = PdbCommandInterface(
-            self._pdb, self._q_stdin, self._q_stdout
+            pdb=self._pdb,
+            queue_in=self._q_stdin,
+            queue_out=self._q_stdout,
+            counter=self._prompting_counter,
+            trace_id=self._trace_id,
+            registry=self._registry,
+            trace_args=self._trace_args,
         )
         self._pdb_ci.start()
 
