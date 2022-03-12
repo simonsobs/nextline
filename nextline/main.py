@@ -8,6 +8,7 @@ from .state import Machine
 
 if TYPE_CHECKING:
     from .pdb.proxy import PdbCIState
+    from .types import RunInfo, TraceInfo
 
 
 class Nextline:

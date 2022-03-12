@@ -18,3 +18,11 @@ class RunInfo:
     result: Optional[str] = None
     exception: Optional[str] = None
 
+
+@dataclasses.dataclass(frozen=True)
+class TraceInfo:
+    run_no: int
+    state: str
+    trace_no: int
+    thread_no: int
+    task_no: Optional[int] = None
