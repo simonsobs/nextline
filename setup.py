@@ -32,8 +32,8 @@ setup(
             "pytest>=7.0",
             "pytest-cov>=3.0",
             "pytest-asyncio>=0.18",
-            "pytest-timeout>=2.1.0",
-            "snapshottest>0.5",
+            "pytest-timeout>=2.1",
+            "snapshottest>=0.6",
         ],
         "dev": [
             "twine",
