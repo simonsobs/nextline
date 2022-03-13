@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import datetime
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
@@ -63,6 +64,7 @@ class PdbCommandInterface:
             prompt_no=self._prompt_no,
             open=False,
             command=command,
+            ended_at=datetime.datetime.now(),
         )
         self._command = command
         self._queue_in.put(command)
@@ -98,6 +100,7 @@ class PdbCommandInterface:
                 file_name=self._file_name,
                 line_no=self._line_no,
                 stdout=out,
+                started_at=datetime.datetime.now(),
             )
 
     def _read_until_prompt(self, queue, prompt):

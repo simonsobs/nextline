@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import queue
 from itertools import count
 
@@ -56,7 +57,11 @@ def PdbInterfaceFactory(
         ids = tuple(ids)
         registry["trace_ids"] = ids
 
-        trace_info = dataclasses.replace(trace_info, state="finished")
+        trace_info = dataclasses.replace(
+            trace_info,
+            state="finished",
+            ended_at=datetime.datetime.now(),
+        )
         registry["trace_info"] = trace_info
 
     callback = ThreadTaskDoneCallback(done=callback_func)
@@ -75,6 +80,7 @@ def PdbInterfaceFactory(
             thread_no=thread_no,
             task_no=task_no,
             state="running",
+            started_at=datetime.datetime.now(),
         )
         registry["trace_info"] = trace_info
 

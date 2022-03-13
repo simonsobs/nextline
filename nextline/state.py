@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from threading import Thread
+import datetime
 import itertools
 import traceback
 import json
@@ -78,6 +79,7 @@ class Machine:
                 run_no=self.registry["run_no"],
                 state=self.state_name,
                 script=self.registry["statement"],
+                started_at=datetime.datetime.now(),
             )
         if self.state_name == "finished":
             exception = None
@@ -95,6 +97,7 @@ class Machine:
                 state=self.state_name,
                 result=result,
                 exception=exception,
+                ended_at=datetime.datetime.now(),
             )
 
     @property

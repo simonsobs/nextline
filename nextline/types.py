@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 from typing import Callable, Any, Optional
 from types import FrameType
 
@@ -17,6 +18,8 @@ class RunInfo:
     script: Optional[str] = None
     result: Optional[str] = None
     exception: Optional[str] = None
+    started_at: Optional[datetime.datetime] = None
+    ended_at: Optional[datetime.datetime] = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -26,6 +29,8 @@ class TraceInfo:
     trace_no: int
     thread_no: int
     task_no: Optional[int] = None
+    started_at: Optional[datetime.datetime] = None
+    ended_at: Optional[datetime.datetime] = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -39,3 +44,5 @@ class PromptInfo:
     line_no: Optional[int] = None
     stdout: Optional[str] = None
     command: Optional[str] = None
+    started_at: Optional[datetime.datetime] = None
+    ended_at: Optional[datetime.datetime] = None
