@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import queue
 from itertools import count
 
 from ..utils import UniqThreadTaskIdComposer, ThreadTaskDoneCallback
+from ..types import TraceInfo
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -41,18 +43,26 @@ def PdbInterfaceFactory(
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
-    _ = UniqThreadTaskIdComposer()
+    id_composer = UniqThreadTaskIdComposer()
     trace_id_counter = count(1).__next__
     prompting_counter = count(1).__next__
-    callback_map: Dict[Any, int] = {}
+    callback_map: Dict[Any, TraceInfo] = {}
 
     def callback_func(key):
-        trace_id = callback_map[key]
+        trace_info = callback_map[key]
+        trace_id = trace_info.trace_no
         del registry[trace_id]
         ids = list(registry.get("trace_ids"))
         ids.remove(trace_id)
         ids = tuple(ids)
         registry["trace_ids"] = ids
+
+        trace_info = dataclasses.replace(
+            trace_info,
+            state="finished",
+            ended_at=datetime.datetime.now(),
+        )
+        registry["trace_info"] = trace_info
 
     callback = ThreadTaskDoneCallback(done=callback_func)
 
@@ -63,8 +73,19 @@ def PdbInterfaceFactory(
         ids = (registry.get("trace_ids") or ()) + (trace_id,)
         registry["trace_ids"] = ids
 
+        thread_no, task_no = id_composer()
+        trace_info = TraceInfo(
+            run_no=registry["run_no"],
+            trace_no=trace_id,
+            thread_no=thread_no,
+            task_no=task_no,
+            state="running",
+            started_at=datetime.datetime.now(),
+        )
+        registry["trace_info"] = trace_info
+
         key = callback.register()
-        callback_map[key] = trace_id
+        callback_map[key] = trace_info
 
         pbi = PdbInterface(
             trace_id=trace_id,
@@ -173,7 +194,13 @@ class PdbInterface:
         )
 
         self._pdb_ci = PdbCommandInterface(
-            self._pdb, self._q_stdin, self._q_stdout
+            pdb=self._pdb,
+            queue_in=self._q_stdin,
+            queue_out=self._q_stdout,
+            counter=self._prompting_counter,
+            trace_id=self._trace_id,
+            registry=self._registry,
+            trace_args=self._trace_args,
         )
         self._pdb_ci.start()
 

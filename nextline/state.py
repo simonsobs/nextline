@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 from threading import Thread
+import datetime
 import itertools
+import traceback
+import json
 from typing import TYPE_CHECKING, Dict, Optional, Any
 
 from .trace import Trace
 from .utils import SubscribableDict, ThreadSafeAsyncioEvent, to_thread
 from .call import call_with_trace
+from .types import RunInfo
 from . import script
 
 if TYPE_CHECKING:
@@ -70,6 +75,34 @@ class Machine:
 
     def _state_changed(self) -> None:
         self.registry["state_name"] = self.state_name
+        if self.state_name == "running":
+            self._run_info = RunInfo(
+                run_no=self.registry["run_no"],
+                state=self.state_name,
+                script=self.registry["statement"],
+                started_at=datetime.datetime.now(),
+            )
+            self.registry["run_info"] = self._run_info
+        if self.state_name == "finished":
+            exception = None
+            if exc := self.exception():
+                exception = "".join(
+                    traceback.format_exception(
+                        type(exc), exc, exc.__traceback__
+                    )
+                )
+            result = None
+            if not exception:
+                result = json.dumps(self.result())
+            self._run_info = dataclasses.replace(
+                self._run_info,
+                state=self.state_name,
+                result=result,
+                exception=exception,
+                ended_at=datetime.datetime.now(),
+            )
+            # TODO: check if run_no matches
+            self.registry["run_info"] = self._run_info
 
     @property
     def state_name(self) -> str:
