@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 from threading import Thread
 import datetime
 import itertools
@@ -75,12 +76,13 @@ class Machine:
     def _state_changed(self) -> None:
         self.registry["state_name"] = self.state_name
         if self.state_name == "running":
-            self.registry["run_info"] = RunInfo(
+            self._run_info = RunInfo(
                 run_no=self.registry["run_no"],
                 state=self.state_name,
                 script=self.registry["statement"],
                 started_at=datetime.datetime.now(),
             )
+            self.registry["run_info"] = self._run_info
         if self.state_name == "finished":
             exception = None
             if exc := self.exception():
@@ -92,13 +94,15 @@ class Machine:
             result = None
             if not exception:
                 result = json.dumps(self.result())
-            self.registry["run_info"] = RunInfo(
-                run_no=self.registry["run_no"],
+            self._run_info = dataclasses.replace(
+                self._run_info,
                 state=self.state_name,
                 result=result,
                 exception=exception,
                 ended_at=datetime.datetime.now(),
             )
+            # TODO: check if run_no matches
+            self.registry["run_info"] = self._run_info
 
     @property
     def state_name(self) -> str:
