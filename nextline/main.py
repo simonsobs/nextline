@@ -28,8 +28,8 @@ class Nextline:
 
     """
 
-    def __init__(self, statement):
-        self.machine = Machine(statement)
+    def __init__(self, statement, run_no_start_from: int = 1):
+        self.machine = Machine(statement, run_no_start_from)
         self.registry = self.machine.registry
 
     def __repr__(self):
