@@ -18,8 +18,8 @@ class SubscribableDict(MutableMapping):
         """Async generator that yields values for the key as they are set
 
         Yields immediately the current value for the key, wait for new values
-        and yield them as they are set. Wait for the first value for the key,
-        if the key doesn't exist; KeyError won't be raised.
+        and yield them as they are set. Wait for the first value for the key if
+        the key doesn't exist; KeyError won't be raised.
         """
         return self._map[key].subscribe()
 
