@@ -9,7 +9,6 @@ from nextline.utils import UniqThreadTaskIdComposer as IdComposer
 from nextline.utils.types import ThreadTaskId
 
 
-##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def wrap_thread(monkeypatch):
     """Replace threading.Thread with nextline.utils.ExcThread"""
@@ -21,7 +20,6 @@ def wrap_thread(monkeypatch):
     yield
 
 
-##__________________________________________________________________||
 def assert_call(obj: IdComposer, expected: ThreadTaskId):
     assert expected == obj()
     assert expected == obj()
@@ -34,14 +32,12 @@ async def async_assert_call(obj: IdComposer, expected: ThreadTaskId):
     assert expected == obj()
 
 
-##__________________________________________________________________||
 @pytest.fixture()
 def obj():
     y = IdComposer()
     yield y
 
 
-##__________________________________________________________________||
 def test_compose(obj: IdComposer):
     expected = (1, None)
     assert_call(obj, expected)
@@ -62,7 +58,6 @@ def test_threads(obj: IdComposer):
     t.join()
 
 
-##__________________________________________________________________||
 @pytest.mark.asyncio
 async def test_async_coroutine(obj: IdComposer):
     expected = (1, 1)
@@ -120,7 +115,6 @@ async def test_async_asyncio_to_thread(obj: IdComposer):
     await to_thread(partial(assert_call, obj, expected))
 
 
-##__________________________________________________________________||
 async def async_nested(obj: IdComposer, expected_thread_id):
     expected1 = (expected_thread_id, 1)
     assert_call(obj, expected1)
@@ -154,6 +148,3 @@ def test_nested(obj: IdComposer):
     t = threading.Thread(target=nested, args=(obj, expected_thread_id))
     t.start()
     t.join()
-
-
-##__________________________________________________________________||
