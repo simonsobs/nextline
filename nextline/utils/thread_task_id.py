@@ -6,7 +6,7 @@ from weakref import WeakKeyDictionary
 
 from typing import Union, Callable, Tuple, Dict, DefaultDict
 
-from ..types import ThreadID, TaskId, ThreadTaskId
+from ..types import ThreadNo, TaskNo, ThreadTaskId
 
 
 class ThreadTaskIdComposer:
@@ -20,11 +20,11 @@ class ThreadTaskIdComposer:
             Union[Thread, Task], ThreadTaskId
         ] = WeakKeyDictionary()
 
-        self._thread_id_map: Dict[Thread, ThreadID] = WeakKeyDictionary()
-        self._task_id_map: Dict[Task, TaskId] = WeakKeyDictionary()
+        self._thread_id_map: Dict[Thread, ThreadNo] = WeakKeyDictionary()
+        self._task_id_map: Dict[Task, TaskNo] = WeakKeyDictionary()
 
         self._task_id_counter_map: DefaultDict[
-            ThreadID, Callable[[], int]
+            ThreadNo, Callable[[], int]
         ] = defaultdict(lambda: count(1).__next__)
 
     def __call__(self) -> ThreadTaskId:

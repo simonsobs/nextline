@@ -4,9 +4,9 @@ from typing import Callable, Any, Optional, Union, Tuple
 from types import FrameType
 
 
-ThreadID = int
-TaskId = Union[int, None]
-ThreadTaskId = Tuple[ThreadID, TaskId]
+ThreadNo = int
+TaskNo = Union[int, None]
+ThreadTaskId = Tuple[ThreadNo, TaskNo]
 
 
 TraceFunc = Callable[
