@@ -50,6 +50,12 @@ class ThreadTaskIdComposer:
 
         return ret
 
+    def has_id(self) -> bool:
+        """True if the id has been created in the current thread and task"""
+        thread, task = self._current_thread_task()
+        key = task or thread
+        return key in self._map
+
     def _current_thread_task(self) -> Tuple[Thread, Union[Task, None]]:
         try:
             task = current_task()

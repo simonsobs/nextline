@@ -8,16 +8,24 @@ from nextline.utils import ThreadTaskIdComposer as IdComposer
 from nextline.types import ThreadTaskId
 
 
-def assert_call(obj: IdComposer, expected: ThreadTaskId):
+def assert_call(obj: IdComposer, expected: ThreadTaskId, has_id: bool = False):
+    assert obj.has_id() is has_id
+    assert obj.has_id() is has_id
     assert expected == obj()
     assert expected == obj()
+    assert obj.has_id()
 
 
-async def async_assert_call(obj: IdComposer, expected: ThreadTaskId):
+async def async_assert_call(
+    obj: IdComposer, expected: ThreadTaskId, has_id: bool = False
+):
+    assert obj.has_id() is has_id
+    assert obj.has_id() is has_id
     await asyncio.sleep(0)
     assert expected == obj()
     await asyncio.sleep(0)
     assert expected == obj()
+    assert obj.has_id()
 
 
 @pytest.fixture()
@@ -52,8 +60,8 @@ async def test_async_coroutine(obj: IdComposer):
     assert_call(obj, expected)
 
     # run in the same task
-    await async_assert_call(obj, expected)
-    await async_assert_call(obj, expected)
+    await async_assert_call(obj, expected, True)
+    await async_assert_call(obj, expected, True)
 
 
 @pytest.mark.asyncio
@@ -100,13 +108,13 @@ async def test_async_asyncio_to_thread(obj: IdComposer):
     await to_thread(partial(assert_call, obj, expected))
 
     expected = ThreadTaskId(2, None)
-    await to_thread(partial(assert_call, obj, expected))
+    await to_thread(partial(assert_call, obj, expected, True))
 
 
 async def async_nested(obj: IdComposer, expected_thread_id):
     expected1 = ThreadTaskId(expected_thread_id, 1)
     assert_call(obj, expected1)
-    await async_assert_call(obj, expected1)
+    await async_assert_call(obj, expected1, True)
 
     expected2 = ThreadTaskId(expected_thread_id, 2)
     t1 = asyncio.create_task(async_assert_call(obj, expected2))
