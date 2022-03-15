@@ -101,7 +101,7 @@ async def test_async_tasks_gather(obj: IdComposer):
 
 
 def test_async_asyncio_run(obj: IdComposer):
-    expected = (1, None)
+    expected: ThreadTaskId = (1, None)
     assert_call(obj, expected)
 
     expected = (1, 1)
@@ -110,7 +110,7 @@ def test_async_asyncio_run(obj: IdComposer):
 
 @pytest.mark.asyncio
 async def test_async_asyncio_to_thread(obj: IdComposer):
-    expected = (1, 1)
+    expected: ThreadTaskId = (1, 1)
     assert_call(obj, expected)
 
     expected = (2, None)
