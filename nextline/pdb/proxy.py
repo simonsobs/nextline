@@ -73,12 +73,12 @@ def PdbInterfaceFactory(
         ids = (registry.get("trace_ids") or ()) + (trace_id,)
         registry["trace_ids"] = ids
 
-        thread_no, task_no = id_composer()
+        thread_task_id = id_composer()
         trace_info = TraceInfo(
             run_no=registry["run_no"],
             trace_no=trace_id,
-            thread_no=thread_no,
-            task_no=task_no,
+            thread_no=thread_task_id.thread_no,
+            task_no=thread_task_id.task_no,
             state="running",
             started_at=datetime.datetime.now(),
         )

@@ -1,12 +1,17 @@
 import dataclasses
 import datetime
-from typing import Callable, Any, Optional, Union, Tuple
+from typing import Callable, Any, Optional, Union
 from types import FrameType
 
 
 ThreadNo = int
 TaskNo = Union[int, None]
-ThreadTaskId = Tuple[ThreadNo, TaskNo]
+
+
+@dataclasses.dataclass(frozen=True)
+class ThreadTaskId:
+    thread_no: ThreadNo
+    task_no: TaskNo
 
 
 TraceFunc = Callable[

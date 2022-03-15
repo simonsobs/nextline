@@ -68,11 +68,11 @@ class ThreadTaskIdComposer:
             self._thread_id_map[thread] = thread_id
 
         if not task:
-            return thread_id, None
+            return ThreadTaskId(thread_no=thread_id, task_no=None)
 
         task_id = self._task_id_map.get(task)
         if not task_id:
             task_id = self._task_id_counter_map[thread_id]()
             self._task_id_map[task] = task_id
 
-        return thread_id, task_id
+        return ThreadTaskId(thread_no=thread_id, task_no=task_id)
