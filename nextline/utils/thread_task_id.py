@@ -10,31 +10,31 @@ from ..types import ThreadNo, TaskNo, ThreadTaskId
 
 
 class ThreadTaskIdComposer:
-    """Compose paris of unique thread Id and async task Id"""
+    """Create ThreadTaskId objects with unique thread and async task numbers"""
 
     def __init__(self):
 
-        self.thread_id_counter = count(1).__next__
+        self.thread_no_counter = count(1).__next__
 
         self._map: Dict[
             Union[Thread, Task], ThreadTaskId
         ] = WeakKeyDictionary()
 
-        self._thread_id_map: Dict[Thread, ThreadNo] = WeakKeyDictionary()
-        self._task_id_map: Dict[Task, TaskNo] = WeakKeyDictionary()
+        self._thread_no_map: Dict[Thread, ThreadNo] = WeakKeyDictionary()
+        self._task_no_map: Dict[Task, TaskNo] = WeakKeyDictionary()
 
-        self._task_id_counter_map: DefaultDict[
+        self._task_no_counter_map: DefaultDict[
             ThreadNo, Callable[[], int]
         ] = defaultdict(lambda: count(1).__next__)
 
     def __call__(self) -> ThreadTaskId:
-        """Return the pair of the current thread ID and async task ID
+        """ThreadTaskId with the current thread and async task numbers
 
         Returns
         -------
-        tuple
-            The pair of the current thread ID and async task ID. If
-            not in an async task, the async task ID will be None.
+        ThreadTaskId
+            With the current thread and async task numbers. If not in an async
+            task, the async task number will be None.
         """
 
         thread, task = self._current_thread_task()
@@ -61,18 +61,18 @@ class ThreadTaskIdComposer:
         self, thread: Thread, task: Union[Task, None]
     ) -> ThreadTaskId:
 
-        thread_id = self._thread_id_map.get(thread)
-        if not thread_id:
-            thread_id = self.thread_id_counter()
-            assert thread_id  # for mypy
-            self._thread_id_map[thread] = thread_id
+        thread_no = self._thread_no_map.get(thread)
+        if not thread_no:
+            thread_no = self.thread_no_counter()
+            assert thread_no  # for mypy
+            self._thread_no_map[thread] = thread_no
 
         if not task:
-            return ThreadTaskId(thread_no=thread_id, task_no=None)
+            return ThreadTaskId(thread_no=thread_no, task_no=None)
 
-        task_id = self._task_id_map.get(task)
-        if not task_id:
-            task_id = self._task_id_counter_map[thread_id]()
-            self._task_id_map[task] = task_id
+        task_no = self._task_no_map.get(task)
+        if not task_no:
+            task_no = self._task_no_counter_map[thread_no]()
+            self._task_no_map[task] = task_no
 
-        return ThreadTaskId(thread_no=thread_id, task_no=task_id)
+        return ThreadTaskId(thread_no=thread_no, task_no=task_no)
