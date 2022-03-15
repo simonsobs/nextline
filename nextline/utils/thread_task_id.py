@@ -9,7 +9,7 @@ from typing import Union, Callable, Tuple, Dict, DefaultDict
 from .types import ThreadID, TaskId, ThreadTaskId
 
 
-class UniqThreadTaskIdComposer:
+class ThreadTaskIdComposer:
     """Compose paris of unique thread Id and async task Id"""
 
     def __init__(self):

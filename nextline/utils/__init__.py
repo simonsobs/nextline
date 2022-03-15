@@ -1,5 +1,5 @@
 from .queuedist import QueueDist  # noqa: F401
-from .thread_task_id import UniqThreadTaskIdComposer  # noqa: F401
+from .thread_task_id import ThreadTaskIdComposer  # noqa: F401
 from .thread_safe_event import ThreadSafeAsyncioEvent  # noqa: F401
 from .loop import ToLoop  # noqa: F401
 from .subscribabledict import SubscribableDict  # noqa: F401
