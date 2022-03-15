@@ -64,6 +64,7 @@ class UniqThreadTaskIdComposer:
         thread_id = self._thread_id_map.get(thread)
         if not thread_id:
             thread_id = self.thread_id_counter()
+            assert thread_id  # for mypy
             self._thread_id_map[thread] = thread_id
 
         if not task:
