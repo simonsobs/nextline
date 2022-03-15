@@ -6,7 +6,7 @@ from weakref import WeakKeyDictionary
 
 from typing import Union, Callable, Tuple, Dict, DefaultDict
 
-from .types import ThreadID, TaskId, ThreadTaskId
+from ..types import ThreadID, TaskId, ThreadTaskId
 
 
 class ThreadTaskIdComposer:

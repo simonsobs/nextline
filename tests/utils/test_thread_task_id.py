@@ -6,7 +6,7 @@ import pytest
 
 from nextline.utils import to_thread
 from nextline.utils import ThreadTaskIdComposer as IdComposer
-from nextline.utils.types import ThreadTaskId
+from nextline.types import ThreadTaskId
 
 
 @pytest.fixture(autouse=True)
