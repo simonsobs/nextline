@@ -44,18 +44,18 @@ def PdbInterfaceFactory(
 ) -> Callable[[], PdbInterface]:
 
     id_composer = ThreadTaskIdComposer()
-    trace_id_counter = count(1).__next__
+    trace_no_counter = count(1).__next__
     prompting_counter = count(1).__next__
     callback_map: Dict[Any, TraceInfo] = {}
 
     def callback_func(key):
         trace_info = callback_map[key]
-        trace_id = trace_info.trace_no
-        del registry[trace_id]
-        ids = list(registry.get("trace_ids"))
-        ids.remove(trace_id)
-        ids = tuple(ids)
-        registry["trace_ids"] = ids
+        trace_no = trace_info.trace_no
+        del registry[trace_no]
+        nos = list(registry.get("trace_ids"))
+        nos.remove(trace_no)
+        nos = tuple(nos)
+        registry["trace_ids"] = nos
 
         trace_info = dataclasses.replace(
             trace_info,
@@ -67,16 +67,16 @@ def PdbInterfaceFactory(
     callback = ThreadTaskDoneCallback(done=callback_func)
 
     def factory() -> PdbInterface:
-        trace_id = trace_id_counter()
+        trace_no = trace_no_counter()
 
-        registry[trace_id] = None
-        ids = (registry.get("trace_ids") or ()) + (trace_id,)
-        registry["trace_ids"] = ids
+        registry[trace_no] = None
+        nos = (registry.get("trace_ids") or ()) + (trace_no,)
+        registry["trace_ids"] = nos
 
         thread_task_id = id_composer()
         trace_info = TraceInfo(
             run_no=registry["run_no"],
-            trace_no=trace_id,
+            trace_no=trace_no,
             thread_no=thread_task_id.thread_no,
             task_no=thread_task_id.task_no,
             state="running",
@@ -88,7 +88,7 @@ def PdbInterfaceFactory(
         callback_map[key] = trace_info
 
         pbi = PdbInterface(
-            trace_id=trace_id,
+            trace_id=trace_no,
             registry=registry,
             ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
