@@ -7,6 +7,7 @@ import datetime
 import itertools
 import traceback
 import json
+from weakref import WeakKeyDictionary
 from typing import TYPE_CHECKING, Dict, Optional, Any
 
 from .trace import Trace
@@ -69,6 +70,9 @@ class Machine:
         self.registry["run_no_count"] = run_no_count
 
         self.registry["trace_id_factory"] = ThreadTaskIdComposer()
+
+        self.registry["run_no_map"] = WeakKeyDictionary()
+        self.registry["trace_no_map"] = WeakKeyDictionary()
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()

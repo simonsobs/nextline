@@ -44,6 +44,7 @@ async def test_states():
     async def initialized(nextline: Nextline):
         async for s in nextline.subscribe_state():
             if s == "initialized":
+                await asyncio.sleep(0)
                 break
 
     async def subscribe_state(nextline: Nextline):

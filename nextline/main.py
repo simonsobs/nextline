@@ -1,14 +1,28 @@
 from __future__ import annotations
 
+import sys
+import io
+import datetime
 import linecache
 
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncGenerator,
+    Optional,
+    Tuple,
+    TextIO,
+)
+
 
 from .state import Machine
+from .utils import QueueDist, current_task_or_thread
+from .types import StdoutInfo
 
 if TYPE_CHECKING:
     from .pdb.proxy import PdbCIState
     from .types import RunInfo, TraceInfo, PromptInfo
+    from .utils import SubscribableDict
 
 
 class Nextline:
@@ -31,6 +45,7 @@ class Nextline:
     def __init__(self, statement, run_no_start_from: int = 1):
         self.machine = Machine(statement, run_no_start_from)
         self.registry = self.machine.registry
+        self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -127,3 +142,69 @@ class Nextline:
 
     def subscribe(self, key) -> AsyncGenerator[Any, None]:
         return self.registry.subscribe(key)
+
+    def subscribe_stdout(self) -> AsyncGenerator[StdoutInfo, None]:
+        return self._stdout.subscribe()
+
+
+AGenDatetimeStr = AsyncGenerator[Tuple[datetime.datetime, str], None]
+
+
+class IOSubscription(io.TextIOWrapper):
+    def __init__(self, src: TextIO, registry: SubscribableDict):
+        """Make output stream subscribable
+
+        The src needs to be replaced with the instance of this class. For
+        example, if the src is stdout,
+            sys.stdout = IOSubscription(sys.stdout)
+
+        NOTE: The code on the logic about the buffer copied from
+        https://github.com/alphatwirl/atpbar/blob/894a7e0b4d81aa7b/atpbar/stream.py#L54
+        """
+        self.registry = registry
+        self._queue = QueueDist()
+        self._src = src
+        self._buffer = ""
+
+        self._id_composer = registry["trace_id_factory"]  # type: ignore
+        self._run_no_map = registry["run_no_map"]  # type: ignore
+        self._trace_no_map = registry["trace_no_map"]  # type: ignore
+
+    def write(self, s: str) -> int:
+
+        ret = self._src.write(s)
+        # TypeError if s isn't str as long as self._src is sys.stdout or
+        # sys.stderr.
+
+        if not self._id_composer.has_id():
+            return ret
+
+        self._buffer += s
+        if s.endswith("\n"):
+            self.flush()
+        return ret
+
+    def flush(self):
+        if not self._buffer:
+            return
+        if not self._id_composer.has_id():
+            return
+        key = current_task_or_thread()
+        if not (run_no := self._run_no_map.get(key)):
+            return
+        if not (trace_no := self._trace_no_map.get(key)):
+            return
+        now = datetime.datetime.now()
+        info = StdoutInfo(
+            run_no=run_no,
+            trace_no=trace_no,
+            text=self._buffer,
+            written_at=now,
+        )
+        # print(info, file=sys.stderr)
+        self._queue.put(info)
+        self._buffer = ""
+
+    async def subscribe(self):
+        async for y in self._queue.subscribe():  # type: ignore
+            yield y
