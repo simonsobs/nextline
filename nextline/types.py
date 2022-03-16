@@ -56,3 +56,11 @@ class PromptInfo:
     command: Optional[str] = None
     started_at: Optional[datetime.datetime] = None
     ended_at: Optional[datetime.datetime] = None
+
+
+@dataclasses.dataclass(frozen=True)
+class StdoutInfo:
+    run_no: int
+    trace_no: int
+    text: Optional[str] = None
+    written_at: Optional[datetime.datetime] = None
