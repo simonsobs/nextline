@@ -83,7 +83,7 @@ class Nextline:
         return self.subscribe("run_no")
 
     def subscribe_trace_ids(self) -> AsyncGenerator[Tuple[int], None]:
-        return self.subscribe("trace_ids")
+        return self.subscribe("trace_nos")
 
     async def subscribe_prompting(
         self,

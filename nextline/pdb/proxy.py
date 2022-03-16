@@ -52,10 +52,10 @@ def PdbInterfaceFactory(
         trace_info = callback_map[key]
         trace_no = trace_info.trace_no
         del registry[trace_no]
-        nos = list(registry.get("trace_ids"))
+        nos = list(registry.get("trace_nos"))
         nos.remove(trace_no)
         nos = tuple(nos)
-        registry["trace_ids"] = nos
+        registry["trace_nos"] = nos
 
         trace_info = dataclasses.replace(
             trace_info,
@@ -70,8 +70,8 @@ def PdbInterfaceFactory(
         trace_no = trace_no_counter()
 
         registry[trace_no] = None
-        nos = (registry.get("trace_ids") or ()) + (trace_no,)
-        registry["trace_ids"] = nos
+        nos = (registry.get("trace_nos") or ()) + (trace_no,)
+        registry["trace_nos"] = nos
 
         thread_task_id = id_composer()
         trace_info = TraceInfo(
