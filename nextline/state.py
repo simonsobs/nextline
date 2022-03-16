@@ -59,9 +59,9 @@ class Machine:
 
         self.registry["statement"] = statement
         self.registry["script_file_name"] = SCRIPT_FILE_NAME
-        self.registry["run_no_count"] = itertools.count(
-            run_no_start_from
-        ).__next__
+
+        run_no_count = itertools.count(run_no_start_from).__next__
+        self.registry["run_no_count"] = run_no_count
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
