@@ -44,6 +44,7 @@ class Nextline:
     def __init__(self, statement, run_no_start_from: int = 1):
         self.machine = Machine(statement, run_no_start_from)
         self.registry = self.machine.registry
+        self._stdout = sys.stdout = IOSubscription(sys.stdout)
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -142,7 +143,7 @@ class Nextline:
         return self.registry.subscribe(key)
 
     def subscribe_stdout(self):
-        return subscribe_stdout()
+        return self._stdout.subscribe()
 
 
 AGenDatetimeStr = AsyncGenerator[Tuple[datetime.datetime, str], None]
@@ -184,19 +185,3 @@ class IOSubscription(io.TextIOWrapper):
     async def subscribe(self) -> AGenDatetimeStr:
         async for y in self._queue.subscribe():
             yield y
-
-
-def create_subscribe_stdout() -> Callable[[], AGenDatetimeStr]:
-    stream: Union[IOSubscription, None] = None
-
-    async def subscribe_stdout() -> AGenDatetimeStr:
-        nonlocal stream
-        if not stream:
-            stream = sys.stdout = IOSubscription(sys.stdout)
-        async for y in stream.subscribe():
-            yield y
-
-    return subscribe_stdout
-
-
-subscribe_stdout = create_subscribe_stdout()
