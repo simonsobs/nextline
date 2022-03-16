@@ -56,6 +56,17 @@ class ThreadTaskIdComposer:
         key = task or thread
         return key in self._map
 
+    def reset(self) -> None:
+        """Start over the thread and async task numbers from one
+
+        This method only resets the counters that generate thread and async
+        task numbers. If the __call__() is executed in a thread and async task
+        for which the ID has been generated before the reset, it will still
+        return the same ID created before the reset.
+        """
+        self.thread_no_counter = count(1).__next__
+        self._task_no_counter_map.clear()
+
     def _current_thread_task(self) -> Tuple[Thread, Union[Task, None]]:
         try:
             task = current_task()
