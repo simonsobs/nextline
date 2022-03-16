@@ -10,7 +10,12 @@ import json
 from typing import TYPE_CHECKING, Dict, Optional, Any
 
 from .trace import Trace
-from .utils import SubscribableDict, ThreadSafeAsyncioEvent, to_thread
+from .utils import (
+    SubscribableDict,
+    ThreadSafeAsyncioEvent,
+    ThreadTaskIdComposer,
+    to_thread,
+)
 from .call import call_with_trace
 from .types import RunInfo
 from . import script
@@ -62,6 +67,8 @@ class Machine:
 
         run_no_count = itertools.count(run_no_start_from).__next__
         self.registry["run_no_count"] = run_no_count
+
+        self.registry["trace_id_factory"] = ThreadTaskIdComposer()
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
@@ -244,6 +251,7 @@ class Initialized(State):
         self.registry = registry
         run_no = self.registry.get("run_no_count")()  # type: ignore
         self.registry["run_no"] = run_no
+        self.registry["trace_id_factory"].reset()  # type: ignore
 
     def run(self):
         self.assert_not_obsolete()

@@ -5,7 +5,7 @@ import datetime
 import queue
 from itertools import count
 
-from ..utils import ThreadTaskIdComposer, ThreadTaskDoneCallback
+from ..utils import ThreadTaskDoneCallback
 from ..types import TraceInfo
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
@@ -26,7 +26,7 @@ from types import FrameType
 
 if TYPE_CHECKING:
     from ..types import TraceFunc
-    from ..utils import SubscribableDict
+    from ..utils import SubscribableDict, ThreadTaskIdComposer
 
 
 @dataclasses.dataclass(frozen=True)
@@ -43,7 +43,7 @@ def PdbInterfaceFactory(
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
-    id_composer = ThreadTaskIdComposer()
+    id_composer: ThreadTaskIdComposer = registry["trace_id_factory"]
     trace_no_counter = count(1).__next__
     prompting_counter = count(1).__next__
     callback_map: Dict[Any, TraceInfo] = {}

@@ -4,7 +4,7 @@ import itertools
 import pytest
 
 from nextline.state import Initialized, StateObsoleteError, StateMethodError
-from nextline.utils import SubscribableDict
+from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 
 SOURCE_ONE = """
 import time
@@ -27,6 +27,7 @@ class BaseTestState(ABC):
         y = SubscribableDict()
         y["statement"] = statement
         y["run_no_count"] = itertools.count().__next__
+        y["trace_id_factory"] = ThreadTaskIdComposer()
         yield y
         y.close()
 

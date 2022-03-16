@@ -9,7 +9,7 @@ from nextline.state import (
     Finished,
     Closed,
 )
-from nextline.utils import SubscribableDict
+from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 
 SOURCE = """
 import time
@@ -21,6 +21,7 @@ time.sleep(0.001)
 def registry():
     y = SubscribableDict()
     y["run_no_count"] = itertools.count().__next__
+    y["trace_id_factory"] = ThreadTaskIdComposer()
     yield y
     y.close()
 
