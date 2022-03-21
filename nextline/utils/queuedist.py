@@ -4,10 +4,10 @@ import janus
 
 from typing import AsyncGenerator, Generic, List, Tuple, TypeVar
 
-_ItemType = TypeVar("_ItemType")
+_T = TypeVar("_T")
 
 
-class QueueDist(Generic[_ItemType]):
+class QueueDist(Generic[_T]):
     """Distribute data to subscribers
 
     Data can be sent from any thread. Asynchronous subscriptions don't need to
@@ -30,9 +30,9 @@ class QueueDist(Generic[_ItemType]):
 
         self._qs_out: List[janus.Queue] = []
         self._lock_out = threading.Condition()
-        self._last_enumerated: Tuple[int, _ItemType] = (-1, self.Start)
+        self._last_enumerated: Tuple[int, _T] = (-1, self.Start)
 
-        self._last_item: _ItemType = None
+        self._last_item: _T = None
 
         self._closed: bool = False
         self._lock_close = threading.Condition()
@@ -45,7 +45,7 @@ class QueueDist(Generic[_ItemType]):
         """The number of the subscribers"""
         return len(self._qs_out)
 
-    def put(self, item: _ItemType) -> None:
+    def put(self, item: _T) -> None:
         """Send data to subscribers
 
         This method can be called in any thread.
@@ -53,11 +53,11 @@ class QueueDist(Generic[_ItemType]):
         self._last_item = item
         self._q_in.put(item)
 
-    def get(self) -> _ItemType:
+    def get(self) -> _T:
         """Most recent data that have been put"""
         return self._last_item
 
-    async def subscribe(self) -> AsyncGenerator[_ItemType, None]:
+    async def subscribe(self) -> AsyncGenerator[_T, None]:
         """Yield data as they are put"""
         q: janus.Queue = janus.Queue()
 
