@@ -1,26 +1,30 @@
+import enum
 import threading
-import queue
-import janus
+from queue import Queue
+from janus import Queue as Janus
 
-from typing import AsyncGenerator, Generic, Type, Union, List, Tuple, TypeVar
+from typing import (
+    AsyncGenerator,
+    Generic,
+    Literal,
+    Union,
+    List,
+    Tuple,
+    TypeVar,
+)
 
 
-class _Start:
-    pass
+class _M(enum.Enum):
+    # TODO: Using Enum as sentinel for now as suggested in
+    # https://stackoverflow.com/a/60605919/7309855. It still has a problem. For
+    # example, the type of yielded values in subscribe() is not correctly
+    # inferred as _T.
 
+    START = object()
+    END = object()
 
-class _End:
-    pass
-
-
-# TODO: Correct type hint. The type of yielded values in subscribe() is
-# _QueueItem. It should be _T.
 
 _T = TypeVar("_T")
-_M = TypeVar("_M", Type[_Start], Type[_End])
-
-_QueueItem = Union[_T, _M]
-_Enumerated = Tuple[int, _QueueItem]
 
 
 class QueueDist(Generic[_T]):
@@ -36,11 +40,14 @@ class QueueDist(Generic[_T]):
     """
 
     def __init__(self):
-        self._q_in: queue.Queue[_QueueItem] = queue.Queue()
 
-        self._qs_out: List[janus.Queue[_Enumerated]] = []
+        self._q_in: Queue[Union[_T, Literal[_M.END]]] = Queue()
+
+        self._qs_out: List[Janus[Tuple[int, Union[_T, Literal[_M.END]]]]] = []
         self._lock_out = threading.Condition()
-        self._last_enumerated: _Enumerated = (-1, _Start)
+        self._last_enumerated: Tuple[
+            int, Union[_T, Literal[_M.START], Literal[_M.END]]
+        ] = (-1, _M.START)
 
         self._last_item: _T = None
 
@@ -69,23 +76,23 @@ class QueueDist(Generic[_T]):
 
     async def subscribe(self) -> AsyncGenerator[_T, None]:
         """Yield data as they are put"""
-        q: janus.Queue[_Enumerated] = janus.Queue()
+        q: Janus[Tuple[int, Union[_T, Literal[_M.END]]]] = Janus()
 
         with self._lock_out:
             self._qs_out.append(q)
 
         last_idx, last_item = self._last_enumerated
 
-        if last_item is _End:
+        if last_item is _M.END:
             return
 
         try:
-            if last_item is not _Start:
+            if last_item is not _M.START:
                 yield last_item
 
             while True:
                 idx, item = await q.async_q.get()
-                if item is _End:
+                if item is _M.END:
                     break
                 if last_idx < idx:
                     yield item
@@ -103,7 +110,7 @@ class QueueDist(Generic[_T]):
             if self._closed:
                 return
             self._closed = True
-            self._q_in.put(_End)
+            self._q_in.put(_M.END)
             self._thread.join()
             self._q_in.join()
 
@@ -113,7 +120,7 @@ class QueueDist(Generic[_T]):
         This method runs in a thread.
         """
         idx, item = self._last_enumerated
-        while item is not _End:
+        while item is not _M.END:
             idx += 1
             item = self._q_in.get()
             self._q_in.task_done()
