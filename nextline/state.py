@@ -61,7 +61,7 @@ class Machine:
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
-        self.registry = SubscribableDict()
+        self.registry: SubscribableDict[Any, Any] = SubscribableDict()
 
         self.registry["statement"] = statement
         self.registry["script_file_name"] = SCRIPT_FILE_NAME
