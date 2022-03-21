@@ -9,7 +9,7 @@ from .aiterable import aiterable
 
 @pytest.mark.asyncio
 async def test_one():
-    obj = SubscribableDict()
+    obj: SubscribableDict[str, str] = SubscribableDict()
 
     key = "key_one"
     items = ["item_one", "item_two", "item_three"]

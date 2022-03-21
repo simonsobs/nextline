@@ -2,12 +2,12 @@ import threading
 import queue
 import janus
 
-from typing import AsyncGenerator, List, Tuple, TypeVar
+from typing import AsyncGenerator, Generic, List, Tuple, TypeVar
 
 _ItemType = TypeVar("_ItemType")
 
 
-class QueueDist:
+class QueueDist(Generic[_ItemType]):
     """Distribute data to subscribers
 
     Data can be sent from any thread. Asynchronous subscriptions don't need to

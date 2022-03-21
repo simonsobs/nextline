@@ -1,18 +1,28 @@
 from collections.abc import MutableMapping
 from collections import defaultdict
-from typing import AsyncGenerator, Optional, TypeVar, DefaultDict, Iterator
+from typing import (
+    overload,
+    AsyncGenerator,
+    Generic,
+    Optional,
+    Union,
+    TypeVar,
+    DefaultDict,
+    Iterator,
+)
 
 from .queuedist import QueueDist
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
+_T = TypeVar("_T")
 
 
-class SubscribableDict(MutableMapping):
+class SubscribableDict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     """Dict with async generator that yields values as they change"""
 
     def __init__(self):
-        self._map: DefaultDict[_KT, QueueDist] = defaultdict(QueueDist)
+        self._map: DefaultDict[_KT, QueueDist[_VT]] = defaultdict(QueueDist)
 
     def subscribe(self, key: _KT) -> AsyncGenerator[_VT, None]:
         """Async generator that yields values for the key as they are set
@@ -30,7 +40,15 @@ class SubscribableDict(MutableMapping):
         else:
             raise KeyError
 
-    def get(self, key: _KT, default: Optional[_VT] = None) -> Optional[_VT]:
+    @overload
+    def get(self, key: _KT) -> Optional[_VT]:
+        ...
+
+    @overload
+    def get(self, key: _KT, default: Union[_VT, _T]) -> Union[_VT, _T]:
+        ...
+
+    def get(self, key, default=None):
         """The current value for the key if the key exist, else the default"""
         if q := self._map.get(key):
             return q.get()
@@ -51,7 +69,7 @@ class SubscribableDict(MutableMapping):
         """
         self._map.pop(key).close()
 
-    def close(self):
+    def close(self) -> None:
         """Remove all keys, ending all subscriptions for all keys"""
         while True:
             try:
