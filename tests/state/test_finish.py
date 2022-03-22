@@ -7,6 +7,7 @@ from nextline.state import Initialized, Finished, Closed
 
 if TYPE_CHECKING:
     from nextline.utils import SubscribableDict
+    from nextline.state import State
 
 from .base import BaseTestState
 
@@ -63,10 +64,12 @@ class TestFinished(BaseTestState):
 
     @pytest.mark.parametrize("source, exc", params)
     @pytest.mark.asyncio
-    async def test_exception_raise(self, registry: SubscribableDict, source, exc):
+    async def test_exception_raise(
+        self, registry: SubscribableDict, source, exc
+    ):
         registry["statement"] = source
 
-        state = Initialized(registry=registry)
+        state: State = Initialized(registry=registry)
         state = state.run()
 
         state = await state.exited()
@@ -83,7 +86,7 @@ class TestFinished(BaseTestState):
     async def test_result_raise(self, registry: SubscribableDict, source, exc):
         registry["statement"] = source
 
-        state = Initialized(registry=registry)
+        state: State = Initialized(registry=registry)
         state = state.run()
 
         state = await state.exited()
