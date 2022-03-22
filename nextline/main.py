@@ -42,7 +42,7 @@ class Nextline:
 
     """
 
-    def __init__(self, statement, run_no_start_from: int = 1):
+    def __init__(self, statement: str, run_no_start_from: int = 1):
         self.machine = Machine(statement, run_no_start_from)
         self.registry = self.machine.registry
         self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
@@ -64,7 +64,7 @@ class Nextline:
         """Return value of the last run. always None"""
         return self.machine.result()
 
-    def reset(self, statement=None) -> None:
+    def reset(self, statement: Optional[str] = None) -> None:
         """Prepare for the next run"""
         self.machine.reset(statement=statement)
 
