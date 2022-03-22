@@ -157,10 +157,17 @@ class Machine:
     def result(self) -> Any:
         return self._state.result()
 
-    def reset(self, statement: Optional[str] = None) -> None:
+    def reset(
+        self,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ) -> None:
         """Enter the initialized state"""
         if statement:
             self.registry["statement"] = statement
+        if run_no_start_from is not None:
+            run_no_count = itertools.count(run_no_start_from).__next__
+            self.registry["run_no_count"] = run_no_count
         self._state = self._state.reset()
         self._state_changed()
 
