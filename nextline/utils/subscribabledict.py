@@ -1,4 +1,3 @@
-from collections.abc import MutableMapping
 from collections import defaultdict
 from typing import (
     overload,
@@ -9,6 +8,7 @@ from typing import (
     TypeVar,
     DefaultDict,
     Iterator,
+    MutableMapping,
 )
 
 from .queuedist import QueueDist
