@@ -36,6 +36,7 @@ setup(
             "snapshottest>=0.6",
         ],
         "dev": [
+            "tox",
             "twine",
             "flake8",
             "black",
