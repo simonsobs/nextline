@@ -28,7 +28,7 @@ class TaskDoneCallback:
     def register(self, task: Optional[Task] = None) -> Task:
         """Add the current task by default, or the given task
 
-        The callback function `done`, given at the initializaiton,
+        The callback function `done`, given at the initialization,
         will be called with the task object when the task ends.
         """
         if task is None:
@@ -47,8 +47,8 @@ class TaskDoneCallback:
 
         The method cannot be called from a registered task.
 
-        If exceptions are raised in the callback funciton, this method
-        reraises the first exception.
+        If exceptions are raised in the callback function, this method
+        re-raises the first exception.
 
         """
         try:
@@ -75,7 +75,7 @@ class TaskDoneCallback:
         self.reraise()
 
     def reraise(self) -> None:
-        """Reraise the first excpeption occured in the callback function"""
+        """Reraise the first exception occurred in the callback function"""
         if self._exceptions:
             raise self._exceptions[0]
 
@@ -87,13 +87,13 @@ class TaskDoneCallback:
         """This method is given to asyncio.Task.add_done_callback()
 
         When called, this method, in turn, calls the callback function
-        `done`, given at the initializaiton.
+        `done`, given at the initialization.
 
         Note: This method will be called by asyncio.Handle with the
         task object as the only argument. However, the method is
-        accepting additonal arbitrary arguments because an exception
+        accepting additional arbitrary arguments because an exception
         caused by an argument mismatch will be difficult to find; it
-        will be catched by the asyncio.Handle and given to the
+        will be caught by the asyncio.Handle and given to the
         exception handler of the event loop.
         """
 
