@@ -1,7 +1,7 @@
 import time
 from asyncio import Task, current_task
 
-from typing import Optional, Callable, Type, Set, List
+from typing import Optional, Callable, Set, List
 
 from ..func import to_thread
 
@@ -23,7 +23,7 @@ class TaskDoneCallback:
     ):
         self._done = done
         self._active: Set[Task] = set()
-        self._exceptions: List[Type[Exception]] = []
+        self._exceptions: List[BaseException] = []
 
     def register(self, task: Optional[Task] = None) -> Task:
         """Add the current task by default, or the given task
