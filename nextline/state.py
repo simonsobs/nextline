@@ -387,6 +387,14 @@ class Exited(State):
     async def finish(self):
         self.assert_not_obsolete()
         await to_thread(self._thread.join)
+
+        # TODO: close the callback somewhere else
+        if callback := self.registry.get("callback"):
+            try:
+                callback.close()
+            except BaseException:
+                pass
+
         finished = Finished(
             self.registry, result=self._result, exception=self._exception
         )
