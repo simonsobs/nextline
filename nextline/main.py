@@ -4,6 +4,7 @@ import sys
 import io
 import datetime
 import linecache
+from logging import getLogger
 
 from typing import (
     TYPE_CHECKING,
@@ -43,6 +44,11 @@ class Nextline:
     """
 
     def __init__(self, statement: str, run_no_start_from: int = 1):
+
+        logger = getLogger(__name__)
+        logger.debug(f"statement starts with {statement[:25]!r}")
+        logger.debug(f"The next run number will be {run_no_start_from}")
+
         self.machine = Machine(statement, run_no_start_from)
         self.registry = self.machine.registry
         self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
