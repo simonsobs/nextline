@@ -7,6 +7,7 @@ from typing import (
     AsyncGenerator,
     Generic,
     Literal,
+    Optional,
     Union,
     List,
     Tuple,
@@ -74,8 +75,15 @@ class QueueDist(Generic[_T]):
         """Most recent data that have been put"""
         return self._last_item
 
-    async def subscribe(self) -> AsyncGenerator[_T, None]:
-        """Yield data as they are put"""
+    async def subscribe(
+        self,
+        last: Optional[bool] = True,
+    ) -> AsyncGenerator[_T, None]:
+        """Yield data as they are put
+
+        If `last` is true, yield immediately the most recent data before
+        waiting for new data.
+        """
         q: Janus[Tuple[int, Union[_T, Literal[_M.END]]]] = Janus()
 
         with self._lock_out:
@@ -87,7 +95,7 @@ class QueueDist(Generic[_T]):
             return
 
         try:
-            if last_item is not _M.START:
+            if last and last_item is not _M.START:
                 yield last_item
 
             while True:

@@ -1,6 +1,5 @@
 import asyncio
-import time
-from typing import Iterable
+from typing import Iterable, Optional
 
 import pytest
 
@@ -36,8 +35,8 @@ async def async_send(obj: QueueDist, items: Iterable):
         assert i == obj.get()
 
 
-async def async_receive(obj: QueueDist):
-    return [i async for i in obj.subscribe()]
+async def async_receive(obj: QueueDist, last: Optional[bool] = True):
+    return [i async for i in obj.subscribe(last=last)]
 
 
 @pytest.mark.asyncio
@@ -57,7 +56,8 @@ async def test_subscribe(obj: QueueDist):
 
 
 @pytest.mark.asyncio
-async def test_receive_the_most_recent_item(obj: QueueDist):
+@pytest.mark.parametrize("last", [True, False])
+async def test_receive_the_most_recent_item(obj: QueueDist, last: bool):
 
     task_receive_1 = asyncio.create_task(async_receive(obj))
     await asyncio.sleep(0)  # let task_receive_1 start
@@ -67,9 +67,9 @@ async def test_receive_the_most_recent_item(obj: QueueDist):
         obj.put(i)
         assert i == obj.get()
 
-    time.sleep(0.01)
+    await asyncio.sleep(0.01)
 
-    task_receive_2 = asyncio.create_task(async_receive(obj))
+    task_receive_2 = asyncio.create_task(async_receive(obj, last))
 
     items = list(range(10))
     task_send = asyncio.create_task(async_send(obj, items))
@@ -79,7 +79,8 @@ async def test_receive_the_most_recent_item(obj: QueueDist):
     assert [*pre_items, *items] == await task_receive_1
 
     # receive 'C', which was put before task_receive_2 started
-    assert [pre_items[-1], *items] == await task_receive_2
+    expected = [pre_items[-1], *items] if last else items
+    assert expected == await task_receive_2
 
 
 @pytest.mark.asyncio
