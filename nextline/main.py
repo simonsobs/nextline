@@ -219,5 +219,5 @@ class IOSubscription(io.TextIOWrapper):
         self._buffer = ""
 
     async def subscribe(self):
-        async for y in self._queue.subscribe():  # type: ignore
+        async for y in self._queue.subscribe(last=False):  # type: ignore
             yield y
