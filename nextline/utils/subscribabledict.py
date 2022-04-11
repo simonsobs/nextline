@@ -24,14 +24,20 @@ class SubscribableDict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self):
         self._map: DefaultDict[_KT, QueueDist[_VT]] = defaultdict(QueueDist)
 
-    def subscribe(self, key: _KT) -> AsyncGenerator[_VT, None]:
+    def subscribe(
+        self,
+        key: _KT,
+        last: Optional[bool] = True,
+    ) -> AsyncGenerator[_VT, None]:
         """Async generator that yields values for the key as they are set
 
-        Yields immediately the current value for the key, wait for new values
-        and yield them as they are set. Wait for the first value for the key if
-        the key doesn't exist; KeyError won't be raised.
+        Waits for new values and yields them as they are set. If `last` is
+        true, yields immediately the current value for the key before starting
+        to wait. If the key doesn't exist, waits for the first value for the
+        key; KeyError won't be raised.
+
         """
-        return self._map[key].subscribe()
+        return self._map[key].subscribe(last=last)
 
     def __getitem__(self, key: _KT) -> _VT:
         """The current value for the key. KeyError if the key doesn't exist."""

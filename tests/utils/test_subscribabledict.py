@@ -14,8 +14,8 @@ async def test_one():
     key = "key_one"
     items = ["item_one", "item_two", "item_three"]
 
-    async def subscribe():
-        return [y async for y in obj.subscribe(key)]
+    async def subscribe(last=True):
+        return [y async for y in obj.subscribe(key, last=last)]
 
     async def send():
         async for i in aiterable(items):
@@ -27,7 +27,8 @@ async def test_one():
         assert 0 == len(obj)
         assert [] == list(obj)
 
-    results = await asyncio.gather(subscribe(), subscribe(), send())
+    results = await asyncio.gather(subscribe(), subscribe(False), send())
+    # NOTE: the effect of the option `last` is not tested
     assert items == results[0]
     assert items == results[1]
 
