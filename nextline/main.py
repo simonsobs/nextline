@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from .utils import SubscribableDict
 
 
-
 class Nextline:
     """Nextline allows line-by-line execution of concurrent Python scripts
 
@@ -228,6 +227,5 @@ class IOSubscription(io.TextIOWrapper):
     def close(self):
         self._queue.close()
 
-    async def subscribe(self):
-        async for y in self._queue.subscribe(last=False):  # type: ignore
-            yield y
+    def subscribe(self):
+        return self._queue.subscribe(last=False)
