@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from nextline.main import IOSubscription
+from nextline.io import IOSubscription
 from nextline.utils import (
     SubscribableDict,
     ThreadTaskIdComposer,
