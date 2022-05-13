@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import asyncio
 import dataclasses
 from threading import Thread
@@ -11,6 +12,7 @@ from weakref import WeakKeyDictionary
 from typing import TYPE_CHECKING, Dict, Optional, Any
 
 from .trace import Trace
+from .io import IOSubscription
 from .utils import (
     SubscribableDict,
     ThreadSafeAsyncioEvent,
@@ -79,6 +81,7 @@ class Machine:
 
         self._state: State = Initialized(self.registry)
         self._state_changed()
+        self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -177,6 +180,10 @@ class Machine:
             self._state = self._state.close()
             self._state_changed()
             await to_thread(self.registry.close)
+        self._stdout.close()
+
+    def subscribe_stdout(self):
+        return self._stdout.subscribe()
 
 
 class StateObsoleteError(Exception):

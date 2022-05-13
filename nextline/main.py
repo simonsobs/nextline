@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import linecache
 from logging import getLogger
 
@@ -8,7 +7,6 @@ from typing import TYPE_CHECKING, Any, AsyncIterator, Optional, Tuple
 
 
 from .state import Machine
-from .io import IOSubscription
 from .types import StdoutInfo
 
 if TYPE_CHECKING:
@@ -41,7 +39,6 @@ class Nextline:
 
         self.machine = Machine(statement, run_no_start_from)
         self.registry = self.machine.registry
-        self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -147,4 +144,4 @@ class Nextline:
         return self.registry.subscribe(key)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
-        return self._stdout.subscribe()
+        return self.machine.subscribe_stdout()
