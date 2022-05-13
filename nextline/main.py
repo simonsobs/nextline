@@ -164,9 +164,6 @@ class Nextline:
         return self._stdout.subscribe()
 
 
-AGenDatetimeStr = AsyncIterator[Tuple[datetime.datetime, str]]
-
-
 class IOSubscription(io.TextIOWrapper):
     def __init__(self, src: TextIO, registry: SubscribableDict):
         """Make output stream subscribable
