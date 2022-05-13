@@ -4,7 +4,7 @@ from queue import Queue
 from janus import Queue as Janus
 
 from typing import (
-    AsyncGenerator,
+    AsyncIterator,
     Generic,
     Literal,
     Optional,
@@ -78,7 +78,7 @@ class QueueDist(Generic[_T]):
     async def subscribe(
         self,
         last: Optional[bool] = True,
-    ) -> AsyncGenerator[_T, None]:
+    ) -> AsyncIterator[_T]:
         """Yield data as they are put
 
         If `last` is true, yield immediately the most recent data before

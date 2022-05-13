@@ -10,7 +10,7 @@ from logging import getLogger
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncGenerator,
+    AsyncIterator,
     DefaultDict,
     Optional,
     Tuple,
@@ -103,7 +103,7 @@ class Nextline:
         """
         return self.machine.state_name
 
-    def subscribe_state(self) -> AsyncGenerator[str, None]:
+    def subscribe_state(self) -> AsyncIterator[str]:
         return self.subscribe("state_name")
 
     @property
@@ -111,16 +111,16 @@ class Nextline:
         """The current run number"""
         return self.get("run_no")
 
-    def subscribe_run_no(self) -> AsyncGenerator[int, None]:
+    def subscribe_run_no(self) -> AsyncIterator[int]:
         return self.subscribe("run_no")
 
-    def subscribe_trace_ids(self) -> AsyncGenerator[Tuple[int], None]:
+    def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int]]:
         return self.subscribe("trace_nos")
 
     async def subscribe_prompting(
         self,
         trace_id: int,
-    ) -> AsyncGenerator[PdbCIState, None]:
+    ) -> AsyncIterator[PdbCIState]:
         agen = self.subscribe(trace_id)
         async for y in agen:
             if y is None:
@@ -145,26 +145,26 @@ class Nextline:
             return lines[line_no - 1]
         return ""
 
-    def subscribe_run_info(self) -> AsyncGenerator[RunInfo, None]:
+    def subscribe_run_info(self) -> AsyncIterator[RunInfo]:
         return self.subscribe("run_info")
 
-    def subscribe_trace_info(self) -> AsyncGenerator[TraceInfo, None]:
+    def subscribe_trace_info(self) -> AsyncIterator[TraceInfo]:
         return self.subscribe("trace_info")
 
-    def subscribe_prompt_info(self) -> AsyncGenerator[PromptInfo, None]:
+    def subscribe_prompt_info(self) -> AsyncIterator[PromptInfo]:
         return self.subscribe("prompt_info")
 
     def get(self, key) -> Any:
         return self.registry.get(key)
 
-    def subscribe(self, key) -> AsyncGenerator[Any, None]:
+    def subscribe(self, key) -> AsyncIterator[Any]:
         return self.registry.subscribe(key)
 
-    def subscribe_stdout(self) -> AsyncGenerator[StdoutInfo, None]:
+    def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
         return self._stdout.subscribe()
 
 
-AGenDatetimeStr = AsyncGenerator[Tuple[datetime.datetime, str], None]
+AGenDatetimeStr = AsyncIterator[Tuple[datetime.datetime, str]]
 
 
 class IOSubscription(io.TextIOWrapper):
