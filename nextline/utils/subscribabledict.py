@@ -1,10 +1,9 @@
+from __future__ import annotations
 from collections import defaultdict
 from typing import (
     overload,
-    AsyncGenerator,
     Generic,
     Optional,
-    Union,
     TypeVar,
     DefaultDict,
     Iterator,
@@ -24,11 +23,7 @@ class SubscribableDict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self):
         self._map: DefaultDict[_KT, QueueDist[_VT]] = defaultdict(QueueDist)
 
-    def subscribe(
-        self,
-        key: _KT,
-        last: Optional[bool] = True,
-    ) -> AsyncGenerator[_VT, None]:
+    def subscribe(self, key: _KT, last: Optional[bool] = True):
         """Async generator that yields values for the key as they are set
 
         Waits for new values and yields them as they are set. If `last` is
@@ -51,7 +46,7 @@ class SubscribableDict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         ...
 
     @overload
-    def get(self, key: _KT, default: Union[_VT, _T]) -> Union[_VT, _T]:
+    def get(self, key: _KT, default: _VT | _T) -> _VT | _T:
         ...
 
     def get(self, key, default=None):
