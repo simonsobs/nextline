@@ -28,7 +28,7 @@ class IOSubscription(io.TextIOWrapper):
         https://github.com/alphatwirl/atpbar/blob/894a7e0b4d81aa7b/atpbar/stream.py#L54
         """
         self.registry = registry
-        self._queue = QueueDist[str]()
+        self._queue = QueueDist[StdoutInfo]()
         self._src = src
         self._buffer: DefaultDict[Task | Thread, str] = defaultdict(str)
 
