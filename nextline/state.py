@@ -326,10 +326,17 @@ class Running(State):
             func = script.compose(code)
             result = None
             exception = None
-            try:
-                result = call_with_trace(func, trace)
-            except BaseException as e:
-                exception = e
+
+            def call():
+                nonlocal result, exception
+                try:
+                    result = call_with_trace(func, trace)
+                except BaseException as e:
+                    exception = e
+
+            t = Thread(target=call, daemon=True)
+            t.start()
+            t.join()
             self._done(result, exception)
 
         self._thread = Thread(target=run, daemon=True)
