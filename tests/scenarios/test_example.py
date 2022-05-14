@@ -8,28 +8,16 @@ from nextline import Nextline
 from nextline.utils import agen_with_wait
 
 
-this_dir = Path(__file__).resolve().parent
-
-
-@pytest.fixture(autouse=True)
-def monkey_patch_syspath(monkeypatch):
-    monkeypatch.syspath_prepend(str(this_dir))
-    yield
-
-
-statement = this_dir.joinpath("script.py").read_text()
-
-
 @pytest.mark.asyncio
-async def test_run():
-    nextline = Nextline(statement)
+async def test_run(nextline: Nextline):
     assert nextline.state == "initialized"
-    task_subscribe_state = asyncio.create_task(subscribe_state(nextline))
-    task_control_execution = asyncio.create_task(control_execution(nextline))
-    task_run = asyncio.create_task(run(nextline))
+
     await asyncio.gather(
-        task_run, task_subscribe_state, task_control_execution
+        subscribe_state(nextline),
+        control_execution(nextline),
+        run(nextline),
     )
+
     assert nextline.state == "closed"
 
 
@@ -110,3 +98,25 @@ def extract_comment(line: str) -> Optional[str]:
     if comments:
         return comments[0]
     return None
+
+
+@pytest.fixture
+def nextline(statement):
+    return Nextline(statement)
+
+
+@pytest.fixture
+def statement(script_dir, monkey_patch_syspath):
+    del monkey_patch_syspath
+    return Path(script_dir).joinpath("script.py").read_text()
+
+
+@pytest.fixture
+def monkey_patch_syspath(monkeypatch, script_dir):
+    monkeypatch.syspath_prepend(script_dir)
+    yield
+
+
+@pytest.fixture
+def script_dir():
+    return str(Path(__file__).resolve().parent)
