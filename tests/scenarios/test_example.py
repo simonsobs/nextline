@@ -13,7 +13,7 @@ async def test_run(nextline: Nextline):
     assert nextline.state == "initialized"
 
     await asyncio.gather(
-        subscribe_state(nextline),
+        assert_subscriptions(nextline),
         control_execution(nextline),
         run(nextline),
     )
@@ -21,8 +21,16 @@ async def test_run(nextline: Nextline):
     assert nextline.state == "closed"
 
 
-async def subscribe_state(nextline: Nextline):
-    return [s async for s in nextline.subscribe_state()]
+async def assert_subscriptions(nextline: Nextline):
+    await asyncio.gather(
+        assert_subscribe_state(nextline),
+    )
+
+
+async def assert_subscribe_state(nextline: Nextline):
+    expected = ["initialized", "running", "exited", "finished", "closed"]
+    actual = [s async for s in nextline.subscribe_state()]
+    assert actual == expected
 
 
 async def run(nextline: Nextline):
