@@ -48,7 +48,7 @@ async def agen_with_wait(
     """
     done: Set[Task] = set()
     pending: Set[Task] = set()
-    anext = asyncio.create_task(agen.__anext__())
+    anext = asyncio.ensure_future(agen.__anext__())
     while True:
         done_, pending_ = await asyncio.wait(
             pending | {anext},
@@ -74,4 +74,4 @@ async def agen_with_wait(
             pending |= set(new)
             yield tuple(done), tuple(pending)
             done.clear()
-        anext = asyncio.create_task(agen.__anext__())
+        anext = asyncio.ensure_future(agen.__anext__())
