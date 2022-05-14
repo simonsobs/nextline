@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 import asyncio
+from operator import attrgetter
+from itertools import groupby
+from collections import Counter
 from pathlib import Path
 from typing import Optional, Set
 
 import pytest
+
+from typing import Dict, Any
 
 from nextline import Nextline
 from nextline.utils import agen_with_wait
@@ -24,12 +31,118 @@ async def test_run(nextline: Nextline):
 async def assert_subscriptions(nextline: Nextline):
     await asyncio.gather(
         assert_subscribe_state(nextline),
+        assert_subscribe_run_no(nextline),
+        assert_subscribe_run_info(nextline),
+        assert_subscribe_trace_info(nextline),
+        assert_subscribe_prompt_info(nextline),
     )
 
 
 async def assert_subscribe_state(nextline: Nextline):
     expected = ["initialized", "running", "exited", "finished", "closed"]
     actual = [s async for s in nextline.subscribe_state()]
+    assert actual == expected
+
+
+async def assert_subscribe_run_no(nextline: Nextline):
+    expected = [1]
+    actual = [s async for s in nextline.subscribe_run_no()]
+    assert actual == expected
+
+
+async def assert_subscribe_run_info(nextline: Nextline):
+    run_no = 1
+    results = [s async for s in nextline.subscribe_run_info()]
+    info0, info1 = results
+    assert info0.run_no == info1.run_no == run_no
+    assert info0.state == "running"
+    assert info1.state == "finished"
+    assert info0.script
+    assert info0.script == info1.script
+    assert info0.result is None
+    assert info1.result == "null"
+    assert info0.exception is None
+    assert info1.exception is None
+    assert info0.started_at
+    assert info0.started_at == info1.started_at
+    assert not info0.ended_at
+    assert info1.ended_at
+
+
+async def assert_subscribe_trace_info(nextline: Nextline):
+    run_no = 1
+    results = [s async for s in nextline.subscribe_trace_info()]
+    assert {run_no} == {r.run_no for r in results}
+    assert {"running": 5, "finished": 5} == Counter(r.state for r in results)
+
+    groupby_state_ = groupby(
+        sorted(results, key=attrgetter("state")),
+        attrgetter("state"),
+    )
+    groupby_state = {k: list(v) for k, v in groupby_state_}
+    running = groupby_state["running"]
+    finished = groupby_state["finished"]
+
+    assert {1, 2, 3, 4, 5} == {r.trace_no for r in running}
+    assert {1, 2, 3, 4, 5} == {r.trace_no for r in finished}
+
+    expected = {(1, None), (2, None), (3, None), (1, 1), (1, 2)}
+    assert expected == {(r.thread_no, r.task_no) for r in running}
+    assert expected == {(r.thread_no, r.task_no) for r in finished}
+
+    assert all([r.started_at for r in running])
+    assert not any([r.ended_at for r in running])
+
+    assert all([r.started_at for r in finished])
+    assert all([r.ended_at for r in finished])
+
+
+async def assert_subscribe_prompt_info(nextline: Nextline):
+    run_no = 1
+    results = [s async for s in nextline.subscribe_prompt_info()]
+    assert {run_no} == {r.run_no for r in results}
+
+    assert 116 == len(results)
+
+    expected: Dict[Any, int]
+    actual: Counter[Any]
+
+    expected = {1: 48, 2: 26, 3: 26, 4: 10, 5: 6}
+    actual = Counter(r.trace_no for r in results)
+    assert actual == expected
+
+    assert [r.prompt_no for r in results]
+
+    expected = {True: 58, False: 58}
+    actual = Counter(r.open for r in results)
+    assert actual == expected
+
+    expected = {None: 58, "line": 51, "return": 5, "call": 2}
+    actual = Counter(r.event for r in results)
+    assert actual == expected
+
+    expected = {True: 58, False: 58}
+    actual = Counter(r.file_name is not None for r in results)
+    assert actual == expected
+
+    expected = {True: 58, False: 58}
+    actual = Counter(r.line_no is not None for r in results)
+    assert actual == expected
+
+    expected = {True: 58, False: 58}
+    actual = Counter(r.stdout is not None for r in results)
+    assert actual == expected
+
+    expected = {None: 58, "next": 56, "step": 2}
+    actual = Counter(r.command for r in results)
+    assert actual == expected
+
+    expected = {True: 58, False: 58}
+    actual = Counter(r.started_at is not None for r in results)
+    assert actual == expected
+
+    expected = {True: 58, False: 58}
+    actual = Counter(r.ended_at is not None for r in results)
     assert actual == expected
 
 
