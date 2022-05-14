@@ -7,6 +7,7 @@ import functools
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
+    AsyncIterator,
     Iterable,
     Union,
     Set,
@@ -28,7 +29,7 @@ def current_task_or_thread() -> Union[Task, Thread]:
 
 
 try:
-    from asyncio import to_thread
+    from asyncio import to_thread  # type: ignore
 except ImportError:
     # for Python 3.8
     # to_thread() is new in Python 3.9
@@ -40,7 +41,7 @@ except ImportError:
 
 
 async def agen_with_wait(
-    agen: AsyncGenerator,
+    agen: AsyncIterator,
 ) -> AsyncGenerator[Any, Iterable[Task]]:
     """Yield from the agen while waiting for received tasks
 
