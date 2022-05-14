@@ -3,7 +3,6 @@ import threading
 import pytest
 
 
-##__________________________________________________________________||
 @pytest.fixture(autouse=True)
 def recover_trace():
     """Set the original trace function back after each test"""
@@ -11,6 +10,3 @@ def recover_trace():
     yield
     sys.settrace(trace_org)
     threading.settrace(trace_org)
-
-
-##__________________________________________________________________||
