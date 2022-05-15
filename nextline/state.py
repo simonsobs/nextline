@@ -81,6 +81,7 @@ class Machine:
 
         self._state: State = Initialized(self.registry)
         self._state_changed()
+        self._sys_stdout = sys.stdout
         self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
 
     def __repr__(self):
@@ -181,6 +182,7 @@ class Machine:
             self._state_changed()
             await to_thread(self.registry.close)
         self._stdout.close()
+        sys.stdout = self._sys_stdout
 
     def subscribe_stdout(self):
         return self._stdout.subscribe()
