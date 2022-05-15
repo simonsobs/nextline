@@ -35,6 +35,7 @@ async def assert_subscriptions(nextline: Nextline):
         assert_subscribe_run_info(nextline),
         assert_subscribe_trace_info(nextline),
         assert_subscribe_prompt_info(nextline),
+        # assert_subscribe_stdout(nextline),
     )
 
 
@@ -144,6 +145,20 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     expected = {True: 58, False: 58}
     actual = Counter(r.ended_at is not None for r in results)
     assert actual == expected
+
+
+async def assert_subscribe_stdout(nextline: Nextline):
+    # doesn't work without the `-s` option
+    run_no = 1
+    results = [s async for s in nextline.subscribe_stdout()]
+    assert {run_no} == {r.run_no for r in results}
+
+    assert 1 == len(results)
+
+    r0 = results[0]
+    assert 1 == r0.trace_no
+    assert "here!\n" == r0.text
+    assert r0.written_at
 
 
 async def run(nextline: Nextline):
