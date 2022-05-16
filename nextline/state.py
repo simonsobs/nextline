@@ -310,14 +310,16 @@ class Running(State):
         statement = self.registry.get("statement")
 
         self._pdb_ci_map: Dict[int, PdbCommandInterface] = {}
-        trace = Trace(
-            registry=self.registry,
-            pdb_ci_map=self._pdb_ci_map,
-        )
 
         self.loop = asyncio.get_running_loop()
 
         def run():
+
+            trace = Trace(
+                registry=self.registry,
+                pdb_ci_map=self._pdb_ci_map,
+            )
+
             code = statement
             if isinstance(code, str):
                 try:
