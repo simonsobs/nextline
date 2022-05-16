@@ -1,46 +1,33 @@
 from __future__ import annotations
 
 from threading import Thread
-import queue
-import janus
-from typing import TYPE_CHECKING, Dict, Tuple, Any
+from typing import TYPE_CHECKING, Dict
+from typing_extensions import TypeAlias
 
 from .trace import Trace
-from .utils import SubscribableDict
 from .call import call_with_trace
 from . import script
 
 if TYPE_CHECKING:
+    import queue  # noqa F401
+    import janus  # noqa F401
+    from typing import Any, Tuple  # noqa F401
+    from .utils import SubscribableDict
     from .pdb.ci import PdbCommandInterface
 
+QCommands: TypeAlias = "queue.Queue[Tuple[int, str] | None]"
+QDone: TypeAlias = "queue.Queue[janus.Queue[Tuple[Any, Any]]]"
 
-def run(
-    registry: SubscribableDict,
-    q_commands: queue.Queue[Tuple[int, str] | None],
-    q_done: queue.Queue[janus.Queue[Tuple[Any, Any]]],
-):
 
-    statement = registry.get("statement")
-    script_file_name = registry.get("script_file_name", "<string>")
+def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
+
+    code = _compile_code(registry, q_done)
+    if code is None:
+        return
 
     pdb_ci_map: Dict[int, PdbCommandInterface] = {}
 
-    def done(result, exception):
-        janus_q = q_done.get()
-        janus_q.sync_q.put((result, exception))
-
-    trace = Trace(
-        registry=registry,
-        pdb_ci_map=pdb_ci_map,
-    )
-
-    code = statement
-    if isinstance(code, str):
-        try:
-            code = compile(code, script_file_name, "exec")
-        except BaseException as e:
-            done(None, e)
-            return
+    trace = Trace(registry=registry, pdb_ci_map=pdb_ci_map)
 
     def command():
         while m := q_commands.get():
@@ -48,6 +35,7 @@ def run(
             pdb_ci = pdb_ci_map[trace_id]
             pdb_ci.send_pdb_command(command)
             q_commands.task_done()
+        q_commands.task_done()
 
     t_command = Thread(target=command, daemon=True)
     t_command.start()
@@ -75,4 +63,19 @@ def run(
         except BaseException:
             pass
 
-    done(result, exception)
+    janus_q = q_done.get()
+    janus_q.sync_q.put((result, exception))
+
+
+def _compile_code(registry: SubscribableDict, q_done: QDone):
+    script_file_name = registry.get("script_file_name", "<string>")
+    code = registry.get("statement")
+    if isinstance(code, str):
+        try:
+            code = compile(code, script_file_name, "exec")
+        except BaseException as exception:
+            result = None
+            janus_q = q_done.get()
+            janus_q.sync_q.put((result, exception))
+            return None
+    return code
