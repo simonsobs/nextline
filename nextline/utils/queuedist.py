@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 import threading
 from queue import Queue
@@ -8,7 +10,6 @@ from typing import (
     Generic,
     Literal,
     Optional,
-    Union,
     List,
     Tuple,
     TypeVar,
@@ -42,12 +43,12 @@ class QueueDist(Generic[_T]):
 
     def __init__(self):
 
-        self._q_in: Queue[Union[_T, Literal[_M.END]]] = Queue()
+        self._q_in: Queue[_T | Literal[_M.END]] = Queue()
 
-        self._qs_out: List[Janus[Tuple[int, Union[_T, Literal[_M.END]]]]] = []
+        self._qs_out: List[Janus[Tuple[int, _T | Literal[_M.END]]]] = []
         self._lock_out = threading.Condition()
         self._last_enumerated: Tuple[
-            int, Union[_T, Literal[_M.START], Literal[_M.END]]
+            int, _T | Literal[_M.START] | Literal[_M.END]
         ] = (-1, _M.START)
 
         self._last_item: _T = None
@@ -84,7 +85,7 @@ class QueueDist(Generic[_T]):
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
         """
-        q: Janus[Tuple[int, Union[_T, Literal[_M.END]]]] = Janus()
+        q: Janus[Tuple[int, _T | Literal[_M.END]]] = Janus()
 
         with self._lock_out:
             self._qs_out.append(q)
