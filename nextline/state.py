@@ -306,16 +306,24 @@ class Running(State):
 
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
-        statement = self.registry.get("statement")
         self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
-        self._q: queue.Queue[janus.Queue] = queue.Queue()
+        self._q_done: queue.Queue[janus.Queue] = queue.Queue()
 
         def run():
 
+            registry = self.registry
+            q_commands = self._q_commands
+            q_done = self._q_done
+            statement = registry.get("statement")
+
             pdb_ci_map: Dict[int, PdbCommandInterface] = {}
 
+            def done(result, exception):
+                janus_q = q_done.get()
+                janus_q.sync_q.put((result, exception))
+
             trace = Trace(
-                registry=self.registry,
+                registry=registry,
                 pdb_ci_map=pdb_ci_map,
             )
 
@@ -324,7 +332,7 @@ class Running(State):
                 try:
                     code = compile(code, SCRIPT_FILE_NAME, "exec")
                 except BaseException as e:
-                    self._done(None, e)
+                    done(None, e)
                     return
             func = script.compose(code)
             result = None
@@ -332,13 +340,13 @@ class Running(State):
 
             def command():
                 while True:
-                    m = self._q_commands.get()
+                    m = q_commands.get()
                     if m is None:
                         break
                     trace_id, command = m
                     pdb_ci = pdb_ci_map[trace_id]
                     pdb_ci.send_pdb_command(command)
-                    self._q_commands.task_done()
+                    q_commands.task_done()
 
             def call():
                 nonlocal result, exception
@@ -352,28 +360,24 @@ class Running(State):
             t_call.start()
             t_command.start()
             t_call.join()
-            self._q_commands.put(None)
+            q_commands.put(None)
             t_command.join()
 
-            if callback := self.registry.get("callback"):
+            if callback := registry.get("callback"):
                 try:
                     callback.close()
                 except BaseException:
                     pass
 
-            self._done(result, exception)
+            done(result, exception)
 
         self._thread = Thread(target=run, daemon=True)
         self._thread.start()
 
-    def _done(self, result=None, exception=None):
-        janus_q = self._q.get()
-        janus_q.sync_q.put((result, exception))
-
     async def exited(self):
         """return the exited state after the script exits."""
         j = janus.Queue()
-        self._q.put(j)
+        self._q_done.put(j)
         result, exception = await j.async_q.get()
         exited = Exited(
             self.registry,
