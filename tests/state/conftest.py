@@ -9,5 +9,5 @@ def monkey_patch_trace(monkeypatch):
     mock_instance = Mock()
     mock_instance.return_value = None
     mock_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr("nextline.state.Trace", mock_class)
+    monkeypatch.setattr("nextline.run.Trace", mock_class)
     yield mock_class
