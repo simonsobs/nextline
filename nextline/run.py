@@ -3,7 +3,7 @@ from __future__ import annotations
 from threading import Thread
 import queue
 import janus
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple, Any
 
 from .trace import Trace
 from .utils import SubscribableDict
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def run(
     registry: SubscribableDict,
     q_commands: queue.Queue[Tuple[int, str] | None],
-    q_done: queue.Queue[janus.Queue],
+    q_done: queue.Queue[janus.Queue[Tuple[Any, Any]]],
 ):
 
     statement = registry.get("statement")

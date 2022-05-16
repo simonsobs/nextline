@@ -314,7 +314,7 @@ class Running(State):
 
     async def exited(self):
         """return the exited state after the script exits."""
-        j = janus.Queue()
+        j: janus.Queue[Tuple[Any, Any]] = janus.Queue()
         self._q_done.put(j)
         result, exception = await j.async_q.get()
         exited = Exited(
