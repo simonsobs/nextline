@@ -30,12 +30,8 @@ class TestRunning(BaseTestState):
 
     @pytest.mark.asyncio
     async def test_exited(self, state):
-        # exited() can be called multiple times
         exited = await state.exited()
         assert isinstance(exited, Exited)
-        assert exited is await state.exited()
-        assert exited is await state.exited()
-
         await self.assert_obsolete(state)
 
     def test_send_pdb_command(self, state):

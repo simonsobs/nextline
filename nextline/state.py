@@ -8,6 +8,8 @@ import datetime
 import itertools
 import traceback
 import json
+import queue
+import janus
 from weakref import WeakKeyDictionary
 from typing import TYPE_CHECKING, Dict, Optional, Any
 
@@ -15,7 +17,6 @@ from .trace import Trace
 from .io import IOSubscription
 from .utils import (
     SubscribableDict,
-    ThreadSafeAsyncioEvent,
     ThreadTaskIdComposer,
     to_thread,
 )
@@ -305,13 +306,9 @@ class Running(State):
 
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
-        self._event = ThreadSafeAsyncioEvent()
-
         statement = self.registry.get("statement")
-
         self._pdb_ci_map: Dict[int, PdbCommandInterface] = {}
-
-        self.loop = asyncio.get_running_loop()
+        self._q: queue.Queue[janus.Queue] = queue.Queue()
 
         def run():
 
@@ -354,30 +351,22 @@ class Running(State):
         self._thread.start()
 
     def _done(self, result=None, exception=None):
+        janus_q = self._q.get()
+        janus_q.sync_q.put((result, exception))
 
-        if self.loop.is_closed():
-            # The exit is not being waited in the main thread, for example,
-            # exited() is not called.
-            return
-
-        self._exited = Exited(
+    async def exited(self):
+        """return the exited state after the script exits."""
+        j = janus.Queue()
+        self._q.put(j)
+        result, exception = await j.async_q.get()
+        exited = Exited(
             self.registry,
             thread=self._thread,
             result=result,
             exception=exception,
         )
-
-        try:
-            self._event.set()
-        except RuntimeError:
-            # The event loop is closed.
-            pass
-
-    async def exited(self):
-        """return the exited state after the script exits."""
-        await self._event.wait()
         self.obsolete()
-        return self._exited
+        return exited
 
     def send_pdb_command(self, trace_id: int, command: str) -> None:
         pdb_ci = self._pdb_ci_map[trace_id]
