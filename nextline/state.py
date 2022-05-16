@@ -11,7 +11,7 @@ import json
 import queue
 import janus
 from weakref import WeakKeyDictionary
-from typing import TYPE_CHECKING, Dict, Optional, Any
+from typing import TYPE_CHECKING, Dict, Optional, Any, Tuple
 
 from .trace import Trace
 from .io import IOSubscription
@@ -307,14 +307,16 @@ class Running(State):
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
         statement = self.registry.get("statement")
-        self._pdb_ci_map: Dict[int, PdbCommandInterface] = {}
+        self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
         self._q: queue.Queue[janus.Queue] = queue.Queue()
 
         def run():
 
+            pdb_ci_map: Dict[int, PdbCommandInterface] = {}
+
             trace = Trace(
                 registry=self.registry,
-                pdb_ci_map=self._pdb_ci_map,
+                pdb_ci_map=pdb_ci_map,
             )
 
             code = statement
@@ -328,6 +330,16 @@ class Running(State):
             result = None
             exception = None
 
+            def command():
+                while True:
+                    m = self._q_commands.get()
+                    if m is None:
+                        break
+                    trace_id, command = m
+                    pdb_ci = pdb_ci_map[trace_id]
+                    pdb_ci.send_pdb_command(command)
+                    self._q_commands.task_done()
+
             def call():
                 nonlocal result, exception
                 try:
@@ -335,9 +347,13 @@ class Running(State):
                 except BaseException as e:
                     exception = e
 
-            t = Thread(target=call, daemon=True)
-            t.start()
-            t.join()
+            t_call = Thread(target=call, daemon=True)
+            t_command = Thread(target=command, daemon=True)
+            t_call.start()
+            t_command.start()
+            t_call.join()
+            self._q_commands.put(None)
+            t_command.join()
 
             if callback := self.registry.get("callback"):
                 try:
@@ -369,8 +385,7 @@ class Running(State):
         return exited
 
     def send_pdb_command(self, trace_id: int, command: str) -> None:
-        pdb_ci = self._pdb_ci_map[trace_id]
-        pdb_ci.send_pdb_command(command)
+        self._q_commands.put((trace_id, command))
 
 
 class Exited(State):
