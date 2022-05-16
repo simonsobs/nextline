@@ -334,19 +334,20 @@ class Running(State):
                 except BaseException as e:
                     done(None, e)
                     return
-            func = script.compose(code)
-            result = None
-            exception = None
 
             def command():
-                while True:
-                    m = q_commands.get()
-                    if m is None:
-                        break
+                while m := q_commands.get():
                     trace_id, command = m
                     pdb_ci = pdb_ci_map[trace_id]
                     pdb_ci.send_pdb_command(command)
                     q_commands.task_done()
+
+            t_command = Thread(target=command, daemon=True)
+            t_command.start()
+
+            func = script.compose(code)
+            result = None
+            exception = None
 
             def call():
                 nonlocal result, exception
@@ -356,9 +357,7 @@ class Running(State):
                     exception = e
 
             t_call = Thread(target=call, daemon=True)
-            t_command = Thread(target=command, daemon=True)
             t_call.start()
-            t_command.start()
             t_call.join()
             q_commands.put(None)
             t_command.join()
