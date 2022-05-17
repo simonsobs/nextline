@@ -3,14 +3,14 @@
 The name of this module becomes the module name of the callable.
 """
 
+from __future__ import annotations
 from functools import partial
 
-from typing import Union, Callable
+from typing import Callable
 from types import CodeType
 
 
-##__________________________________________________________________||
-def compose(code: Union[CodeType, str]) -> Callable:
+def compose(code: CodeType | str) -> Callable[[], None]:
     """Create a function that executes the code
 
     Parameters
@@ -38,6 +38,3 @@ def compose(code: Union[CodeType, str]) -> Callable:
 
     func = partial(exec, code, globals_)
     return func
-
-
-##__________________________________________________________________||
