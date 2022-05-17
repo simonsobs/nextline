@@ -56,7 +56,7 @@ async def test_states():
 
     states = await task_monitor_state
 
-    expected = ["initialized", "running", "exited", "finished", "closed"]
+    expected = ["initialized", "running", "finished", "closed"]
     assert expected == states
 
 

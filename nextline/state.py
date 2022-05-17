@@ -38,12 +38,6 @@ class Machine:
             |    .-------------.   |
             |    |   Running   |   |
             |    '-------------'   |
-            |          | _exited() |
-            |          |           |
-            |          v           |
-            |    .-------------.   |
-            |    |   Exited    |   |
-            |    '-------------'   |
             |          | finish()  |
             |          |           |
             |          V           |
@@ -128,26 +122,12 @@ class Machine:
         """Enter the running state"""
         self._state = self._state.run()
         self._state_changed()
-        self._task_exited = asyncio.create_task(self._exited())
-
-    async def _exited(self) -> None:
-        """Enter the exited state
-
-        This method is scheduled as a task in run().
-
-        Before changing the state to "exited", this method waits for the script
-        execution (in another thread) to exit.
-        """
-
-        self._state = await self._state.exited()
-        self._state_changed()
 
     def send_pdb_command(self, thread_asynctask_id, command) -> None:
         self._state.send_pdb_command(thread_asynctask_id, command)
 
     async def finish(self) -> None:
         """Enter the finished state"""
-        await self._task_exited
         async with self._lock_finish:
             self._state = await self._state.finish()
             self._state_changed()
@@ -222,10 +202,6 @@ class State(ObsoleteMixin):
         return f'<{" ".join(items)}>'
 
     def run(self) -> State:
-        self.assert_not_obsolete()
-        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
-
-    async def exited(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -312,58 +288,18 @@ class Running(State):
         )
         self._thread.start()
 
-    async def exited(self):
-        """return the exited state after the script exits."""
+    async def finish(self):
+        self.assert_not_obsolete()
         j: janus.Queue[Tuple[Any, Any]] = janus.Queue()
         self._q_done.put(j.sync_q)
         result, exception = await j.async_q.get()
-        exited = Exited(
-            self.registry,
-            thread=self._thread,
-            result=result,
-            exception=exception,
-        )
+        await to_thread(self._thread.join)
+        finished = Finished(self.registry, result=result, exception=exception)
         self.obsolete()
-        return exited
+        return finished
 
     def send_pdb_command(self, trace_id: int, command: str) -> None:
         self._q_commands.put((trace_id, command))
-
-
-class Exited(State):
-    """The state "exited", the script execution has exited
-
-    Parameters
-    ----------
-    registry : object
-        An instance of Registry
-    thread : object
-        The object of the thread in which the script was executed.
-        This thread is to be joined.
-    result : any
-        The result of the script execution, always None
-    exception : exception or None
-        The execution raised in the script execution if any. Otherwise
-        None
-    """
-
-    name = "exited"
-
-    def __init__(self, registry: SubscribableDict, thread, result, exception):
-        self.registry = registry
-        self._thread = thread
-        self._result = result
-        self._exception = exception
-
-    async def finish(self):
-        self.assert_not_obsolete()
-        await to_thread(self._thread.join)
-
-        finished = Finished(
-            self.registry, result=self._result, exception=self._exception
-        )
-        self.obsolete()
-        return finished
 
 
 class Finished(State):

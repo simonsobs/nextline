@@ -69,7 +69,6 @@ async def test_transitions():
     expected = [
         "initialized",
         "running",
-        "exited",
         "finished",
         "initialized",
         "closed",
@@ -97,11 +96,9 @@ async def test_reset_with_statement():
     expected = [
         "initialized",
         "running",
-        "exited",
         "finished",
         "initialized",
         "running",
-        "exited",
         "finished",
         "closed",
     ]
