@@ -1,6 +1,6 @@
 import pytest
 
-from nextline.state import Running, Exited, StateObsoleteError
+from nextline.state import Running, Finished, StateObsoleteError
 
 from .base import BaseTestState
 
@@ -29,9 +29,9 @@ class TestRunning(BaseTestState):
             await state.close()
 
     @pytest.mark.asyncio
-    async def test_exited(self, state):
-        exited = await state.exited()
-        assert isinstance(exited, Exited)
+    async def test_finish(self, state):
+        finished = await state.finish()
+        assert isinstance(finished, Finished)
         await self.assert_obsolete(state)
 
     def test_send_pdb_command(self, state):

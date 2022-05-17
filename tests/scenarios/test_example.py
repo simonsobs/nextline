@@ -40,7 +40,7 @@ async def assert_subscriptions(nextline: Nextline):
 
 
 async def assert_subscribe_state(nextline: Nextline):
-    expected = ["initialized", "running", "exited", "finished", "closed"]
+    expected = ["initialized", "running", "finished", "closed"]
     actual = [s async for s in nextline.subscribe_state()]
     assert actual == expected
 

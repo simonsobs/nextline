@@ -72,7 +72,6 @@ class TestFinished(BaseTestState):
         state: State = Initialized(registry=registry)
         state = state.run()
 
-        state = await state.exited()
         state = await state.finish()
         assert isinstance(state, Finished)
 
@@ -89,7 +88,6 @@ class TestFinished(BaseTestState):
         state: State = Initialized(registry=registry)
         state = state.run()
 
-        state = await state.exited()
         state = await state.finish()
         assert isinstance(state, Finished)
 

@@ -81,7 +81,7 @@ class Nextline:
     def state(self) -> str:
         """The current condition of the script execution.
 
-        The possible values are "initialized", "running", "exited", "finished",
+        The possible values are "initialized", "running", "finished",
         "closed"
         """
         return self.machine.state_name

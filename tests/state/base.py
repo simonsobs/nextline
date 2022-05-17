@@ -45,24 +45,12 @@ class BaseTestState(ABC):
         yield y
         if y.is_obsolete():
             return
-        exited = await y.exited()
-        if exited.is_obsolete():
-            return
-        finished = await exited.finish()
-        finished.close()
-
-    @pytest.fixture()
-    async def exited(self, running):
-        y = await running.exited()
-        yield y
-        if y.is_obsolete():
-            return
         finished = await y.finish()
         finished.close()
 
     @pytest.fixture()
-    async def finished(self, exited):
-        y = await exited.finish()
+    async def finished(self, running):
+        y = await running.finish()
         yield y
         if y.is_obsolete():
             return
@@ -92,9 +80,6 @@ class BaseTestState(ABC):
             state.run()
 
         with pytest.raises(StateObsoleteError):
-            await state.exited()
-
-        with pytest.raises(StateObsoleteError):
             await state.finish()
 
         with pytest.raises(StateObsoleteError):
@@ -106,11 +91,6 @@ class BaseTestState(ABC):
     def test_run(self, state):
         with pytest.raises(StateMethodError):
             state.run()
-
-    @pytest.mark.asyncio
-    async def test_exited(self, state):
-        with pytest.raises(StateMethodError):
-            await state.exited()
 
     @pytest.mark.asyncio
     async def test_finish(self, state):
