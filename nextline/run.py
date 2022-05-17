@@ -10,13 +10,12 @@ from . import script
 
 if TYPE_CHECKING:
     import queue  # noqa F401
-    import janus  # noqa F401
     from typing import Any, Tuple  # noqa F401
     from .utils import SubscribableDict
     from .pdb.ci import PdbCommandInterface
 
 QCommands: TypeAlias = "queue.Queue[Tuple[int, str] | None]"
-QDone: TypeAlias = "queue.Queue[janus.Queue[Tuple[Any, Any]]]"
+QDone: TypeAlias = "queue.Queue[queue.Queue[Tuple[Any, Any]]]"
 
 
 def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
@@ -63,8 +62,8 @@ def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
         except BaseException:
             pass
 
-    janus_q = q_done.get()
-    janus_q.sync_q.put((result, exception))
+    q = q_done.get()
+    q.put((result, exception))
 
 
 def _compile_code(registry: SubscribableDict, q_done: QDone):
@@ -75,7 +74,7 @@ def _compile_code(registry: SubscribableDict, q_done: QDone):
             code = compile(code, script_file_name, "exec")
         except BaseException as exception:
             result = None
-            janus_q = q_done.get()
-            janus_q.sync_q.put((result, exception))
+            q = q_done.get()
+            q.put((result, exception))
             return None
     return code

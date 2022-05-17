@@ -303,7 +303,7 @@ class Running(State):
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
         self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
-        self._q_done: queue.Queue[janus.Queue] = queue.Queue()
+        self._q_done: queue.Queue[janus.SyncQueue] = queue.Queue()
 
         self._thread = Thread(
             target=run,
@@ -315,7 +315,7 @@ class Running(State):
     async def exited(self):
         """return the exited state after the script exits."""
         j: janus.Queue[Tuple[Any, Any]] = janus.Queue()
-        self._q_done.put(j)
+        self._q_done.put(j.sync_q)
         result, exception = await j.async_q.get()
         exited = Exited(
             self.registry,
