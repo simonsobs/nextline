@@ -279,20 +279,18 @@ class Running(State):
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
         self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
-        self._q_done: queue.Queue[janus.SyncQueue] = queue.Queue()
+        self._q_done: janus.Queue[Tuple[Any, Any]] = janus.Queue()
 
         self._thread = Thread(
             target=run,
-            args=(self.registry, self._q_commands, self._q_done),
+            args=(self.registry, self._q_commands, self._q_done.sync_q),
             daemon=True,
         )
         self._thread.start()
 
     async def finish(self):
         self.assert_not_obsolete()
-        j: janus.Queue[Tuple[Any, Any]] = janus.Queue()
-        self._q_done.put(j.sync_q)
-        result, exception = await j.async_q.get()
+        result, exception = await self._q_done.async_q.get()
         await to_thread(self._thread.join)
         finished = Finished(self.registry, result=result, exception=exception)
         self.obsolete()

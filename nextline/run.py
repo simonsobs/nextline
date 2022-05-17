@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .pdb.ci import PdbCommandInterface
 
 QCommands: TypeAlias = "queue.Queue[Tuple[int, str] | None]"
-QDone: TypeAlias = "queue.Queue[queue.Queue[Tuple[Any, Any]]]"
+QDone: TypeAlias = "queue.Queue[Tuple[Any, Any]]"
 
 
 def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
@@ -62,8 +62,7 @@ def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
         except BaseException:
             pass
 
-    q = q_done.get()
-    q.put((result, exception))
+    q_done.put((result, exception))
 
 
 def _compile_code(registry: SubscribableDict, q_done: QDone):
@@ -74,7 +73,6 @@ def _compile_code(registry: SubscribableDict, q_done: QDone):
             code = compile(code, script_file_name, "exec")
         except BaseException as exception:
             result = None
-            q = q_done.get()
-            q.put((result, exception))
+            q_done.put((result, exception))
             return None
     return code

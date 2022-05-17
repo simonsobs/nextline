@@ -18,12 +18,11 @@ async def test_one(
     registry,
     q_commands,
     q_done,
-    q_result_exception,
     task_send_commands,
 ):
     del task_send_commands
     await to_thread(run, registry, q_commands, q_done)
-    result, exception = q_result_exception.get()
+    result, exception = q_done.get()
     assert result is None
     if expected_exception:
         with pytest.raises(expected_exception):
@@ -105,13 +104,6 @@ def q_commands():
 
 
 @pytest.fixture
-def q_done(q_result_exception):
-    y = queue.Queue()
-    y.put(q_result_exception)
-    return y
-
-
-@pytest.fixture
-def q_result_exception():
+def q_done():
     y = queue.Queue()
     return y
