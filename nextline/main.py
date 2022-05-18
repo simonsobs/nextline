@@ -100,15 +100,8 @@ class Nextline:
     def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int]]:
         return self.subscribe("trace_nos")
 
-    async def subscribe_prompting(
-        self,
-        trace_id: int,
-    ) -> AsyncIterator[PdbCIState]:
-        agen = self.subscribe(trace_id)
-        async for y in agen:
-            if y is None:
-                continue
-            yield y
+    def subscribe_prompting(self, trace_id: int) -> AsyncIterator[PdbCIState]:
+        return self.subscribe(trace_id)
 
     def send_pdb_command(self, trace_id: int, command: str):
         self.machine.send_pdb_command(trace_id, command)
