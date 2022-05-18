@@ -117,7 +117,7 @@ class PdbInterface:
     Parameters
     ----------
     trace_id : object
-        The Id to distiugish each instance of Pdb
+        The Id to distinguish each instance of Pdb
     modules_to_trace: set
         The set of modules to trace. This object is shared by multiple
         objects. Modules in which Pdb commands are prompted will be
