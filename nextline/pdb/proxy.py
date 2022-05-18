@@ -29,14 +29,6 @@ if TYPE_CHECKING:
     from ..utils import SubscribableDict, ThreadTaskIdComposer
 
 
-@dataclasses.dataclass(frozen=True)
-class PdbCIState:
-    prompting: int
-    file_name: str
-    line_no: int
-    trace_event: str
-
-
 def PdbInterfaceFactory(
     registry: SubscribableDict,
     pdb_ci_map: Dict[int, PdbCommandInterface],
@@ -51,10 +43,6 @@ def PdbInterfaceFactory(
     def callback_func(key) -> None:
         trace_info = callback_map[key]
         trace_no = trace_info.trace_no
-        try:
-            del registry[trace_no]
-        except KeyError:
-            pass
         key = f"prompt_info_{trace_no}"
         try:
             del registry[key]
@@ -210,13 +198,6 @@ class PdbInterface:
             # TODO: This should be done somewhere else
             self.modules_to_trace.add(module_name)
 
-        self._state = PdbCIState(
-            prompting=self._prompting_counter(),
-            file_name=self._pdb.canonic(frame.f_code.co_filename),
-            line_no=frame.f_lineno,
-            trace_event=event,
-        )
-
         self._pdb_ci = PdbCommandInterface(
             pdb=self._pdb,
             queue_in=self._q_stdin,
@@ -230,14 +211,8 @@ class PdbInterface:
 
         self._ci_map[self._trace_id] = self._pdb_ci
 
-        self._registry[self._trace_id] = self._state
-
     def exited_cmdloop(self) -> None:
         """To be called by the custom Pdb after _cmdloop()"""
 
         del self._ci_map[self._trace_id]
-
-        self._state = dataclasses.replace(self._state, prompting=0)
-        self._registry[self._trace_id] = self._state
-
         self._pdb_ci.end()
