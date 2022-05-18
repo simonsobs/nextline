@@ -20,8 +20,8 @@ async def test_run():
 
     await asyncio.sleep(0.01)
 
-    async for state in nextline.subscribe_state():
-        if state == "running":
+    async for s in nextline.subscribe_state():
+        if s == "running":
             break
 
     async for trace_ids in nextline.subscribe_trace_ids():
@@ -30,10 +30,11 @@ async def test_run():
             break
 
     n_prompting = 0
-    async for state in nextline.subscribe_prompting(trace_id):
-        if state.prompting:
-            n_prompting += 1
-            nextline.send_pdb_command(trace_id, "next")
+    async for s in nextline.subscribe_prompt_info_for(trace_id):
+        if not s.open:
+            continue
+        n_prompting += 1
+        nextline.send_pdb_command(trace_id, "next")
     assert 3 == n_prompting
 
     await run

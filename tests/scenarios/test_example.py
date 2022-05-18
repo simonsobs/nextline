@@ -188,20 +188,22 @@ async def control_execution(nextline: Nextline):
 async def control_trace(nextline: Nextline, trace_id):
     # print(f"control_trace({trace_id})")
     file_name = ""
-    async for s in nextline.subscribe_prompting(trace_id):
+    async for s in nextline.subscribe_prompt_info_for(trace_id):
+        if not s.open:
+            continue
         # print(s)
         if not file_name == s.file_name:
+            assert s.file_name
             file_name = s.file_name
             assert nextline.get_source(file_name)
-        if s.prompting:
-            command = "next"
-            if s.trace_event == "line":
-                line = nextline.get_source_line(
-                    line_no=s.line_no,
-                    file_name=s.file_name,
-                )
-                command = find_command(line) or command
-            nextline.send_pdb_command(trace_id, command)
+        command = "next"
+        if s.event == "line":
+            line = nextline.get_source_line(
+                line_no=s.line_no,
+                file_name=s.file_name,
+            )
+            command = find_command(line) or command
+        nextline.send_pdb_command(trace_id, command)
 
 
 def find_command(line: str) -> Optional[str]:
