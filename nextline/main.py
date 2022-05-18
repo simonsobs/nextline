@@ -130,6 +130,11 @@ class Nextline:
     def subscribe_prompt_info(self) -> AsyncIterator[PromptInfo]:
         return self.subscribe("prompt_info")
 
+    def subscribe_prompt_info_for(
+        self, trace_no: int
+    ) -> AsyncIterator[PromptInfo]:
+        return self.subscribe(f"prompt_info_{trace_no}")
+
     def get(self, key) -> Any:
         return self.registry.get(key)
 
