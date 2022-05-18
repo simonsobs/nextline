@@ -192,7 +192,7 @@ class PdbInterface:
         if not self._trace_args:
             raise RuntimeError("calling_trace() must be called first")
 
-        frame, event, _ = self._trace_args
+        frame, *_ = self._trace_args
 
         if module_name := frame.f_globals.get("__name__"):
             # TODO: This should be done somewhere else
