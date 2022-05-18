@@ -10,7 +10,6 @@ from .state import Machine
 from .types import StdoutInfo
 
 if TYPE_CHECKING:
-    from .pdb.proxy import PdbCIState
     from .types import RunInfo, TraceInfo, PromptInfo
 
 
@@ -100,9 +99,6 @@ class Nextline:
     def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int]]:
         return self.subscribe("trace_nos")
 
-    def subscribe_prompting(self, trace_id: int) -> AsyncIterator[PdbCIState]:
-        return self.subscribe(trace_id)
-
     def send_pdb_command(self, trace_id: int, command: str):
         self.machine.send_pdb_command(trace_id, command)
 
@@ -129,6 +125,11 @@ class Nextline:
 
     def subscribe_prompt_info(self) -> AsyncIterator[PromptInfo]:
         return self.subscribe("prompt_info")
+
+    def subscribe_prompt_info_for(
+        self, trace_no: int
+    ) -> AsyncIterator[PromptInfo]:
+        return self.subscribe(f"prompt_info_{trace_no}")
 
     def get(self, key) -> Any:
         return self.registry.get(key)
