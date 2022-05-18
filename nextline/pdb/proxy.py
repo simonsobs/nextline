@@ -79,7 +79,7 @@ def PdbInterfaceFactory(
             run_no=run_no,
             trace_no=trace_no,
             prompt_no=-1,
-            open=False
+            open=False,
         )
 
         task_or_thread = current_task_or_thread()
