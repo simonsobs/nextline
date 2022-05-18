@@ -48,7 +48,7 @@ def PdbInterfaceFactory(
     prompting_counter = count(1).__next__
     callback_map: Dict[Any, TraceInfo] = {}
 
-    def callback_func(key):
+    def callback_func(key) -> None:
         trace_info = callback_map[key]
         trace_no = trace_info.trace_no
         try:
@@ -60,9 +60,9 @@ def PdbInterfaceFactory(
             del registry[key]
         except KeyError:
             pass
-        nos = list(registry.get("trace_nos"))
-        nos.remove(trace_no)
-        nos = tuple(nos)
+        nosl = list(registry.get("trace_nos"))  # type: ignore
+        nosl.remove(trace_no)
+        nos = tuple(nosl)
         registry["trace_nos"] = nos
 
         trace_info = dataclasses.replace(
