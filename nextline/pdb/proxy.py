@@ -55,6 +55,11 @@ def PdbInterfaceFactory(
             del registry[trace_no]
         except KeyError:
             pass
+        key = f"prompt_info_{trace_no}"
+        try:
+            del registry[key]
+        except KeyError:
+            pass
         nos = list(registry.get("trace_nos"))
         nos.remove(trace_no)
         nos = tuple(nos)
