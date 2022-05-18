@@ -63,6 +63,9 @@ class PdbCommandInterface:
             trace_no=self._trace_id,
             prompt_no=self._prompt_no,
             open=False,
+            event=self._event,
+            file_name=self._file_name,
+            line_no=self._line_no,
             command=command,
             ended_at=datetime.datetime.now(),
         )

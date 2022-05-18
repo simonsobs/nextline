@@ -118,15 +118,15 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     actual = Counter(r.open for r in results)
     assert actual == expected
 
-    expected = {None: 58, "line": 51, "return": 5, "call": 2}
+    expected = {"line": 102, "return": 10, "call": 4}
     actual = Counter(r.event for r in results)
     assert actual == expected
 
-    expected = {True: 58, False: 58}
+    expected = {True: 116}
     actual = Counter(r.file_name is not None for r in results)
     assert actual == expected
 
-    expected = {True: 58, False: 58}
+    expected = {True: 116}
     actual = Counter(r.line_no is not None for r in results)
     assert actual == expected
 
