@@ -123,8 +123,8 @@ class Machine:
         self._state = self._state.run()
         self._state_changed()
 
-    def send_pdb_command(self, thread_asynctask_id, command) -> None:
-        self._state.send_pdb_command(thread_asynctask_id, command)
+    def send_pdb_command(self, trace_id, command) -> None:
+        self._state.send_pdb_command(trace_id, command)
 
     async def finish(self) -> None:
         """Enter the finished state"""
