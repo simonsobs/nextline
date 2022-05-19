@@ -174,13 +174,13 @@ async def control_execution(nextline: Nextline):
     agen = agen_with_wait(nextline.subscribe_trace_ids())
     async for ids_ in agen:
         ids = set(ids_)
-        new_ids, prev_ids = ids - prev_ids, ids
+        new_ids, prev_ids = ids - prev_ids, ids  # type: ignore
 
         tasks = {
             asyncio.create_task(control_trace(nextline, id_))
             for id_ in new_ids
         }
-        _, pending = await agen.asend(tasks)
+        _, pending = await agen.asend(tasks)  # type: ignore
 
     await asyncio.gather(*pending)
 
@@ -189,6 +189,7 @@ async def control_trace(nextline: Nextline, trace_id):
     # print(f"control_trace({trace_id})")
     file_name = ""
     async for s in nextline.subscribe_prompt_info_for(trace_id):
+        # await asyncio.sleep(0.01)
         if not s.open:
             continue
         # print(s)
@@ -204,6 +205,7 @@ async def control_trace(nextline: Nextline, trace_id):
             )
             command = find_command(line) or command
         nextline.send_pdb_command(trace_id, command)
+        # await asyncio.sleep(0.01)
 
 
 def find_command(line: str) -> Optional[str]:
