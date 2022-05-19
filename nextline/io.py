@@ -49,13 +49,10 @@ class IOSubscription(io.TextIOWrapper):
 
         self._buffer[key] += s
         if s.endswith("\n"):
-            self.flush()
+            self._put(key)
         return ret
 
-    def flush(self):
-        if not self._id_composer.has_id():
-            return
-        key = current_task_or_thread()
+    def _put(self, key):
         if not self._buffer[key]:
             return
         if not (run_no := self._run_no_map.get(key)):
