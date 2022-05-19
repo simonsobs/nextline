@@ -9,17 +9,17 @@ from typing import (
     AsyncGenerator,
     AsyncIterator,
     Iterable,
-    Union,
     Set,
-    Any,
+    Tuple,
+    TypeVar,
 )
 
 if TYPE_CHECKING:
     from threading import Thread
-    from asyncio import Task
+    from asyncio import Task, Future
 
 
-def current_task_or_thread() -> Union[Task, Thread]:
+def current_task_or_thread() -> Task | Thread:
     """The asyncio task object if in a task, else the thread object"""
     try:
         task = asyncio.current_task()
@@ -40,15 +40,20 @@ except ImportError:
         return await loop.run_in_executor(None, func_call)
 
 
+T = TypeVar("T")
+
+
 async def agen_with_wait(
-    agen: AsyncIterator,
-) -> AsyncGenerator[Any, Iterable[Task]]:
+    agen: AsyncIterator[T],
+) -> AsyncGenerator[
+    T | Tuple[Tuple[Future, ...], Tuple[Future, ...]], Iterable[Future]
+]:
     """Yield from the agen while waiting for received tasks
 
     Used to raise an exception from tasks
     """
-    done: Set[Task] = set()
-    pending: Set[Task] = set()
+    done: Set[Future] = set()
+    pending: Set[Future] = set()
     anext = asyncio.ensure_future(agen.__anext__())
     while True:
         done_, pending_ = await asyncio.wait(
