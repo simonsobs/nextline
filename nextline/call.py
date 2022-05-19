@@ -1,19 +1,20 @@
+from __future__ import annotations
+
 import sys
 import threading
 
-from typing import Callable, Any, Type
+from typing import Callable, TypeVar
 
 from .types import TraceFunc
 
-Func = Callable[[], Any]
-DoneFunc = Callable[[Any, Type[Exception]], None]
+T = TypeVar("T")
 
 
 def call_with_trace(
-    func: Func,
+    func: Callable[[], T],
     trace: TraceFunc,
     thread: bool = True,
-) -> Any:
+) -> T | None:
     """Set the trace function while running the function
 
     Notes
