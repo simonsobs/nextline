@@ -118,15 +118,3 @@ def test_interval(done: Done):
 
     obj.close()
     t.join()
-
-
-def test_interval_invalid(done: Done):
-    interval = "invalid"
-    obj = ThreadDoneCallback(done=done, interval=interval)
-    t = ExcThread(target=target, args=(obj,))
-    t.start()
-
-    with pytest.raises(TypeError):
-        obj.close()
-
-    t.join()
