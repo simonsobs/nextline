@@ -81,3 +81,30 @@ async def agen_with_wait(
             yield tuple(done), tuple(pending)
             done.clear()
         anext = asyncio.ensure_future(agen.__anext__())
+
+
+async def merge_aiters(
+    *aiters: AsyncIterator[T],
+) -> AsyncIterator[Tuple[int, T]]:
+    aiter_map = {a: i for i, a in enumerate(aiters)}
+    task_map = {
+        asyncio.ensure_future(a.__anext__()): a for a in aiter_map.keys()
+    }
+    tasks = set(task_map.keys())
+    while tasks:
+        done, pending = await asyncio.wait(
+            tasks,
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        tasks = pending
+        while done:
+            task = done.pop()
+            try:
+                item = task.result()
+            except StopAsyncIteration:
+                continue
+            aiter = task_map[task]
+            yield aiter_map[aiter], item
+            task = asyncio.ensure_future(aiter.__anext__())
+            tasks.add(task)
+            task_map[task] = aiter
