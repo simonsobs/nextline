@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 import asyncio
 import dataclasses
-from threading import Thread
 import datetime
 import itertools
 import traceback
@@ -15,6 +14,7 @@ from typing import Optional, Any, Tuple
 
 from .io import IOSubscription
 from .utils import (
+    ExcThread,
     SubscribableDict,
     ThreadTaskIdComposer,
     to_thread,
@@ -281,7 +281,7 @@ class Running(State):
         self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
         self._q_done: janus.Queue[Tuple[Any, Any]] = janus.Queue()
 
-        self._thread = Thread(
+        self._thread = ExcThread(
             target=run,
             args=(self.registry, self._q_commands, self._q_done.sync_q),
             daemon=True,
@@ -290,8 +290,8 @@ class Running(State):
 
     async def finish(self):
         self.assert_not_obsolete()
-        result, exception = await self._q_done.async_q.get()
         await to_thread(self._thread.join)
+        result, exception = await self._q_done.async_q.get()
         finished = Finished(self.registry, result=result, exception=exception)
         self.obsolete()
         return finished
