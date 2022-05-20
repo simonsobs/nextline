@@ -1,5 +1,6 @@
+from __future__ import annotations
 import asyncio
-from typing import Iterable, Optional
+from string import ascii_uppercase
 
 import pytest
 
@@ -20,7 +21,7 @@ def obj():
     y.close()
 
 
-def test_open_close(obj):
+def test_close(obj):
     assert obj
 
 
@@ -29,169 +30,190 @@ def test_close_multiple_times(obj):
     obj.close()
 
 
-async def async_send(obj: QueueDist, items: Iterable):
-    async for i in aiterable(items):
-        obj.put(i)
-        assert i == obj.get()
-
-
-async def async_receive(obj: QueueDist, last: Optional[bool] = True):
-    return [i async for i in obj.subscribe(last=last)]
+def test_get(obj: QueueDist[int]):
+    assert obj.get() is None
+    for item in range(5):
+        obj.put(item)
+        assert item == obj.get()
 
 
 @pytest.mark.asyncio
-async def test_subscribe(obj: QueueDist):
-    items = list(range(10))
-    task_receive_1 = asyncio.create_task(async_receive(obj))
-    task_receive_2 = asyncio.create_task(async_receive(obj))
-    task_send = asyncio.create_task(async_send(obj, items))
-    await task_send
-    results = await asyncio.gather(
-        task_receive_1, task_receive_2, to_thread(obj.close)
+@pytest.mark.parametrize("n_items", (0, 1, 2, 5))
+@pytest.mark.parametrize("n_subscriptions", (0, 1, 2, 5))
+async def test_subscribe(obj: QueueDist[int], n_items, n_subscriptions):
+    items = tuple(range(n_items))
+    expected = [items] * n_subscriptions
+
+    async def receive():
+        return tuple([i async for i in obj.subscribe()])
+
+    async def send():
+        async for i in aiterable(items):
+            obj.put(i)
+        obj.close()
+
+    *results, _ = await asyncio.gather(
+        *(receive() for _ in range(n_subscriptions)),
+        send(),
     )
-    result1, result2, *_ = results
-    assert items == result1
-    assert items == result2
+    assert results == expected
     assert obj.nsubscriptions == 0
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("n", (0, 1, 2, 5))
+async def test_nsubscriptions(obj: QueueDist[int], n):
+    async def receive():
+        return tuple([i async for i in obj.subscribe()])
+
+    task = asyncio.gather(*(receive() for _ in range(n)))
+    await asyncio.sleep(0)
+    assert obj.nsubscriptions == n
+    obj.close()
+    await task
+    assert obj.nsubscriptions == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("n_pre_items", (0, 1, 2, 5))
+@pytest.mark.parametrize("n_items", (0, 1, 3))
 @pytest.mark.parametrize("last", [True, False])
-async def test_receive_the_most_recent_item(obj: QueueDist, last: bool):
+@pytest.mark.parametrize("n_subscriptions", (0, 1, 3))
+async def test_last(
+    obj: QueueDist[int | str],
+    n_pre_items: int,
+    n_items: int,
+    last: bool,
+    n_subscriptions: int,
+):
+    pre_items = tuple(ascii_uppercase[:n_pre_items])
+    items = tuple(range(n_items))
 
-    task_receive_1 = asyncio.create_task(async_receive(obj))
-    await asyncio.sleep(0)  # let task_receive_1 start
+    expected = [pre_items[-1:] + items if last else items] * n_subscriptions
 
-    pre_items = ["A", "B", "C"]
+    async def receive():
+        return tuple([i async for i in obj.subscribe(last=last)])
+
+    async def send():
+        async for i in aiterable(items):
+            obj.put(i)
+        obj.close()
+
     for i in pre_items:
         obj.put(i)
-        assert i == obj.get()
 
-    await asyncio.sleep(0.01)
+    await asyncio.sleep(0.001)
 
-    task_receive_2 = asyncio.create_task(async_receive(obj, last))
+    *results, _ = await asyncio.gather(
+        *(receive() for _ in range(n_subscriptions)),
+        send(),
+    )
+    assert results == expected
 
-    items = list(range(10))
-    task_send = asyncio.create_task(async_send(obj, items))
 
-    await task_send
+@pytest.mark.parametrize("n_items", (0, 1, 3))
+def test_put_after_close(obj: QueueDist[int | str], n_items: int):
+    items = tuple(range(n_items))
+    for i in items:
+        obj.put(i)
     obj.close()
-    assert [*pre_items, *items] == await task_receive_1
-
-    # receive 'C', which was put before task_receive_2 started
-    expected = [pre_items[-1], *items] if last else items
-    assert expected == await task_receive_2
+    with pytest.raises(RuntimeError):
+        obj.put("A")
+    if items:
+        assert obj.get() == items[-1]  # the last item is not replaced
+    else:
+        assert obj.get() is None
 
 
 @pytest.mark.asyncio
-async def test_subscribe_after_end(obj: QueueDist):
-    # Note: This test might be unnecessary. It is more useful to test
-    # what happens if subscribed after closed.
-
-    items = list(range(10))
-    task_send = asyncio.create_task(async_send(obj, items))
-    await task_send
+@pytest.mark.parametrize("n_items", (0, 1, 3))
+async def test_subscribe_after_close(obj: QueueDist[int], n_items: int):
+    items = tuple(range(n_items))
+    for i in items:
+        obj.put(i)
     obj.close()
+    await asyncio.sleep(0.001)
 
-    task_receive = asyncio.create_task(async_receive(obj))
-    await task_receive
+    async def receive():
+        return tuple([i async for i in obj.subscribe()])
 
-
-async def async_receive_with_break(obj, at=None):
-    ret = []
-    async for i in obj.subscribe():
-        if i == at:
-            break
-        ret.append(i)
-    return ret
+    results = await receive()
+    assert results == ()  # empty
 
 
 @pytest.mark.asyncio
-async def test_break(obj: QueueDist):
-    items = list(range(10))
-    at = 5
-    task_receive_1 = asyncio.create_task(async_receive_with_break(obj, at))
-    task_receive_2 = asyncio.create_task(async_receive(obj))
-    task_send = asyncio.create_task(async_send(obj, items))
-    await task_send
-    assert items[: items.index(at)] == await task_receive_1
-    results = await asyncio.gather(task_receive_2, to_thread(obj.close))
-    result2, *_ = results
-    assert items == result2
-    assert obj.nsubscriptions == 0
+@pytest.mark.parametrize("at", (0, 2, 4))
+async def test_break(obj: QueueDist[int], at: int):
+    items = tuple(range(5))
+    expected = items[: items.index(at)]
+
+    async def receive():
+        ret = []
+        assert obj.nsubscriptions == 0
+        async for i in obj.subscribe():
+            assert obj.nsubscriptions == 1
+            if i == at:
+                break
+            ret.append(i)
+        await asyncio.sleep(0.001)
+        assert obj.nsubscriptions == 0  # the queue is closed
+        return tuple(ret)
+
+    async def send():
+        async for i in aiterable(items):
+            obj.put(i)
+        obj.close()
+
+    results, _ = await asyncio.gather(receive(), send())
+    assert results == expected
 
 
-nsubscribers = [0, 1, 2, 5, 50]
-pre_nitems = [0, 1, 2, 50]
-post_nitems = [0, 1, 2, 100]
-
-
-@pytest.mark.parametrize("post_nitems", post_nitems)
-@pytest.mark.parametrize("pre_nitems", pre_nitems)
-@pytest.mark.parametrize("nsubscribers", nsubscribers)
 @pytest.mark.asyncio
+@pytest.mark.parametrize("n_subscriptions", [0, 1, 2, 5, 50])
+@pytest.mark.parametrize("n_pre_items", [0, 1, 2, 50])
+@pytest.mark.parametrize("n_post_items", [0, 1, 2, 100])
 async def test_thread(
-    obj: QueueDist,
-    nsubscribers: int,
-    pre_nitems: int,
-    post_nitems: int,
+    obj: QueueDist[int],
+    n_subscriptions: int,
+    n_pre_items: int,
+    n_post_items: int,
 ):
     """test if the issue is resolved
     https://github.com/simonsobs/nextline/issues/2
 
     """
 
-    nitems = pre_nitems + post_nitems
+    n_items = n_pre_items + n_post_items
 
-    if nsubscribers >= 50 and nitems >= 100:
+    if n_subscriptions >= 50 and n_items >= 100:
         pytest.skip("nsubscribers >= 50 and nitems >= 100")
 
-    async def subscribe(obj, event):
-        await event.wait()
-        items = []
-        async for i in obj.subscribe():
-            items.append(i)
-        return items
+    pre_items = tuple(range(-n_pre_items, 0))
+    post_items = tuple(range(n_post_items))
+    items = pre_items + post_items
+    assert len(items) == n_items
 
-    def send(obj, pre_items, event, post_items, event_end):
+    event = ThreadSafeAsyncioEvent()
+
+    async def receive():
+        await event.wait()
+        return tuple([i async for i in obj.subscribe()])
+
+    def send():
         for i in pre_items:
             obj.put(i)
-            assert i == obj.get()
         event.set()
         for i in post_items:
             obj.put(i)
-            assert i == obj.get()
-        event_end.set()
-
-    async def close(obj, event_end):
-        await event_end.wait()
         obj.close()
 
-    items = list(range(nitems))
-    pre_items = items[:pre_nitems]
-    post_items = items[pre_nitems:]
-
-    event = ThreadSafeAsyncioEvent()
-    event_end = ThreadSafeAsyncioEvent()
-
-    coro = to_thread(send, obj, pre_items, event, post_items, event_end)
-    task_send = asyncio.create_task(coro)
-
-    tasks_subscribe = []
-    for i in range(nsubscribers):
-        coro = subscribe(obj, event)
-        task = asyncio.create_task(coro)
-        tasks_subscribe.append(task)
-
-    coro = close(obj, event_end)
-    task_close = asyncio.create_task(coro)
-
-    results = await asyncio.gather(*tasks_subscribe, task_send, task_close)
-    for actual in results[:nsubscribers]:
+    *results, _ = await asyncio.gather(
+        *(receive() for _ in range(n_subscriptions)),
+        to_thread(send),
+    )
+    for actual in results:
         if not actual:  # can be empty
             continue
         # print(actual[0])
         expected = items[items.index(actual[0]) :]  # no missing or duplicate
-        # items from the first
-        # received item
         assert actual == expected
