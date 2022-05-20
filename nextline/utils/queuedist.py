@@ -72,6 +72,8 @@ class QueueDist(Generic[_T]):
 
         This method can be called in any thread.
         """
+        if self._closed:
+            raise RuntimeError(f"{self} is closed.")
         self._last_item = item
         self._q_in.put(item)
 
