@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 import threading
 from queue import Queue
-from janus import Queue as Janus
+from janus import Queue as Janus, SyncQueue
 
 from typing import (
     AsyncIterator,
@@ -45,7 +45,10 @@ class QueueDist(Generic[_T]):
 
         self._q_in: Queue[_T | Literal[_M.END]] = Queue()
 
-        self._qs_out: List[Janus[Tuple[int, _T | Literal[_M.END]]]] = []
+        self._qs_out: List[
+            Queue[Tuple[int, _T | Literal[_M.END]]]
+            | SyncQueue[Tuple[int, _T | Literal[_M.END]]]
+        ] = []
         self._lock_out = threading.Condition()
         self._last_enumerated: Tuple[
             int, _T | Literal[_M.START] | Literal[_M.END]
@@ -88,7 +91,7 @@ class QueueDist(Generic[_T]):
         q: Janus[Tuple[int, _T | Literal[_M.END]]] = Janus()
 
         with self._lock_out:
-            self._qs_out.append(q)
+            self._qs_out.append(q.sync_q)
 
         last_idx, last_item = self._last_enumerated
 
@@ -108,7 +111,7 @@ class QueueDist(Generic[_T]):
 
         finally:
             with self._lock_out:
-                self._qs_out.remove(q)
+                self._qs_out.remove(q.sync_q)
 
             q.close()
             await q.wait_closed()
@@ -136,4 +139,4 @@ class QueueDist(Generic[_T]):
             self._last_enumerated = (idx, item)
             with self._lock_out:
                 for q in self._qs_out:
-                    q.sync_q.put(self._last_enumerated)
+                    q.put(self._last_enumerated)
