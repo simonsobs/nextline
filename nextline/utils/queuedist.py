@@ -54,7 +54,7 @@ class QueueDist(Generic[_T]):
             int, _T | Literal[_M.START] | Literal[_M.END]
         ] = (-1, _M.START)
 
-        self._last_item: _T = None
+        self._last_item: _T | None = None
 
         self._closed: bool = False
         self._lock_close = threading.Condition()
@@ -75,7 +75,7 @@ class QueueDist(Generic[_T]):
         self._last_item = item
         self._q_in.put(item)
 
-    def get(self) -> _T:
+    def get(self) -> _T | None:
         """Most recent data that have been put"""
         return self._last_item
 
