@@ -49,7 +49,6 @@ class QueueDist(Generic[_T]):
             Queue[Tuple[int, _T | Literal[_M.END]]]
             | SyncQueue[Tuple[int, _T | Literal[_M.END]]]
         ] = []
-        self._lock_out = threading.Condition()
         self._last_enumerated: Tuple[
             int, _T | Literal[_M.START] | Literal[_M.END]
         ] = (-1, _M.START)
@@ -92,8 +91,7 @@ class QueueDist(Generic[_T]):
         """
         q: Janus[Tuple[int, _T | Literal[_M.END]]] = Janus()
 
-        with self._lock_out:
-            self._qs_out.append(q.sync_q)
+        self._qs_out.append(q.sync_q)
 
         last_idx, last_item = self._last_enumerated
 
@@ -112,8 +110,7 @@ class QueueDist(Generic[_T]):
                     yield item
 
         finally:
-            with self._lock_out:
-                self._qs_out.remove(q.sync_q)
+            self._qs_out.remove(q.sync_q)
 
             q.close()
             await q.wait_closed()
@@ -139,6 +136,5 @@ class QueueDist(Generic[_T]):
             item = self._q_in.get()
             self._q_in.task_done()
             self._last_enumerated = (idx, item)
-            with self._lock_out:
-                for q in self._qs_out:
-                    q.put(self._last_enumerated)
+            for q in list(self._qs_out):  # list in case it changes in a thread
+                q.put(self._last_enumerated)
