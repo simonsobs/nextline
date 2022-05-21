@@ -6,10 +6,31 @@ from typing import Any
 from weakref import WeakKeyDictionary
 
 import pytest
+from unittest.mock import Mock
 
 from nextline.run import run
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 from nextline.utils.func import to_thread
+
+
+def test_q_done_on_exception(q_done, monkey_patch_run):
+    del monkey_patch_run
+    registry = Mock()
+    q_commands = Mock()
+    with pytest.raises(MockError):
+        run(registry, q_commands, q_done)
+    assert (None, None) == q_done.get()
+
+
+class MockError(Exception):
+    pass
+
+
+@pytest.fixture
+def monkey_patch_run(monkeypatch):
+    y = Mock(side_effect=MockError)
+    monkeypatch.setattr("nextline.run._run", y)
+    yield y
 
 
 @pytest.mark.asyncio

@@ -19,6 +19,14 @@ QDone: TypeAlias = "queue.Queue[Tuple[Any, Any]]"
 
 
 def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
+    try:
+        _run(registry, q_commands, q_done)
+    except BaseException:
+        q_done.put((None, None))
+        raise
+
+
+def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
 
     code = _compile_code(registry, q_done)
     if code is None:
