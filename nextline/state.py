@@ -290,8 +290,8 @@ class Running(State):
 
     async def finish(self):
         self.assert_not_obsolete()
-        await to_thread(self._thread.join)
         result, exception = await self._q_done.async_q.get()
+        await to_thread(self._thread.join)
         finished = Finished(self.registry, result=result, exception=exception)
         self.obsolete()
         return finished
