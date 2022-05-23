@@ -29,7 +29,7 @@ class _M(enum.Enum):
 _T = TypeVar("_T")
 
 
-class QueueDist(Generic[_T]):
+class SubscribableQueue(Generic[_T]):
     """Distribute data to subscribers
 
     Data can be sent from any thread. Asynchronous subscriptions don't need to

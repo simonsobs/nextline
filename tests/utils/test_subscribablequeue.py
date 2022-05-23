@@ -4,19 +4,19 @@ from string import ascii_uppercase
 
 import pytest
 
-from nextline.utils import QueueDist, ThreadSafeAsyncioEvent, to_thread
+from nextline.utils import SubscribableQueue, ThreadSafeAsyncioEvent, to_thread
 
 from .aiterable import aiterable
 
 
 def test_daemon():
-    _ = QueueDist()
+    _ = SubscribableQueue()
     # The program shouldn't be blocked even when close() is not called.
 
 
 @pytest.fixture()
 def obj():
-    y = QueueDist()
+    y = SubscribableQueue()
     yield y
     y.close()
 
@@ -30,7 +30,7 @@ def test_close_multiple_times(obj):
     obj.close()
 
 
-def test_get(obj: QueueDist[int]):
+def test_get(obj: SubscribableQueue[int]):
     assert obj.get() is None
     for item in range(5):
         obj.put(item)
@@ -40,7 +40,7 @@ def test_get(obj: QueueDist[int]):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("n_items", (0, 1, 2, 5))
 @pytest.mark.parametrize("n_subscriptions", (0, 1, 2, 5))
-async def test_subscribe(obj: QueueDist[int], n_items, n_subscriptions):
+async def test_subscribe(obj: SubscribableQueue[int], n_items, n_subscriptions):
     items = tuple(range(n_items))
     expected = [items] * n_subscriptions
 
@@ -62,7 +62,7 @@ async def test_subscribe(obj: QueueDist[int], n_items, n_subscriptions):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("n", (0, 1, 2, 5))
-async def test_nsubscriptions(obj: QueueDist[int], n):
+async def test_nsubscriptions(obj: SubscribableQueue[int], n):
     async def receive():
         return tuple([i async for i in obj.subscribe()])
 
@@ -80,7 +80,7 @@ async def test_nsubscriptions(obj: QueueDist[int], n):
 @pytest.mark.parametrize("last", [True, False])
 @pytest.mark.parametrize("n_subscriptions", (0, 1, 3))
 async def test_last(
-    obj: QueueDist[int | str],
+    obj: SubscribableQueue[int | str],
     n_pre_items: int,
     n_items: int,
     last: bool,
@@ -112,7 +112,7 @@ async def test_last(
 
 
 @pytest.mark.parametrize("n_items", (0, 1, 3))
-def test_put_after_close(obj: QueueDist[int | str], n_items: int):
+def test_put_after_close(obj: SubscribableQueue[int | str], n_items: int):
     items = tuple(range(n_items))
     for i in items:
         obj.put(i)
@@ -127,7 +127,7 @@ def test_put_after_close(obj: QueueDist[int | str], n_items: int):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("n_items", (0, 1, 3))
-async def test_subscribe_after_close(obj: QueueDist[int], n_items: int):
+async def test_subscribe_after_close(obj: SubscribableQueue[int], n_items: int):
     items = tuple(range(n_items))
     for i in items:
         obj.put(i)
@@ -143,7 +143,7 @@ async def test_subscribe_after_close(obj: QueueDist[int], n_items: int):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("at", (0, 2, 4))
-async def test_break(obj: QueueDist[int], at: int):
+async def test_break(obj: SubscribableQueue[int], at: int):
     items = tuple(range(5))
     expected = items[: items.index(at)]
 
@@ -173,7 +173,7 @@ async def test_break(obj: QueueDist[int], at: int):
 @pytest.mark.parametrize("n_pre_items", [0, 1, 2, 50])
 @pytest.mark.parametrize("n_post_items", [0, 1, 2, 100])
 async def test_thread(
-    obj: QueueDist[int],
+    obj: SubscribableQueue[int],
     n_subscriptions: int,
     n_pre_items: int,
     n_post_items: int,

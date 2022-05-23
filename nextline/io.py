@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, DefaultDict, TextIO
 
 
-from .utils import QueueDist, current_task_or_thread
+from .utils import SubscribableQueue, current_task_or_thread
 from .types import StdoutInfo
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class IOSubscription(io.TextIOWrapper):
         https://github.com/alphatwirl/atpbar/blob/894a7e0b4d81aa7b/atpbar/stream.py#L54
         """
         self.registry = registry
-        self._queue = QueueDist[StdoutInfo]()
+        self._queue = SubscribableQueue[StdoutInfo]()
         self._src = src
         self._buffer: DefaultDict[Task | Thread, str] = defaultdict(str)
 

@@ -10,7 +10,7 @@ from typing import (
     MutableMapping,
 )
 
-from .queuedist import QueueDist
+from .subscribablequeue import SubscribableQueue
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
@@ -21,7 +21,7 @@ class SubscribableDict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     """Dict with async generator that yields values as they change"""
 
     def __init__(self):
-        self._map: DefaultDict[_KT, QueueDist[_VT]] = defaultdict(QueueDist)
+        self._map: DefaultDict[_KT, SubscribableQueue[_VT]] = defaultdict(SubscribableQueue)
 
     def subscribe(self, key: _KT, last: Optional[bool] = True):
         """Async generator that yields values for the key as they are set
