@@ -30,15 +30,15 @@ _T = TypeVar("_T")
 
 
 class SubscribableQueue(Generic[_T]):
-    """Distribute data to subscribers
+    """Distribute items to subscribers
 
-    Data can be sent from any thread. Asynchronous subscriptions don't need to
-    be all in the same thread.
+    Items can be sent from any threads. Asynchronous subscriptions don't need
+    to be all in the same thread.
 
-    A new subscriber immediately receives the most recent issue of the past
-    data and then wait for future issues.
+    A new subscriber immediately receives the latest item and then wait for new
+    items.
 
-    The order of the data is preserved.
+    The order of the items is preserved.
     """
 
     def __init__(self):
@@ -78,6 +78,8 @@ class SubscribableQueue(Generic[_T]):
 
     def get(self) -> _T | None:
         """Most recent data that have been put"""
+        # TODO: Raise an exception if no item has been put, which can be caught
+        # in SubscribableDict.__getitem__()
         return self._last_item
 
     async def subscribe(
