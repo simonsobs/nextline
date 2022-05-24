@@ -31,7 +31,8 @@ def test_close_multiple_times(obj):
 
 
 def test_get(obj: SubscribableQueue[int]):
-    assert obj.get() is None
+    with pytest.raises(LookupError):
+        obj.get()
     for item in range(5):
         obj.put(item)
         assert item == obj.get()
@@ -122,7 +123,8 @@ def test_put_after_close(obj: SubscribableQueue[int | str], n_items: int):
     if items:
         assert obj.get() == items[-1]  # the last item is not replaced
     else:
-        assert obj.get() is None
+        with pytest.raises(LookupError):
+            obj.get()
 
 
 @pytest.mark.asyncio

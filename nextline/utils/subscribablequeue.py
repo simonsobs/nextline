@@ -53,7 +53,7 @@ class SubscribableQueue(Generic[_T]):
             int, _T | Literal[_M.START] | Literal[_M.END]
         ] = (-1, _M.START)
 
-        self._last_item: _T | None = None
+        self._last_item: _T | Literal[_M.START] = _M.START
 
         self._closed: bool = False
         self._lock_close = threading.Condition()
@@ -76,10 +76,10 @@ class SubscribableQueue(Generic[_T]):
         self._last_item = item
         self._q_in.put(item)
 
-    def get(self) -> _T | None:
+    def get(self) -> _T:
         """Most recent data that have been put"""
-        # TODO: Raise an exception if no item has been put, which can be caught
-        # in SubscribableDict.__getitem__()
+        if self._last_item is _M.START:
+            raise LookupError
         return self._last_item
 
     async def subscribe(
