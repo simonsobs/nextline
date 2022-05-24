@@ -2,13 +2,13 @@ from __future__ import annotations
 from typing import AsyncIterator, Generic, Optional, TypeVar
 
 from .subscribablequeue import SubscribableQueue
-from ._userdict import TUserDict
+from ._userdict import UserDict
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
 
-class QueueDict(TUserDict[_KT, SubscribableQueue[_VT]], Generic[_KT, _VT]):
+class QueueDict(UserDict[_KT, SubscribableQueue[_VT]], Generic[_KT, _VT]):
     def __missing__(self, key: _KT) -> SubscribableQueue[_VT]:
         v = self[key] = SubscribableQueue()
         return v
@@ -17,7 +17,7 @@ class QueueDict(TUserDict[_KT, SubscribableQueue[_VT]], Generic[_KT, _VT]):
         self.data.pop(key).close()
 
 
-class SubscribableDict(TUserDict[_KT, _VT], Generic[_KT, _VT]):
+class SubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
     """Dict with async generator that yields values as they change"""
 
     def __init__(self, *args, **kwargs):
