@@ -15,6 +15,8 @@ _VT = TypeVar("_VT")
 
 
 class SubscribableDict(UserDict, MutableMapping[_KT, _VT], Generic[_KT, _VT]):
+    """Dict with async generator that yields values as they change"""
+
     def __init__(self, *args, **kwargs):
         self._queue: DefaultDict[_KT, SubscribableQueue[_VT]] = defaultdict(
             SubscribableQueue
