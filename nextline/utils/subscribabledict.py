@@ -1,27 +1,27 @@
 from __future__ import annotations
-from collections import defaultdict, UserDict
-from typing import (
-    AsyncIterator,
-    Generic,
-    Optional,
-    TypeVar,
-    DefaultDict,
-    MutableMapping,
-)
+from typing import AsyncIterator, Generic, Optional, TypeVar
 
 from .subscribablequeue import SubscribableQueue
+from ._userdict import TUserDict
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
 
-class SubscribableDict(UserDict, MutableMapping[_KT, _VT], Generic[_KT, _VT]):
+class QueueDict(TUserDict[_KT, SubscribableQueue[_VT]], Generic[_KT, _VT]):
+    def __missing__(self, key: _KT) -> SubscribableQueue[_VT]:
+        v = self[key] = SubscribableQueue()
+        return v
+
+    def __delitem__(self, key: _KT) -> None:
+        self.data.pop(key).close()
+
+
+class SubscribableDict(TUserDict[_KT, _VT], Generic[_KT, _VT]):
     """Dict with async generator that yields values as they change"""
 
     def __init__(self, *args, **kwargs):
-        self._queue: DefaultDict[_KT, SubscribableQueue[_VT]] = defaultdict(
-            SubscribableQueue
-        )
+        self._queue: QueueDict[_KT, _VT] = QueueDict()
         super().__init__(*args, **kwargs)
 
     def subscribe(
@@ -51,18 +51,12 @@ class SubscribableDict(UserDict, MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         KeyError will be raised if the key doesn't exist
         """
         super().__delitem__(key)
-        self._queue.pop(key).close()
+        self.end(key)
+
+    def end(self, key: _KT):
+        del self._queue[key]
 
     def close(self) -> None:
-        """Remove all keys, ending all subscriptions for all keys"""
-        while True:
-            try:
-                self.popitem()  # __delitem__() will be called
-            except KeyError:
-                break
-        while True:
-            try:
-                k, v = self._queue.popitem()
-            except KeyError:
-                break
-            v.close()
+        """Remove all keys, ending all subscriptions"""
+        self.clear()
+        self._queue.clear()

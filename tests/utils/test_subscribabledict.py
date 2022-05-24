@@ -8,7 +8,23 @@ from .aiterable import aiterable
 
 
 @pytest.mark.asyncio
-async def test_one():
+async def test_end():
+    obj: SubscribableDict[str, str] = SubscribableDict()
+    key = "A"
+
+    async def subscribe():
+        return tuple([y async for y in obj.subscribe(key)])
+
+    async def end():
+        await asyncio.sleep(0.001)
+        obj.end(key)
+
+    results = await asyncio.gather(subscribe(), end())
+    print(results)
+
+
+@pytest.mark.asyncio
+async def test_one_():
     obj: SubscribableDict[str, str] = SubscribableDict()
 
     key = "key_one"
@@ -35,23 +51,18 @@ async def test_one():
     obj.close()
 
 
-nitems = [0, 1, 2, 50]
-nsubscribers = [0, 1, 2, 70]
-
-
-@pytest.mark.parametrize("nitems", nitems)
-@pytest.mark.parametrize("nsubscribers", nsubscribers)
+@pytest.mark.parametrize("nitems", [0, 1, 2, 50])
+@pytest.mark.parametrize("nsubscribers", [0, 1, 2, 70])
 @pytest.mark.parametrize("thread", [True, False])
 @pytest.mark.parametrize("close_register", [True, False])
 @pytest.mark.asyncio
 async def test_matrix(close_register, thread, nsubscribers, nitems):
     async def subscribe():
-        return [y async for y in obj.subscribe(key)]
+        return tuple([y async for y in obj.subscribe(key)])
 
     def register():
         for item in items:
             obj[key] = item
-            assert obj[key] == item
         if close_register:
             if key in obj:
                 del obj[key]
@@ -62,7 +73,7 @@ async def test_matrix(close_register, thread, nsubscribers, nitems):
     obj = SubscribableDict()
 
     key = "item"
-    items = [f"{key}-{i+1}" for i in range(nitems)]
+    items = tuple([f"{key}-{i+1}" for i in range(nitems)])
 
     # subscribe
     tasks_subscribe = []
