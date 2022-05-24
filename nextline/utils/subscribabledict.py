@@ -54,9 +54,29 @@ class SubscribableDict(TUserDict[_KT, _VT], Generic[_KT, _VT]):
         self.end(key)
 
     def end(self, key: _KT):
-        del self._queue[key]
+        """End all subscriptions for the key without removing the key
+
+        The async generators returned by the method `subscribe()` for the key
+        will return.
+
+        The item for the key is still accessible as d[key]
+
+        KeyError will not be raised
+
+        """
+        try:
+            del self._queue[key]
+        except KeyError:
+            pass
 
     def close(self) -> None:
-        """Remove all keys, ending all subscriptions"""
-        self.clear()
+        """End all subscriptions for all keys
+
+        The all async generators returned by the method `subscribe()` for any
+        key will return.
+
+        No keys will be removed, i.e., d[key] still returns the item for the
+        key.
+
+        """
         self._queue.clear()

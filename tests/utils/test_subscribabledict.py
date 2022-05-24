@@ -1,4 +1,5 @@
 import asyncio
+from string import ascii_lowercase
 
 import pytest
 
@@ -7,20 +8,123 @@ from nextline.utils import SubscribableDict, to_thread
 from .aiterable import aiterable
 
 
+@pytest.fixture
+def obj():
+    y = SubscribableDict()
+    yield y
+    y.close()
+
+
 @pytest.mark.asyncio
-async def test_end():
-    obj: SubscribableDict[str, str] = SubscribableDict()
+async def test_end(obj: SubscribableDict[str, str]):
     key = "A"
 
     async def subscribe():
         return tuple([y async for y in obj.subscribe(key)])
 
-    async def end():
+    async def put():
         await asyncio.sleep(0.001)
         obj.end(key)
 
-    results = await asyncio.gather(subscribe(), end())
-    print(results)
+    result, _ = await asyncio.gather(subscribe(), put())
+    assert result == ()
+
+
+@pytest.mark.asyncio
+async def test_end_without_subscription(obj: SubscribableDict[str, str]):
+    key = "A"
+    obj.end(key)
+
+
+@pytest.mark.asyncio
+async def test_close(obj: SubscribableDict[str, str]):
+    key = "A"
+    n_items = 5
+    items = tuple(ascii_lowercase[:n_items])
+
+    async def subscribe():
+        return tuple([y async for y in obj.subscribe(key)])
+
+    async def put():
+        await asyncio.sleep(0.001)
+        for item in items:
+            obj[key] = item
+        obj.close()  # ends the subscription
+        assert obj[key] == items[-1]  # the last item is still there
+
+    result, _ = await asyncio.gather(subscribe(), put())
+    assert result == items
+
+
+@pytest.mark.asyncio
+async def test_clear(obj: SubscribableDict[str, str]):
+    key = "A"
+    n_items = 5
+    items = tuple(ascii_lowercase[:n_items])
+
+    async def subscribe():
+        return tuple([y async for y in obj.subscribe(key)])
+
+    async def put():
+        await asyncio.sleep(0.001)
+        obj.clear()  # doesn't end the subscription as no item hasn't been put
+        for item in items:
+            obj[key] = item
+        obj.clear()  # ends the subscription
+        assert key not in obj  # the item is deleted
+
+    result, _ = await asyncio.gather(subscribe(), put())
+    assert result == items
+
+
+@pytest.mark.asyncio
+async def test_del(obj: SubscribableDict[str, str]):
+    key = "A"
+    n_items = 5
+    items = tuple(ascii_lowercase[:n_items])
+
+    async def subscribe():
+        return tuple([y async for y in obj.subscribe(key)])
+
+    async def put():
+        await asyncio.sleep(0.001)
+        with pytest.raises(KeyError):
+            del obj[key]  # this doesn't end the subscription
+        for item in items:
+            obj[key] = item
+        del obj[key]  # this ends the subscription
+        assert key not in obj
+
+    result, _ = await asyncio.gather(subscribe(), put())
+    assert result == items
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("last", [True, False])
+async def test_last(obj: SubscribableDict[str, str], last: bool):
+    key = "A"
+    n_pre_items = 3
+    n_items = 5
+    pre_items = tuple(reversed(ascii_lowercase[-n_pre_items:]))
+    items = tuple(ascii_lowercase[:n_items])
+    expected = pre_items[-1:] + items if last else items
+
+    for item in pre_items:
+        obj[key] = item
+
+    await asyncio.sleep(0.001)
+
+    async def subscribe():
+        return tuple([y async for y in obj.subscribe(key, last=last)])
+
+    async def put():
+        await asyncio.sleep(0.001)
+        for item in items:
+            obj[key] = item
+        del obj[key]
+
+    result, _ = await asyncio.gather(subscribe(), put())
+    assert result == expected
 
 
 @pytest.mark.asyncio
