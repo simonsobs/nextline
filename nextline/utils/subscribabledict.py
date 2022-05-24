@@ -1,6 +1,7 @@
 from __future__ import annotations
 from collections import defaultdict, UserDict
 from typing import (
+    AsyncIterator,
     Generic,
     Optional,
     TypeVar,
@@ -23,7 +24,9 @@ class SubscribableDict(UserDict, MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         )
         super().__init__(*args, **kwargs)
 
-    def subscribe(self, key: _KT, last: Optional[bool] = True):
+    def subscribe(
+        self, key: _KT, last: Optional[bool] = True
+    ) -> AsyncIterator[_VT]:
         """Async generator that yields values for the key as they are set
 
         Waits for new values and yields them as they are set. If `last` is
