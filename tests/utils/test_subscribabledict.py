@@ -35,37 +35,6 @@ async def test_one():
     obj.close()
 
 
-def test_key_error():
-    obj = SubscribableDict()
-
-    key = "no_such_key"
-    with pytest.raises(KeyError):
-        obj[key]
-
-    assert 0 == len(obj)
-    assert not obj
-
-    with pytest.raises(KeyError):
-        del obj[key]
-
-    obj.close()
-
-
-def test_get():
-    obj = SubscribableDict()
-
-    key = "no_such_key"
-    assert obj.get(key) is None
-
-    key = "no_such_key"
-    assert 123 == obj.get(key, 123)
-
-    assert 0 == len(obj)
-    assert not obj
-
-    obj.close()
-
-
 nitems = [0, 1, 2, 50]
 nsubscribers = [0, 1, 2, 70]
 
