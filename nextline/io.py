@@ -31,7 +31,6 @@ class IOSubscription(io.TextIOWrapper):
             sys.stdout = IOSubscription(sys.stdout)
 
         """
-        self.registry = registry
         self._queue = SubscribableQueue[StdoutInfo]()
         self._src = src
         self._buffer: DefaultDict[Task | Thread, str] = defaultdict(str)
@@ -47,6 +46,12 @@ class IOSubscription(io.TextIOWrapper):
 
     def write(self, s: str) -> int:
         return self._s.write(s)
+
+    def _listen(self) -> None:
+        while m := self._q.get():
+            self._put(*m)
+            self._q.task_done()
+        self._q.task_done()
 
     def _put(self, key, text, timestamp):
         if not (run_no := self._run_no_map.get(key)):
@@ -70,12 +75,6 @@ class IOSubscription(io.TextIOWrapper):
 
     def subscribe(self):
         return self._queue.subscribe(last=False)
-
-    def _listen(self) -> None:
-        while m := self._q.get():
-            self._put(*m)
-            self._q.task_done()
-        self._q.task_done()
 
 
 class IOQueue(io.TextIOWrapper):
