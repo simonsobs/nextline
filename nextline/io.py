@@ -4,7 +4,7 @@ import io
 import datetime
 from collections import defaultdict
 
-from typing import TYPE_CHECKING, DefaultDict, TextIO
+from typing import TYPE_CHECKING, DefaultDict, Mapping, TextIO
 
 
 from .utils import SubscribableQueue, current_task_or_thread
@@ -13,11 +13,10 @@ from .types import StdoutInfo
 if TYPE_CHECKING:
     from asyncio import Task
     from threading import Thread
-    from .utils import SubscribableDict
 
 
 class IOSubscription(io.TextIOWrapper):
-    def __init__(self, src: TextIO, registry: SubscribableDict):
+    def __init__(self, src: TextIO, registry: Mapping):
         """Make output stream subscribable
 
         The src needs to be replaced with the instance of this class. For

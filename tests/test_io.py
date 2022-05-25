@@ -3,22 +3,18 @@ import io
 from itertools import count
 from weakref import WeakKeyDictionary
 
-from typing import Any
+from typing import Any, Dict
 
 import pytest
 
 from nextline.io import IOSubscription
-from nextline.utils import (
-    SubscribableDict,
-    ThreadTaskIdComposer,
-    current_task_or_thread,
-)
+from nextline.utils import ThreadTaskIdComposer, current_task_or_thread
 
 
 @pytest.mark.asyncio
 async def test_one(
     obj: IOSubscription,
-    registry: SubscribableDict[str, Any],
+    registry: Dict[str, Any],
     text_io: io.StringIO,
 ):
     async def subscribe():
@@ -64,7 +60,7 @@ async def test_one(
 
 
 @pytest.fixture
-def obj(registry: SubscribableDict[str, Any], text_io: io.StringIO):
+def obj(registry: Dict[str, Any], text_io: io.StringIO):
     y = IOSubscription(text_io, registry)
     yield y
 
@@ -77,7 +73,7 @@ def text_io():
 
 @pytest.fixture
 def registry():
-    y = SubscribableDict[str, Any]()
+    y = {}
     y["trace_id_factory"] = ThreadTaskIdComposer()
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
