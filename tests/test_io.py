@@ -18,9 +18,10 @@ async def test_one(
     text_io: io.StringIO,
 ):
     async def subscribe():
-        return [y async for y in obj.subscribe()]
+        return tuple([y async for y in obj.subscribe()])
 
     async def write():
+        await asyncio.sleep(0.001)
         trace_no = trace_no_counter()
         task_or_thread = current_task_or_thread()
         registry["trace_id_factory"]()
@@ -35,26 +36,20 @@ async def test_one(
         obj.write("\n")
         await asyncio.sleep(0)
 
+    async def put():
+        await asyncio.gather(
+            write(),
+            write(),
+        )
+        obj.close()
+
     run_no = 1
     trace_no_counter = count(1).__next__
 
-    t = asyncio.create_task(subscribe())
-
-    await asyncio.sleep(0)
-
-    await asyncio.gather(
-        asyncio.create_task(write()),
-        asyncio.create_task(write()),
-    )
+    results, _ = await asyncio.gather(subscribe(), put())
 
     assert len("abcdef\n" * 2) == len(text_io.getvalue())
 
-    await asyncio.sleep(0)
-
-    obj.close()
-
-    results = await t
-    # print(results)
     assert 2 == len(results)
     assert ["abcdef\n"] * 2 == [r.text for r in results]
 
