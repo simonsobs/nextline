@@ -17,29 +17,32 @@ async def test_one(
     registry: Dict[str, Any],
     text_io: io.StringIO,
 ):
+    messages = ("abc", "def", "\n", "ghi", "jkl", "\n")
+
     async def subscribe():
         return tuple([y async for y in obj.subscribe()])
 
-    async def write():
-        await asyncio.sleep(0.001)
+    async def write(to_put: bool):
         trace_no = trace_no_counter()
         task_or_thread = current_task_or_thread()
-        registry["trace_id_factory"]()
+        if to_put:
+            registry["trace_id_factory"]()
         registry["run_no_map"][task_or_thread] = run_no
         registry["trace_no_map"][task_or_thread] = trace_no
         await asyncio.sleep(0)
-        # print("abcdef", file=obj)
-        obj.write("abc")
-        await asyncio.sleep(0)
-        obj.write("def")
-        await asyncio.sleep(0)
-        obj.write("\n")
-        await asyncio.sleep(0)
+        for m in messages:
+            obj.write(m)
+            await asyncio.sleep(0)
+
+    n = 2  # number of write(True)
+    m = 1  # number of write(False)
 
     async def put():
+        await asyncio.sleep(0.001)
         await asyncio.gather(
-            write(),
-            write(),
+            write(True),
+            write(True),
+            write(False),
         )
         obj.close()
 
@@ -48,10 +51,11 @@ async def test_one(
 
     results, _ = await asyncio.gather(subscribe(), put())
 
-    assert len("abcdef\n" * 2) == len(text_io.getvalue())
+    assert len("".join(messages) * (n + m)) == len(text_io.getvalue())
 
-    assert 2 == len(results)
-    assert ["abcdef\n"] * 2 == [r.text for r in results]
+    assert len("".join(messages).split()) * n == len(results)
+    expected = sorted("".join(messages).splitlines(True) * n)
+    assert expected == sorted(r.text for r in results)
 
 
 @pytest.fixture
