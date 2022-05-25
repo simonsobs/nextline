@@ -8,7 +8,7 @@ from typing import Any, Dict
 import pytest
 
 from nextline.io import IOSubscription
-from nextline.utils import ThreadTaskIdComposer, current_task_or_thread
+from nextline.utils import current_task_or_thread
 
 
 @pytest.mark.asyncio
@@ -26,9 +26,8 @@ async def test_one(
         trace_no = trace_no_counter()
         task_or_thread = current_task_or_thread()
         if to_put:
-            registry["trace_id_factory"]()
-        registry["run_no_map"][task_or_thread] = run_no
-        registry["trace_no_map"][task_or_thread] = trace_no
+            registry["run_no_map"][task_or_thread] = run_no
+            registry["trace_no_map"][task_or_thread] = trace_no
         await asyncio.sleep(0)
         for m in messages:
             obj.write(m)
@@ -73,7 +72,6 @@ def text_io():
 @pytest.fixture
 def registry():
     y = {}
-    y["trace_id_factory"] = ThreadTaskIdComposer()
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
     yield y

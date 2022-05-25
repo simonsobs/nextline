@@ -16,15 +16,6 @@ if TYPE_CHECKING:
     from asyncio import Task
 
 
-def create_key_factory(to_put):
-    def key_factory():
-        if not to_put():
-            return None
-        return current_task_or_thread()
-
-    return key_factory
-
-
 class IOQueueItem(NamedTuple):
     key: Any
     text: str
@@ -52,13 +43,7 @@ class IOSubscription(io.TextIOWrapper):
         self._thread = Thread(target=self._listen, daemon=True)
         self._thread.start()
 
-        id_composer = registry["trace_id_factory"]  # type: ignore
-        self._key_factory = create_key_factory(to_put=id_composer.has_id)
-        self._s = IOQueue(
-            src=src,
-            queue=self._q,
-            key_factory=self._key_factory,
-        )
+        self._s = IOQueue(src=src, queue=self._q)
 
     def write(self, s: str) -> int:
         return self._s.write(s)
@@ -94,10 +79,9 @@ class IOSubscription(io.TextIOWrapper):
 
 
 class IOQueue(io.TextIOWrapper):
-    def __init__(self, src: TextIO, queue: Queue[IOQueueItem], key_factory):
+    def __init__(self, src: TextIO, queue: Queue[IOQueueItem]):
         self._queue = queue
         self._src = src
-        self._key_factory = key_factory
         self._buffer: DefaultDict[Any, str] = defaultdict(str)
 
     def write(self, s: str) -> int:
@@ -106,8 +90,7 @@ class IOQueue(io.TextIOWrapper):
         # TypeError if s isn't str as long as self._src is sys.stdout or
         # sys.stderr.
 
-        if not (key := self._key_factory()):
-            return ret
+        key = current_task_or_thread()
 
         self._buffer[key] += s
         if s.endswith("\n"):
