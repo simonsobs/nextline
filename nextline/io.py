@@ -44,24 +44,15 @@ class IOSubscription(io.TextIOWrapper):
         id_composer = registry["trace_id_factory"]  # type: ignore
 
         self._key_factory = create_key_factory(to_put=id_composer.has_id)
+        self._s = Scratch(
+            src=src,
+            put=self._put,
+            queue=self._queue,
+            key_factory=self._key_factory,
+        )
 
     def write(self, s: str) -> int:
-
-        ret = self._src.write(s)
-        # TypeError if s isn't str as long as self._src is sys.stdout or
-        # sys.stderr.
-
-        if not (key := self._key_factory()):
-            return ret
-
-        self._buffer[key] += s
-        if s.endswith("\n"):
-            self._put(
-                key=key,
-                text=self._buffer.pop(key),
-                timestamp=datetime.datetime.now(),
-            )
-        return ret
+        return self._s.write(s)
 
     def _put(self, key, text, timestamp):
         if not (run_no := self._run_no_map.get(key)):
@@ -82,3 +73,30 @@ class IOSubscription(io.TextIOWrapper):
 
     def subscribe(self):
         return self._queue.subscribe(last=False)
+
+
+class Scratch(io.TextIOWrapper):
+    def __init__(self, src: TextIO, queue, put, key_factory):
+        self._queue = queue
+        self._put = put
+        self._src = src
+        self._key_factory = key_factory
+        self._buffer: DefaultDict[Task | Thread, str] = defaultdict(str)
+
+    def write(self, s: str) -> int:
+
+        ret = self._src.write(s)
+        # TypeError if s isn't str as long as self._src is sys.stdout or
+        # sys.stderr.
+
+        if not (key := self._key_factory()):
+            return ret
+
+        self._buffer[key] += s
+        if s.endswith("\n"):
+            self._put(
+                key=key,
+                text=self._buffer.pop(key),
+                timestamp=datetime.datetime.now(),
+            )
+        return ret
