@@ -94,11 +94,8 @@ class IOQueue(io.TextIOWrapper):
 
         self._buffer[key] += s
         if s.endswith("\n"):
-            self._queue.put(
-                IOQueueItem(
-                    key=key,
-                    text=self._buffer.pop(key),
-                    timestamp=datetime.datetime.now(),
-                )
-            )
+            text = self._buffer.pop(key)
+            now = datetime.datetime.now()
+            item = IOQueueItem(key, text, now)
+            self._queue.put(item)
         return ret
