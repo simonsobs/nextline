@@ -48,7 +48,7 @@ class IOSubscription(io.TextIOWrapper):
 
         id_composer = registry["trace_id_factory"]  # type: ignore
         self._key_factory = create_key_factory(to_put=id_composer.has_id)
-        self._s = Scratch(
+        self._s = IOQueue(
             src=src,
             queue=self._q,
             key_factory=self._key_factory,
@@ -87,7 +87,7 @@ class IOSubscription(io.TextIOWrapper):
         self._q.task_done()
 
 
-class Scratch(io.TextIOWrapper):
+class IOQueue(io.TextIOWrapper):
     def __init__(self, src: TextIO, queue, key_factory):
         self._queue = queue
         self._src = src
