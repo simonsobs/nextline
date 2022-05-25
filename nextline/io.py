@@ -6,7 +6,7 @@ from threading import Thread
 import datetime
 from collections import defaultdict
 
-from typing import TYPE_CHECKING, Any, DefaultDict, Mapping, NamedTuple, TextIO
+from typing import TYPE_CHECKING, DefaultDict, Mapping, NamedTuple, TextIO
 
 
 from .utils import SubscribableQueue, current_task_or_thread
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class IOQueueItem(NamedTuple):
-    key: Any
+    key: Thread | Task
     text: str
     timestamp: datetime.datetime
 
@@ -82,7 +82,7 @@ class IOQueue(io.TextIOWrapper):
     def __init__(self, src: TextIO, queue: Queue[IOQueueItem]):
         self._queue = queue
         self._src = src
-        self._buffer: DefaultDict[Any, str] = defaultdict(str)
+        self._buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
 
     def write(self, s: str) -> int:
 
