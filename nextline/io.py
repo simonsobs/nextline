@@ -15,6 +15,15 @@ if TYPE_CHECKING:
     from threading import Thread
 
 
+def create_key_factory(to_put):
+    def key_factory():
+        if not to_put():
+            return None
+        return current_task_or_thread()
+
+    return key_factory
+
+
 class IOSubscription(io.TextIOWrapper):
     def __init__(self, src: TextIO, registry: Mapping):
         """Make output stream subscribable
@@ -23,17 +32,18 @@ class IOSubscription(io.TextIOWrapper):
         example, if the src is stdout,
             sys.stdout = IOSubscription(sys.stdout)
 
-        NOTE: The code on the logic about the buffer copied from
-        https://github.com/alphatwirl/atpbar/blob/894a7e0b4d81aa7b/atpbar/stream.py#L54
         """
         self.registry = registry
         self._queue = SubscribableQueue[StdoutInfo]()
         self._src = src
         self._buffer: DefaultDict[Task | Thread, str] = defaultdict(str)
 
-        self._id_composer = registry["trace_id_factory"]  # type: ignore
         self._run_no_map = registry["run_no_map"]  # type: ignore
         self._trace_no_map = registry["trace_no_map"]  # type: ignore
+
+        id_composer = registry["trace_id_factory"]  # type: ignore
+
+        self._key_factory = create_key_factory(to_put=id_composer.has_id)
 
     def write(self, s: str) -> int:
 
@@ -41,33 +51,31 @@ class IOSubscription(io.TextIOWrapper):
         # TypeError if s isn't str as long as self._src is sys.stdout or
         # sys.stderr.
 
-        if not self._id_composer.has_id():
+        if not (key := self._key_factory()):
             return ret
-
-        key = current_task_or_thread()
 
         self._buffer[key] += s
         if s.endswith("\n"):
-            self._put(key)
+            self._put(
+                key=key,
+                text=self._buffer.pop(key),
+                timestamp=datetime.datetime.now(),
+            )
         return ret
 
-    def _put(self, key):
-        if not self._buffer[key]:
-            return
+    def _put(self, key, text, timestamp):
         if not (run_no := self._run_no_map.get(key)):
             return
         if not (trace_no := self._trace_no_map.get(key)):
             return
-        now = datetime.datetime.now()
         info = StdoutInfo(
             run_no=run_no,
             trace_no=trace_no,
-            text=self._buffer[key],
-            written_at=now,
+            text=text,
+            written_at=timestamp,
         )
         # print(info, file=sys.stderr)
         self._queue.put(info)
-        del self._buffer[key]
 
     def close(self):
         self._queue.close()
