@@ -6,7 +6,7 @@ from threading import Thread
 import datetime
 from collections import defaultdict
 
-from typing import TYPE_CHECKING, Any, DefaultDict, Mapping, TextIO
+from typing import TYPE_CHECKING, Any, DefaultDict, Mapping, NamedTuple, TextIO
 
 
 from .utils import SubscribableQueue, current_task_or_thread
@@ -23,6 +23,12 @@ def create_key_factory(to_put):
         return current_task_or_thread()
 
     return key_factory
+
+
+class IOQueueItem(NamedTuple):
+    key: Any
+    text: str
+    timestamp: datetime.datetime
 
 
 class IOSubscription(io.TextIOWrapper):
@@ -42,7 +48,7 @@ class IOSubscription(io.TextIOWrapper):
         self._run_no_map = registry["run_no_map"]  # type: ignore
         self._trace_no_map = registry["trace_no_map"]  # type: ignore
 
-        self._q: Queue[Any] = Queue()
+        self._q: Queue[IOQueueItem] = Queue()
         self._thread = Thread(target=self._listen, daemon=True)
         self._thread.start()
 
@@ -88,7 +94,7 @@ class IOSubscription(io.TextIOWrapper):
 
 
 class IOQueue(io.TextIOWrapper):
-    def __init__(self, src: TextIO, queue, key_factory):
+    def __init__(self, src: TextIO, queue: Queue[IOQueueItem], key_factory):
         self._queue = queue
         self._src = src
         self._key_factory = key_factory
@@ -106,6 +112,10 @@ class IOQueue(io.TextIOWrapper):
         self._buffer[key] += s
         if s.endswith("\n"):
             self._queue.put(
-                (key, self._buffer.pop(key), datetime.datetime.now())
+                IOQueueItem(
+                    key=key,
+                    text=self._buffer.pop(key),
+                    timestamp=datetime.datetime.now(),
+                )
             )
         return ret
