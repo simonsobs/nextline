@@ -50,7 +50,7 @@ class IOSubscription(io.TextIOWrapper):
         self._thread = Thread(target=self._listen, daemon=True)
         self._thread.start()
 
-        self._s = IOQueue(src=src, queue=self._q)
+        self._s = IOPeekWrite(src, create_callback(self._q))
 
     def write(self, s: str) -> int:
         return self._s.write(s)
@@ -85,10 +85,10 @@ class IOSubscription(io.TextIOWrapper):
         return self._queue.subscribe(last=False)
 
 
-def IOQueue(src: TextIO, queue: Queue[IOQueueItem]):
+def create_callback(queue: Queue[IOQueueItem]) -> Callable[[str], None]:
     buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
 
-    def callback(s: str):
+    def callback(s: str) -> None:
         key = current_task_or_thread()
         buffer[key] += s
         if s.endswith("\n"):
@@ -97,7 +97,7 @@ def IOQueue(src: TextIO, queue: Queue[IOQueueItem]):
             item = IOQueueItem(key, text, now)
             queue.put(item)
 
-    return IOPeekWrite(src, callback)
+    return callback
 
 
 class IOPeekWrite(io.TextIOWrapper):
