@@ -162,9 +162,6 @@ class Machine:
         self._io_sub.close()
         sys.stdout = self._sys_stdout
 
-    def subscribe_stdout(self):
-        return self._io_sub.subscribe()
-
 
 class StateObsoleteError(Exception):
     """Operation on an obsolete state object."""

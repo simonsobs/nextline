@@ -42,7 +42,7 @@ async def test_one(
     messages = ("abc", "def", "\n", "ghi", "jkl", "\n")
 
     async def subscribe():
-        return tuple([y async for y in obj.subscribe()])
+        return tuple([y async for y in registry.subscribe("stdout")])
 
     async def write(to_put: bool):
         trace_no = trace_no_counter()

@@ -155,8 +155,10 @@ class Nextline:
     def get(self, key) -> Any:
         return self.registry.get(key)
 
-    def subscribe(self, key) -> AsyncIterator[Any]:
-        return self.registry.subscribe(key)
+    def subscribe(
+        self, key, last: Optional[bool] = True
+    ) -> AsyncIterator[Any]:
+        return self.registry.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
-        return self.machine.subscribe_stdout()
+        return self.subscribe("stdout", last=False)

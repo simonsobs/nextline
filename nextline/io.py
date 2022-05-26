@@ -69,9 +69,6 @@ class IOSubscription:
         self._q.join()
         self._thread.join()
 
-    def subscribe(self):
-        return self._registry.subscribe("stdout", last=False)
-
 
 def create_callback(queue: Queue[IOQueueItem]) -> Callable[[str], None]:
     buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
