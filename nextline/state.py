@@ -73,7 +73,8 @@ class Machine:
         self._state: State = Initialized(self.registry)
         self._state_changed()
         self._sys_stdout = sys.stdout
-        self._stdout = sys.stdout = IOSubscription(sys.stdout, self.registry)
+        self._io_sub = IOSubscription(self.registry)
+        self._stdout = sys.stdout = self._io_sub.create_out(sys.stdout)
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -158,11 +159,11 @@ class Machine:
             self._state = self._state.close()
             self._state_changed()
             await to_thread(self.registry.close)
-        self._stdout.close()
+        self._io_sub.close()
         sys.stdout = self._sys_stdout
 
     def subscribe_stdout(self):
-        return self._stdout.subscribe()
+        return self._io_sub.subscribe()
 
 
 class StateObsoleteError(Exception):

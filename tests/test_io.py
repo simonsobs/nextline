@@ -33,10 +33,12 @@ def test_peek():
 
 @pytest.mark.asyncio
 async def test_one(
-    obj: IOSubscription,
     registry: Dict[str, Any],
     text_io: io.StringIO,
 ):
+    obj = IOSubscription(registry)
+    out = obj.create_out(text_io)
+
     messages = ("abc", "def", "\n", "ghi", "jkl", "\n")
 
     async def subscribe():
@@ -50,7 +52,7 @@ async def test_one(
             registry["trace_no_map"][task_or_thread] = trace_no
         await asyncio.sleep(0)
         for m in messages:
-            obj.write(m)
+            out.write(m)
             await asyncio.sleep(0)
 
     n = 2  # number of write(True)
@@ -75,12 +77,6 @@ async def test_one(
     assert len("".join(messages).split()) * n == len(results)
     expected = sorted("".join(messages).splitlines(True) * n)
     assert expected == sorted(r.text for r in results)
-
-
-@pytest.fixture
-def obj(registry: Dict[str, Any], text_io: io.StringIO):
-    y = IOSubscription(text_io, registry)
-    yield y
 
 
 @pytest.fixture

@@ -30,8 +30,8 @@ class IOQueueItem(NamedTuple):
     timestamp: datetime.datetime
 
 
-class IOSubscription(io.TextIOWrapper):
-    def __init__(self, src: TextIO, registry: Mapping):
+class IOSubscription:
+    def __init__(self, registry: Mapping):
         """Make output stream subscribable
 
         The src needs to be replaced with the instance of this class. For
@@ -48,10 +48,9 @@ class IOSubscription(io.TextIOWrapper):
         self._thread = Thread(target=self._listen, daemon=True)
         self._thread.start()
 
-        self._s = IOPeekWrite(src, create_callback(self._q))
-
-    def write(self, s: str) -> int:
-        return self._s.write(s)
+    def create_out(self, src: TextIO):
+        ret = IOPeekWrite(src, create_callback(self._q))
+        return ret
 
     def _listen(self) -> None:
         while m := self._q.get():
