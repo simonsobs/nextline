@@ -88,24 +88,20 @@ class IOSubscription(io.TextIOWrapper):
 class IOQueue(io.TextIOWrapper):
     def __init__(self, src: TextIO, queue: Queue[IOQueueItem]):
         self._queue = queue
-        self._src = src
         self._buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
+        self._peek = IOPeekWrite(src, self._callback)
 
     def write(self, s: str) -> int:
+        return self._peek.write(s)
 
-        ret = self._src.write(s)
-        # TypeError if s isn't str as long as self._src is sys.stdout or
-        # sys.stderr.
-
+    def _callback(self, s: str):
         key = current_task_or_thread()
-
         self._buffer[key] += s
         if s.endswith("\n"):
             text = self._buffer.pop(key)
             now = datetime.datetime.now()
             item = IOQueueItem(key, text, now)
             self._queue.put(item)
-        return ret
 
 
 class IOPeekWrite(io.TextIOWrapper):
