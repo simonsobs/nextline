@@ -40,8 +40,6 @@ class IOSubscription(io.TextIOWrapper):
 
         """
         self._queue = SubscribableQueue[StdoutInfo]()
-        self._src = src
-        self._buffer: DefaultDict[Task | Thread, str] = defaultdict(str)
 
         self._run_no_map = registry["run_no_map"]  # type: ignore
         self._trace_no_map = registry["trace_no_map"]  # type: ignore
