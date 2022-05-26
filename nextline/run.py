@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import sys
 from threading import Thread
 from typing import TYPE_CHECKING, Dict
 from typing_extensions import TypeAlias
 
 from .trace import Trace
 from .call import call_with_trace
+from .utils import ExcThread
 from . import script
 
 if TYPE_CHECKING:
@@ -53,12 +55,18 @@ def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
 
     def call():
         nonlocal result, exception
+        sys_stdout = sys.stdout
+        create_capture_stdout = registry["create_capture_stdout"]
         try:
-            result = call_with_trace(func, trace)
-        except BaseException as e:
-            exception = e
+            sys.stdout = create_capture_stdout(sys.stdout)
+            try:
+                result = call_with_trace(func, trace)
+            except BaseException as e:
+                exception = e
+        finally:
+            sys.stdout = sys_stdout
 
-    t_call = Thread(target=call, daemon=True)
+    t_call = ExcThread(target=call, daemon=True)
     t_call.start()
     t_call.join()
     q_commands.put(None)

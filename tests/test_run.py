@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import queue
+import sys
 from typing import Any
 from weakref import WeakKeyDictionary
 
@@ -77,6 +78,7 @@ def registry(statement):
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
     y["trace_id_factory"] = ThreadTaskIdComposer()
+    y["create_capture_stdout"] = lambda _: sys.stdout
     yield y
 
 

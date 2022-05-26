@@ -1,3 +1,4 @@
+import sys
 import itertools
 
 import pytest
@@ -21,6 +22,7 @@ def registry():
     y = SubscribableDict()
     y["run_no_count"] = itertools.count().__next__
     y["trace_id_factory"] = ThreadTaskIdComposer()
+    y["create_capture_stdout"] = lambda _: sys.stdout
     yield y
     y.close()
 

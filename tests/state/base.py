@@ -1,3 +1,4 @@
+import sys
 from abc import ABC, abstractmethod
 import itertools
 
@@ -28,6 +29,7 @@ class BaseTestState(ABC):
         y["statement"] = statement
         y["run_no_count"] = itertools.count().__next__
         y["trace_id_factory"] = ThreadTaskIdComposer()
+        y["create_capture_stdout"] = lambda _: sys.stdout
         yield y
         y.close()
 

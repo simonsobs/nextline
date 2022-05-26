@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import asyncio
 import dataclasses
 import datetime
@@ -71,10 +70,10 @@ class Machine:
         self._lock_close = asyncio.Condition()
 
         self._state: State = Initialized(self.registry)
-        self._state_changed()
-        self._sys_stdout = sys.stdout
         self._io_sub = IOSubscription(self.registry)
-        self._stdout = sys.stdout = self._io_sub.create_out(sys.stdout)
+        self.registry["create_capture_stdout"] = self._io_sub.create_out
+
+        self._state_changed()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -159,7 +158,6 @@ class Machine:
             self._state = self._state.close()
             self._state_changed()
             await to_thread(self.registry.close)
-        sys.stdout = self._sys_stdout
 
 
 class StateObsoleteError(Exception):
