@@ -32,13 +32,6 @@ class IOQueueItem(NamedTuple):
 
 class IOSubscription:
     def __init__(self, registry: Mapping):
-        """Make output stream subscribable
-
-        The src needs to be replaced with the instance of this class. For
-        example, if the src is stdout,
-            sys.stdout = IOSubscription(sys.stdout)
-
-        """
         self._queue = SubscribableQueue[StdoutInfo]()
 
         self._run_no_map = registry["run_no_map"]  # type: ignore
@@ -53,21 +46,21 @@ class IOSubscription:
         return ret
 
     def _listen(self) -> None:
-        while m := self._q.get():
-            self._put(*m)
+        while item := self._q.get():
+            self._put(item)
             self._q.task_done()
         self._q.task_done()
 
-    def _put(self, key, text, timestamp):
-        if not (run_no := self._run_no_map.get(key)):
+    def _put(self, item):
+        if not (run_no := self._run_no_map.get(item.key)):
             return
-        if not (trace_no := self._trace_no_map.get(key)):
+        if not (trace_no := self._trace_no_map.get(item.key)):
             return
         info = StdoutInfo(
             run_no=run_no,
             trace_no=trace_no,
-            text=text,
-            written_at=timestamp,
+            text=item.text,
+            written_at=item.timestamp,
         )
         # print(info, file=sys.stderr)
         self._queue.put(info)
