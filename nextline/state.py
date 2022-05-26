@@ -159,7 +159,6 @@ class Machine:
             self._state = self._state.close()
             self._state_changed()
             await to_thread(self.registry.close)
-        self._io_sub.close()
         sys.stdout = self._sys_stdout
 
 

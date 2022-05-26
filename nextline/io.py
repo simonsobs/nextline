@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-from queue import Queue
 from threading import Thread
 import datetime
 from collections import defaultdict
@@ -36,21 +35,11 @@ class IOSubscription:
         self._run_no_map = registry["run_no_map"]  # type: ignore
         self._trace_no_map = registry["trace_no_map"]  # type: ignore
 
-        self._q: Queue[IOQueueItem] = Queue()
-        self._thread = Thread(target=self._listen, daemon=True)
-        self._thread.start()
-
     def create_out(self, src: TextIO):
-        ret = IOPeekWrite(src, create_callback(self._q))
+        ret = IOPeekWrite(src, create_callback(self._put))
         return ret
 
-    def _listen(self) -> None:
-        while item := self._q.get():
-            self._put(item)
-            self._q.task_done()
-        self._q.task_done()
-
-    def _put(self, item):
+    def _put(self, item: IOQueueItem):
         if not (run_no := self._run_no_map.get(item.key)):
             return
         if not (trace_no := self._trace_no_map.get(item.key)):
@@ -64,25 +53,22 @@ class IOSubscription:
         # print(info, file=sys.stderr)
         self._registry["stdout"] = info
 
-    def close(self):
-        self._q.put(None)
-        self._q.join()
-        self._thread.join()
 
-
-def create_callback(queue: Queue[IOQueueItem]) -> Callable[[str], None]:
+def create_callback(
+    callback: Callable[[IOQueueItem], None]
+) -> Callable[[str], None]:
     buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
 
-    def callback(s: str) -> None:
+    def ret(s: str) -> None:
         key = current_task_or_thread()
         buffer[key] += s
         if s.endswith("\n"):
             text = buffer.pop(key)
             now = datetime.datetime.now()
             item = IOQueueItem(key, text, now)
-            queue.put(item)
+            callback(item)
 
-    return callback
+    return ret
 
 
 class IOPeekWrite(io.TextIOWrapper):

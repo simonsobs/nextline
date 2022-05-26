@@ -65,7 +65,6 @@ async def test_one(
             write(True),
             write(False),
         )
-        obj.close()
         registry.close()
 
     run_no = 1
