@@ -3,13 +3,13 @@ import io
 from itertools import count
 from weakref import WeakKeyDictionary
 
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from unittest.mock import Mock, call
 
 from nextline.io import IOSubscription, IOPeekWrite
-from nextline.utils import current_task_or_thread
+from nextline.utils import SubscribableDict, current_task_or_thread
 
 
 def test_peek():
@@ -33,7 +33,7 @@ def test_peek():
 
 @pytest.mark.asyncio
 async def test_one(
-    registry: Dict[str, Any],
+    registry: SubscribableDict[str, Any],
     text_io: io.StringIO,
 ):
     obj = IOSubscription(registry)
@@ -66,6 +66,7 @@ async def test_one(
             write(False),
         )
         obj.close()
+        registry.close()
 
     run_no = 1
     trace_no_counter = count(1).__next__
@@ -87,7 +88,7 @@ def text_io():
 
 @pytest.fixture
 def registry():
-    y = {}
+    y = SubscribableDict()
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
     yield y

@@ -10,14 +10,13 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     DefaultDict,
-    Mapping,
     NamedTuple,
     TextIO,
     Any,
 )
 
 
-from .utils import SubscribableQueue, current_task_or_thread
+from .utils import SubscribableDict, current_task_or_thread
 from .types import StdoutInfo
 
 if TYPE_CHECKING:
@@ -31,8 +30,8 @@ class IOQueueItem(NamedTuple):
 
 
 class IOSubscription:
-    def __init__(self, registry: Mapping):
-        self._queue = SubscribableQueue[StdoutInfo]()
+    def __init__(self, registry: SubscribableDict):
+        self._registry = registry
 
         self._run_no_map = registry["run_no_map"]  # type: ignore
         self._trace_no_map = registry["trace_no_map"]  # type: ignore
@@ -63,16 +62,15 @@ class IOSubscription:
             written_at=item.timestamp,
         )
         # print(info, file=sys.stderr)
-        self._queue.put(info)
+        self._registry["stdout"] = info
 
     def close(self):
         self._q.put(None)
         self._q.join()
         self._thread.join()
-        self._queue.close()
 
     def subscribe(self):
-        return self._queue.subscribe(last=False)
+        return self._registry.subscribe("stdout", last=False)
 
 
 def create_callback(queue: Queue[IOQueueItem]) -> Callable[[str], None]:
