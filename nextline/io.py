@@ -119,6 +119,9 @@ class IOPeekWrite(io.TextIOWrapper):
         return ret
 
     def __getattribute__(self, name: str) -> Any:
+        if name == "close":
+            # not returning self._src.close so to avoid an error in pytest
+            return super().__getattribute__(name)
         if name == "write":
             return super().__getattribute__(name)
         src = super().__getattribute__("_src")
