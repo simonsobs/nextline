@@ -22,9 +22,9 @@ if TYPE_CHECKING:
     from asyncio import Task
 
 
-class IOQueueItem(NamedTuple):
-    key: Thread | Task
-    text: str
+class OutLineItem(NamedTuple):
+    key: Task | Thread
+    line: str
     timestamp: datetime.datetime
 
 
@@ -39,7 +39,7 @@ class IOSubscription:
         ret = IOPeekWrite(src, create_callback(self._put))
         return ret
 
-    def _put(self, item: IOQueueItem):
+    def _put(self, item: OutLineItem):
         if not (run_no := self._run_no_map.get(item.key)):
             return
         if not (trace_no := self._trace_no_map.get(item.key)):
@@ -47,7 +47,7 @@ class IOSubscription:
         info = StdoutInfo(
             run_no=run_no,
             trace_no=trace_no,
-            text=item.text,
+            text=item.line,
             written_at=item.timestamp,
         )
         # print(info, file=sys.stderr)
@@ -55,7 +55,7 @@ class IOSubscription:
 
 
 def create_callback(
-    callback: Callable[[IOQueueItem], None]
+    callback: Callable[[OutLineItem], None]
 ) -> Callable[[str], None]:
     buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
 
@@ -63,9 +63,9 @@ def create_callback(
         key = current_task_or_thread()
         buffer[key] += s
         if s.endswith("\n"):
-            text = buffer.pop(key)
+            line = buffer.pop(key)
             now = datetime.datetime.now()
-            item = IOQueueItem(key, text, now)
+            item = OutLineItem(key, line, now)
             callback(item)
 
     return ret
