@@ -6,7 +6,15 @@ from threading import Thread
 import datetime
 from collections import defaultdict
 
-from typing import TYPE_CHECKING, DefaultDict, Mapping, NamedTuple, TextIO
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    DefaultDict,
+    Mapping,
+    NamedTuple,
+    TextIO,
+    Any,
+)
 
 
 from .utils import SubscribableQueue, current_task_or_thread
@@ -98,3 +106,24 @@ class IOQueue(io.TextIOWrapper):
             item = IOQueueItem(key, text, now)
             self._queue.put(item)
         return ret
+
+
+class IOPeekWrite(io.TextIOWrapper):
+    """Hook sys.stdout.write() or sys.stderr.write()"""
+
+    def __init__(self, src: TextIO, callback: Callable[[str], None]):
+        self._src = src
+        self._callback = callback
+
+    def write(self, s: str) -> int:
+        src: TextIO = super().__getattribute__("_src")
+        callback: Callable[[str], None] = super().__getattribute__("_callback")
+        ret = src.write(s)
+        callback(s)
+        return ret
+
+    def __getattribute__(self, name: str) -> Any:
+        if name == "write":
+            return super().__getattribute__(name)
+        src = super().__getattribute__("_src")
+        return getattr(src, name)

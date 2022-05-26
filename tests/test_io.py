@@ -6,9 +6,29 @@ from weakref import WeakKeyDictionary
 from typing import Any, Dict
 
 import pytest
+from unittest.mock import Mock, call
 
-from nextline.io import IOSubscription
+from nextline.io import IOSubscription, IOPeekWrite
 from nextline.utils import current_task_or_thread
+
+
+def test_peek():
+    wrap = io.StringIO()
+    src = Mock(spec=io.StringIO, wraps=wrap)
+    callback = Mock()
+    obj = IOPeekWrite(src, callback)
+    assert obj.write("foo")
+    assert obj.write("bar")
+    assert obj.write("\n")
+    obj.flush()
+    assert [
+        call.write("foo"),
+        call.write("bar"),
+        call.write("\n"),
+        call.flush(),
+    ] == src.method_calls
+    assert [call("foo"), call("bar"), call("\n")] == callback.call_args_list
+    assert "foobar\n" == wrap.getvalue()
 
 
 @pytest.mark.asyncio
