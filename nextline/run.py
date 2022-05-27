@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import sys
+import queue  # noqa F401
 from threading import Thread
 import concurrent.futures
-from typing import TYPE_CHECKING, Dict
+
+from typing import Callable, Dict, Any, TextIO, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
 from .trace import Trace
 from .call import call_with_trace
-from . import script
+from .types import TraceFunc
+from .utils import SubscribableDict
+from .pdb.ci import PdbCommandInterface
 
-if TYPE_CHECKING:
-    import queue  # noqa F401
-    from typing import Any, Tuple  # noqa F401
-    from .utils import SubscribableDict
-    from .pdb.ci import PdbCommandInterface
+from . import script
 
 QCommands: TypeAlias = "queue.Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "queue.Queue[Tuple[Any, Any]]"
@@ -50,14 +50,18 @@ def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
     t_command.start()
 
     func = script.compose(code)
+    wrap_stdout = registry["create_capture_stdout"]
 
-    def call():
+    def call(
+        func: Callable[[], Any],
+        trace: TraceFunc,
+        wrap_stdout: Callable[[TextIO], TextIO],
+    ):
         result = None
         exception = None
         sys_stdout = sys.stdout
-        create_capture_stdout = registry["create_capture_stdout"]
         try:
-            sys.stdout = create_capture_stdout(sys.stdout)
+            sys.stdout = wrap_stdout(sys.stdout)
             try:
                 result = call_with_trace(func, trace)
             except BaseException as e:
@@ -67,7 +71,7 @@ def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
             return result, exception
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        future_to_call = executor.submit(call)
+        future_to_call = executor.submit(call, func, trace, wrap_stdout)
         result, exception = future_to_call.result()
 
     q_commands.put(None)
