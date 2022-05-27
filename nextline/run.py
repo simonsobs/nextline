@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import sys
 from threading import Thread
+import concurrent.futures
 from typing import TYPE_CHECKING, Dict
 from typing_extensions import TypeAlias
 
 from .trace import Trace
 from .call import call_with_trace
-from .utils import ExcThread
 from . import script
 
 if TYPE_CHECKING:
@@ -50,11 +50,10 @@ def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
     t_command.start()
 
     func = script.compose(code)
-    result = None
-    exception = None
 
     def call():
-        nonlocal result, exception
+        result = None
+        exception = None
         sys_stdout = sys.stdout
         create_capture_stdout = registry["create_capture_stdout"]
         try:
@@ -65,10 +64,12 @@ def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
                 exception = e
         finally:
             sys.stdout = sys_stdout
+            return result, exception
 
-    t_call = ExcThread(target=call, daemon=True)
-    t_call.start()
-    t_call.join()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        future_to_call = executor.submit(call)
+        result, exception = future_to_call.result()
+
     q_commands.put(None)
     t_command.join()
 
