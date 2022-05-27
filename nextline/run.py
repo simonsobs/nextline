@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import queue  # noqa F401
-from threading import Thread
 import concurrent.futures
 
 from typing import Callable, Dict, Any, TextIO, Tuple  # noqa F401
@@ -44,25 +43,15 @@ def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
 
     trace = Trace(registry=registry, pdb_ci_map=pdb_ci_map)
 
-    def command():
-        while m := q_commands.get():
-            trace_id, command = m
-            pdb_ci = pdb_ci_map[trace_id]
-            pdb_ci.send_pdb_command(command)
-            q_commands.task_done()
-        q_commands.task_done()
-
-    t_command = Thread(target=command, daemon=True)
-    t_command.start()
-
     func = script.compose(code)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        # TODO: Handle exceptions occurred in _command()
+        future_to_command = executor.submit(_command, q_commands, pdb_ci_map)
         future_to_call = executor.submit(_exec, func, trace, wrap_stdout)
         result, exception = future_to_call.result()
-
-    q_commands.put(None)
-    t_command.join()
+        q_commands.put(None)
+        future_to_command.result()
 
     if callback := registry.get("callback"):
         try:
@@ -96,3 +85,14 @@ def _exec(
     finally:
         sys.stdout = sys_stdout
         return result, exception
+
+
+def _command(
+    q_commands: QCommands, pdb_ci_map: Dict[int, PdbCommandInterface]
+):
+    while m := q_commands.get():
+        trace_id, command = m
+        pdb_ci = pdb_ci_map[trace_id]
+        pdb_ci.send_pdb_command(command)
+        q_commands.task_done()
+    q_commands.task_done()
