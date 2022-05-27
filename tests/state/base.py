@@ -1,10 +1,21 @@
+from __future__ import annotations
+
 import sys
 from abc import ABC, abstractmethod
 import itertools
+from typing import Any, AsyncGenerator
 
 import pytest
 
-from nextline.state import Initialized, StateObsoleteError, StateMethodError
+from nextline.state import (
+    State,
+    Initialized,
+    Running,
+    Finished,
+    Closed,
+    StateObsoleteError,
+    StateMethodError,
+)
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 
 SOURCE_ONE = """
@@ -18,6 +29,8 @@ class BaseTestState(ABC):
 
     To be inherited by the test class for each state class.
     """
+
+    state_class: Any = None
 
     @pytest.fixture()
     def statement(self):
@@ -34,7 +47,9 @@ class BaseTestState(ABC):
         y.close()
 
     @pytest.fixture()
-    async def initialized(self, registry):
+    async def initialized(
+        self, registry: SubscribableDict
+    ) -> AsyncGenerator[Initialized, None]:
         y = Initialized(registry=registry)
         yield y
         if y.is_obsolete():
@@ -42,7 +57,9 @@ class BaseTestState(ABC):
         y.close()
 
     @pytest.fixture()
-    async def running(self, initialized):
+    async def running(
+        self, initialized: Initialized
+    ) -> AsyncGenerator[Running, None]:
         y = initialized.run()
         yield y
         if y.is_obsolete():
@@ -51,7 +68,9 @@ class BaseTestState(ABC):
         finished.close()
 
     @pytest.fixture()
-    async def finished(self, running):
+    async def finished(
+        self, running: Running
+    ) -> AsyncGenerator[Finished, None]:
         y = await running.finish()
         yield y
         if y.is_obsolete():
@@ -59,7 +78,7 @@ class BaseTestState(ABC):
         y.close()
 
     @pytest.fixture()
-    async def closed(self, finished):
+    async def closed(self, finished: Finished) -> AsyncGenerator[Closed, None]:
         y = finished.close()
         yield y
 
@@ -71,11 +90,12 @@ class BaseTestState(ABC):
         """
         pass
 
-    def test_state(self, state):
+    def test_state(self, state: State):
+        assert self.state_class is not None
         assert isinstance(state, self.state_class)
         assert "obsolete" not in repr(state)
 
-    async def assert_obsolete(self, state):
+    async def assert_obsolete(self, state: State):
         assert "obsolete" in repr(state)
 
         with pytest.raises(StateObsoleteError):
@@ -90,30 +110,30 @@ class BaseTestState(ABC):
         with pytest.raises(StateObsoleteError):
             state.close()
 
-    def test_run(self, state):
+    def test_run(self, state: State):
         with pytest.raises(StateMethodError):
             state.run()
 
     @pytest.mark.asyncio
-    async def test_finish(self, state):
+    async def test_finish(self, state: State):
         with pytest.raises(StateMethodError):
             await state.finish()
 
     @pytest.mark.asyncio
-    async def test_reset(self, state):
+    async def test_reset(self, state: State):
         with pytest.raises(StateMethodError):
             state.reset()
 
-    def test_send_pdb_command(self, state):
-        thread_asynctask_id = (1, None)
+    def test_send_pdb_command(self, state: State):
+        trace_id = 1
         command = "next"
         with pytest.raises(StateMethodError):
-            state.send_pdb_command(thread_asynctask_id, command)
+            state.send_pdb_command(trace_id, command)
 
-    def test_exception(self, state):
+    def test_exception(self, state: State):
         with pytest.raises(StateMethodError):
             state.exception()
 
-    def test_result(self, state):
+    def test_result(self, state: State):
         with pytest.raises(StateMethodError):
             state.result()
