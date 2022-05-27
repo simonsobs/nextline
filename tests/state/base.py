@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 import itertools
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Generator
 
 import pytest
 
@@ -47,9 +47,9 @@ class BaseTestState(ABC):
         y.close()
 
     @pytest.fixture()
-    async def initialized(
+    def initialized(
         self, registry: SubscribableDict
-    ) -> AsyncGenerator[Initialized, None]:
+    ) -> Generator[Initialized, None, None]:
         y = Initialized(registry=registry)
         yield y
         if y.is_obsolete():
@@ -78,9 +78,9 @@ class BaseTestState(ABC):
         y.close()
 
     @pytest.fixture()
-    async def closed(self, finished: Finished) -> AsyncGenerator[Closed, None]:
+    def closed(self, finished: Finished) -> Closed:
         y = finished.close()
-        yield y
+        return y
 
     @abstractmethod
     def state(self, *_, **__):
@@ -119,8 +119,7 @@ class BaseTestState(ABC):
         with pytest.raises(StateMethodError):
             await state.finish()
 
-    @pytest.mark.asyncio
-    async def test_reset(self, state: State):
+    def test_reset(self, state: State):
         with pytest.raises(StateMethodError):
             state.reset()
 
