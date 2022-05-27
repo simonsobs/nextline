@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import sys
 from abc import ABC, abstractmethod
 import itertools
-from typing import Any, AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, Generator, Tuple
 
 import pytest
+from unittest.mock import Mock
 
 from nextline.state import (
     State,
@@ -17,11 +17,7 @@ from nextline.state import (
     StateMethodError,
 )
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
-
-SOURCE_ONE = """
-import time
-time.sleep(0.001)
-""".strip()
+from nextline.run import QCommands, QDone
 
 
 class BaseTestState(ABC):
@@ -32,17 +28,38 @@ class BaseTestState(ABC):
 
     state_class: Any = None
 
-    @pytest.fixture()
-    def statement(self):
-        yield SOURCE_ONE
+    @pytest.fixture
+    def mock_run_exception(self) -> Any:
+        return None
+
+    @pytest.fixture
+    def mock_run_result_exception(self, mock_run_exception) -> Tuple[Any, Any]:
+        result = None
+        return result, mock_run_exception
+
+    @pytest.fixture(autouse=True)
+    def mock_run(
+        self,
+        monkeypatch,
+        mock_run_result_exception: Tuple[Any, Any],
+    ):
+        def run(
+            registry: SubscribableDict,
+            q_commands: QCommands,
+            q_done: QDone,
+        ) -> None:
+            del registry, q_commands
+            q_done.put(mock_run_result_exception)
+
+        wrap = Mock(wraps=run)
+        monkeypatch.setattr("nextline.state.run", wrap)
+        return wrap
 
     @pytest.fixture()
-    def registry(self, statement):
+    def registry(self):
         y = SubscribableDict()
-        y["statement"] = statement
         y["run_no_count"] = itertools.count().__next__
         y["trace_id_factory"] = ThreadTaskIdComposer()
-        y["create_capture_stdout"] = lambda _: sys.stdout
         yield y
         y.close()
 

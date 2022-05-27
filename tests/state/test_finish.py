@@ -2,18 +2,15 @@ from __future__ import annotations
 
 import pytest
 
+from typing import Any
+
 from nextline.state import State, Initialized, Finished, Closed
-from nextline.utils import SubscribableDict
 
 from .base import BaseTestState
 
-SOURCE_RAISE = """
-raise Exception('foo', 'bar')
-""".strip()
 
-SOURCE_INVALID_SYNTAX = """
-def
-""".strip()
+class MockError(Exception):
+    pass
 
 
 class TestFinished(BaseTestState):
@@ -46,46 +43,17 @@ class TestFinished(BaseTestState):
         await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
-    async def test_exception(self, state: State):
-        assert state.exception() is None
+    async def test_exception(self, state: State, mock_run_exception):
+        assert state.exception() is mock_run_exception
 
     @pytest.mark.asyncio
-    async def test_result(self, state: State):
-        assert state.result() is None
+    async def test_result(self, state: State, mock_run_exception):
+        if mock_run_exception is None:
+            assert state.result() is None
+        else:
+            with pytest.raises(mock_run_exception):
+                state.result()
 
-    params = [
-        pytest.param(SOURCE_RAISE, Exception, id="raise"),
-        pytest.param(SOURCE_INVALID_SYNTAX, SyntaxError, id="invalid-syntax"),
-    ]
-
-    @pytest.mark.parametrize("source, exc", params)
-    @pytest.mark.asyncio
-    async def test_exception_raise(
-        self, registry: SubscribableDict, source, exc
-    ):
-        registry["statement"] = source
-
-        state: State = Initialized(registry=registry)
-        state = state.run()
-
-        state = await state.finish()
-        assert isinstance(state, Finished)
-
-        assert isinstance(state.exception(), exc)
-        # assert ("foo", "bar") == state.exception().args
-        with pytest.raises(exc):
-            raise state.exception()
-
-    @pytest.mark.parametrize("source, exc", params)
-    @pytest.mark.asyncio
-    async def test_result_raise(self, registry: SubscribableDict, source, exc):
-        registry["statement"] = source
-
-        state: State = Initialized(registry=registry)
-        state = state.run()
-
-        state = await state.finish()
-        assert isinstance(state, Finished)
-
-        with pytest.raises(exc):
-            state.result()
+    @pytest.fixture(params=[None, MockError])
+    def mock_run_exception(self, request) -> Any:  # type: ignore
+        return request.param

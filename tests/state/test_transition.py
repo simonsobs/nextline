@@ -1,11 +1,9 @@
 import itertools
 
 import pytest
-from unittest.mock import Mock
 
 from nextline.state import Initialized, Running, Finished, Closed
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
-from nextline.run import QCommands, QDone
 
 
 @pytest.fixture()
@@ -34,15 +32,5 @@ async def test_transition(registry):
 
 
 @pytest.fixture(autouse=True)
-def monkey_patch_run(monkeypatch):
-    def mock_run(
-        registry: SubscribableDict,
-        q_commands: QCommands,
-        q_done: QDone,
-    ) -> None:
-        del registry, q_commands
-        q_done.put((None, None))
-
-    wrap = Mock(wraps=mock_run)
-    monkeypatch.setattr("nextline.state.run", wrap)
-    yield wrap
+def monkey_patch_run(monkey_patch_run):
+    yield monkey_patch_run

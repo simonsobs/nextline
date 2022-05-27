@@ -10,7 +10,6 @@ from nextline.state import Machine
 from nextline.utils import SubscribableDict
 
 
-# __________________________________________________________________||
 SOURCE = """
 import time
 time.sleep(0.001)
@@ -21,7 +20,6 @@ x = 2
 """.strip()
 
 
-# __________________________________________________________________||
 @pytest.mark.asyncio
 async def test_init():
     obj = Machine(SOURCE)
@@ -103,3 +101,8 @@ async def test_reset_with_statement():
         "closed",
     ]
     assert expected == await t
+
+
+@pytest.fixture(autouse=True)
+def monkey_patch_run(monkey_patch_run):
+    yield monkey_patch_run
