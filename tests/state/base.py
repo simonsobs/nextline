@@ -83,7 +83,7 @@ class BaseTestState(ABC):
         return y
 
     @abstractmethod
-    def state(self, *_, **__):
+    def state(self, _):
         """Yield an instance of the class being tested
 
         To be overridden as a pytest fixture.

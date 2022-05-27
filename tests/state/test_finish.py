@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from typing import TYPE_CHECKING
 
-from nextline.state import Initialized, Finished, Closed
-
-if TYPE_CHECKING:
-    from nextline.utils import SubscribableDict
-    from nextline.state import State
+from nextline.state import State, Initialized, Finished, Closed
+from nextline.utils import SubscribableDict
 
 from .base import BaseTestState
 
@@ -25,11 +21,11 @@ class TestFinished(BaseTestState):
     state_class = Finished
 
     @pytest.fixture()
-    def state(self, finished):
-        yield finished
+    def state(self, finished: State) -> State:
+        return finished
 
     @pytest.mark.asyncio
-    async def test_finish(self, state):
+    async def test_finish(self, state: State):
         # The same object should be returned no matter
         # how many times called.
         assert state is await state.finish()
@@ -38,23 +34,23 @@ class TestFinished(BaseTestState):
         assert "obsolete" not in repr(state)
 
     @pytest.mark.asyncio
-    async def test_reset(self, state):
+    async def test_reset(self, state: State):
         reset = state.reset()
         assert isinstance(reset, Initialized)
         await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
-    async def test_close(self, state):
+    async def test_close(self, state: State):
         closed = state.close()
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
 
     @pytest.mark.asyncio
-    async def test_exception(self, state):
+    async def test_exception(self, state: State):
         assert state.exception() is None
 
     @pytest.mark.asyncio
-    async def test_result(self, state):
+    async def test_result(self, state: State):
         assert state.result() is None
 
     params = [

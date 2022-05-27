@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import pytest
 
-from nextline.state import Running, Finished, StateObsoleteError
+from nextline.state import State, Running, Finished, StateObsoleteError
 
 from .base import BaseTestState
 
@@ -10,10 +12,10 @@ class TestRunning(BaseTestState):
     state_class = Running
 
     @pytest.fixture()
-    def state(self, running):
-        yield running
+    def state(self, running: State) -> State:
+        return running
 
-    async def assert_obsolete(self, state):
+    async def assert_obsolete(self, state: State):
         assert "obsolete" in repr(state)
 
         with pytest.raises(StateObsoleteError):
@@ -26,7 +28,7 @@ class TestRunning(BaseTestState):
             state.reset()
 
         with pytest.raises(StateObsoleteError):
-            await state.close()
+            state.close()
 
     @pytest.mark.asyncio
     async def test_finish(self, state):
@@ -34,5 +36,5 @@ class TestRunning(BaseTestState):
         assert isinstance(finished, Finished)
         await self.assert_obsolete(state)
 
-    def test_send_pdb_command(self, state):
-        pass
+    def test_send_pdb_command(self, state: State):
+        del state
