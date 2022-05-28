@@ -70,8 +70,7 @@ class Machine:
         self._lock_close = asyncio.Condition()
 
         self._state: State = Initialized(self.registry)
-        self._io_sub = IOSubscription(self.registry)
-        self.registry["create_capture_stdout"] = self._io_sub
+        self.registry["create_capture_stdout"] = IOSubscription(self.registry)
 
         self._state_changed()
 
