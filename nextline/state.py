@@ -71,7 +71,7 @@ class Machine:
 
         self._state: State = Initialized(self.registry)
         self._io_sub = IOSubscription(self.registry)
-        self.registry["create_capture_stdout"] = self._io_sub.create_out
+        self.registry["create_capture_stdout"] = self._io_sub
 
         self._state_changed()
 

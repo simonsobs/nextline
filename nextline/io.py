@@ -35,7 +35,7 @@ class IOSubscription:
         self._run_no_map = registry["run_no_map"]  # type: ignore
         self._trace_no_map = registry["trace_no_map"]  # type: ignore
 
-    def create_out(self, src: TextIO):
+    def __call__(self, src: TextIO):
         ret = IOPeekWrite(src, create_callback(self._put))
         return ret
 

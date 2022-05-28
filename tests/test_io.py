@@ -37,7 +37,7 @@ async def test_one(
     text_io: io.StringIO,
 ):
     obj = IOSubscription(registry)
-    out = obj.create_out(text_io)
+    out = obj(text_io)
 
     messages = ("abc", "def", "\n", "ghi", "jkl", "\n")
 
