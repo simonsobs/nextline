@@ -28,21 +28,15 @@ class OutLineItem(NamedTuple):
     timestamp: datetime.datetime
 
 
-class IOSubscription:
-    def __init__(self, registry: SubscribableDict):
-        self._registry = registry
+def IOSubscription(registry: SubscribableDict):
 
-        self._run_no_map = registry["run_no_map"]  # type: ignore
-        self._trace_no_map = registry["trace_no_map"]  # type: ignore
+    run_no_map = registry["run_no_map"]  # type: ignore
+    trace_no_map = registry["trace_no_map"]  # type: ignore
 
-    def __call__(self, src: TextIO):
-        ret = IOPeekWrite(src, create_callback(self._put))
-        return ret
-
-    def _put(self, item: OutLineItem):
-        if not (run_no := self._run_no_map.get(item.key)):
+    def put(item: OutLineItem):
+        if not (run_no := run_no_map.get(item.key)):
             return
-        if not (trace_no := self._trace_no_map.get(item.key)):
+        if not (trace_no := trace_no_map.get(item.key)):
             return
         info = StdoutInfo(
             run_no=run_no,
@@ -51,7 +45,13 @@ class IOSubscription:
             written_at=item.timestamp,
         )
         # print(info, file=sys.stderr)
-        self._registry["stdout"] = info
+        registry["stdout"] = info
+
+    def f(src: TextIO):
+        ret = IOPeekWrite(src, create_callback(put))
+        return ret
+
+    return f
 
 
 def create_callback(
