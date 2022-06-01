@@ -25,6 +25,24 @@ from .types import RunInfo
 SCRIPT_FILE_NAME = "<string>"
 
 
+class Registrar:
+    def __init__(self, statement: str, run_no_start_from):
+        self.registry = SubscribableDict[Any, Any]()
+
+        self.registry["statement"] = statement
+        self.registry["script_file_name"] = SCRIPT_FILE_NAME
+
+        run_no_count = itertools.count(run_no_start_from).__next__
+        self.registry["run_no_count"] = run_no_count
+
+        self.registry["trace_id_factory"] = ThreadTaskIdComposer()
+
+        self.registry["run_no_map"] = WeakKeyDictionary()
+        self.registry["trace_no_map"] = WeakKeyDictionary()
+
+        self.registry["create_capture_stdout"] = IOSubscription(self.registry)
+
+
 class Machine:
     """State machine
 
@@ -53,25 +71,16 @@ class Machine:
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
-        self.registry = SubscribableDict[Any, Any]()
-
-        self.registry["statement"] = statement
-        self.registry["script_file_name"] = SCRIPT_FILE_NAME
-
-        run_no_count = itertools.count(run_no_start_from).__next__
-        self.registry["run_no_count"] = run_no_count
-
-        self.registry["trace_id_factory"] = ThreadTaskIdComposer()
-
-        self.registry["run_no_map"] = WeakKeyDictionary()
-        self.registry["trace_no_map"] = WeakKeyDictionary()
+        self.registrar = Registrar(
+            statement=statement,
+            run_no_start_from=run_no_start_from,
+        )
+        self.registry = self.registrar.registry
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
 
         self._state: State = Initialized(self.registry)
-        self.registry["create_capture_stdout"] = IOSubscription(self.registry)
-
         self._state_changed()
 
     def __repr__(self):
