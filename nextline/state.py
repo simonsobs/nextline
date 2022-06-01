@@ -42,6 +42,37 @@ class Registrar:
 
         self.registry["create_capture_stdout"] = IOSubscription(self.registry)
 
+    def state_change(self, state: State) -> None:
+        self.registry["state_name"] = state.name
+
+    def run_start(self):
+        self._run_info = RunInfo(
+            run_no=self.registry["run_no"],
+            state="running",
+            script=self.registry["statement"],
+            started_at=datetime.datetime.now(),
+        )
+        self.registry["run_info"] = self._run_info
+
+    def run_end(self, result, exception) -> None:
+        if exception:
+            exception = "".join(
+                traceback.format_exception(
+                    type(exception), exception, exception.__traceback__
+                )
+            )
+        if not exception:
+            result = json.dumps(result)
+        self._run_info = dataclasses.replace(
+            self._run_info,
+            state="finished",
+            result=result,
+            exception=exception,
+            ended_at=datetime.datetime.now(),
+        )
+        # TODO: check if run_no matches
+        self.registry["run_info"] = self._run_info
+
 
 class Machine:
     """State machine
@@ -88,35 +119,13 @@ class Machine:
         return f"<{self.__class__.__name__} {self.state_name!r}>"
 
     def _state_changed(self) -> None:
-        self.registry["state_name"] = self.state_name
+        self.registrar.state_change(self._state)
         if self.state_name == "running":
-            self._run_info = RunInfo(
-                run_no=self.registry["run_no"],
-                state=self.state_name,
-                script=self.registry["statement"],
-                started_at=datetime.datetime.now(),
-            )
-            self.registry["run_info"] = self._run_info
+            self.registrar.run_start()
         if self.state_name == "finished":
-            exception = None
-            if exc := self.exception():
-                exception = "".join(
-                    traceback.format_exception(
-                        type(exc), exc, exc.__traceback__
-                    )
-                )
-            result = None
-            if not exception:
-                result = json.dumps(self.result())
-            self._run_info = dataclasses.replace(
-                self._run_info,
-                state=self.state_name,
-                result=result,
-                exception=exception,
-                ended_at=datetime.datetime.now(),
-            )
-            # TODO: check if run_no matches
-            self.registry["run_info"] = self._run_info
+            exception = self.exception()
+            result = self.result() if not exception else None
+            self.registrar.run_end(result, exception)
 
     @property
     def state_name(self) -> str:
