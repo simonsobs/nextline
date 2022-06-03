@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import threading
 
-from typing import Callable, TypeVar
+from typing import Callable, Optional, TypeVar
 
 from .types import TraceFunc
 
@@ -13,7 +13,7 @@ T = TypeVar("T")
 def call_with_trace(
     func: Callable[[], T],
     trace: TraceFunc,
-    thread: bool = True,
+    thread: Optional[bool] = True,
 ) -> T | None:
     """Set the trace function while running the function
 
