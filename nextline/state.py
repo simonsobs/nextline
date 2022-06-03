@@ -26,30 +26,30 @@ SCRIPT_FILE_NAME = "<string>"
 
 class Registrar:
     def __init__(self, statement: str, run_no_start_from):
-        self.registry = SubscribableDict[Any, Any]()
+        self._registry = SubscribableDict[Any, Any]()
 
-        self.registry["statement"] = statement
-        self.registry["script_file_name"] = SCRIPT_FILE_NAME
+        self._registry["statement"] = statement
+        self._registry["script_file_name"] = SCRIPT_FILE_NAME
 
         run_no_count = itertools.count(run_no_start_from).__next__
-        self.registry["run_no_count"] = run_no_count
+        self._registry["run_no_count"] = run_no_count
 
-        self.registry["trace_id_factory"] = ThreadTaskIdComposer()
+        self._registry["trace_id_factory"] = ThreadTaskIdComposer()
 
-        self.registry["run_no_map"] = WeakKeyDictionary()
-        self.registry["trace_no_map"] = WeakKeyDictionary()
+        self._registry["run_no_map"] = WeakKeyDictionary()
+        self._registry["trace_no_map"] = WeakKeyDictionary()
 
     def state_change(self, state: State) -> None:
-        self.registry["state_name"] = state.name
+        self._registry["state_name"] = state.name
 
     def run_start(self):
         self._run_info = RunInfo(
-            run_no=self.registry["run_no"],
+            run_no=self._registry["run_no"],
             state="running",
-            script=self.registry["statement"],
+            script=self._registry["statement"],
             started_at=datetime.datetime.now(),
         )
-        self.registry["run_info"] = self._run_info
+        self._registry["run_info"] = self._run_info
 
     def run_end(self, result, exception) -> None:
         if exception:
@@ -68,7 +68,7 @@ class Registrar:
             ended_at=datetime.datetime.now(),
         )
         # TODO: check if run_no matches
-        self.registry["run_info"] = self._run_info
+        self._registry["run_info"] = self._run_info
 
 
 class Machine:
@@ -104,7 +104,7 @@ class Machine:
             run_no_start_from=run_no_start_from,
         )
 
-        registry = self.registrar.registry
+        registry = self.registrar._registry
         self.registry = registry
 
         self.context = Context(
