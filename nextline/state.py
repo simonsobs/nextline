@@ -17,7 +17,7 @@ from .utils import (
     ThreadTaskIdComposer,
     to_thread,
 )
-from .run import run
+from .run import run, Context
 from .types import RunInfo
 
 
@@ -292,9 +292,16 @@ class Running(State):
         self._q_commands: Queue[Tuple[int, str]] = Queue()
         self._q_done: Queue[Tuple[Any, Any]] = Queue()
 
+        context = Context(
+            statement=registry.get("statement"),
+            filename=registry.get("script_file_name", "<string>"),
+            create_capture_stdout=registry.get("create_capture_stdout"),
+            registry=registry,
+        )
+
         self._thread = ExcThread(
             target=run,
-            args=(self.registry, self._q_commands, self._q_done),
+            args=(context, self._q_commands, self._q_done),
             daemon=True,
         )
         self._thread.start()
