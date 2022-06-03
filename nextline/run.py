@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
-import queue  # noqa F401
+from queue import Queue  # noqa F401
 import concurrent.futures
 
-from typing import Callable, Dict, Any, TextIO, Tuple  # noqa F401
+from typing import Callable, Dict, Any, TextIO
+from typing import Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
 from .trace import Trace
@@ -15,8 +16,8 @@ from .pdb.ci import PdbCommandInterface
 
 from . import script
 
-QCommands: TypeAlias = "queue.Queue[Tuple[int, str] | None]"
-QDone: TypeAlias = "queue.Queue[Tuple[Any, Any]]"
+QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
+QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 
 
 def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
