@@ -39,8 +39,6 @@ class Registrar:
         self.registry["run_no_map"] = WeakKeyDictionary()
         self.registry["trace_no_map"] = WeakKeyDictionary()
 
-        self.registry["create_capture_stdout"] = IOSubscription(self.registry)
-
     def state_change(self, state: State) -> None:
         self.registry["state_name"] = state.name
 
@@ -105,12 +103,21 @@ class Machine:
             statement=statement,
             run_no_start_from=run_no_start_from,
         )
-        self.registry = self.registrar.registry
+
+        registry = self.registrar.registry
+        self.registry = registry
+
+        self.context = Context(
+            statement=statement,
+            filename=registry["script_file_name"],
+            create_capture_stdout=IOSubscription(registry),
+            registry=registry,
+        )
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
 
-        self._state: State = Initialized(self.registry)
+        self._state: State = Initialized(self.context)
         self._state_changed()
 
     def __repr__(self):
@@ -149,7 +156,8 @@ class Machine:
             self._state_changed()
 
     def exception(self) -> Optional[Exception]:
-        return self._state.exception()
+        ret = self._state.exception()
+        return ret
 
     def result(self) -> Any:
         return self._state.result()
@@ -161,6 +169,7 @@ class Machine:
     ) -> None:
         """Enter the initialized state"""
         if statement:
+            self.context["statement"] = statement
             self.registry["statement"] = statement
         if run_no_start_from is not None:
             run_no_count = itertools.count(run_no_start_from).__next__
@@ -244,34 +253,29 @@ class Initialized(State):
 
     Parameters
     ----------
-    registry : object
-        An instance of Registry.
+    context : dict
+        An instance of Context
 
     """
 
     name = "initialized"
 
-    def __init__(self, registry: SubscribableDict):
-        self.registry = registry
-        run_no = self.registry.get("run_no_count")()  # type: ignore
-        self.registry["run_no"] = run_no
-        self.registry["trace_id_factory"].reset()  # type: ignore
-        self.context = Context(
-            statement=registry.get("statement"),
-            filename=registry.get("script_file_name", "<string>"),
-            create_capture_stdout=registry.get("create_capture_stdout"),
-            registry=registry,
-        )
+    def __init__(self, context: Context):
+        self._context = context
+        registry = context["registry"]
+        run_no = registry.get("run_no_count")()  # type: ignore
+        registry["run_no"] = run_no
+        registry["trace_id_factory"].reset()  # type: ignore
 
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.context)
+        running = Running(self._context)
         self.obsolete()
         return running
 
     def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(registry=self.registry)
+        initialized = Initialized(context=self._context)
         self.obsolete()
         return initialized
 
@@ -287,7 +291,6 @@ class Running(State):
 
     Parameters
     ----------
-    context : dict
         An instance of Context
     """
 
@@ -373,7 +376,7 @@ class Finished(State):
 
     def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(registry=self._context["registry"])
+        initialized = Initialized(context=self._context)
         self.obsolete()
         return initialized
 

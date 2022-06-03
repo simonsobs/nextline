@@ -17,7 +17,7 @@ from nextline.state import (
     StateMethodError,
 )
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
-from nextline.run import QCommands, QDone
+from nextline.run import QCommands, QDone, Context
 
 
 class BaseTestState(ABC):
@@ -55,6 +55,11 @@ class BaseTestState(ABC):
         monkeypatch.setattr("nextline.state.run", wrap)
         return wrap
 
+    @pytest.fixture
+    def context(self, registry: SubscribableDict) -> Context:
+        y = Context(registry=registry)
+        return y
+
     @pytest.fixture()
     def registry(self):
         y = SubscribableDict()
@@ -65,9 +70,9 @@ class BaseTestState(ABC):
 
     @pytest.fixture()
     def initialized(
-        self, registry: SubscribableDict
+        self, context: Context
     ) -> Generator[Initialized, None, None]:
-        y = Initialized(registry=registry)
+        y = Initialized(context=context)
         yield y
         if y.is_obsolete():
             return

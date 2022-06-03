@@ -4,6 +4,13 @@ import pytest
 
 from nextline.state import Initialized, Running, Finished, Closed
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
+from nextline.run import Context
+
+
+@pytest.fixture
+def context(registry: SubscribableDict) -> Context:
+    y = Context(registry=registry)
+    return y
 
 
 @pytest.fixture()
@@ -16,9 +23,9 @@ def registry():
 
 
 @pytest.mark.asyncio
-async def test_transition(registry):
+async def test_transition(context: Context):
 
-    state = Initialized(registry=registry)
+    state = Initialized(context=context)
     assert isinstance(state, Initialized)
 
     state = state.run()
