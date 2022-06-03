@@ -265,7 +265,7 @@ class Initialized(State):
 
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.context, self.registry)
+        running = Running(self.context)
         self.obsolete()
         return running
 
@@ -277,7 +277,7 @@ class Initialized(State):
 
     def close(self):
         self.assert_not_obsolete()
-        closed = Closed(self.registry)
+        closed = Closed()
         self.obsolete()
         return closed
 
@@ -289,14 +289,12 @@ class Running(State):
     ----------
     context : dict
         An instance of Context
-    registry : object
-        An instance of Registry
     """
 
     name = "running"
 
-    def __init__(self, context: Context, registry: SubscribableDict):
-        self.registry = registry
+    def __init__(self, context: Context):
+        self._context = context
         self._q_commands: Queue[Tuple[int, str]] = Queue()
         self._q_done: Queue[Tuple[Any, Any]] = Queue()
 
@@ -311,7 +309,7 @@ class Running(State):
         self.assert_not_obsolete()
         ret, exc = await to_thread(self._q_done.get)
         await to_thread(self._thread.join)
-        finished = Finished(self.registry, result=ret, exception=exc)
+        finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
 
@@ -326,8 +324,8 @@ class Finished(State):
 
     Parameters
     ----------
-    registry : object
-        An instance of Registry
+    context : dict
+        An instance of Context
     result : any
         The result of the script execution, always None
     exception : exception or None
@@ -337,11 +335,11 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry: SubscribableDict, result, exception):
+    def __init__(self, context: Context, result, exception):
         self._result = result
         self._exception = exception
 
-        self.registry = registry
+        self._context = context
 
     def exception(self):
         """Return the exception of the script execution
@@ -375,30 +373,21 @@ class Finished(State):
 
     def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(registry=self.registry)
+        initialized = Initialized(registry=self._context["registry"])
         self.obsolete()
         return initialized
 
     def close(self):
         self.assert_not_obsolete()
-        closed = Closed(self.registry)
+        closed = Closed()
         self.obsolete()
         return closed
 
 
 class Closed(State):
-    """The state "closed"
-
-    Parameters
-    ----------
-    registry : object
-        An instance of Registry
-    """
+    """The state "closed" """
 
     name = "closed"
-
-    def __init__(self, registry: SubscribableDict):
-        self.registry = registry
 
     def close(self):
         self.assert_not_obsolete()
