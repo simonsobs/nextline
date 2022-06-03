@@ -17,10 +17,9 @@ from nextline.utils.func import to_thread
 def test_q_done_on_exception(q_done, monkey_patch_run):
     del monkey_patch_run
     context = Context()
-    registry = Mock()
     q_commands = Mock()
     with pytest.raises(MockError):
-        run(context, registry, q_commands, q_done)
+        run(context, q_commands, q_done)
     assert (None, None) == q_done.get()
 
 
@@ -39,13 +38,12 @@ def monkey_patch_run(monkeypatch):
 async def test_one(
     expected_exception,
     context: Context,
-    registry,
     q_commands,
     q_done,
     task_send_commands,
 ):
     del task_send_commands
-    await to_thread(run, context, registry, q_commands, q_done)
+    await to_thread(run, context, q_commands, q_done)
     result, exception = q_done.get()
     assert result is None
     if expected_exception:
@@ -73,11 +71,12 @@ async def respond_prompt(registry, q_commands):
 
 
 @pytest.fixture
-def context(statement):
+def context(statement, registry):
     y = Context(
         statement=statement,
         filename="<string>",
         create_capture_stdout=lambda _: sys.stdout,
+        registry=registry,
     )
     return y
 

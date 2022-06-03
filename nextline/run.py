@@ -24,31 +24,24 @@ class Context(TypedDict, total=False):
     statement: str
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
+    registry: SubscribableDict
 
 
-def run(
-    context: Context,
-    registry: SubscribableDict,
-    q_commands: QCommands,
-    q_done: QDone,
-):
+def run(context: Context, q_commands: QCommands, q_done: QDone):
     try:
-        _run(context, registry, q_commands, q_done)
+        _run(context, q_commands, q_done)
     except BaseException:
         q_done.put((None, None))
         raise
 
 
-def _run(
-    context: Context,
-    registry: SubscribableDict,
-    q_commands: QCommands,
-    q_done: QDone,
-):
+def _run(context: Context, q_commands: QCommands, q_done: QDone):
 
     statement = context.get("statement")
     filename = context.get("script_file_name", "<string>")
     wrap_stdout = context["create_capture_stdout"]
+
+    registry = context["registry"]
 
     try:
         code = _compile(statement, filename)
