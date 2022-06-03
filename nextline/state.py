@@ -256,10 +256,16 @@ class Initialized(State):
         run_no = self.registry.get("run_no_count")()  # type: ignore
         self.registry["run_no"] = run_no
         self.registry["trace_id_factory"].reset()  # type: ignore
+        self.context = Context(
+            statement=registry.get("statement"),
+            filename=registry.get("script_file_name", "<string>"),
+            create_capture_stdout=registry.get("create_capture_stdout"),
+            registry=registry,
+        )
 
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.registry)
+        running = Running(self.context, self.registry)
         self.obsolete()
         return running
 
@@ -281,23 +287,18 @@ class Running(State):
 
     Parameters
     ----------
+    context : dict
+        An instance of Context
     registry : object
         An instance of Registry
     """
 
     name = "running"
 
-    def __init__(self, registry: SubscribableDict):
+    def __init__(self, context: Context, registry: SubscribableDict):
         self.registry = registry
         self._q_commands: Queue[Tuple[int, str]] = Queue()
         self._q_done: Queue[Tuple[Any, Any]] = Queue()
-
-        context = Context(
-            statement=registry.get("statement"),
-            filename=registry.get("script_file_name", "<string>"),
-            create_capture_stdout=registry.get("create_capture_stdout"),
-            registry=registry,
-        )
 
         self._thread = ExcThread(
             target=run,
