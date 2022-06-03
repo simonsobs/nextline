@@ -25,11 +25,8 @@ SCRIPT_FILE_NAME = "<string>"
 
 
 class Registrar:
-    def __init__(self, statement: str, run_no_start_from):
+    def __init__(self, run_no_start_from):
         self._registry = SubscribableDict[Any, Any]()
-
-        self._registry["statement"] = statement
-        self._registry["script_file_name"] = SCRIPT_FILE_NAME
 
         run_no_count = itertools.count(run_no_start_from).__next__
         self._registry["run_no_count"] = run_no_count
@@ -38,6 +35,12 @@ class Registrar:
 
         self._registry["run_no_map"] = WeakKeyDictionary()
         self._registry["trace_no_map"] = WeakKeyDictionary()
+
+    def script_change(
+        self, script: str, filename: str = SCRIPT_FILE_NAME
+    ) -> None:
+        self._registry["statement"] = script
+        self._registry["script_file_name"] = filename
 
     def state_change(self, state: State) -> None:
         self._registry["state_name"] = state.name
@@ -99,20 +102,20 @@ class Machine:
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
-        self.registrar = Registrar(
-            statement=statement,
-            run_no_start_from=run_no_start_from,
-        )
+        filename = SCRIPT_FILE_NAME
+        self.registrar = Registrar(run_no_start_from=run_no_start_from)
 
         registry = self.registrar._registry
         self.registry = registry
 
         self.context = Context(
             statement=statement,
-            filename=registry["script_file_name"],
+            filename=filename,
             create_capture_stdout=IOSubscription(registry),
             registry=registry,
         )
+
+        self.registrar.script_change(script=statement, filename=filename)
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
@@ -170,7 +173,7 @@ class Machine:
         """Enter the initialized state"""
         if statement:
             self.context["statement"] = statement
-            self.registry["statement"] = statement
+            self.registrar.script_change(script=statement)
         if run_no_start_from is not None:
             run_no_count = itertools.count(run_no_start_from).__next__
             self.registry["run_no_count"] = run_no_count
