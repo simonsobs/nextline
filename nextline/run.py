@@ -73,18 +73,15 @@ def _exec(
     trace: TraceFunc,
     wrap_stdout: Callable[[TextIO], TextIO],
 ):
-    result = None
-    exception = None
+    ret = None
+    exc = None
     sys_stdout = sys.stdout
     try:
         sys.stdout = wrap_stdout(sys.stdout)
-        try:
-            result = call_with_trace(func, trace)
-        except BaseException as e:
-            exception = e
+        ret, exc = call_with_trace(func, trace)
     finally:
         sys.stdout = sys_stdout
-        return result, exception
+        return ret, exc
 
 
 def _command(

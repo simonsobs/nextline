@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import threading
 
-from typing import Callable, Optional, TypeVar
+from typing import Callable, Optional, Tuple, TypeVar
 
 from .types import TraceFunc
 
@@ -14,7 +14,7 @@ def call_with_trace(
     func: Callable[[], T],
     trace: TraceFunc,
     thread: Optional[bool] = True,
-) -> T | None:
+) -> Tuple[T | None, BaseException | None]:
     """Set the trace function while running the function
 
     Notes
@@ -28,7 +28,7 @@ def call_with_trace(
     ----------
     func : callable
         A function to be called without any args. Use functools.partial to
-        provide args. A return value and an exception will be given to `done`.
+        provide args.
     trace: callable
         A trace function.
     thread: bool, default True
@@ -36,14 +36,11 @@ def call_with_trace(
 
     Returns
     -------
-    any
-        The return value of func().
+    tuple
+        A tuple with two elements. The first is the return value of func() or
+        None if an exception is raised in func(). The second is the exception
+        raised in func() or None if no exception is rased.
 
-    Raises
-    ------
-    any
-        An exception raised in func(). The exception is re-raised after the
-        original trace function is put back.
     """
 
     ret = None
@@ -61,6 +58,4 @@ def call_with_trace(
         sys.settrace(trace_org)
         if thread:
             threading.settrace(trace_org)  # type: ignore
-        if exc:
-            raise exc
-        return ret
+        return ret, exc

@@ -20,25 +20,30 @@ def test_simple(trace):
         return x
 
     trace_org = sys.gettrace()
-    ret = call_with_trace(func, trace=trace)
+    ret, exc = call_with_trace(func, trace=trace)
     assert trace_org == sys.gettrace()
     assert 123 == ret
+    assert exc is None
     # print(trace.call_args_list)
     assert 4 == trace.call_count  # "call", "line", "line", "return"
 
 
+class MockError(Exception):
+    pass
+
+
 def test_raise(trace):
     def func():
-        raise Exception("foo", "bar")
+        raise MockError()
 
     trace_org = sys.gettrace()
 
-    with pytest.raises(Exception) as exc:
-        call_with_trace(func, trace=trace)
+    ret, exc = call_with_trace(func, trace=trace)
 
     assert trace_org == sys.gettrace()
 
-    assert ("foo", "bar") == exc.value.args
+    assert ret is None
+    assert isinstance(exc, MockError)
 
     assert 4 == trace.call_count  # "call", "line", "exception", "return"
 
