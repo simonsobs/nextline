@@ -6,8 +6,7 @@ import datetime
 import itertools
 import traceback
 import json
-import queue
-import janus
+from queue import Queue
 from weakref import WeakKeyDictionary
 from typing import Optional, Any, Tuple
 
@@ -290,19 +289,19 @@ class Running(State):
 
     def __init__(self, registry: SubscribableDict):
         self.registry = registry
-        self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
-        self._q_done: janus.Queue[Tuple[Any, Any]] = janus.Queue()
+        self._q_commands: Queue[Tuple[int, str]] = Queue()
+        self._q_done: Queue[Tuple[Any, Any]] = Queue()
 
         self._thread = ExcThread(
             target=run,
-            args=(self.registry, self._q_commands, self._q_done.sync_q),
+            args=(self.registry, self._q_commands, self._q_done),
             daemon=True,
         )
         self._thread.start()
 
     async def finish(self):
         self.assert_not_obsolete()
-        ret, exc = await self._q_done.async_q.get()
+        ret, exc = await to_thread(self._q_done.get)
         await to_thread(self._thread.join)
         finished = Finished(self.registry, result=ret, exception=exc)
         self.obsolete()
