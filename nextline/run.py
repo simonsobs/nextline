@@ -4,7 +4,7 @@ import sys
 from queue import Queue  # noqa F401
 import concurrent.futures
 
-from typing import Callable, Dict, Any, TextIO
+from typing import Callable, Dict, Any, TextIO, TypedDict
 from typing import Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -20,19 +20,35 @@ QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 
 
-def run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
+class Context(TypedDict, total=False):
+    statement: str
+    filename: str
+    create_capture_stdout: Callable[[TextIO], TextIO]
+
+
+def run(
+    context: Context,
+    registry: SubscribableDict,
+    q_commands: QCommands,
+    q_done: QDone,
+):
     try:
-        _run(registry, q_commands, q_done)
+        _run(context, registry, q_commands, q_done)
     except BaseException:
         q_done.put((None, None))
         raise
 
 
-def _run(registry: SubscribableDict, q_commands: QCommands, q_done: QDone):
+def _run(
+    context: Context,
+    registry: SubscribableDict,
+    q_commands: QCommands,
+    q_done: QDone,
+):
 
-    statement = registry.get("statement")
-    filename = registry.get("script_file_name", "<string>")
-    wrap_stdout = registry["create_capture_stdout"]
+    statement = context.get("statement")
+    filename = context.get("script_file_name", "<string>")
+    wrap_stdout = context["create_capture_stdout"]
 
     try:
         code = _compile(statement, filename)

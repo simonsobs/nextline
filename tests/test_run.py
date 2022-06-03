@@ -9,17 +9,18 @@ from weakref import WeakKeyDictionary
 import pytest
 from unittest.mock import Mock
 
-from nextline.run import run
+from nextline.run import run, Context
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 from nextline.utils.func import to_thread
 
 
 def test_q_done_on_exception(q_done, monkey_patch_run):
     del monkey_patch_run
+    context = Context()
     registry = Mock()
     q_commands = Mock()
     with pytest.raises(MockError):
-        run(registry, q_commands, q_done)
+        run(context, registry, q_commands, q_done)
     assert (None, None) == q_done.get()
 
 
@@ -37,13 +38,14 @@ def monkey_patch_run(monkeypatch):
 @pytest.mark.asyncio
 async def test_one(
     expected_exception,
+    context: Context,
     registry,
     q_commands,
     q_done,
     task_send_commands,
 ):
     del task_send_commands
-    await to_thread(run, registry, q_commands, q_done)
+    await to_thread(run, context, registry, q_commands, q_done)
     result, exception = q_done.get()
     assert result is None
     if expected_exception:
@@ -71,14 +73,22 @@ async def respond_prompt(registry, q_commands):
 
 
 @pytest.fixture
-def registry(statement):
+def context(statement):
+    y = Context(
+        statement=statement,
+        filename="<string>",
+        create_capture_stdout=lambda _: sys.stdout,
+    )
+    return y
+
+
+@pytest.fixture
+def registry():
     y = SubscribableDict[str, Any]()
-    y["statement"] = statement
     y["run_no"] = 1
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
     y["trace_id_factory"] = ThreadTaskIdComposer()
-    y["create_capture_stdout"] = lambda _: sys.stdout
     yield y
 
 
