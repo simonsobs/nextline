@@ -1,5 +1,6 @@
 import sys
 from threading import Thread
+import traceback
 
 import pytest
 from unittest.mock import Mock
@@ -46,6 +47,10 @@ def test_raise(trace):
     assert isinstance(exc, MockError)
 
     assert 4 == trace.call_count  # "call", "line", "exception", "return"
+
+    # assert the frame of call_with_trace() is removed
+    formatted = traceback.format_exception(type(exc), exc, exc.__traceback__)
+    assert len(formatted) == 3
 
 
 @pytest.mark.parametrize("thread", [True, False])

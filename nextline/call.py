@@ -58,4 +58,16 @@ def call_with_trace(
         sys.settrace(trace_org)
         if thread:
             threading.settrace(trace_org)  # type: ignore
+
+        if exc:
+
+            # How to print the exception in the same way as the interpreter.
+            # import traceback
+            # traceback.print_exception(type(exc), exc, exc.__traceback__)
+
+            if exc.__traceback__:
+                # remove this frame from the traceback.
+                # Note: exc.__traceback__ is sys._getframe()
+                exc.__traceback__ = exc.__traceback__.tb_next
+
         return ret, exc
