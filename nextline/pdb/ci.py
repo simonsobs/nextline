@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 import threading
-import datetime
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
-
-from ..types import PromptInfo
 
 if TYPE_CHECKING:
     from types import FrameType
@@ -47,7 +44,7 @@ class PdbCommandInterface:
         self._queue_out = queue_out
         self._counter = counter
         self._trace_no = trace_no
-        self._registry = context["registry"]
+        self._context = context
         self._ended = False
         self._nprompts = 0
 
@@ -59,20 +56,14 @@ class PdbCommandInterface:
 
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
-        prompt_info = PromptInfo(
-            run_no=self._registry["run_no"],
+        self._context["registrar"].prompt_end(
             trace_no=self._trace_no,
             prompt_no=self._prompt_no,
-            open=False,
             event=self._event,
             file_name=self._file_name,
             line_no=self._line_no,
             command=command,
-            ended_at=datetime.datetime.now(),
         )
-        self._registry["prompt_info"] = prompt_info
-        key = f"prompt_info_{self._trace_no}"
-        self._registry[key] = prompt_info
         self._command = command
         self._queue_in.put(command)
 
@@ -98,20 +89,14 @@ class PdbCommandInterface:
             self._nprompts += 1
             self._prompt_no = self._counter()
             self._stdout = out
-            prompt_info = PromptInfo(
-                run_no=self._registry["run_no"],
+            self._context["registrar"].prompt_start(
                 trace_no=self._trace_no,
                 prompt_no=self._prompt_no,
-                open=True,
                 event=self._event,
                 file_name=self._file_name,
                 line_no=self._line_no,
-                stdout=out,
-                started_at=datetime.datetime.now(),
+                out=out,
             )
-            self._registry["prompt_info"] = prompt_info
-            key = f"prompt_info_{self._trace_no}"
-            self._registry[key] = prompt_info
 
     def _read_until_prompt(self, queue, prompt):
         """read the queue up to the prompt"""

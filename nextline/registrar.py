@@ -142,3 +142,45 @@ class Registrar:
         )
 
         self._registry["trace_info"] = trace_info
+
+    def prompt_start(
+        self, trace_no, prompt_no, event, file_name, line_no, out
+    ) -> None:
+        run_no: int = self._registry["run_no"]
+
+        prompt_info = PromptInfo(
+            run_no=run_no,
+            trace_no=trace_no,
+            prompt_no=prompt_no,
+            open=True,
+            event=event,
+            file_name=file_name,
+            line_no=line_no,
+            stdout=out,
+            started_at=datetime.datetime.now(),
+        )
+
+        self._registry["prompt_info"] = prompt_info
+        key = f"prompt_info_{prompt_info.trace_no}"
+        self._registry[key] = prompt_info
+
+    def prompt_end(
+        self, trace_no, prompt_no, event, file_name, line_no, command
+    ) -> None:
+        run_no: int = self._registry["run_no"]
+
+        prompt_info = PromptInfo(
+            run_no=run_no,
+            trace_no=trace_no,
+            prompt_no=prompt_no,
+            open=False,
+            event=event,
+            file_name=file_name,
+            line_no=line_no,
+            command=command,
+            ended_at=datetime.datetime.now(),
+        )
+
+        self._registry["prompt_info"] = prompt_info
+        key = f"prompt_info_{prompt_info.trace_no}"
+        self._registry[key] = prompt_info
