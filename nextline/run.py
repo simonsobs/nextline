@@ -52,6 +52,9 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
 
     pdb_ci_map: Dict[int, PdbCommandInterface] = {}
 
+    callback = ThreadTaskDoneCallback(done=context["registrar"].trace_end)
+    context["callback"] = callback
+
     trace = Trace(context=context, pdb_ci_map=pdb_ci_map)
 
     func = script.compose(code)
@@ -64,8 +67,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
         q_commands.put(None)
         future_to_command.result()
 
-    if callback := context.get("callback"):
-        callback.close()
+    callback.close()
 
     q_done.put((result, exception))
 
