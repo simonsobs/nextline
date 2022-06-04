@@ -1,7 +1,8 @@
+from __future__ import annotations
 from threading import Thread
 from asyncio import Task
 
-from typing import Union, Callable
+from typing import Callable, Optional
 
 from ..func import current_task_or_thread, to_thread
 from .thread import ThreadDoneCallback
@@ -11,7 +12,7 @@ from .task import TaskDoneCallback
 class ThreadTaskDoneCallback:
     def __init__(
         self,
-        done: Callable[[Union[Task, Thread]], None],
+        done: Callable[[Task | Thread], None],
         interval: float = 0.001,
     ):
         self._thread_callback = ThreadDoneCallback(
@@ -20,8 +21,8 @@ class ThreadTaskDoneCallback:
         self._task_callback = TaskDoneCallback(done=done)
 
     def register(
-        self, task_or_thread: Union[Task, Thread, None] = None
-    ) -> Union[Task, Thread]:
+        self, task_or_thread: Optional[Task | Thread] = None
+    ) -> Task | Thread:
         if task_or_thread is None:
             task_or_thread = current_task_or_thread()
         if isinstance(task_or_thread, Task):
