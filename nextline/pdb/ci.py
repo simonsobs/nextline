@@ -38,7 +38,7 @@ class PdbCommandInterface:
         queue_in: Queue,
         queue_out: Queue,
         counter: Callable[[], int],
-        trace_id: int,
+        trace_no: int,
         context: Context,
         trace_args: Tuple[FrameType, str, Any],
     ):
@@ -46,7 +46,7 @@ class PdbCommandInterface:
         self._queue_in = queue_in
         self._queue_out = queue_out
         self._counter = counter
-        self._trace_id = trace_id
+        self._trace_no = trace_no
         self._registry = context["registry"]
         self._ended = False
         self._nprompts = 0
@@ -61,7 +61,7 @@ class PdbCommandInterface:
         """send a command to pdb"""
         prompt_info = PromptInfo(
             run_no=self._registry["run_no"],
-            trace_no=self._trace_id,
+            trace_no=self._trace_no,
             prompt_no=self._prompt_no,
             open=False,
             event=self._event,
@@ -71,7 +71,7 @@ class PdbCommandInterface:
             ended_at=datetime.datetime.now(),
         )
         self._registry["prompt_info"] = prompt_info
-        key = f"prompt_info_{self._trace_id}"
+        key = f"prompt_info_{self._trace_no}"
         self._registry[key] = prompt_info
         self._command = command
         self._queue_in.put(command)
@@ -100,7 +100,7 @@ class PdbCommandInterface:
             self._stdout = out
             prompt_info = PromptInfo(
                 run_no=self._registry["run_no"],
-                trace_no=self._trace_id,
+                trace_no=self._trace_no,
                 prompt_no=self._prompt_no,
                 open=True,
                 event=self._event,
@@ -110,7 +110,7 @@ class PdbCommandInterface:
                 started_at=datetime.datetime.now(),
             )
             self._registry["prompt_info"] = prompt_info
-            key = f"prompt_info_{self._trace_id}"
+            key = f"prompt_info_{self._trace_no}"
             self._registry[key] = prompt_info
 
     def _read_until_prompt(self, queue, prompt):

@@ -40,7 +40,7 @@ def PdbInterfaceFactory(
         context["callback"].register()
 
         pbi = PdbInterface(
-            trace_id=trace_no,
+            trace_no=trace_no,
             context=context,
             ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
@@ -74,13 +74,13 @@ class PdbInterface:
 
     def __init__(
         self,
-        trace_id: int,
+        trace_no: int,
         context: Context,
         ci_map: Dict[int, PdbCommandInterface],
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
-        self._trace_id = trace_id
+        self._trace_no = trace_no
         self._context = context
         self._ci_map = ci_map
         self._prompting_counter = prompting_counter
@@ -143,16 +143,16 @@ class PdbInterface:
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
             counter=self._prompting_counter,
-            trace_id=self._trace_id,
+            trace_no=self._trace_no,
             context=self._context,
             trace_args=self._trace_args,
         )
         self._pdb_ci.start()
 
-        self._ci_map[self._trace_id] = self._pdb_ci
+        self._ci_map[self._trace_no] = self._pdb_ci
 
     def exited_cmdloop(self) -> None:
         """To be called by the custom Pdb after _cmdloop()"""
 
-        del self._ci_map[self._trace_id]
+        del self._ci_map[self._trace_no]
         self._pdb_ci.end()
