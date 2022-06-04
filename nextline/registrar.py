@@ -14,6 +14,7 @@ from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from .types import RunInfo, TraceInfo, PromptInfo
+from .utils.func import current_task_or_thread
 
 if TYPE_CHECKING:
     from .state import State
@@ -93,6 +94,10 @@ class Registrar:
             prompt_no=-1,
             open=False,
         )
+
+        task_or_thread = current_task_or_thread()
+        self._run_no_map[task_or_thread] = run_no
+        self._trace_no_map[task_or_thread] = trace_no
 
         trace_info = TraceInfo(
             run_no=run_no,
