@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .types import RunInfo
+from .types import RunInfo, TraceInfo
 
 if TYPE_CHECKING:
     from .state import State
@@ -83,3 +83,11 @@ class Registrar:
         )
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
+
+    def trace_start(self, trace_info: TraceInfo):
+        print(f"trace_start({trace_info})")
+        self._registry["trace_info"] = trace_info
+
+    def trace_end(self, trace_info: TraceInfo):
+        print(f"trace_end({trace_info})")
+        self._registry["trace_info"] = trace_info

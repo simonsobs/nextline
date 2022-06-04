@@ -60,7 +60,9 @@ def PdbInterfaceFactory(
             state="finished",
             ended_at=datetime.datetime.now(),
         )
-        registry["trace_info"] = trace_info
+        # registry["trace_info"] = trace_info
+
+        context["registrar"].trace_end(trace_info)
 
     callback = ThreadTaskDoneCallback(done=callback_func)
 
@@ -96,10 +98,12 @@ def PdbInterfaceFactory(
             state="running",
             started_at=datetime.datetime.now(),
         )
-        registry["trace_info"] = trace_info
+        # registry["trace_info"] = trace_info
 
         key = callback.register()
         callback_map[key] = trace_info
+
+        context["registrar"].trace_start(trace_info)
 
         pbi = PdbInterface(
             trace_id=trace_no,
