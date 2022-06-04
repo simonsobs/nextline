@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .utils import SubscribableDict
 from .types import RunInfo
 
 if TYPE_CHECKING:
@@ -25,7 +24,7 @@ TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
 
 
 class Registrar:
-    def __init__(self, registry: SubscribableDict):
+    def __init__(self, registry: MutableMapping):
         self._registry = registry
         self._run_no_map: RunNoMap = WeakKeyDictionary()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
