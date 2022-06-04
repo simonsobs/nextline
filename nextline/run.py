@@ -65,10 +65,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
         future_to_command.result()
 
     if callback := context.get("callback"):
-        try:
-            callback.close()
-        except BaseException:
-            pass
+        callback.close()
 
     q_done.put((result, exception))
 
