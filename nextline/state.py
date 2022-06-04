@@ -62,6 +62,7 @@ class Machine:
             run_no_count=itertools.count(run_no_start_from).__next__,
             trace_id_factory=ThreadTaskIdComposer(),
             registry=self.registry,
+            registrar=self._registrar,
         )
 
         self._registrar.script_change(script=statement, filename=filename)

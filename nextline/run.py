@@ -8,6 +8,7 @@ from typing import Callable, Dict, Any, TextIO, TypedDict
 from typing import Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
+from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
 from .types import TraceFunc
@@ -27,6 +28,7 @@ class Context(TypedDict, total=False):
     run_no_count: Callable[[], int]
     trace_id_factory: ThreadTaskIdComposer
     registry: SubscribableDict
+    registrar: Registrar
 
 
 def run(context: Context, q_commands: QCommands, q_done: QDone):
