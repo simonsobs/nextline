@@ -116,7 +116,6 @@ class Registrar:
             state="running",
             started_at=datetime.datetime.now(),
         )
-        print(f"trace_start({trace_info})")
         self._registry["trace_info"] = trace_info
         return trace_info
 
