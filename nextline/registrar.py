@@ -4,7 +4,7 @@ from asyncio import Task  # noqa F401
 from threading import Thread  # noqa F401
 import dataclasses
 import datetime
-import itertools
+from itertools import count
 import traceback
 import json
 from weakref import WeakKeyDictionary
@@ -27,14 +27,14 @@ TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
 class Registrar:
     def __init__(self, registry: MutableMapping, run_no_start_from: int):
         self._registry = registry
-        self._run_no_count = itertools.count(run_no_start_from).__next__
+        self._run_no_count = count(run_no_start_from).__next__
         self._run_no_map: RunNoMap = WeakKeyDictionary()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._registry["run_no_map"] = self._run_no_map
         self._registry["trace_no_map"] = self._trace_no_map
 
     def reset_run_no_count(self, run_no_start_from: int) -> None:
-        self._run_no_count = itertools.count(run_no_start_from).__next__
+        self._run_no_count = count(run_no_start_from).__next__
 
     def script_change(self, script: str, filename: str) -> None:
         self._registry["statement"] = script
