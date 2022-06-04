@@ -28,6 +28,7 @@ class Context(TypedDict, total=False):
     create_capture_stdout: Callable[[TextIO], TextIO]
     registrar: Registrar
     callback: ThreadTaskDoneCallback
+    pdb_ci_map: PdbCiMap
 
 
 def run(context: Context, q_commands: QCommands, q_done: QDone):
@@ -51,13 +52,14 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
         return
 
     pdb_ci_map: PdbCiMap = {}
+    context["pdb_ci_map"] = pdb_ci_map
 
     done = context["registrar"].trace_end
 
     with ThreadTaskDoneCallback(done=done) as callback:
         context["callback"] = callback
 
-        trace = Trace(context=context, pdb_ci_map=pdb_ci_map)
+        trace = Trace(context=context)
 
         func = script.compose(code)
 

@@ -43,7 +43,6 @@ def thread():
 def target_trace_func(modules_to_trace: Set[str]):
     y = Trace(
         context=Mock(spec=SubscribableDict),
-        pdb_ci_map={},
         modules_to_trace=modules_to_trace,
     )
     yield y

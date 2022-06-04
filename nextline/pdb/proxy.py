@@ -15,7 +15,6 @@ from typing import (
     Union,
     Any,
     Set,
-    Dict,
     Tuple,
 )
 from types import FrameType
@@ -27,7 +26,6 @@ if TYPE_CHECKING:
 
 def PdbInterfaceFactory(
     context: Context,
-    pdb_ci_map: Dict[int, PdbCommandInterface],
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
@@ -42,7 +40,6 @@ def PdbInterfaceFactory(
         pbi = PdbInterface(
             trace_no=trace_no,
             context=context,
-            ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
             modules_to_trace=modules_to_trace,
         )
@@ -76,13 +73,12 @@ class PdbInterface:
         self,
         trace_no: int,
         context: Context,
-        ci_map: Dict[int, PdbCommandInterface],
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
         self._trace_no = trace_no
         self._context = context
-        self._ci_map = ci_map
+        self._ci_map = context["pdb_ci_map"]
         self._prompting_counter = prompting_counter
         self.modules_to_trace = modules_to_trace
         self._opened = False
