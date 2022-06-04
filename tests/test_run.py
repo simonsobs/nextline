@@ -10,6 +10,7 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.run import run, Context
+from nextline.registrar import Registrar
 from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 from nextline.utils.func import to_thread
 
@@ -71,14 +72,21 @@ async def respond_prompt(registry, q_commands):
 
 
 @pytest.fixture
-def context(statement, registry):
+def context(statement, registrar, registry):
     y = Context(
         statement=statement,
         filename="<string>",
         create_capture_stdout=lambda _: sys.stdout,
         trace_id_factory=ThreadTaskIdComposer(),
         registry=registry,
+        registrar=registrar,
     )
+    return y
+
+
+@pytest.fixture
+def registrar(registry: SubscribableDict):
+    y = Registrar(registry=registry)
     return y
 
 
