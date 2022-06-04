@@ -53,7 +53,6 @@ class Machine:
                 self.registry["run_no_map"],
                 self.registry["trace_no_map"],
             ),
-            registry=self.registry,
             registrar=self._registrar,
         )
 
