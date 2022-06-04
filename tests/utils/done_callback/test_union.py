@@ -53,3 +53,19 @@ async def test_task(done: Done):
     await t
     await obj.aclose()
     assert {t} == done.args
+
+
+def test_with_thread(done: Done):
+    with ThreadTaskDoneCallback(done=done) as obj:
+        t = Thread(target=target, args=(obj,))
+        t.start()
+    assert {t} == done.args
+    t.join()
+
+
+@pytest.mark.asyncio
+async def test_with_task(done: Done):
+    async with ThreadTaskDoneCallback(done=done) as obj:
+        t = create_task(atarget(obj))
+        await t
+    assert {t} == done.args

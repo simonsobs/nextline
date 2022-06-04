@@ -40,10 +40,24 @@ async def test_one(done: Done):
     assert {t} == done.args
 
 
+@pytest.mark.asyncio
+async def test_async_with(done: Done):
+    async with TaskDoneCallback(done=done) as obj:
+        t = asyncio.create_task(target(obj))
+        await t
+    assert {t} == done.args
+
+
 def test_asyncio_run(done: Done):
     obj = TaskDoneCallback(done=done)
     asyncio.run(target(obj))
     obj.close()
+    assert 1 == len(done.args)
+
+
+def test_with(done: Done):
+    with TaskDoneCallback(done=done) as obj:
+        asyncio.run(target(obj))
     assert 1 == len(done.args)
 
 

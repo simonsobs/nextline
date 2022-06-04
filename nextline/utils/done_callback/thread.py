@@ -80,3 +80,10 @@ class ThreadDoneCallback:
                 break
         if exc:
             raise exc[0]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        self.close()

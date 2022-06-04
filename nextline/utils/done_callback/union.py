@@ -39,3 +39,17 @@ class ThreadTaskDoneCallback:
         """Awaitable version of close()"""
         await self._task_callback.aclose(interval=interval)
         await to_thread(self._thread_callback.close)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        self.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        await self.aclose()

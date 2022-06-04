@@ -41,6 +41,14 @@ def test_one(done: Done):
     t.join()
 
 
+def test_with(done: Done):
+    with ThreadDoneCallback(done=done) as obj:
+        t = ExcThread(target=target, args=(obj,))
+        t.start()
+    assert {t} == done.args
+    t.join()
+
+
 def test_register_arg(done: Done):
     def target():
         delay = random.random() * 0.01
