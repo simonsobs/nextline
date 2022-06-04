@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import itertools
 from queue import Queue
 from typing import Optional, Any, Tuple
 
@@ -49,7 +48,7 @@ class Machine:
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
-        self._registrar = Registrar(self.registry)
+        self._registrar = Registrar(self.registry, run_no_start_from)
 
         self.context = Context(
             statement=statement,
@@ -59,7 +58,6 @@ class Machine:
                 self.registry["run_no_map"],
                 self.registry["trace_no_map"],
             ),
-            run_no_count=itertools.count(run_no_start_from).__next__,
             trace_id_factory=ThreadTaskIdComposer(),
             registry=self.registry,
             registrar=self._registrar,
@@ -121,8 +119,7 @@ class Machine:
                 script=statement, filename=SCRIPT_FILE_NAME
             )
         if run_no_start_from is not None:
-            run_no_count = itertools.count(run_no_start_from).__next__
-            self.context["run_no_count"] = run_no_count
+            self._registrar.reset_run_no_count(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
 
@@ -211,9 +208,6 @@ class Initialized(State):
 
     def __init__(self, context: Context):
         self._context = context
-        registry = context["registry"]
-        run_no = context["run_no_count"]()
-        registry["run_no"] = run_no
         context["trace_id_factory"].reset()
 
     def run(self):
