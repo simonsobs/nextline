@@ -90,7 +90,7 @@ class Registrar:
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
 
-    def trace_start(self, trace_no) -> TraceInfo:
+    def trace_start(self, trace_no) -> None:
 
         nos = (self._registry.get("trace_nos") or ()) + (trace_no,)
         self._registry["trace_nos"] = nos
@@ -120,7 +120,6 @@ class Registrar:
         )
         self._trace_info_map[task_or_thread] = trace_info
         self._registry["trace_info"] = trace_info
-        return trace_info
 
     def trace_end(self, task_or_thread: Task | Thread):
         trace_info = self._trace_info_map[task_or_thread]

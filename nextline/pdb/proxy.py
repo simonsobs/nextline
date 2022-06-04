@@ -4,7 +4,6 @@ import queue
 from itertools import count
 
 from ..utils import ThreadTaskDoneCallback
-from ..types import TraceInfo
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -37,7 +36,6 @@ def PdbInterfaceFactory(
 
     trace_no_counter = count(1).__next__
     prompting_counter = count(1).__next__
-    callback_map: Dict[Any, TraceInfo] = {}
 
     def callback_func(key) -> None:
         context["registrar"].trace_end(key)
@@ -50,10 +48,9 @@ def PdbInterfaceFactory(
 
     def factory() -> PdbInterface:
         trace_no = trace_no_counter()
-        trace_info = context["registrar"].trace_start(trace_no)
+        context["registrar"].trace_start(trace_no)
 
-        key = callback.register()
-        callback_map[key] = trace_info
+        callback.register()
 
         pbi = PdbInterface(
             trace_id=trace_no,
