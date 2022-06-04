@@ -84,9 +84,19 @@ class Registrar:
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
 
-    def trace_start(self, trace_info: TraceInfo):
+    def trace_start(self, trace_no, thread_task_id) -> TraceInfo:
+        run_no: int = self._registry["run_no"]
+        trace_info = TraceInfo(
+            run_no=run_no,
+            trace_no=trace_no,
+            thread_no=thread_task_id.thread_no,
+            task_no=thread_task_id.task_no,
+            state="running",
+            started_at=datetime.datetime.now(),
+        )
         print(f"trace_start({trace_info})")
         self._registry["trace_info"] = trace_info
+        return trace_info
 
     def trace_end(self, trace_info: TraceInfo):
         print(f"trace_end({trace_info})")

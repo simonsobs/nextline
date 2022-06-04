@@ -90,20 +90,10 @@ def PdbInterfaceFactory(
         registry["run_no_map"][task_or_thread] = run_no  # type: ignore
         registry["trace_no_map"][task_or_thread] = trace_no  # type: ignore
 
-        trace_info = TraceInfo(
-            run_no=run_no,
-            trace_no=trace_no,
-            thread_no=thread_task_id.thread_no,
-            task_no=thread_task_id.task_no,
-            state="running",
-            started_at=datetime.datetime.now(),
-        )
-        # registry["trace_info"] = trace_info
+        trace_info = context["registrar"].trace_start(trace_no, thread_task_id)
 
         key = callback.register()
         callback_map[key] = trace_info
-
-        context["registrar"].trace_start(trace_info)
 
         pbi = PdbInterface(
             trace_id=trace_no,
