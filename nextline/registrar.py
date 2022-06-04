@@ -120,5 +120,23 @@ class Registrar:
         return trace_info
 
     def trace_end(self, trace_info: TraceInfo):
+
+        trace_no = trace_info.trace_no
+        key = f"prompt_info_{trace_no}"
+        try:
+            del self._registry[key]
+        except KeyError:
+            pass
+        nosl = list(self._registry.get("trace_nos"))  # type: ignore
+        nosl.remove(trace_no)
+        nos = tuple(nosl)
+        self._registry["trace_nos"] = nos
+
+        trace_info = dataclasses.replace(
+            trace_info,
+            state="finished",
+            ended_at=datetime.datetime.now(),
+        )
+
         print(f"trace_end({trace_info})")
         self._registry["trace_info"] = trace_info

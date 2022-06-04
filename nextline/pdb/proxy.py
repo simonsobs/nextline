@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
-import datetime
 import queue
 from itertools import count
 
@@ -43,24 +41,6 @@ def PdbInterfaceFactory(
 
     def callback_func(key) -> None:
         trace_info = callback_map[key]
-        trace_no = trace_info.trace_no
-        key = f"prompt_info_{trace_no}"
-        try:
-            del registry[key]
-        except KeyError:
-            pass
-        nosl = list(registry.get("trace_nos"))  # type: ignore
-        nosl.remove(trace_no)
-        nos = tuple(nosl)
-        registry["trace_nos"] = nos
-
-        trace_info = dataclasses.replace(
-            trace_info,
-            state="finished",
-            ended_at=datetime.datetime.now(),
-        )
-        # registry["trace_info"] = trace_info
-
         context["registrar"].trace_end(trace_info)
 
     callback = ThreadTaskDoneCallback(done=callback_func)
