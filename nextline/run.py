@@ -4,21 +4,22 @@ import sys
 from queue import Queue  # noqa F401
 import concurrent.futures
 
-from typing import Callable, Dict, Any, TextIO, TypedDict
-from typing import Tuple  # noqa F401
+from typing import Callable, Any, TextIO, TypedDict
+from typing import Tuple, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
 from .types import TraceFunc
-from .pdb.ci import PdbCommandInterface
+from .pdb.ci import PdbCommandInterface  # noqa F401
 from .utils import ThreadTaskDoneCallback
 
 from . import script
 
 QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
+PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
 
 
 class Context(TypedDict, total=False):
@@ -49,7 +50,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
         q_done.put((None, e))
         return
 
-    pdb_ci_map: Dict[int, PdbCommandInterface] = {}
+    pdb_ci_map: PdbCiMap = {}
 
     done = context["registrar"].trace_end
 
@@ -95,9 +96,7 @@ def _exec(
         return ret, exc
 
 
-def _command(
-    q_commands: QCommands, pdb_ci_map: Dict[int, PdbCommandInterface]
-):
+def _command(q_commands: QCommands, pdb_ci_map: PdbCiMap):
     while m := q_commands.get():
         trace_id, command = m
         pdb_ci = pdb_ci_map[trace_id]
