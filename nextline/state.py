@@ -25,11 +25,8 @@ SCRIPT_FILE_NAME = "<string>"
 
 
 class Registrar:
-    def __init__(self, run_no_start_from):
+    def __init__(self):
         self._registry = SubscribableDict[Any, Any]()
-
-        run_no_count = itertools.count(run_no_start_from).__next__
-        self._registry["run_no_count"] = run_no_count
 
         self._registry["trace_id_factory"] = ThreadTaskIdComposer()
 
@@ -103,7 +100,7 @@ class Machine:
 
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
-        self.registrar = Registrar(run_no_start_from=run_no_start_from)
+        self.registrar = Registrar()
 
         registry = self.registrar._registry
         self.registry = registry
@@ -112,6 +109,7 @@ class Machine:
             statement=statement,
             filename=filename,
             create_capture_stdout=IOSubscription(registry),
+            run_no_count=itertools.count(run_no_start_from).__next__,
             registry=registry,
         )
 
@@ -176,7 +174,7 @@ class Machine:
             self.registrar.script_change(script=statement)
         if run_no_start_from is not None:
             run_no_count = itertools.count(run_no_start_from).__next__
-            self.registry["run_no_count"] = run_no_count
+            self.context["run_no_count"] = run_no_count
         self._state = self._state.reset()
         self._state_changed()
 
@@ -266,7 +264,7 @@ class Initialized(State):
     def __init__(self, context: Context):
         self._context = context
         registry = context["registry"]
-        run_no = registry.get("run_no_count")()  # type: ignore
+        run_no = context["run_no_count"]()
         registry["run_no"] = run_no
         registry["trace_id_factory"].reset()  # type: ignore
 

@@ -24,6 +24,7 @@ class Context(TypedDict, total=False):
     statement: str
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
+    run_no_count: Callable[[], int]
     registry: SubscribableDict
 
 

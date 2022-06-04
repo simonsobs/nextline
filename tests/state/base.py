@@ -57,13 +57,16 @@ class BaseTestState(ABC):
 
     @pytest.fixture
     def context(self, registry: SubscribableDict) -> Context:
-        y = Context(registry=registry)
+        y = Context(
+            registry=registry,
+            run_no_count=itertools.count().__next__,
+        )
         return y
 
     @pytest.fixture()
     def registry(self):
         y = SubscribableDict()
-        y["run_no_count"] = itertools.count().__next__
+        # y["run_no_count"] = itertools.count().__next__
         y["trace_id_factory"] = ThreadTaskIdComposer()
         yield y
         y.close()
