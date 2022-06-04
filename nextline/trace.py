@@ -11,8 +11,8 @@ from .pdb.proxy import PdbInterfaceFactory
 from .utils import current_task_or_thread
 
 if TYPE_CHECKING:
+    from .run import Context
     from .types import TraceFunc
-    from .utils import SubscribableDict
     from .pdb.ci import PdbCommandInterface
 
 
@@ -46,7 +46,7 @@ MODULES_TO_SKIP = {
 
 
 def Trace(
-    registry: SubscribableDict,
+    context: Context,
     pdb_ci_map: Dict[int, PdbCommandInterface],
     modules_to_trace: Optional[Set[str]] = None,
 ) -> TraceFunc:
@@ -55,8 +55,8 @@ def Trace(
 
     Parameters
     ----------
-    registry : object
-        An instance of Registry
+    context : dict
+        An instance of Context
     modules_to_trace : set, optional
         The names of modules to trace. The module in which the trace
         is first time called will be always traced even if not in the
@@ -73,7 +73,7 @@ def Trace(
     # multiple objects.
 
     pdbi_factory = PdbInterfaceFactory(
-        registry=registry,
+        context=context,
         pdb_ci_map=pdb_ci_map,
         modules_to_trace=modules_to_trace,
     )

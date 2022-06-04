@@ -52,7 +52,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
 
     pdb_ci_map: Dict[int, PdbCommandInterface] = {}
 
-    trace = Trace(registry=registry, pdb_ci_map=pdb_ci_map)
+    trace = Trace(context=context, pdb_ci_map=pdb_ci_map)
 
     func = script.compose(code)
 

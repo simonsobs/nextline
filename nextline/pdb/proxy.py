@@ -25,15 +25,17 @@ from typing import (
 from types import FrameType
 
 if TYPE_CHECKING:
+    from ..run import Context
     from ..types import TraceFunc
     from ..utils import SubscribableDict, ThreadTaskIdComposer
 
 
 def PdbInterfaceFactory(
-    registry: SubscribableDict,
+    context: Context,
     pdb_ci_map: Dict[int, PdbCommandInterface],
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
+    registry = context["registry"]
 
     id_composer: ThreadTaskIdComposer = registry["trace_id_factory"]
     trace_no_counter = count(1).__next__
