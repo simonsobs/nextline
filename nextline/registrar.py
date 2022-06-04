@@ -14,6 +14,7 @@ from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from .types import RunInfo, TraceInfo, PromptInfo
+from .utils import ThreadTaskIdComposer
 from .utils.func import current_task_or_thread
 
 if TYPE_CHECKING:
@@ -33,6 +34,7 @@ class Registrar:
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._registry["run_no_map"] = self._run_no_map
         self._registry["trace_no_map"] = self._trace_no_map
+        self._trace_id_factory = ThreadTaskIdComposer()
 
     def reset_run_no_count(self, run_no_start_from: int) -> None:
         self._run_no_count = count(run_no_start_from).__next__
@@ -55,6 +57,7 @@ class Registrar:
 
     def state_initialized(self) -> None:
         self._registry["run_no"] = self._run_no_count()
+        self._trace_id_factory.reset()
 
     def run_start(self) -> None:
         self._run_info = RunInfo(
@@ -85,7 +88,7 @@ class Registrar:
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
 
-    def trace_start(self, trace_no, thread_task_id) -> TraceInfo:
+    def trace_start(self, trace_no) -> TraceInfo:
         run_no: int = self._registry["run_no"]
 
         self._registry[f"prompt_info_{trace_no}"] = PromptInfo(
@@ -98,6 +101,8 @@ class Registrar:
         task_or_thread = current_task_or_thread()
         self._run_no_map[task_or_thread] = run_no
         self._trace_no_map[task_or_thread] = trace_no
+
+        thread_task_id = self._trace_id_factory()
 
         trace_info = TraceInfo(
             run_no=run_no,

@@ -37,7 +37,6 @@ def PdbInterfaceFactory(
 ) -> Callable[[], PdbInterface]:
     registry = context["registry"]
 
-    id_composer = context["trace_id_factory"]
     trace_no_counter = count(1).__next__
     prompting_counter = count(1).__next__
     callback_map: Dict[Any, TraceInfo] = {}
@@ -76,9 +75,7 @@ def PdbInterfaceFactory(
         nos = (registry.get("trace_nos") or ()) + (trace_no,)
         registry["trace_nos"] = nos
 
-        thread_task_id = id_composer()
-
-        trace_info = context["registrar"].trace_start(trace_no, thread_task_id)
+        trace_info = context["registrar"].trace_start(trace_no)
 
         key = callback.register()
         callback_map[key] = trace_info

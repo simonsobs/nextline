@@ -5,12 +5,7 @@ from queue import Queue
 from typing import Optional, Any, Tuple
 
 from .io import IOSubscription
-from .utils import (
-    ExcThread,
-    SubscribableDict,
-    ThreadTaskIdComposer,
-    to_thread,
-)
+from .utils import ExcThread, SubscribableDict, to_thread
 from .run import run, Context
 from .registrar import Registrar
 
@@ -58,7 +53,6 @@ class Machine:
                 self.registry["run_no_map"],
                 self.registry["trace_no_map"],
             ),
-            trace_id_factory=ThreadTaskIdComposer(),
             registry=self.registry,
             registrar=self._registrar,
         )
@@ -208,7 +202,6 @@ class Initialized(State):
 
     def __init__(self, context: Context):
         self._context = context
-        context["trace_id_factory"].reset()
 
     def run(self):
         self.assert_not_obsolete()

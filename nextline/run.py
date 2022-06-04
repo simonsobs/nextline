@@ -13,11 +13,7 @@ from .trace import Trace
 from .call import call_with_trace
 from .types import TraceFunc
 from .pdb.ci import PdbCommandInterface
-from .utils import (
-    SubscribableDict,
-    ThreadTaskIdComposer,
-    ThreadTaskDoneCallback,
-)
+from .utils import SubscribableDict, ThreadTaskDoneCallback
 
 from . import script
 
@@ -29,7 +25,6 @@ class Context(TypedDict, total=False):
     statement: str
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
-    trace_id_factory: ThreadTaskIdComposer
     registry: SubscribableDict
     registrar: Registrar
     callback: ThreadTaskDoneCallback
