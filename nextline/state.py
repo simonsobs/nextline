@@ -25,11 +25,9 @@ SCRIPT_FILE_NAME = "<string>"
 
 
 class Registrar:
-    def __init__(self):
-        self._registry = SubscribableDict[Any, Any]()
-
+    def __init__(self, registry: SubscribableDict):
+        self._registry = registry
         self._registry["trace_id_factory"] = ThreadTaskIdComposer()
-
         self._registry["run_no_map"] = WeakKeyDictionary()
         self._registry["trace_no_map"] = WeakKeyDictionary()
 
@@ -100,17 +98,15 @@ class Machine:
 
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
-        self._registrar = Registrar()
-
-        registry = self._registrar._registry
-        self.registry = registry
+        self.registry = SubscribableDict[Any, Any]()
+        self._registrar = Registrar(self.registry)
 
         self.context = Context(
             statement=statement,
             filename=filename,
-            create_capture_stdout=IOSubscription(registry),
+            create_capture_stdout=IOSubscription(self.registry),
             run_no_count=itertools.count(run_no_start_from).__next__,
-            registry=registry,
+            registry=self.registry,
         )
 
         self._registrar.script_change(script=statement, filename=filename)
