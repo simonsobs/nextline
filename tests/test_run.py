@@ -76,6 +76,7 @@ def context(statement, registry):
         statement=statement,
         filename="<string>",
         create_capture_stdout=lambda _: sys.stdout,
+        trace_id_factory=ThreadTaskIdComposer(),
         registry=registry,
     )
     return y
@@ -87,7 +88,6 @@ def registry():
     y["run_no"] = 1
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
-    y["trace_id_factory"] = ThreadTaskIdComposer()
     yield y
 
 

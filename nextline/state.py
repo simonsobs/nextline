@@ -27,7 +27,6 @@ SCRIPT_FILE_NAME = "<string>"
 class Registrar:
     def __init__(self, registry: SubscribableDict):
         self._registry = registry
-        self._registry["trace_id_factory"] = ThreadTaskIdComposer()
         self._registry["run_no_map"] = WeakKeyDictionary()
         self._registry["trace_no_map"] = WeakKeyDictionary()
 
@@ -106,6 +105,7 @@ class Machine:
             filename=filename,
             create_capture_stdout=IOSubscription(self.registry),
             run_no_count=itertools.count(run_no_start_from).__next__,
+            trace_id_factory=ThreadTaskIdComposer(),
             registry=self.registry,
         )
 
@@ -262,7 +262,7 @@ class Initialized(State):
         registry = context["registry"]
         run_no = context["run_no_count"]()
         registry["run_no"] = run_no
-        registry["trace_id_factory"].reset()  # type: ignore
+        context["trace_id_factory"].reset()
 
     def run(self):
         self.assert_not_obsolete()

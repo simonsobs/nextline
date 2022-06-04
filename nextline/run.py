@@ -11,7 +11,7 @@ from typing_extensions import TypeAlias
 from .trace import Trace
 from .call import call_with_trace
 from .types import TraceFunc
-from .utils import SubscribableDict
+from .utils import SubscribableDict, ThreadTaskIdComposer
 from .pdb.ci import PdbCommandInterface
 
 from . import script
@@ -25,6 +25,7 @@ class Context(TypedDict, total=False):
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
     run_no_count: Callable[[], int]
+    trace_id_factory: ThreadTaskIdComposer
     registry: SubscribableDict
 
 

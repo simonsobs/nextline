@@ -12,6 +12,7 @@ def context(registry: SubscribableDict) -> Context:
     y = Context(
         registry=registry,
         run_no_count=itertools.count().__next__,
+        trace_id_factory=ThreadTaskIdComposer(),
     )
     return y
 
@@ -19,7 +20,6 @@ def context(registry: SubscribableDict) -> Context:
 @pytest.fixture()
 def registry():
     y = SubscribableDict()
-    y["trace_id_factory"] = ThreadTaskIdComposer()
     yield y
     y.close()
 
