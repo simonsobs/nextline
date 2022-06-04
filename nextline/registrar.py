@@ -29,8 +29,14 @@ class Registrar:
 
     def state_change(self, state: State) -> None:
         self._registry["state_name"] = state.name
+        if state.name == "running":
+            self.run_start()
+            return
+        if state.name == "finished":
+            self.run_end(state=state)
+            return
 
-    def run_start(self):
+    def run_start(self) -> None:
         self._run_info = RunInfo(
             run_no=self._registry["run_no"],
             state="running",
@@ -39,20 +45,23 @@ class Registrar:
         )
         self._registry["run_info"] = self._run_info
 
-    def run_end(self, result, exception) -> None:
-        if exception:
-            exception = "".join(
+    def run_end(self, state: State) -> None:
+        exc = state.exception()
+        ret = state.result() if not exc else None
+        if exc:
+            fmt_exc = "".join(
                 traceback.format_exception(
-                    type(exception), exception, exception.__traceback__
+                    type(exc), exc, exc.__traceback__
                 )
             )
-        if not exception:
-            result = json.dumps(result)
+        else:
+            ret = json.dumps(ret)
+            fmt_exc = None
         self._run_info = dataclasses.replace(
             self._run_info,
             state="finished",
-            result=result,
-            exception=exception,
+            result=ret,
+            exception=fmt_exc,
             ended_at=datetime.datetime.now(),
         )
         # TODO: check if run_no matches

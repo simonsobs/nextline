@@ -79,12 +79,6 @@ class Machine:
 
     def _state_changed(self) -> None:
         self._registrar.state_change(self._state)
-        if self.state_name == "running":
-            self._registrar.run_start()
-        if self.state_name == "finished":
-            exception = self.exception()
-            result = self.result() if not exception else None
-            self._registrar.run_end(result, exception)
 
     @property
     def state_name(self) -> str:
