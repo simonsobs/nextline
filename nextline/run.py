@@ -51,22 +51,24 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
 
     pdb_ci_map: Dict[int, PdbCommandInterface] = {}
 
-    callback = ThreadTaskDoneCallback(done=context["registrar"].trace_end)
-    context["callback"] = callback
+    done = context["registrar"].trace_end
 
-    trace = Trace(context=context, pdb_ci_map=pdb_ci_map)
+    with ThreadTaskDoneCallback(done=done) as callback:
+        context["callback"] = callback
 
-    func = script.compose(code)
+        trace = Trace(context=context, pdb_ci_map=pdb_ci_map)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        # TODO: Handle exceptions occurred in _command()
-        future_to_command = executor.submit(_command, q_commands, pdb_ci_map)
-        future_to_call = executor.submit(_exec, func, trace, wrap_stdout)
-        result, exception = future_to_call.result()
-        q_commands.put(None)
-        future_to_command.result()
+        func = script.compose(code)
 
-    callback.close()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            # TODO: Handle exceptions occurred in _command()
+            future_to_command = executor.submit(
+                _command, q_commands, pdb_ci_map
+            )
+            future_to_call = executor.submit(_exec, func, trace, wrap_stdout)
+            result, exception = future_to_call.result()
+            q_commands.put(None)
+            future_to_command.result()
 
     q_done.put((result, exception))
 
