@@ -58,9 +58,7 @@ class Registrar:
         ret = state.result() if not exc else None
         if exc:
             fmt_exc = "".join(
-                traceback.format_exception(
-                    type(exc), exc, exc.__traceback__
-                )
+                traceback.format_exception(type(exc), exc, exc.__traceback__)
             )
         else:
             ret = json.dumps(ret)
