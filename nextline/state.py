@@ -30,9 +30,7 @@ class Registrar:
         self._registry["run_no_map"] = WeakKeyDictionary()
         self._registry["trace_no_map"] = WeakKeyDictionary()
 
-    def script_change(
-        self, script: str, filename: str = SCRIPT_FILE_NAME
-    ) -> None:
+    def script_change(self, script: str, filename: str) -> None:
         self._registry["statement"] = script
         self._registry["script_file_name"] = filename
 
@@ -167,7 +165,9 @@ class Machine:
         """Enter the initialized state"""
         if statement:
             self.context["statement"] = statement
-            self._registrar.script_change(script=statement)
+            self._registrar.script_change(
+                script=statement, filename=SCRIPT_FILE_NAME
+            )
         if run_no_start_from is not None:
             run_no_count = itertools.count(run_no_start_from).__next__
             self.context["run_no_count"] = run_no_count
