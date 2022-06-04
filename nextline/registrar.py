@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .types import RunInfo, TraceInfo
+from .types import RunInfo, TraceInfo, PromptInfo
 
 if TYPE_CHECKING:
     from .state import State
@@ -86,6 +86,14 @@ class Registrar:
 
     def trace_start(self, trace_no, thread_task_id) -> TraceInfo:
         run_no: int = self._registry["run_no"]
+
+        self._registry[f"prompt_info_{trace_no}"] = PromptInfo(
+            run_no=run_no,
+            trace_no=trace_no,
+            prompt_no=-1,
+            open=False,
+        )
+
         trace_info = TraceInfo(
             run_no=run_no,
             trace_no=trace_no,

@@ -6,7 +6,7 @@ import queue
 from itertools import count
 
 from ..utils import ThreadTaskDoneCallback, current_task_or_thread
-from ..types import TraceInfo, PromptInfo
+from ..types import TraceInfo
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -78,13 +78,6 @@ def PdbInterfaceFactory(
 
         run_no: int = registry["run_no"]
         thread_task_id = id_composer()
-
-        registry[f"prompt_info_{trace_no}"] = PromptInfo(
-            run_no=run_no,
-            trace_no=trace_no,
-            prompt_no=-1,
-            open=False,
-        )
 
         task_or_thread = current_task_or_thread()
         registry["run_no_map"][task_or_thread] = run_no  # type: ignore
