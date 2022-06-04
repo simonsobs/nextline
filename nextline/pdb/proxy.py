@@ -23,7 +23,6 @@ from types import FrameType
 if TYPE_CHECKING:
     from ..run import Context
     from ..types import TraceFunc
-    from ..utils import SubscribableDict
 
 
 def PdbInterfaceFactory(
@@ -31,7 +30,6 @@ def PdbInterfaceFactory(
     pdb_ci_map: Dict[int, PdbCommandInterface],
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
-    registry = context["registry"]
 
     trace_no_counter = count(1).__next__
     prompting_counter = count(1).__next__
@@ -43,7 +41,7 @@ def PdbInterfaceFactory(
 
         pbi = PdbInterface(
             trace_id=trace_no,
-            registry=registry,
+            context=context,
             ci_map=pdb_ci_map,
             prompting_counter=prompting_counter,
             modules_to_trace=modules_to_trace,
@@ -77,13 +75,13 @@ class PdbInterface:
     def __init__(
         self,
         trace_id: int,
-        registry: SubscribableDict,
+        context: Context,
         ci_map: Dict[int, PdbCommandInterface],
         prompting_counter: Callable[[], int],
         modules_to_trace: Set[str],
     ):
         self._trace_id = trace_id
-        self._registry = registry
+        self._context = context
         self._ci_map = ci_map
         self._prompting_counter = prompting_counter
         self.modules_to_trace = modules_to_trace
@@ -146,7 +144,7 @@ class PdbInterface:
             queue_out=self._q_stdout,
             counter=self._prompting_counter,
             trace_id=self._trace_id,
-            registry=self._registry,
+            context=self._context,
             trace_args=self._trace_args,
         )
         self._pdb_ci.start()

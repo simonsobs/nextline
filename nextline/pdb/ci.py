@@ -5,13 +5,14 @@ import datetime
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
+
 from ..types import PromptInfo
 
 if TYPE_CHECKING:
     from types import FrameType
     from pdb import Pdb
     from queue import Queue
-    from ..utils import SubscribableDict
+    from ..run import Context
 
 
 class PdbCommandInterface:
@@ -38,7 +39,7 @@ class PdbCommandInterface:
         queue_out: Queue,
         counter: Callable[[], int],
         trace_id: int,
-        registry: SubscribableDict,
+        context: Context,
         trace_args: Tuple[FrameType, str, Any],
     ):
         self._pdb = pdb
@@ -46,7 +47,7 @@ class PdbCommandInterface:
         self._queue_out = queue_out
         self._counter = counter
         self._trace_id = trace_id
-        self._registry = registry
+        self._registry = context["registry"]
         self._ended = False
         self._nprompts = 0
 
