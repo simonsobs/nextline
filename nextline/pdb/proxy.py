@@ -40,8 +40,7 @@ def PdbInterfaceFactory(
     callback_map: Dict[Any, TraceInfo] = {}
 
     def callback_func(key) -> None:
-        trace_info = callback_map[key]
-        context["registrar"].trace_end(trace_info)
+        context["registrar"].trace_end(key)
 
     callback = ThreadTaskDoneCallback(done=callback_func)
 

@@ -24,6 +24,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 RunNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
+TraceInfoMap: TypeAlias = "MutableMapping[Task | Thread, TraceInfo]"
 
 
 class Registrar:
@@ -35,6 +36,7 @@ class Registrar:
         self._registry["run_no_map"] = self._run_no_map
         self._registry["trace_no_map"] = self._trace_no_map
         self._trace_id_factory = ThreadTaskIdComposer()
+        self._trace_info_map: TraceInfoMap = WeakKeyDictionary()
 
     def reset_run_no_count(self, run_no_start_from: int) -> None:
         self._run_no_count = count(run_no_start_from).__next__
@@ -116,10 +118,12 @@ class Registrar:
             state="running",
             started_at=datetime.datetime.now(),
         )
+        self._trace_info_map[task_or_thread] = trace_info
         self._registry["trace_info"] = trace_info
         return trace_info
 
-    def trace_end(self, trace_info: TraceInfo):
+    def trace_end(self, task_or_thread: Task | Thread):
+        trace_info = self._trace_info_map[task_or_thread]
 
         trace_no = trace_info.trace_no
         key = f"prompt_info_{trace_no}"
