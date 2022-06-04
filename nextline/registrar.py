@@ -142,5 +142,4 @@ class Registrar:
             ended_at=datetime.datetime.now(),
         )
 
-        print(f"trace_end({trace_info})")
         self._registry["trace_info"] = trace_info
