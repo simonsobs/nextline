@@ -100,9 +100,9 @@ class Machine:
 
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
-        self.registrar = Registrar()
+        self._registrar = Registrar()
 
-        registry = self.registrar._registry
+        registry = self._registrar._registry
         self.registry = registry
 
         self.context = Context(
@@ -113,7 +113,7 @@ class Machine:
             registry=registry,
         )
 
-        self.registrar.script_change(script=statement, filename=filename)
+        self._registrar.script_change(script=statement, filename=filename)
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
@@ -126,13 +126,13 @@ class Machine:
         return f"<{self.__class__.__name__} {self.state_name!r}>"
 
     def _state_changed(self) -> None:
-        self.registrar.state_change(self._state)
+        self._registrar.state_change(self._state)
         if self.state_name == "running":
-            self.registrar.run_start()
+            self._registrar.run_start()
         if self.state_name == "finished":
             exception = self.exception()
             result = self.result() if not exception else None
-            self.registrar.run_end(result, exception)
+            self._registrar.run_end(result, exception)
 
     @property
     def state_name(self) -> str:
@@ -171,7 +171,7 @@ class Machine:
         """Enter the initialized state"""
         if statement:
             self.context["statement"] = statement
-            self.registrar.script_change(script=statement)
+            self._registrar.script_change(script=statement)
         if run_no_start_from is not None:
             run_no_count = itertools.count(run_no_start_from).__next__
             self.context["run_no_count"] = run_no_count
