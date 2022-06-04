@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     DefaultDict,
+    Mapping,
     NamedTuple,
     TextIO,
     Any,
@@ -28,11 +29,11 @@ class OutLineItem(NamedTuple):
     timestamp: datetime.datetime
 
 
-def IOSubscription(registry: SubscribableDict):
-
-    run_no_map = registry["run_no_map"]  # type: ignore
-    trace_no_map = registry["trace_no_map"]  # type: ignore
-
+def IOSubscription(
+    registry: SubscribableDict,
+    run_no_map: Mapping[Task | Thread, int],
+    trace_no_map: Mapping[Task | Thread, int],
+):
     def put(item: OutLineItem):
         if not (run_no := run_no_map.get(item.key)):
             return

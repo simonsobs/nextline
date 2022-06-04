@@ -1,9 +1,12 @@
+from __future__ import annotations
 import asyncio
 import io
 from itertools import count
+from asyncio import Task
+from threading import Thread
 from weakref import WeakKeyDictionary
 
-from typing import Any
+from typing import Any, MutableMapping
 
 import pytest
 from unittest.mock import Mock, call
@@ -34,9 +37,11 @@ def test_peek():
 @pytest.mark.asyncio
 async def test_one(
     registry: SubscribableDict[str, Any],
+    run_no_map: MutableMapping[Task | Thread, int],
+    trace_no_map: MutableMapping[Task | Thread, int],
     text_io: io.StringIO,
 ):
-    obj = IOSubscription(registry)
+    obj = IOSubscription(registry, run_no_map, trace_no_map)
     out = obj(text_io)
 
     messages = ("abc", "def", "\n", "ghi", "jkl", "\n")
@@ -48,8 +53,8 @@ async def test_one(
         trace_no = trace_no_counter()
         task_or_thread = current_task_or_thread()
         if to_put:
-            registry["run_no_map"][task_or_thread] = run_no
-            registry["trace_no_map"][task_or_thread] = trace_no
+            run_no_map[task_or_thread] = run_no
+            trace_no_map[task_or_thread] = trace_no
         await asyncio.sleep(0)
         for m in messages:
             out.write(m)
@@ -88,6 +93,16 @@ def text_io():
 @pytest.fixture
 def registry():
     y = SubscribableDict()
-    y["run_no_map"] = WeakKeyDictionary()
-    y["trace_no_map"] = WeakKeyDictionary()
     yield y
+
+
+@pytest.fixture
+def run_no_map():
+    y = WeakKeyDictionary()
+    return y
+
+
+@pytest.fixture
+def trace_no_map():
+    y = WeakKeyDictionary()
+    return y

@@ -54,7 +54,11 @@ class Machine:
         self.context = Context(
             statement=statement,
             filename=filename,
-            create_capture_stdout=IOSubscription(self.registry),
+            create_capture_stdout=IOSubscription(
+                self.registry,
+                self.registry["run_no_map"],
+                self.registry["trace_no_map"],
+            ),
             run_no_count=itertools.count(run_no_start_from).__next__,
             trace_id_factory=ThreadTaskIdComposer(),
             registry=self.registry,
