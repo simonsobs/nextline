@@ -71,10 +71,6 @@ def PdbInterfaceFactory(
 
     def factory() -> PdbInterface:
         trace_no = trace_no_counter()
-
-        nos = (registry.get("trace_nos") or ()) + (trace_no,)
-        registry["trace_nos"] = nos
-
         trace_info = context["registrar"].trace_start(trace_no)
 
         key = callback.register()

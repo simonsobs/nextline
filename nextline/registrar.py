@@ -89,6 +89,10 @@ class Registrar:
         self._registry["run_info"] = self._run_info
 
     def trace_start(self, trace_no) -> TraceInfo:
+
+        nos = (self._registry.get("trace_nos") or ()) + (trace_no,)
+        self._registry["trace_nos"] = nos
+
         run_no: int = self._registry["run_no"]
 
         self._registry[f"prompt_info_{trace_no}"] = PromptInfo(
