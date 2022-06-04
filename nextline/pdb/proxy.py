@@ -64,7 +64,7 @@ def PdbInterfaceFactory(
 
     callback = ThreadTaskDoneCallback(done=callback_func)
 
-    registry["callback"] = callback
+    context["callback"] = callback
     # NOTE: Sending `callback` so `callback.close()` can be called when the
     # thread ends.
 

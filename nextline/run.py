@@ -12,8 +12,12 @@ from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
 from .types import TraceFunc
-from .utils import SubscribableDict, ThreadTaskIdComposer
 from .pdb.ci import PdbCommandInterface
+from .utils import (
+    SubscribableDict,
+    ThreadTaskIdComposer,
+    ThreadTaskDoneCallback,
+)
 
 from . import script
 
@@ -29,6 +33,7 @@ class Context(TypedDict, total=False):
     trace_id_factory: ThreadTaskIdComposer
     registry: SubscribableDict
     registrar: Registrar
+    callback: ThreadTaskDoneCallback
 
 
 def run(context: Context, q_commands: QCommands, q_done: QDone):
@@ -44,8 +49,6 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
     statement = context.get("statement")
     filename = context.get("script_file_name", "<string>")
     wrap_stdout = context["create_capture_stdout"]
-
-    registry = context["registry"]
 
     try:
         code = _compile(statement, filename)
@@ -67,7 +70,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
         q_commands.put(None)
         future_to_command.result()
 
-    if callback := registry.get("callback"):
+    if callback := context.get("callback"):
         try:
             callback.close()
         except BaseException:
