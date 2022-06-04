@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import itertools
 from typing import Any, AsyncGenerator, Generator, Tuple
 
 import pytest
@@ -16,7 +15,6 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 from nextline.run import QCommands, QDone, Context
 
 
@@ -44,11 +42,11 @@ class BaseTestState(ABC):
         mock_run_result_exception: Tuple[Any, Any],
     ):
         def run(
-            registry: SubscribableDict,
+            context: Context,
             q_commands: QCommands,
             q_done: QDone,
         ) -> None:
-            del registry, q_commands
+            del context, q_commands
             q_done.put(mock_run_result_exception)
 
         wrap = Mock(wraps=run)
@@ -56,19 +54,9 @@ class BaseTestState(ABC):
         return wrap
 
     @pytest.fixture
-    def context(self, registry: SubscribableDict) -> Context:
-        y = Context(
-            registry=registry,
-            run_no_count=itertools.count().__next__,
-            trace_id_factory=ThreadTaskIdComposer(),
-        )
+    def context(self) -> Context:
+        y = Context()
         return y
-
-    @pytest.fixture()
-    def registry(self):
-        y = SubscribableDict()
-        yield y
-        y.close()
 
     @pytest.fixture()
     def initialized(

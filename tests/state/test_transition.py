@@ -1,27 +1,13 @@
-import itertools
-
 import pytest
 
 from nextline.state import Initialized, Running, Finished, Closed
-from nextline.utils import SubscribableDict, ThreadTaskIdComposer
 from nextline.run import Context
 
 
 @pytest.fixture
-def context(registry: SubscribableDict) -> Context:
-    y = Context(
-        registry=registry,
-        run_no_count=itertools.count().__next__,
-        trace_id_factory=ThreadTaskIdComposer(),
-    )
+def context() -> Context:
+    y = Context()
     return y
-
-
-@pytest.fixture()
-def registry():
-    y = SubscribableDict()
-    yield y
-    y.close()
 
 
 @pytest.mark.asyncio

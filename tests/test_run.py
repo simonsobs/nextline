@@ -11,7 +11,7 @@ from unittest.mock import Mock
 
 from nextline.run import run, Context
 from nextline.registrar import Registrar
-from nextline.utils import SubscribableDict, ThreadTaskIdComposer
+from nextline.utils import SubscribableDict
 from nextline.utils.func import to_thread
 
 
@@ -77,8 +77,6 @@ def context(statement, registrar, registry):
         statement=statement,
         filename="<string>",
         create_capture_stdout=lambda _: sys.stdout,
-        trace_id_factory=ThreadTaskIdComposer(),
-        registry=registry,
         registrar=registrar,
     )
     return y
