@@ -42,11 +42,23 @@ class Callback:
         self.trace_end(trace_no)
 
     def trace_start(self, trace_no: int):
+
+        # TODO: Putting a prompt info for now because otherwise tests get stuck
+        # sometimes for an unknown reason. Need to investigate
+        prompt_info = PromptInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            prompt_no=-1,
+            open=False,
+        )
+        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+
         self._registrar.trace_start(trace_no)
         task_or_thread = self._thread_task_done_callback.register()
         self._trace_no_map[task_or_thread] = trace_no
 
     def trace_end(self, trace_no: int):
+        self._registrar.end_prompt_info_for_trace(trace_no)
         self._registrar.trace_end(trace_no)
 
     def prompt_start(

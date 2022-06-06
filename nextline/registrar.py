@@ -78,18 +78,10 @@ class Registrar:
         self._trace_info_map.clear()
 
     def trace_start(self, trace_no) -> None:
+        run_no: int = self._registry["run_no"]
 
         nos = (self._registry.get("trace_nos") or ()) + (trace_no,)
         self._registry["trace_nos"] = nos
-
-        run_no: int = self._registry["run_no"]
-
-        self._registry[f"prompt_info_{trace_no}"] = PromptInfo(
-            run_no=run_no,
-            trace_no=trace_no,
-            prompt_no=-1,
-            open=False,
-        )
 
         task_or_thread = current_task_or_thread()
         self._run_no_map[task_or_thread] = run_no
@@ -111,11 +103,6 @@ class Registrar:
     def trace_end(self, trace_no):
         trace_info = self._trace_info_map[trace_no]
 
-        key = f"prompt_info_{trace_no}"
-        try:
-            del self._registry[key]
-        except KeyError:
-            pass
         nosl = list(self._registry.get("trace_nos"))  # type: ignore
         nosl.remove(trace_no)
         nos = tuple(nosl)
@@ -137,3 +124,10 @@ class Registrar:
     ) -> None:
         key = f"prompt_info_{trace_no}"
         self._registry[key] = prompt_info
+
+    def end_prompt_info_for_trace(self, trace_no: int) -> None:
+        key = f"prompt_info_{trace_no}"
+        try:
+            del self._registry[key]
+        except KeyError:
+            pass
