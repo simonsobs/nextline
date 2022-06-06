@@ -7,6 +7,7 @@ from queue import Queue  # noqa F401
 import concurrent.futures
 from weakref import WeakKeyDictionary
 import datetime
+import dataclasses
 
 from typing import Callable, Any, TextIO, TypedDict
 from typing import Tuple, MutableMapping  # noqa F401
@@ -15,9 +16,9 @@ from typing_extensions import TypeAlias
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
-from .types import TraceFunc, PromptInfo
+from .types import TraceFunc, TraceInfo, PromptInfo
 from .pdb.ci import PdbCommandInterface  # noqa F401
-from .utils import ThreadTaskDoneCallback
+from .utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 
 from . import script
 
@@ -25,6 +26,7 @@ QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
+TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Callback:
@@ -34,6 +36,8 @@ class Callback:
         self._registrar = self._context["registrar"]
         self._trace_nos: Tuple[int, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
+        self._trace_id_factory = ThreadTaskIdComposer()
+        self._trace_info_map: TraceInfoMap = {}
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self.task_or_thread_end
         )
@@ -58,6 +62,19 @@ class Callback:
         self._registrar.put_trace_nos(self._trace_nos)
 
         self._registrar.trace_start(trace_no)
+        thread_task_id = self._trace_id_factory()
+
+        trace_info = TraceInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            thread_no=thread_task_id.thread_no,
+            task_no=thread_task_id.task_no,
+            state="running",
+            started_at=datetime.datetime.now(),
+        )
+        self._trace_info_map[trace_no] = trace_info
+        self._registrar.put_trace_info(trace_info)
+
         task_or_thread = self._thread_task_done_callback.register()
         self._trace_no_map[task_or_thread] = trace_no
 
@@ -69,7 +86,15 @@ class Callback:
         self._trace_nos = tuple(nosl)
         self._registrar.put_trace_nos(self._trace_nos)
 
-        self._registrar.trace_end(trace_no)
+        trace_info = self._trace_info_map[trace_no]
+
+        trace_info = dataclasses.replace(
+            trace_info,
+            state="finished",
+            ended_at=datetime.datetime.now(),
+        )
+
+        self._registrar.put_trace_info(trace_info)
 
     def prompt_start(
         self, trace_no, prompt_no, event, file_name, line_no, out

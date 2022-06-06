@@ -13,7 +13,6 @@ from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from .types import RunInfo, TraceInfo, PromptInfo
-from .utils import ThreadTaskIdComposer
 from .utils.func import current_task_or_thread
 
 if TYPE_CHECKING:
@@ -33,8 +32,6 @@ class Registrar:
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._registry["run_no_map"] = self._run_no_map
         self._registry["trace_no_map"] = self._trace_no_map
-        self._trace_id_factory = ThreadTaskIdComposer()
-        self._trace_info_map: TraceInfoMap = {}
 
     def script_change(self, script: str, filename: str) -> None:
         self._registry["statement"] = script
@@ -45,7 +42,6 @@ class Registrar:
 
     def state_initialized(self, run_no: int) -> None:
         self._registry["run_no"] = run_no
-        self._trace_id_factory.reset()
 
     def run_start(self, run_no: int) -> None:
         self._run_info = RunInfo(
@@ -75,7 +71,6 @@ class Registrar:
         )
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
-        self._trace_info_map.clear()
 
     def trace_start(self, trace_no) -> None:
         run_no: int = self._registry["run_no"]
@@ -83,30 +78,6 @@ class Registrar:
         task_or_thread = current_task_or_thread()
         self._run_no_map[task_or_thread] = run_no
         self._trace_no_map[task_or_thread] = trace_no
-
-        thread_task_id = self._trace_id_factory()
-
-        trace_info = TraceInfo(
-            run_no=run_no,
-            trace_no=trace_no,
-            thread_no=thread_task_id.thread_no,
-            task_no=thread_task_id.task_no,
-            state="running",
-            started_at=datetime.datetime.now(),
-        )
-        self._trace_info_map[trace_no] = trace_info
-        self.put_trace_info(trace_info)
-
-    def trace_end(self, trace_no):
-        trace_info = self._trace_info_map[trace_no]
-
-        trace_info = dataclasses.replace(
-            trace_info,
-            state="finished",
-            ended_at=datetime.datetime.now(),
-        )
-
-        self.put_trace_info(trace_info)
 
     def put_trace_nos(self, trace_nos: Tuple[int, ...]) -> None:
         self._registry["trace_nos"] = trace_nos
