@@ -74,6 +74,7 @@ async def respond_prompt(registry, q_commands):
 @pytest.fixture
 def context(statement, registrar, registry):
     y = Context(
+        run_no=1,
         statement=statement,
         filename="<string>",
         create_capture_stdout=lambda _: sys.stdout,

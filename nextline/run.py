@@ -6,6 +6,7 @@ from threading import Thread
 from queue import Queue  # noqa F401
 import concurrent.futures
 from weakref import WeakKeyDictionary
+import datetime
 
 from typing import Callable, Any, TextIO, TypedDict
 from typing import Tuple, MutableMapping  # noqa F401
@@ -14,7 +15,7 @@ from typing_extensions import TypeAlias
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
-from .types import TraceFunc
+from .types import TraceFunc, PromptInfo
 from .pdb.ci import PdbCommandInterface  # noqa F401
 from .utils import ThreadTaskDoneCallback
 
@@ -29,6 +30,7 @@ TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
 class Callback:
     def __init__(self, context: Context):
         self._context = context
+        self._run_no = context["run_no"]
         self._registrar = self._context["registrar"]
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._thread_task_done_callback = ThreadTaskDoneCallback(
@@ -50,26 +52,34 @@ class Callback:
     def prompt_start(
         self, trace_no, prompt_no, event, file_name, line_no, out
     ) -> None:
-        self._registrar.prompt_start(
+        prompt_info = PromptInfo(
+            run_no=self._run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
+            open=True,
             event=event,
             file_name=file_name,
             line_no=line_no,
-            out=out,
+            stdout=out,
+            started_at=datetime.datetime.now(),
         )
+        self._registrar.prompt_start(prompt_info)
 
     def prompt_end(
         self, trace_no, prompt_no, event, file_name, line_no, command
     ) -> None:
-        self._registrar.prompt_end(
+        prompt_info = PromptInfo(
+            run_no=self._run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
+            open=False,
             event=event,
             file_name=file_name,
             line_no=line_no,
             command=command,
+            ended_at=datetime.datetime.now(),
         )
+        self._registrar.prompt_end(prompt_info)
 
     def close(self) -> None:
         self._thread_task_done_callback.close()
