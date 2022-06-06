@@ -129,13 +129,11 @@ class Registrar:
 
         self._registry["trace_info"] = trace_info
 
-    def prompt_start(self, prompt_info: PromptInfo):
-        self._put_prompt_info(prompt_info)
-
-    def prompt_end(self, prompt_info: PromptInfo) -> None:
-        self._put_prompt_info(prompt_info)
-
-    def _put_prompt_info(self, prompt_info: PromptInfo) -> None:
+    def put_prompt_info(self, prompt_info: PromptInfo) -> None:
         self._registry["prompt_info"] = prompt_info
-        key = f"prompt_info_{prompt_info.trace_no}"
+
+    def put_prompt_info_for_trace(
+        self, trace_no: int, prompt_info: PromptInfo
+    ) -> None:
+        key = f"prompt_info_{trace_no}"
         self._registry[key] = prompt_info

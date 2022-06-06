@@ -63,7 +63,8 @@ class Callback:
             stdout=out,
             started_at=datetime.datetime.now(),
         )
-        self._registrar.prompt_start(prompt_info)
+        self._registrar.put_prompt_info(prompt_info)
+        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     def prompt_end(
         self, trace_no, prompt_no, event, file_name, line_no, command
@@ -79,7 +80,8 @@ class Callback:
             command=command,
             ended_at=datetime.datetime.now(),
         )
-        self._registrar.prompt_end(prompt_info)
+        self._registrar.put_prompt_info(prompt_info)
+        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     def close(self) -> None:
         self._thread_task_done_callback.close()
