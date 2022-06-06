@@ -75,6 +75,7 @@ class Machine:
         self._registrar.state_change(self._state)
         if self._state.name == "initialized":
             self._run_no = self._run_no_count()
+            self.context["run_no"] = self._run_no
             self._registrar.state_initialized(self._run_no)
         elif self._state.name == "running":
             self._registrar.run_start(self._run_no)

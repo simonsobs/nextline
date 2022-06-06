@@ -59,6 +59,7 @@ class Callback:
 
 
 class Context(TypedDict, total=False):
+    run_no: int
     statement: str
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
