@@ -47,6 +47,30 @@ class Callback:
     def trace_end(self, trace_no: int):
         self._registrar.trace_end(trace_no)
 
+    def prompt_start(
+        self, trace_no, prompt_no, event, file_name, line_no, out
+    ) -> None:
+        self._registrar.prompt_start(
+            trace_no=trace_no,
+            prompt_no=prompt_no,
+            event=event,
+            file_name=file_name,
+            line_no=line_no,
+            out=out,
+        )
+
+    def prompt_end(
+        self, trace_no, prompt_no, event, file_name, line_no, command
+    ) -> None:
+        self._registrar.prompt_end(
+            trace_no=trace_no,
+            prompt_no=prompt_no,
+            event=event,
+            file_name=file_name,
+            line_no=line_no,
+            command=command,
+        )
+
     def close(self) -> None:
         self._thread_task_done_callback.close()
 

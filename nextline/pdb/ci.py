@@ -56,7 +56,7 @@ class PdbCommandInterface:
 
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
-        self._context["registrar"].prompt_end(
+        self._context["callback"].prompt_end(
             trace_no=self._trace_no,
             prompt_no=self._prompt_no,
             event=self._event,
@@ -89,7 +89,7 @@ class PdbCommandInterface:
             self._nprompts += 1
             self._prompt_no = self._counter()
             self._stdout = out
-            self._context["registrar"].prompt_start(
+            self._context["callback"].prompt_start(
                 trace_no=self._trace_no,
                 prompt_no=self._prompt_no,
                 event=self._event,
