@@ -85,7 +85,7 @@ def context(statement, registrar, registry):
 
 @pytest.fixture
 def registrar(registry: SubscribableDict):
-    y = Registrar(registry=registry, run_no_start_from=1)
+    y = Registrar(registry=registry)
     return y
 
 

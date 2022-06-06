@@ -8,7 +8,7 @@ import traceback
 import json
 from weakref import WeakKeyDictionary
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -27,7 +27,7 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(self, registry: MutableMapping, run_no_start_from: int):
+    def __init__(self, registry: MutableMapping):
         self._registry = registry
         self._run_no_map: RunNoMap = WeakKeyDictionary()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
@@ -80,9 +80,6 @@ class Registrar:
     def trace_start(self, trace_no) -> None:
         run_no: int = self._registry["run_no"]
 
-        nos = (self._registry.get("trace_nos") or ()) + (trace_no,)
-        self._registry["trace_nos"] = nos
-
         task_or_thread = current_task_or_thread()
         self._run_no_map[task_or_thread] = run_no
         self._trace_no_map[task_or_thread] = trace_no
@@ -98,15 +95,10 @@ class Registrar:
             started_at=datetime.datetime.now(),
         )
         self._trace_info_map[trace_no] = trace_info
-        self._registry["trace_info"] = trace_info
+        self.put_trace_info(trace_info)
 
     def trace_end(self, trace_no):
         trace_info = self._trace_info_map[trace_no]
-
-        nosl = list(self._registry.get("trace_nos"))  # type: ignore
-        nosl.remove(trace_no)
-        nos = tuple(nosl)
-        self._registry["trace_nos"] = nos
 
         trace_info = dataclasses.replace(
             trace_info,
@@ -114,6 +106,12 @@ class Registrar:
             ended_at=datetime.datetime.now(),
         )
 
+        self.put_trace_info(trace_info)
+
+    def put_trace_nos(self, trace_nos: Tuple[int, ...]) -> None:
+        self._registry["trace_nos"] = trace_nos
+
+    def put_trace_info(self, trace_info: TraceInfo) -> None:
         self._registry["trace_info"] = trace_info
 
     def put_prompt_info(self, prompt_info: PromptInfo) -> None:

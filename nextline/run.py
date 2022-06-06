@@ -32,6 +32,7 @@ class Callback:
         self._context = context
         self._run_no = context["run_no"]
         self._registrar = self._context["registrar"]
+        self._trace_nos: Tuple[int, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self.task_or_thread_end
@@ -53,12 +54,21 @@ class Callback:
         )
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
+        self._trace_nos = self._trace_nos + (trace_no,)
+        self._registrar.put_trace_nos(self._trace_nos)
+
         self._registrar.trace_start(trace_no)
         task_or_thread = self._thread_task_done_callback.register()
         self._trace_no_map[task_or_thread] = trace_no
 
     def trace_end(self, trace_no: int):
         self._registrar.end_prompt_info_for_trace(trace_no)
+
+        nosl = list(self._trace_nos)
+        nosl.remove(trace_no)
+        self._trace_nos = tuple(nosl)
+        self._registrar.put_trace_nos(self._trace_nos)
+
         self._registrar.trace_end(trace_no)
 
     def prompt_start(

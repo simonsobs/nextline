@@ -46,7 +46,7 @@ class Machine:
         self.registry = SubscribableDict[Any, Any]()
         self._run_no = run_no_start_from - 1
         self._run_no_count = count(run_no_start_from).__next__
-        self._registrar = Registrar(self.registry, run_no_start_from)
+        self._registrar = Registrar(self.registry)
 
         self.context = Context(
             statement=statement,
