@@ -5,6 +5,7 @@ from asyncio import Task
 from threading import Thread
 from queue import Queue  # noqa F401
 import concurrent.futures
+from weakref import WeakKeyDictionary
 
 from typing import Callable, Any, TextIO, TypedDict
 from typing import Tuple, MutableMapping  # noqa F401
@@ -22,25 +23,29 @@ from . import script
 QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
+TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
 
 
 class Callback:
     def __init__(self, context: Context):
         self._context = context
         self._registrar = self._context["registrar"]
+        self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self.task_or_thread_end
         )
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
-        self.trace_end(task_or_thread)
+        trace_no = self._trace_no_map[task_or_thread]
+        self.trace_end(trace_no)
 
     def trace_start(self, trace_no: int):
         self._registrar.trace_start(trace_no)
-        self._thread_task_done_callback.register()
+        task_or_thread = self._thread_task_done_callback.register()
+        self._trace_no_map[task_or_thread] = trace_no
 
-    def trace_end(self, task_or_thread: Task | Thread):
-        self._registrar.trace_end(task_or_thread)
+    def trace_end(self, trace_no: int):
+        self._registrar.trace_end(trace_no)
 
     def close(self) -> None:
         self._thread_task_done_callback.close()
