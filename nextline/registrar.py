@@ -4,7 +4,6 @@ from asyncio import Task  # noqa F401
 from threading import Thread  # noqa F401
 import dataclasses
 import datetime
-from itertools import count
 import traceback
 import json
 from weakref import WeakKeyDictionary
@@ -30,7 +29,6 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 class Registrar:
     def __init__(self, registry: MutableMapping, run_no_start_from: int):
         self._registry = registry
-        self._run_no_count = count(run_no_start_from).__next__
         self._run_no_map: RunNoMap = WeakKeyDictionary()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._registry["run_no_map"] = self._run_no_map
@@ -38,32 +36,20 @@ class Registrar:
         self._trace_id_factory = ThreadTaskIdComposer()
         self._trace_info_map: TraceInfoMap = {}
 
-    def reset_run_no_count(self, run_no_start_from: int) -> None:
-        self._run_no_count = count(run_no_start_from).__next__
-
     def script_change(self, script: str, filename: str) -> None:
         self._registry["statement"] = script
         self._registry["script_file_name"] = filename
 
     def state_change(self, state: State) -> None:
         self._registry["state_name"] = state.name
-        if state.name == "initialized":
-            self.state_initialized()
-            return
-        if state.name == "running":
-            self.run_start()
-            return
-        if state.name == "finished":
-            self.run_end(state=state)
-            return
 
-    def state_initialized(self) -> None:
-        self._registry["run_no"] = self._run_no_count()
+    def state_initialized(self, run_no: int) -> None:
+        self._registry["run_no"] = run_no
         self._trace_id_factory.reset()
 
-    def run_start(self) -> None:
+    def run_start(self, run_no: int) -> None:
         self._run_info = RunInfo(
-            run_no=self._registry["run_no"],
+            run_no=run_no,
             state="running",
             script=self._registry["statement"],
             started_at=datetime.datetime.now(),

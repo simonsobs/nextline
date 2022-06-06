@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from queue import Queue
+from itertools import count
 from typing import Optional, Any, Tuple
 
 from .io import IOSubscription
@@ -43,6 +44,8 @@ class Machine:
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
+        self._run_no = run_no_start_from - 1
+        self._run_no_count = count(run_no_start_from).__next__
         self._registrar = Registrar(self.registry, run_no_start_from)
 
         self.context = Context(
@@ -70,6 +73,13 @@ class Machine:
 
     def _state_changed(self) -> None:
         self._registrar.state_change(self._state)
+        if self._state.name == "initialized":
+            self._run_no = self._run_no_count()
+            self._registrar.state_initialized(self._run_no)
+        elif self._state.name == "running":
+            self._registrar.run_start(self._run_no)
+        elif self._state.name == "finished":
+            self._registrar.run_end(state=self._state)
 
     @property
     def state_name(self) -> str:
@@ -112,7 +122,8 @@ class Machine:
                 script=statement, filename=SCRIPT_FILE_NAME
             )
         if run_no_start_from is not None:
-            self._registrar.reset_run_no_count(run_no_start_from)
+            self._run_no_count = count(run_no_start_from).__next__
+            # self._registrar.reset_run_no_count(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
 
