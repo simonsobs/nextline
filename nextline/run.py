@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import sys
+from asyncio import Task
+from threading import Thread
 from queue import Queue  # noqa F401
 import concurrent.futures
 
@@ -27,7 +29,7 @@ class Context(TypedDict, total=False):
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
     registrar: Registrar
-    callback: ThreadTaskDoneCallback
+    callback: Callable[[int], None]
     pdb_ci_map: PdbCiMap
 
 
@@ -54,10 +56,16 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
     pdb_ci_map: PdbCiMap = {}
     context["pdb_ci_map"] = pdb_ci_map
 
-    done = context["registrar"].trace_end
+    def done(task_or_thread: Task | Thread) -> None:
+        context["registrar"].trace_end(task_or_thread)
 
     with ThreadTaskDoneCallback(done=done) as callback:
-        context["callback"] = callback
+
+        def trace_start(trace_no: int):
+            context["registrar"].trace_start(trace_no)
+            callback.register()
+
+        context["callback"] = trace_start
 
         trace = Trace(context=context)
 

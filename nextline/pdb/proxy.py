@@ -34,8 +34,7 @@ def PdbInterfaceFactory(
 
     def factory() -> PdbInterface:
         trace_no = trace_no_counter()
-        context["registrar"].trace_start(trace_no)
-        context["callback"].register()
+        context["callback"](trace_no)
 
         pbi = PdbInterface(
             trace_no=trace_no,
