@@ -25,17 +25,32 @@ PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
 
 
 class Callback:
-    def __init__(
-        self,
-        context: Context,
-        thread_task_done_callback: ThreadTaskDoneCallback,
-    ):
+    def __init__(self, context: Context):
         self._context = context
-        self._thread_task_done_callback = thread_task_done_callback
+        self._registrar = self._context["registrar"]
+        self._thread_task_done_callback = ThreadTaskDoneCallback(
+            done=self.task_or_thread_end
+        )
+
+    def task_or_thread_end(self, task_or_thread: Task | Thread):
+        self.trace_end(task_or_thread)
 
     def trace_start(self, trace_no: int):
-        self._context["registrar"].trace_start(trace_no)
+        self._registrar.trace_start(trace_no)
         self._thread_task_done_callback.register()
+
+    def trace_end(self, task_or_thread: Task | Thread):
+        self._registrar.trace_end(task_or_thread)
+
+    def close(self) -> None:
+        self._thread_task_done_callback.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        self.close()
 
 
 class Context(TypedDict, total=False):
@@ -70,13 +85,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
     pdb_ci_map: PdbCiMap = {}
     context["pdb_ci_map"] = pdb_ci_map
 
-    def done(task_or_thread: Task | Thread) -> None:
-        context["registrar"].trace_end(task_or_thread)
-
-    with ThreadTaskDoneCallback(done=done) as thread_task_done_callback:
-
-        callback = Callback(context, thread_task_done_callback)
-
+    with Callback(context) as callback:
         context["callback"] = callback
 
         trace = Trace(context=context)
