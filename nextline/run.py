@@ -24,12 +24,26 @@ QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
 
 
+class Callback:
+    def __init__(
+        self,
+        context: Context,
+        thread_task_done_callback: ThreadTaskDoneCallback,
+    ):
+        self._context = context
+        self._thread_task_done_callback = thread_task_done_callback
+
+    def trace_start(self, trace_no: int):
+        self._context["registrar"].trace_start(trace_no)
+        self._thread_task_done_callback.register()
+
+
 class Context(TypedDict, total=False):
     statement: str
     filename: str
     create_capture_stdout: Callable[[TextIO], TextIO]
     registrar: Registrar
-    callback: Callable[[int], None]
+    callback: Callback
     pdb_ci_map: PdbCiMap
 
 
@@ -59,13 +73,11 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
     def done(task_or_thread: Task | Thread) -> None:
         context["registrar"].trace_end(task_or_thread)
 
-    with ThreadTaskDoneCallback(done=done) as callback:
+    with ThreadTaskDoneCallback(done=done) as thread_task_done_callback:
 
-        def trace_start(trace_no: int):
-            context["registrar"].trace_start(trace_no)
-            callback.register()
+        callback = Callback(context, thread_task_done_callback)
 
-        context["callback"] = trace_start
+        context["callback"] = callback
 
         trace = Trace(context=context)
 
