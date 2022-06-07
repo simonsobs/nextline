@@ -71,8 +71,7 @@ class ThreadDoneCallback:
     def _monitor(self):
         exc = []
         while True:
-            done = {t for t in self._active if not t.is_alive()}
-            if done:
+            if done := {t for t in self._active if not t.is_alive()}:
                 if self._done:
                     for d in done:
                         try:
