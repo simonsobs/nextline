@@ -1,44 +1,40 @@
 from __future__ import annotations
 import sys
-from contextlib import contextmanager, closing
-from typing import TYPE_CHECKING, Any, Protocol, TextIO
+from contextlib import contextmanager
+from typing import Any, ContextManager, TextIO
 
 
-if TYPE_CHECKING:
-    from contextlib import _SupportsClose
-
-    class WriteWithClose(_SupportsClose, Protocol):
-        # https://stackoverflow.com/a/62658919/7309855
-        def __call__(self, __s: str) -> Any:
-            ...
+class CallableContextManager(ContextManager):
+    def __call__(self, __s: str) -> Any:
+        ...
 
 
 @contextmanager
-def peek_stdout_write(callback_with_close: WriteWithClose):
+def peek_stdout_write(callback: CallableContextManager):
     textio = sys.stdout
-    with peek_textio_write(textio, callback_with_close) as t:
+    with peek_textio_write(textio, callback) as t:
         yield t
 
 
 @contextmanager
-def peek_stderr_write(callback_with_close):
+def peek_stderr_write(callback):
     textio = sys.stderr
-    with peek_textio_write(textio, callback_with_close) as t:
+    with peek_textio_write(textio, callback) as t:
         yield t
 
 
 @contextmanager
-def peek_textio_write(textio: TextIO, callback_with_close: WriteWithClose):
+def peek_textio_write(textio: TextIO, callback: CallableContextManager):
     org_write = textio.write
 
     def write(s: str, /) -> int:
-        callback_with_close(s)
+        callback(s)
         return org_write(s)
 
     textio.write = write  # type: ignore
 
     try:
-        with closing(callback_with_close):
+        with callback:
             yield write
     finally:
         textio.write = org_write  # type: ignore
