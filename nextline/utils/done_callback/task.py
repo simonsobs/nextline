@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from asyncio import Task, current_task
 
@@ -11,13 +13,16 @@ class TaskDoneCallback:
 
     Parameters
     ----------
-    done : callable
-        A function with one arg. Each time a registered asyncio task
-        ends, this function will be called with the task object as
-        the arg. The return value will be ignored.
+    done : callable, optional
+        A function with one arg. Each time a registered asyncio task ends, this
+        function will be called with the task object as the arg. The return
+        value will be ignored.
+
+        The `done` is optional. This class can be still useful to wait for all
+        registered tasks to end.
     """
 
-    def __init__(self, done: Callable[[Task], Any]):
+    def __init__(self, done: Optional[Callable[[Task], Any]] = None):
         self._done = done
         self._active: Set[Task] = set()
         self._exceptions: List[BaseException] = []
@@ -96,7 +101,8 @@ class TaskDoneCallback:
 
         try:
             self._active.remove(task)
-            self._done(task)
+            if self._done:
+                self._done(task)
         except BaseException as e:
             self._exceptions.append(e)
 
