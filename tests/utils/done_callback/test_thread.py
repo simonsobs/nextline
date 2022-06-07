@@ -134,3 +134,12 @@ def test_interval(done: Done):
 
     obj.close()
     t.join()
+
+
+def test_done_none():
+    with ThreadDoneCallback() as obj:
+        t = ExcThread(target=target, args=(obj,))
+        t.start()
+        time.sleep(0.005)
+    assert not t.is_alive()
+    t.join()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from threading import Thread, current_thread
 
@@ -11,17 +13,21 @@ class ThreadDoneCallback:
 
     Parameters
     ----------
-    done : callable
-        A function with one arg. Each time a registered thread ends,
-        this function will be called with the thread object as the
-        arg. The return value will be ignored.
+    done : callable, optional
+        A function with one arg. Each time a registered thread ends, this
+        function will be called with the thread object as the arg. The return
+        value will be ignored.
+
+        The `done` is optional. This class can be still useful to wait for all
+        registered tasks to end.
+
     interval : float, default 0.001 [sec]
         The period of determining if any registered thread ends.
     """
 
     def __init__(
         self,
-        done: Callable[[Thread], None],
+        done: Optional[Callable[[Thread], None]] = None,
         interval: float = 0.001,
     ):
         self._done = done
@@ -67,11 +73,12 @@ class ThreadDoneCallback:
         while True:
             done = {t for t in self._active if not t.is_alive()}
             if done:
-                for d in done:
-                    try:
-                        self._done(d)
-                    except BaseException as e:
-                        exc.append(e)
+                if self._done:
+                    for d in done:
+                        try:
+                            self._done(d)
+                        except BaseException as e:
+                            exc.append(e)
                 self._active = self._active - done
             time.sleep(self._interval)
             if self._active:
