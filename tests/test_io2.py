@@ -32,11 +32,7 @@ _T = TypeVar("_T")
 class KeyFactory:
     def __init__(self, to_return: MutableSequence[Task | Thread]):
         self._to_return = to_return
-
-        def do_nothing(key):
-            del key
-
-        self._callback = ThreadTaskDoneCallback(done=do_nothing)
+        self._callback = ThreadTaskDoneCallback()
 
     def __call__(self) -> Task | Thread | None:
         if current_task_or_thread() not in self._to_return:
