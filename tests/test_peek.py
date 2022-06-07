@@ -4,13 +4,13 @@ import sys
 import pytest
 from unittest.mock import Mock, call
 
-from nextline.peek import peek_stdout_write, peek_stderr_write
+from nextline.peek import peek_stdout, peek_stderr
 
 
 def test_stdout(capsys):
     callback = Mock()
 
-    with peek_stdout_write(callback):
+    with peek_stdout(callback):
         print("foo")
 
     print("bar")
@@ -27,7 +27,7 @@ def test_stdout(capsys):
 def test_stderr(capsys):
     callback = Mock()
 
-    with peek_stderr_write(callback):
+    with peek_stderr(callback):
         print("foo", file=sys.stderr)
 
     print("bar", file=sys.stderr)
@@ -44,7 +44,7 @@ def test_stderr(capsys):
 def test_stdout_target(capsys):
     callback = Mock()
 
-    with peek_stdout_write(callback) as t:
+    with peek_stdout(callback) as t:
         t("foo")
 
     assert [call("foo")] == callback.call_args_list
@@ -56,7 +56,7 @@ def test_stdout_target(capsys):
 def test_stderr_target(capsys):
     callback = Mock()
 
-    with peek_stderr_write(callback) as t:
+    with peek_stderr(callback) as t:
         t("foo")
 
     assert [call("foo")] == callback.call_args_list
@@ -68,7 +68,7 @@ def test_stderr_target(capsys):
 def test_raise(capsys):
     callback = Mock(side_effect=MockError)
 
-    with peek_stdout_write(callback):
+    with peek_stdout(callback):
         with pytest.raises(MockError):
             print("foo")
 
