@@ -12,7 +12,7 @@ from unittest.mock import Mock
 async def target(obj: TaskDoneCallback):
     assert asyncio.current_task() == obj.register()
     delay = random.random() * 0.01
-    time.sleep(delay)
+    await asyncio.sleep(delay)
 
 
 class Done:
@@ -145,3 +145,12 @@ async def test_raise_in_done():
 
     with pytest.raises(ValueError):
         await obj.aclose()
+
+
+@pytest.mark.asyncio
+async def test_done_none():
+    async with TaskDoneCallback() as obj:
+        t = asyncio.create_task(target(obj))
+        await asyncio.sleep(0)  # let the task be registered
+    assert t.done()  # finished after exited
+    await t
