@@ -79,8 +79,8 @@ def peek_stdout_by_task_and_thread(
 ):
     key_factory = KeyFactory(to_return=to_peek)
     read_lines = ReadLines(callback)
-    w = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
-    with peek_stdout(w) as t:
+    assign_key = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
+    with peek_stdout(assign_key) as t:
         with key_factory:
             yield t
 
