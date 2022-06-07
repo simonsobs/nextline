@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from threading import Thread, current_thread
 
-from typing import Optional, Callable, Set
+from typing import Optional, Callable, Set, Any
 
 from ..thread_exception import ExcThread
 
@@ -27,7 +27,7 @@ class ThreadDoneCallback:
 
     def __init__(
         self,
-        done: Optional[Callable[[Thread], None]] = None,
+        done: Optional[Callable[[Thread], Any]] = None,
         interval: float = 0.001,
     ):
         self._done = done
