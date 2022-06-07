@@ -2,7 +2,7 @@ from __future__ import annotations
 from threading import Thread
 from asyncio import Task
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 from ..func import current_task_or_thread, to_thread
 from .thread import ThreadDoneCallback
@@ -12,7 +12,7 @@ from .task import TaskDoneCallback
 class ThreadTaskDoneCallback:
     def __init__(
         self,
-        done: Callable[[Task | Thread], None],
+        done: Optional[Callable[[Task | Thread], Any]] = None,
         interval: float = 0.001,
     ):
         self._thread_callback = ThreadDoneCallback(
