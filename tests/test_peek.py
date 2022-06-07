@@ -45,6 +45,32 @@ def test_stderr(capsys):
     assert "foo\nbar\n" == captured.err
 
 
+def test_stdout_target(capsys):
+    callback = Mock()
+
+    with peek_stdout_write(callback) as t:
+        t("foo")
+
+    assert [call("foo")] == callback.call_args_list
+    assert [call()] == callback.close.call_args_list
+
+    captured = capsys.readouterr()
+    assert "foo" == captured.out
+
+
+def test_stderr_target(capsys):
+    callback = Mock()
+
+    with peek_stderr_write(callback) as t:
+        t("foo")
+
+    assert [call("foo")] == callback.call_args_list
+    assert [call()] == callback.close.call_args_list
+
+    captured = capsys.readouterr()
+    assert "foo" == captured.err
+
+
 def test_raise(capsys):
     callback = Mock(side_effect=MockCallError)
 

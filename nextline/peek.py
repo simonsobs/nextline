@@ -16,15 +16,15 @@ if TYPE_CHECKING:
 @contextmanager
 def peek_stdout_write(callback_with_close: WriteWithClose):
     textio = sys.stdout
-    with peek_textio_write(textio, callback_with_close):
-        yield
+    with peek_textio_write(textio, callback_with_close) as t:
+        yield t
 
 
 @contextmanager
 def peek_stderr_write(callback_with_close):
     textio = sys.stderr
-    with peek_textio_write(textio, callback_with_close):
-        yield
+    with peek_textio_write(textio, callback_with_close) as t:
+        yield t
 
 
 @contextmanager
@@ -39,6 +39,6 @@ def peek_textio_write(textio: TextIO, callback_with_close: WriteWithClose):
 
     try:
         with closing(callback_with_close):
-            yield
+            yield write
     finally:
         textio.write = org_write  # type: ignore
