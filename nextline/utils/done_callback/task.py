@@ -1,7 +1,7 @@
 import time
 from asyncio import Task, current_task
 
-from typing import Optional, Callable, Set, List
+from typing import Any, Optional, Callable, Set, List
 
 from ..func import to_thread
 
@@ -17,10 +17,7 @@ class TaskDoneCallback:
         the arg. The return value will be ignored.
     """
 
-    def __init__(
-        self,
-        done: Callable[[Task], None],
-    ):
+    def __init__(self, done: Callable[[Task], Any]):
         self._done = done
         self._active: Set[Task] = set()
         self._exceptions: List[BaseException] = []
@@ -79,7 +76,7 @@ class TaskDoneCallback:
         if self._exceptions:
             raise self._exceptions[0]
 
-    def _close(self, interval):
+    def _close(self, interval: float) -> None:
         while self._active:
             time.sleep(interval)
 
