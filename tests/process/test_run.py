@@ -9,7 +9,7 @@ from weakref import WeakKeyDictionary
 import pytest
 from unittest.mock import Mock
 
-from nextline.run import run, Context
+from nextline.process.run import run, Context
 from nextline.registrar import Registrar
 from nextline.utils import SubscribableDict
 from nextline.utils.func import to_thread
@@ -31,7 +31,7 @@ class MockError(Exception):
 @pytest.fixture
 def monkey_patch_run(monkeypatch):
     y = Mock(side_effect=MockError)
-    monkeypatch.setattr("nextline.run._run", y)
+    monkeypatch.setattr("nextline.process.run._run", y)
     yield y
 
 

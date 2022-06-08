@@ -1,7 +1,7 @@
 import pytest
 
 from nextline.state import Initialized, Running, Finished, Closed
-from nextline.run import Context
+from nextline.process.run import Context
 
 
 @pytest.fixture

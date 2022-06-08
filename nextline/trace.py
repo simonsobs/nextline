@@ -11,7 +11,7 @@ from .pdb.proxy import PdbInterfaceFactory
 from .utils import current_task_or_thread
 
 if TYPE_CHECKING:
-    from .run import Context
+    from .process.run import Context
     from .types import TraceFunc
 
 

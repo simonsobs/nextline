@@ -12,15 +12,15 @@ from typing import Set, TypedDict
 from typing import Any, Tuple, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .registrar import Registrar
-from .trace import Trace
-from .call import call_with_trace
-from .types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
-from .pdb.ci import PdbCommandInterface  # noqa F401
-from .utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
-from .io import peek_stdout_by_task_and_thread
+from ..registrar import Registrar
+from ..trace import Trace
+from ..call import call_with_trace
+from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
+from ..pdb.ci import PdbCommandInterface  # noqa F401
+from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
+from ..io import peek_stdout_by_task_and_thread
 
-from . import script
+from .. import script
 
 QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"

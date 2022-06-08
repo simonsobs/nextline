@@ -15,7 +15,7 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.run import QCommands, QDone, Context
+from nextline.process.run import QCommands, QDone, Context
 
 
 class BaseTestState(ABC):

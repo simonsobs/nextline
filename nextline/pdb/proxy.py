@@ -21,7 +21,7 @@ from typing import (
 from types import FrameType
 
 if TYPE_CHECKING:
-    from ..run import Context
+    from ..process.run import Context
     from sys import _TraceFunc as TraceFunc
 
 

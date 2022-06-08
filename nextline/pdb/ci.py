@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from types import FrameType
     from pdb import Pdb
     from queue import Queue
-    from ..run import Context
+    from ..process.run import Context
 
 
 class PdbCommandInterface:
