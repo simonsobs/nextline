@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import queue
-from itertools import count
 
-from ..types import PromptNo, TraceNo
+from ..types import PromptNo
+from ..count import PromptNoCounter, TraceNoCounter
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -30,11 +30,8 @@ def PdbInterfaceFactory(
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
-    # trace_no_counter = count(1).__next__
-    trace_no_counter = (lambda f: (lambda: TraceNo(f())))(count(1).__next__)
-
-    # prompt_no_counter = count(1).__next__
-    prompt_no_counter = (lambda f: (lambda: PromptNo(f())))(count(1).__next__)
+    trace_no_counter = TraceNoCounter(1)
+    prompt_no_counter = PromptNoCounter(1)
 
     def factory() -> PdbInterface:
         trace_no = trace_no_counter()

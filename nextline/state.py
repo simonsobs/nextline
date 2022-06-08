@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 from queue import Queue
-from itertools import count
 from typing import Optional, Any, Tuple
 
 from .utils import ExcThread, SubscribableDict, to_thread
 from .run import run, Context
 from .registrar import Registrar
 from .types import RunNo
+from .count import RunNoCounter
 
 
 SCRIPT_FILE_NAME = "<string>"
@@ -45,9 +45,7 @@ class Machine:
         filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
         self._run_no = RunNo(run_no_start_from - 1)
-        self._run_no_count = (lambda f: (lambda: RunNo(f())))(
-            count(run_no_start_from).__next__
-        )
+        self._run_no_count = RunNoCounter(run_no_start_from)
         self._registrar = Registrar(self.registry)
 
         self.context = Context(
@@ -120,9 +118,7 @@ class Machine:
                 script=statement, filename=SCRIPT_FILE_NAME
             )
         if run_no_start_from is not None:
-            self._run_no_count = (lambda f: (lambda: RunNo(f())))(
-                count(run_no_start_from).__next__
-            )
+            self._run_no_count = RunNoCounter(run_no_start_from)
             # self._registrar.reset_run_no_count(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
