@@ -1,7 +1,7 @@
+from __future__ import annotations
 import dataclasses
 import datetime
-from typing import Callable, Any, Optional, Union
-from types import FrameType
+from typing import Optional, Union
 
 
 ThreadNo = int
@@ -12,13 +12,6 @@ TaskNo = Union[int, None]
 class ThreadTaskId:
     thread_no: ThreadNo
     task_no: TaskNo
-
-
-TraceFunc = Callable[
-    [FrameType, str, Any], Optional[Callable[[FrameType, str, Any], Any]]
-]
-# Copied from (because not sure how to import)
-# https://github.com/python/typeshed/blob/b88a6f19cdcf/stdlib/sys.pyi#L245
 
 
 @dataclasses.dataclass(frozen=True)

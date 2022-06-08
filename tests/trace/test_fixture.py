@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import pytest
 from unittest.mock import Mock
 
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
-from nextline.types import TraceFunc
+if TYPE_CHECKING:
+    from sys import _TraceFunc as TraceFunc
 
 
 def test_wrap_target_trace_func(

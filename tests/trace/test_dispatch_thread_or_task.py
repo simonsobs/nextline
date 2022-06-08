@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from asyncio import Task
 from threading import Thread
@@ -5,12 +7,14 @@ from threading import Thread
 import pytest
 from unittest.mock import Mock
 
-from typing import Union, Callable, Dict, Set
+from typing import TYPE_CHECKING, Union, Callable, Dict, Set
 
 from nextline.trace import TraceDispatchThreadOrTask
 from nextline.utils import current_task_or_thread
-from nextline.types import TraceFunc
 from nextline.utils import ExcThread
+
+if TYPE_CHECKING:
+    from sys import _TraceFunc as TraceFunc
 
 from .funcs import TraceSummary, summarize_trace_calls
 

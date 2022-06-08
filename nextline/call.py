@@ -3,9 +3,11 @@ from __future__ import annotations
 import sys
 import threading
 
-from typing import Callable, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar
 
-from .types import TraceFunc
+
+if TYPE_CHECKING:
+    from sys import _TraceFunc as TraceFunc
 
 T = TypeVar("T")
 

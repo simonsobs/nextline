@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import pytest
 from unittest.mock import Mock
 
-from typing import Callable, Union, Any, Set
+from typing import TYPE_CHECKING, Callable, Union, Any, Set
 
 from nextline.call import call_with_trace
-from nextline.types import TraceFunc
+
+if TYPE_CHECKING:
+    from sys import _TraceFunc as TraceFunc
 
 from .funcs import summarize_trace_calls
 
