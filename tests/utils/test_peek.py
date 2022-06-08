@@ -4,7 +4,7 @@ import sys
 import pytest
 from unittest.mock import Mock, call
 
-from nextline.peek import peek_stdout, peek_stderr
+from nextline.utils import peek_stdout, peek_stderr
 
 
 def test_stdout(capsys):

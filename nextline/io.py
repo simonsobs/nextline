@@ -7,8 +7,7 @@ from threading import Thread
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
 
-from .utils import ThreadTaskDoneCallback, current_task_or_thread
-from .peek import peek_stdout
+from .utils import ThreadTaskDoneCallback, current_task_or_thread, peek_stdout
 
 
 _T = TypeVar("_T")
