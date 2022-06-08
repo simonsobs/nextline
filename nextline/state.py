@@ -5,7 +5,6 @@ from queue import Queue
 from itertools import count
 from typing import Optional, Any, Tuple
 
-from .io import IOSubscription
 from .utils import ExcThread, SubscribableDict, to_thread
 from .run import run, Context
 from .registrar import Registrar
@@ -51,11 +50,6 @@ class Machine:
         self.context = Context(
             statement=statement,
             filename=filename,
-            create_capture_stdout=IOSubscription(
-                self.registry,
-                self.registry["run_no_map"],
-                self.registry["trace_no_map"],
-            ),
             registrar=self._registrar,
         )
 

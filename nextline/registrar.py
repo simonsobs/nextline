@@ -6,14 +6,12 @@ import dataclasses
 import datetime
 import traceback
 import json
-from weakref import WeakKeyDictionary
 
 from typing import TYPE_CHECKING, Tuple
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .types import RunInfo, TraceInfo, PromptInfo
-from .utils.func import current_task_or_thread
+from .types import RunInfo, StdoutInfo, TraceInfo, PromptInfo
 
 if TYPE_CHECKING:
     from .state import State
@@ -28,10 +26,6 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 class Registrar:
     def __init__(self, registry: MutableMapping):
         self._registry = registry
-        self._run_no_map: RunNoMap = WeakKeyDictionary()
-        self._trace_no_map: TraceNoMap = WeakKeyDictionary()
-        self._registry["run_no_map"] = self._run_no_map
-        self._registry["trace_no_map"] = self._trace_no_map
 
     def script_change(self, script: str, filename: str) -> None:
         self._registry["statement"] = script
@@ -72,13 +66,6 @@ class Registrar:
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
 
-    def trace_start(self, trace_no) -> None:
-        run_no: int = self._registry["run_no"]
-
-        task_or_thread = current_task_or_thread()
-        self._run_no_map[task_or_thread] = run_no
-        self._trace_no_map[task_or_thread] = trace_no
-
     def put_trace_nos(self, trace_nos: Tuple[int, ...]) -> None:
         self._registry["trace_nos"] = trace_nos
 
@@ -100,3 +87,6 @@ class Registrar:
             del self._registry[key]
         except KeyError:
             pass
+
+    def put_stdout_info(self, stdout_info: StdoutInfo) -> None:
+        self._registry["stdout"] = stdout_info

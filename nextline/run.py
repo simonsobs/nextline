@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from asyncio import Task
 from threading import Thread
 from queue import Queue  # noqa F401
@@ -9,16 +8,17 @@ from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
 
-from typing import Callable, Any, Set, TextIO, TypedDict
+from typing import Callable, Any, Set, TypedDict
 from typing import Tuple, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
-from .types import TraceFunc, TraceInfo, PromptInfo
+from .types import TraceFunc, TraceInfo, PromptInfo, StdoutInfo
 from .pdb.ci import PdbCommandInterface  # noqa F401
 from .utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
+from .io2 import peek_stdout_by_task_and_thread
 
 from . import script
 
@@ -61,7 +61,6 @@ class Callback:
         self._trace_nos = self._trace_nos + (trace_no,)
         self._registrar.put_trace_nos(self._trace_nos)
 
-        self._registrar.trace_start(trace_no)
         thread_task_id = self._trace_id_factory()
 
         trace_info = TraceInfo(
@@ -77,6 +76,7 @@ class Callback:
 
         task_or_thread = self._thread_task_done_callback.register()
         self._trace_no_map[task_or_thread] = trace_no
+        self._tasks_and_threads.add(task_or_thread)
 
     def trace_end(self, trace_no: int):
         self._registrar.end_prompt_info_for_trace(trace_no)
@@ -130,14 +130,28 @@ class Callback:
         self._registrar.put_prompt_info(prompt_info)
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
+    def stdout(self, task_or_thread: Task | Thread, line: str):
+        trace_no = self._trace_no_map[task_or_thread]
+        stdout_info = StdoutInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            text=line,
+            written_at=datetime.datetime.now(),
+        )
+        self._registrar.put_stdout_info(stdout_info)
+
     def close(self) -> None:
         self._thread_task_done_callback.close()
 
     def __enter__(self):
+        self._peek_stdout = peek_stdout_by_task_and_thread(
+            to_peek=self._tasks_and_threads, callback=self.stdout
+        )
+        self._peek_stdout.__enter__()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        del exc_type, exc_value, traceback
+        self._peek_stdout.__exit__(exc_type, exc_value, traceback)
         self.close()
 
 
@@ -145,7 +159,6 @@ class Context(TypedDict, total=False):
     run_no: int
     statement: str
     filename: str
-    create_capture_stdout: Callable[[TextIO], TextIO]
     registrar: Registrar
     callback: Callback
     pdb_ci_map: PdbCiMap
@@ -163,7 +176,6 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
 
     statement = context.get("statement")
     filename = context.get("script_file_name", "<string>")
-    wrap_stdout = context["create_capture_stdout"]
 
     try:
         code = _compile(statement, filename)
@@ -188,7 +200,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
             future_to_command = executor.submit(
                 _command, q_commands, pdb_ci_map
             )
-            future_to_call = executor.submit(_exec, func, trace, wrap_stdout)
+            future_to_call = executor.submit(_exec, func, trace)
             result, exception = future_to_call.result()
             q_commands.put(None)
             future_to_command.result()
@@ -202,20 +214,9 @@ def _compile(code, filename):
     return code
 
 
-def _exec(
-    func: Callable[[], Any],
-    trace: TraceFunc,
-    wrap_stdout: Callable[[TextIO], TextIO],
-):
-    ret = None
-    exc = None
-    sys_stdout = sys.stdout
-    try:
-        sys.stdout = wrap_stdout(sys.stdout)
-        ret, exc = call_with_trace(func, trace)
-    finally:
-        sys.stdout = sys_stdout
-        return ret, exc
+def _exec(func: Callable[[], Any], trace: TraceFunc):
+    ret, exc = call_with_trace(func, trace)
+    return ret, exc
 
 
 def _command(q_commands: QCommands, pdb_ci_map: PdbCiMap):
