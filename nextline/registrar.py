@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Tuple
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .types import RunInfo, StdoutInfo, TraceInfo, PromptInfo
+from .types import RunNo, TraceNo, RunInfo, StdoutInfo, TraceInfo, PromptInfo
 
 if TYPE_CHECKING:
     from .state import State
@@ -37,7 +37,7 @@ class Registrar:
     def state_initialized(self, run_no: int) -> None:
         self._registry["run_no"] = run_no
 
-    def run_start(self, run_no: int) -> None:
+    def run_start(self, run_no: RunNo) -> None:
         self._run_info = RunInfo(
             run_no=run_no,
             state="running",
@@ -66,7 +66,7 @@ class Registrar:
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
 
-    def put_trace_nos(self, trace_nos: Tuple[int, ...]) -> None:
+    def put_trace_nos(self, trace_nos: Tuple[TraceNo, ...]) -> None:
         self._registry["trace_nos"] = trace_nos
 
     def put_trace_info(self, trace_info: TraceInfo) -> None:
@@ -76,12 +76,12 @@ class Registrar:
         self._registry["prompt_info"] = prompt_info
 
     def put_prompt_info_for_trace(
-        self, trace_no: int, prompt_info: PromptInfo
+        self, trace_no: TraceNo, prompt_info: PromptInfo
     ) -> None:
         key = f"prompt_info_{trace_no}"
         self._registry[key] = prompt_info
 
-    def end_prompt_info_for_trace(self, trace_no: int) -> None:
+    def end_prompt_info_for_trace(self, trace_no: TraceNo) -> None:
         key = f"prompt_info_{trace_no}"
         try:
             del self._registry[key]

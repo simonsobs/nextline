@@ -15,7 +15,7 @@ from typing_extensions import TypeAlias
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
-from .types import TraceInfo, PromptInfo, StdoutInfo
+from .types import RunNo, TraceNo, TraceInfo, PromptInfo, StdoutInfo
 from .pdb.ci import PdbCommandInterface  # noqa F401
 from .utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 from .io import peek_stdout_by_task_and_thread
@@ -25,15 +25,15 @@ from . import script
 QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
-TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
-TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
+TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
+TraceInfoMap: TypeAlias = "MutableMapping[TraceNo, TraceInfo]"
 
 
 class Callback:
-    def __init__(self, run_no: int, registrar: Registrar):
+    def __init__(self, run_no: RunNo, registrar: Registrar):
         self._run_no = run_no
         self._registrar = registrar
-        self._trace_nos: Tuple[int, ...] = ()
+        self._trace_nos: Tuple[TraceNo, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
         self._trace_info_map: TraceInfoMap = {}
@@ -46,7 +46,7 @@ class Callback:
         trace_no = self._trace_no_map[task_or_thread]
         self.trace_end(trace_no)
 
-    def trace_start(self, trace_no: int):
+    def trace_start(self, trace_no: TraceNo):
 
         # TODO: Putting a prompt info for now because otherwise tests get stuck
         # sometimes for an unknown reason. Need to investigate
@@ -78,7 +78,7 @@ class Callback:
         self._trace_no_map[task_or_thread] = trace_no
         self._tasks_and_threads.add(task_or_thread)
 
-    def trace_end(self, trace_no: int):
+    def trace_end(self, trace_no: TraceNo):
         self._registrar.end_prompt_info_for_trace(trace_no)
 
         nosl = list(self._trace_nos)
@@ -156,7 +156,7 @@ class Callback:
 
 
 class Context(TypedDict, total=False):
-    run_no: int
+    run_no: RunNo
     statement: str
     filename: str
     registrar: Registrar
