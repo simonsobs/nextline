@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from asyncio import Task
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from threading import Thread
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
@@ -19,33 +19,28 @@ def peek_stdout_by_task_and_thread(
     to_peek: Collection[Task | Thread],
     callback: Callable[[Task | Thread, str], Any],
 ):
-    key_factory = KeyFactory(to_return=to_peek)
+    thread_task_done = ThreadTaskDoneCallback()
+    key_factory = KeyFactory(
+        to_return=to_peek,
+        thread_task_done=thread_task_done,
+    )
     read_lines = ReadLines(callback)
     assign_key = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
     with peek_stdout(assign_key) as t:
-        with key_factory:
+        with closing(thread_task_done):
             yield t
 
 
-class KeyFactory:
-    def __init__(self, to_return: Collection[Task | Thread]):
-        self._to_return = to_return
-        self._callback = ThreadTaskDoneCallback()
-
-    def __call__(self) -> Task | Thread | None:
-        if current_task_or_thread() not in self._to_return:
+def KeyFactory(
+    to_return: Collection[Task | Thread],
+    thread_task_done: ThreadTaskDoneCallback,
+):
+    def key_factory() -> Task | Thread | None:
+        if current_task_or_thread() not in to_return:
             return None
-        return self._callback.register()
+        return thread_task_done.register()
 
-    def close(self) -> None:
-        return self._callback.close()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        del exc_type, exc_value, traceback
-        self.close()
+    return key_factory
 
 
 def ReadLines(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], Any]:
