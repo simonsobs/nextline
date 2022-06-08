@@ -21,8 +21,8 @@ def peek_stdout_by_task_and_thread(
 ):
     thread_task_done = ThreadTaskDoneCallback()
     key_factory = KeyFactory(
-        to_return=to_peek,
-        thread_task_done=thread_task_done,
+        to_register=to_peek,
+        register=thread_task_done.register,
     )
     read_lines = ReadLines(callback)
     assign_key = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
@@ -32,13 +32,13 @@ def peek_stdout_by_task_and_thread(
 
 
 def KeyFactory(
-    to_return: Collection[Task | Thread],
-    thread_task_done: ThreadTaskDoneCallback,
-):
+    to_register: Collection[Task | Thread],
+    register: Callable[[], Task | Thread],
+) -> Callable[[], Task | Thread | None]:
     def key_factory() -> Task | Thread | None:
-        if current_task_or_thread() not in to_return:
+        if current_task_or_thread() not in to_register:
             return None
-        return thread_task_done.register()
+        return register()
 
     return key_factory
 
