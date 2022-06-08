@@ -1,96 +1,65 @@
 from __future__ import annotations
 
-import io
-from threading import Thread
-import datetime
+from asyncio import Task
 from collections import defaultdict
-
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    DefaultDict,
-    Mapping,
-    NamedTuple,
-    TextIO,
-    Any,
-)
+from contextlib import closing, contextmanager
+from threading import Thread
+from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
 
-from .utils import SubscribableDict, current_task_or_thread
-from .types import StdoutInfo
-
-if TYPE_CHECKING:
-    from asyncio import Task
+from .utils import ThreadTaskDoneCallback, current_task_or_thread
+from .peek import peek_stdout
 
 
-class OutLineItem(NamedTuple):
-    key: Task | Thread
-    line: str
-    timestamp: datetime.datetime
+_T = TypeVar("_T")
 
 
-def IOSubscription(
-    registry: SubscribableDict,
-    run_no_map: Mapping[Task | Thread, int],
-    trace_no_map: Mapping[Task | Thread, int],
+@contextmanager
+def peek_stdout_by_task_and_thread(
+    to_peek: Collection[Task | Thread],
+    callback: Callable[[Task | Thread, str], Any],
 ):
-    def put(item: OutLineItem):
-        if not (run_no := run_no_map.get(item.key)):
-            return
-        if not (trace_no := trace_no_map.get(item.key)):
-            return
-        info = StdoutInfo(
-            run_no=run_no,
-            trace_no=trace_no,
-            text=item.line,
-            written_at=item.timestamp,
-        )
-        # print(info, file=sys.stderr)
-        registry["stdout"] = info
-
-    def f(src: TextIO):
-        ret = IOPeekWrite(src, create_callback(put))
-        return ret
-
-    return f
+    thread_task_done = ThreadTaskDoneCallback()
+    key_factory = KeyFactory(
+        to_return=to_peek,
+        thread_task_done=thread_task_done,
+    )
+    read_lines = ReadLines(callback)
+    assign_key = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
+    with peek_stdout(assign_key) as t:
+        with closing(thread_task_done):
+            yield t
 
 
-def create_callback(
-    callback: Callable[[OutLineItem], None]
-) -> Callable[[str], None]:
-    buffer: DefaultDict[Thread | Task, str] = defaultdict(str)
+def KeyFactory(
+    to_return: Collection[Task | Thread],
+    thread_task_done: ThreadTaskDoneCallback,
+):
+    def key_factory() -> Task | Thread | None:
+        if current_task_or_thread() not in to_return:
+            return None
+        return thread_task_done.register()
 
-    def ret(s: str) -> None:
-        key = current_task_or_thread()
+    return key_factory
+
+
+def ReadLines(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], Any]:
+    buffer: DefaultDict[_T, str] = defaultdict(str)
+
+    def read_lines(key: _T, s: str) -> None:
         buffer[key] += s
         if s.endswith("\n"):
             line = buffer.pop(key)
-            now = datetime.datetime.now()
-            item = OutLineItem(key, line, now)
-            callback(item)
+            callback(key, line)
 
-    return ret
+    return read_lines
 
 
-class IOPeekWrite(io.TextIOWrapper):
-    """Hook sys.stdout.write() or sys.stderr.write()"""
+def AssignKey(
+    key_factory: Callable[[], _T | None], callback: Callable[[_T, str], Any]
+) -> Callable[[str], None]:
+    def assign_key(s: str) -> None:
+        if key := key_factory():
+            callback(key, s)
 
-    def __init__(self, src: TextIO, callback: Callable[[str], None]):
-        self._src = src
-        self._callback = callback
-
-    def write(self, s: str) -> int:
-        src: TextIO = super().__getattribute__("_src")
-        callback: Callable[[str], None] = super().__getattribute__("_callback")
-        ret = src.write(s)
-        callback(s)
-        return ret
-
-    def __getattribute__(self, name: str) -> Any:
-        if name == "close":
-            # not returning self._src.close so to avoid an error in pytest
-            return super().__getattribute__(name)
-        if name == "write":
-            return super().__getattribute__(name)
-        src = super().__getattribute__("_src")
-        return getattr(src, name)
+    return assign_key
