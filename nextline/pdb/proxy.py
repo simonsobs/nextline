@@ -31,9 +31,7 @@ def PdbInterfaceFactory(
 ) -> Callable[[], PdbInterface]:
 
     # trace_no_counter = count(1).__next__
-    trace_no_counter = (
-        lambda: ((c := count(1).__next__) and (lambda: TraceNo(c())))
-    )()
+    trace_no_counter = (lambda f: (lambda: TraceNo(f())))(count(1).__next__)
 
     prompting_counter = count(1).__next__
 
