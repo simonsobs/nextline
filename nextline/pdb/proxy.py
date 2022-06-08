@@ -21,7 +21,7 @@ from types import FrameType
 
 if TYPE_CHECKING:
     from ..run import Context
-    from ..types import TraceFunc
+    from sys import _TraceFunc as TraceFunc
 
 
 def PdbInterfaceFactory(
