@@ -1,10 +1,11 @@
+from __future__ import annotations
 from threading import Thread, current_thread
 from asyncio import Task, current_task
 from itertools import count
 from collections import defaultdict
 from weakref import WeakKeyDictionary
 
-from typing import Union, Callable, Tuple, Dict, DefaultDict
+from typing import Callable, Tuple, Dict, DefaultDict
 
 from ..types import ThreadNo, TaskNo, ThreadTaskId
 
@@ -16,9 +17,7 @@ class ThreadTaskIdComposer:
 
         self.thread_no_counter = count(1).__next__
 
-        self._map: Dict[
-            Union[Thread, Task], ThreadTaskId
-        ] = WeakKeyDictionary()
+        self._map: Dict[Thread | Task, ThreadTaskId] = WeakKeyDictionary()
 
         self._thread_no_map: Dict[Thread, ThreadNo] = WeakKeyDictionary()
         self._task_no_map: Dict[Task, TaskNo] = WeakKeyDictionary()
@@ -67,21 +66,18 @@ class ThreadTaskIdComposer:
         self.thread_no_counter = count(1).__next__
         self._task_no_counter_map.clear()
 
-    def _current_thread_task(self) -> Tuple[Thread, Union[Task, None]]:
+    def _current_thread_task(self) -> Tuple[Thread, Task | None]:
         try:
             task = current_task()
         except RuntimeError:
             task = None
         return current_thread(), task
 
-    def _compose(
-        self, thread: Thread, task: Union[Task, None]
-    ) -> ThreadTaskId:
+    def _compose(self, thread: Thread, task: Task | None) -> ThreadTaskId:
 
         thread_no = self._thread_no_map.get(thread)
         if not thread_no:
-            thread_no = self.thread_no_counter()
-            assert thread_no  # for mypy
+            thread_no = ThreadNo(self.thread_no_counter())
             self._thread_no_map[thread] = thread_no
 
         if not task:
