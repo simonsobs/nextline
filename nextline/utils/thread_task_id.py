@@ -1,13 +1,13 @@
 from __future__ import annotations
 from threading import Thread, current_thread
 from asyncio import Task, current_task
-from itertools import count
 from collections import defaultdict
 from weakref import WeakKeyDictionary
 
 from typing import Callable, Tuple, Dict, DefaultDict
 
 from ..types import ThreadNo, TaskNo, ThreadTaskId
+from ..count import ThreadNoCounter, TaskNoCounter
 
 
 class ThreadTaskIdComposer:
@@ -15,7 +15,7 @@ class ThreadTaskIdComposer:
 
     def __init__(self):
 
-        self.thread_no_counter = count(1).__next__
+        self.thread_no_counter = ThreadNoCounter(1)
 
         self._map: Dict[Thread | Task, ThreadTaskId] = WeakKeyDictionary()
 
@@ -23,8 +23,8 @@ class ThreadTaskIdComposer:
         self._task_no_map: Dict[Task, TaskNo] = WeakKeyDictionary()
 
         self._task_no_counter_map: DefaultDict[
-            ThreadNo, Callable[[], int]
-        ] = defaultdict(lambda: count(1).__next__)
+            ThreadNo, Callable[[], TaskNo]
+        ] = defaultdict(lambda: TaskNoCounter(1))
 
     def __call__(self) -> ThreadTaskId:
         """ThreadTaskId with the current thread and async task numbers
@@ -63,7 +63,7 @@ class ThreadTaskIdComposer:
         for which the ID has been generated before the reset, it will still
         return the same ID created before the reset.
         """
-        self.thread_no_counter = count(1).__next__
+        self.thread_no_counter = ThreadNoCounter(1)
         self._task_no_counter_map.clear()
 
     def _current_thread_task(self) -> Tuple[Thread, Task | None]:
@@ -77,7 +77,8 @@ class ThreadTaskIdComposer:
 
         thread_no = self._thread_no_map.get(thread)
         if not thread_no:
-            thread_no = ThreadNo(self.thread_no_counter())
+            thread_no = self.thread_no_counter()
+            assert thread_no
             self._thread_no_map[thread] = thread_no
 
         if not task:
@@ -85,7 +86,7 @@ class ThreadTaskIdComposer:
 
         task_no = self._task_no_map.get(task)
         if not task_no:
-            task_no = TaskNo(self._task_no_counter_map[thread_no]())
+            task_no = self._task_no_counter_map[thread_no]()
             self._task_no_map[task] = task_no
 
         return ThreadTaskId(thread_no=thread_no, task_no=task_no)
