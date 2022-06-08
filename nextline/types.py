@@ -1,18 +1,17 @@
 from __future__ import annotations
 import dataclasses
 import datetime
-from typing import Optional
-from typing_extensions import TypeAlias
+from typing import Optional, NewType
 
 
-ThreadNo: TypeAlias = int
-TaskNo: TypeAlias = "int | None"
+ThreadNo = NewType("ThreadNo", int)
+TaskNo = NewType("TaskNo", int)
 
 
 @dataclasses.dataclass(frozen=True)
 class ThreadTaskId:
     thread_no: ThreadNo
-    task_no: TaskNo
+    task_no: TaskNo | None
 
 
 @dataclasses.dataclass(frozen=True)
