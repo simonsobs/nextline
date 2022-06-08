@@ -4,15 +4,15 @@ from weakref import WeakKeyDictionary
 
 import fnmatch
 
-from typing import TYPE_CHECKING, Any, Set, Optional, Union, Callable
+from typing import TYPE_CHECKING, Any, Set, Optional, Callable
 from types import FrameType
 
 from .pdb.proxy import PdbInterfaceFactory
 from .utils import current_task_or_thread
 
 if TYPE_CHECKING:
+    from sys import _TraceFunc as TraceFunc
     from .process.run import Context
-    from .types import TraceFunc
 
 
 MODULES_TO_SKIP = {
@@ -126,7 +126,7 @@ def TraceAddFirstModule(
             return trace(frame, event, arg)
 
         def create_local_trace() -> TraceFunc:
-            next_trace: Union[TraceFunc, None] = trace
+            next_trace: TraceFunc | None = trace
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal first, next_trace
@@ -190,7 +190,7 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     It is used to avoid creating instances of Pdb in threads or async tasks
     that are not traced.
     """
-    trace: Union[TraceFunc, None] = None
+    trace: TraceFunc | None = None
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
         nonlocal trace
@@ -200,7 +200,7 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     return global_trace
 
 
-def _is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
+def _is_matched_to_any(word: str | None, patterns: Set[str]) -> bool:
     """Test if the word matches any of the patterns
 
     This function is based on Bdb.is_skipped_module():
