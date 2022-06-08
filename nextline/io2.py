@@ -4,7 +4,7 @@ from asyncio import Task
 from collections import defaultdict
 from contextlib import contextmanager
 from threading import Thread
-from typing import Any, Callable, DefaultDict, MutableSequence, TypeVar
+from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
 
 from .utils import ThreadTaskDoneCallback, current_task_or_thread
@@ -16,7 +16,7 @@ _T = TypeVar("_T")
 
 @contextmanager
 def peek_stdout_by_task_and_thread(
-    to_peek: MutableSequence[Task | Thread],
+    to_peek: Collection[Task | Thread],
     callback: Callable[[Task | Thread, str], Any],
 ):
     key_factory = KeyFactory(to_return=to_peek)
@@ -28,7 +28,7 @@ def peek_stdout_by_task_and_thread(
 
 
 class KeyFactory:
-    def __init__(self, to_return: MutableSequence[Task | Thread]):
+    def __init__(self, to_return: Collection[Task | Thread]):
         self._to_return = to_return
         self._callback = ThreadTaskDoneCallback()
 
