@@ -33,8 +33,8 @@ def PdbInterfaceFactory(
     # trace_no_counter = count(1).__next__
     trace_no_counter = (lambda f: (lambda: TraceNo(f())))(count(1).__next__)
 
-    # prompting_counter = count(1).__next__
-    prompting_counter = (lambda f: (lambda: PromptNo(f())))(count(1).__next__)
+    # prompt_no_counter = count(1).__next__
+    prompt_no_counter = (lambda f: (lambda: PromptNo(f())))(count(1).__next__)
 
     def factory() -> PdbInterface:
         trace_no = trace_no_counter()
@@ -43,7 +43,7 @@ def PdbInterfaceFactory(
         pbi = PdbInterface(
             trace_no=trace_no,
             context=context,
-            prompting_counter=prompting_counter,
+            prompt_no_counter=prompt_no_counter,
             modules_to_trace=modules_to_trace,
         )
         return pbi
@@ -76,13 +76,13 @@ class PdbInterface:
         self,
         trace_no: int,
         context: Context,
-        prompting_counter: Callable[[], PromptNo],
+        prompt_no_counter: Callable[[], PromptNo],
         modules_to_trace: Set[str],
     ):
         self._trace_no = trace_no
         self._context = context
         self._ci_map = context["pdb_ci_map"]
-        self._prompting_counter = prompting_counter
+        self._prompt_no_counter = prompt_no_counter
         self.modules_to_trace = modules_to_trace
         self._opened = False
 
@@ -141,7 +141,7 @@ class PdbInterface:
             pdb=self._pdb,
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
-            counter=self._prompting_counter,
+            counter=self._prompt_no_counter,
             trace_no=self._trace_no,
             context=self._context,
             trace_args=self._trace_args,
