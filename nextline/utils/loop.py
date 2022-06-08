@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 from functools import partial
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
+
+T = TypeVar("T")
 
 
-def ToLoop() -> Callable[[Callable], Any]:
+def ToLoop() -> Callable[[Callable[[Any], T]], T]:
     """Create a function that calls a function in the same asyncio event loop
 
     A running asyncio event loop needs to exist in the thread in which this
@@ -20,7 +24,7 @@ def ToLoop() -> Callable[[Callable], Any]:
             return False
         return loop is loop_
 
-    def to_loop(func, /, *args, **kwargs) -> Any:
+    def to_loop(func: Callable[[Any], T], /, *args, **kwargs) -> T:
         func_ = partial(func, *args, **kwargs)
 
         if in_the_same_running_loop():
