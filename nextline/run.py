@@ -9,7 +9,7 @@ from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
 
-from typing import Callable, Any, TextIO, TypedDict
+from typing import Callable, Any, Set, TextIO, TypedDict
 from typing import Tuple, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -30,10 +30,9 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Callback:
-    def __init__(self, context: Context):
-        self._context = context
-        self._run_no = context["run_no"]
-        self._registrar = self._context["registrar"]
+    def __init__(self, run_no: int, registrar: Registrar):
+        self._run_no = run_no
+        self._registrar = registrar
         self._trace_nos: Tuple[int, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
@@ -41,6 +40,7 @@ class Callback:
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self.task_or_thread_end
         )
+        self._tasks_and_threads: Set[Task | Thread] = set()
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
@@ -174,7 +174,9 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
     pdb_ci_map: PdbCiMap = {}
     context["pdb_ci_map"] = pdb_ci_map
 
-    with Callback(context) as callback:
+    with Callback(
+        run_no=context["run_no"], registrar=context["registrar"]
+    ) as callback:
         context["callback"] = callback
 
         trace = Trace(context=context)
