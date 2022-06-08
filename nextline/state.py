@@ -8,6 +8,7 @@ from typing import Optional, Any, Tuple
 from .utils import ExcThread, SubscribableDict, to_thread
 from .run import run, Context
 from .registrar import Registrar
+from .types import RunNo
 
 
 SCRIPT_FILE_NAME = "<string>"
@@ -43,8 +44,10 @@ class Machine:
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
-        self._run_no = run_no_start_from - 1
-        self._run_no_count = count(run_no_start_from).__next__
+        self._run_no = RunNo(run_no_start_from - 1)
+        self._run_no_count = (lambda f: (lambda: RunNo(f())))(
+            count(run_no_start_from).__next__
+        )
         self._registrar = Registrar(self.registry)
 
         self.context = Context(
@@ -117,7 +120,9 @@ class Machine:
                 script=statement, filename=SCRIPT_FILE_NAME
             )
         if run_no_start_from is not None:
-            self._run_no_count = count(run_no_start_from).__next__
+            self._run_no_count = (lambda f: (lambda: RunNo(f())))(
+                count(run_no_start_from).__next__
+            )
             # self._registrar.reset_run_no_count(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
