@@ -4,6 +4,8 @@ import threading
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
+from ..types import PromptNo
+
 
 if TYPE_CHECKING:
     from types import FrameType
@@ -34,7 +36,7 @@ class PdbCommandInterface:
         pdb: Pdb,
         queue_in: Queue,
         queue_out: Queue,
-        counter: Callable[[], int],
+        counter: Callable[[], PromptNo],
         trace_no: int,
         context: Context,
         trace_args: Tuple[FrameType, str, Any],
