@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import Mock
 
-from typing import TYPE_CHECKING, Callable, Union, Any, Set
+from typing import TYPE_CHECKING, Callable, Any, Set
 
 from nextline.call import call_with_trace
 
@@ -15,8 +15,8 @@ from .funcs import summarize_trace_calls
 
 @pytest.fixture()
 def target(
-    wrap_target_trace_func: Union[TraceFunc, Mock],
-    modules_in_summary: Union[Set[str], None],
+    wrap_target_trace_func: TraceFunc | Mock,
+    modules_in_summary: Set[str] | None,
     run_target,
 ):
     _ = run_target
@@ -29,7 +29,7 @@ def target(
 @pytest.fixture()
 def probe(
     probe_trace_func: Mock,
-    modules_in_summary: Union[Set[str], None],
+    modules_in_summary: Set[str] | None,
     run_target,
 ):
     _ = run_target
@@ -40,7 +40,7 @@ def probe(
 @pytest.fixture()
 def ref(
     ref_trace_func: Mock,
-    modules_in_summary: Union[Set[str], None],
+    modules_in_summary: Set[str] | None,
     run_ref,
 ):
     _ = run_ref
@@ -56,7 +56,7 @@ def modules_in_summary():
 @pytest.fixture()
 def run_target(
     func: Callable[[], Any],
-    wrap_target_trace_func: Union[TraceFunc, Mock],
+    wrap_target_trace_func: TraceFunc | Mock,
     thread: bool,
 ):
     call_with_trace(func=func, trace=wrap_target_trace_func, thread=thread)
@@ -66,7 +66,7 @@ def run_target(
 @pytest.fixture()
 def run_ref(
     func: Callable[[], Any],
-    ref_trace_func: Union[TraceFunc, Mock],
+    ref_trace_func: TraceFunc | Mock,
     thread: bool,
 ):
     call_with_trace(func=func, trace=ref_trace_func, thread=thread)

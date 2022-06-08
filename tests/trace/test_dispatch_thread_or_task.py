@@ -7,7 +7,7 @@ from threading import Thread
 import pytest
 from unittest.mock import Mock
 
-from typing import TYPE_CHECKING, Union, Callable, Dict, Set
+from typing import TYPE_CHECKING, Callable, Dict, Set
 
 from nextline.trace import TraceDispatchThreadOrTask
 from nextline.utils import current_task_or_thread
@@ -25,10 +25,10 @@ def test_one(
     target: TraceSummary,
     probe: TraceSummary,
     ref: TraceSummary,
-    factory: Union[Mock, Callable[[], Union[Mock, TraceFunc]]],
-    probes: Dict[Union[Task, Thread], TraceSummary],
-    probe_trace_funcs: Dict[Union[Task, Thread], Union[Mock, TraceFunc]],
-    task_or_threads: Dict[Union[Task, Thread], Set[Union[Task, Thread]]],
+    factory: Mock | Callable[[], Mock | TraceFunc],
+    probes: Dict[Task | Thread, TraceSummary],
+    probe_trace_funcs: Dict[Task | Thread, Mock | TraceFunc],
+    task_or_threads: Dict[Task | Thread, Set[Task | Thread]],
     modules_in_summary: Set[str],
 ):
     assert modules_in_summary is not None
@@ -95,8 +95,8 @@ def thread(request):
 
 @pytest.fixture()
 def probes(
-    probe_trace_funcs: Dict[Union[Task, Thread], Union[Mock, TraceFunc]],
-    modules_in_summary: Union[Set[str], None],
+    probe_trace_funcs: Dict[Task | Thread, Mock | TraceFunc],
+    modules_in_summary: Set[str] | None,
 ):
     y = {
         k: summarize_trace_calls(v, modules=modules_in_summary)

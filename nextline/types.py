@@ -1,11 +1,12 @@
 from __future__ import annotations
 import dataclasses
 import datetime
-from typing import Optional, Union
+from typing import Optional
+from typing_extensions import TypeAlias
 
 
-ThreadNo = int
-TaskNo = Union[int, None]
+ThreadNo: TypeAlias = int
+TaskNo: TypeAlias = "int | None"
 
 
 @dataclasses.dataclass(frozen=True)
