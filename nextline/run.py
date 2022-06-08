@@ -15,7 +15,7 @@ from typing_extensions import TypeAlias
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
-from .types import RunNo, TraceNo, TraceInfo, PromptInfo, StdoutInfo
+from .types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
 from .pdb.ci import PdbCommandInterface  # noqa F401
 from .utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 from .io import peek_stdout_by_task_and_thread
@@ -53,7 +53,7 @@ class Callback:
         prompt_info = PromptInfo(
             run_no=self._run_no,
             trace_no=trace_no,
-            prompt_no=-1,
+            prompt_no=PromptNo(-1),
             open=False,
         )
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)

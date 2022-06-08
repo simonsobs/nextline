@@ -8,6 +8,7 @@ RunNo = NewType("RunNo", int)
 TraceNo = NewType("TraceNo", int)
 ThreadNo = NewType("ThreadNo", int)
 TaskNo = NewType("TaskNo", int)
+PromptNo = NewType("PromptNo", int)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -42,7 +43,7 @@ class TraceInfo:
 class PromptInfo:
     run_no: RunNo
     trace_no: TraceNo
-    prompt_no: int
+    prompt_no: PromptNo
     open: bool
     event: Optional[str] = None
     file_name: Optional[str] = None
