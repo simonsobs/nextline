@@ -11,7 +11,7 @@ T = TypeVar("T")
 
 
 def call_with_trace(
-    func: Callable[[], T],
+    func: Callable[[], T | None],
     trace: TraceFunc,
     thread: Optional[bool] = True,
 ) -> Tuple[T | None, BaseException | None]:

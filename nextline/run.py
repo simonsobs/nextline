@@ -8,14 +8,14 @@ from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
 
-from typing import Callable, Any, Set, TypedDict
-from typing import Tuple, MutableMapping  # noqa F401
+from typing import Set, TypedDict
+from typing import Any, Tuple, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from .registrar import Registrar
 from .trace import Trace
 from .call import call_with_trace
-from .types import TraceFunc, TraceInfo, PromptInfo, StdoutInfo
+from .types import TraceInfo, PromptInfo, StdoutInfo
 from .pdb.ci import PdbCommandInterface  # noqa F401
 from .utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 from .io import peek_stdout_by_task_and_thread
@@ -200,7 +200,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
             future_to_command = executor.submit(
                 _command, q_commands, pdb_ci_map
             )
-            future_to_call = executor.submit(_exec, func, trace)
+            future_to_call = executor.submit(call_with_trace, func, trace)
             result, exception = future_to_call.result()
             q_commands.put(None)
             future_to_command.result()
@@ -212,11 +212,6 @@ def _compile(code, filename):
     if isinstance(code, str):
         code = compile(code, filename, "exec")
     return code
-
-
-def _exec(func: Callable[[], Any], trace: TraceFunc):
-    ret, exc = call_with_trace(func, trace)
-    return ret, exc
 
 
 def _command(q_commands: QCommands, pdb_ci_map: PdbCiMap):
