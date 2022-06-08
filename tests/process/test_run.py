@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import queue
-import sys
 from typing import Any
 from weakref import WeakKeyDictionary
 
@@ -77,7 +76,6 @@ def context(statement, registrar, registry):
         run_no=1,
         statement=statement,
         filename="<string>",
-        create_capture_stdout=lambda _: sys.stdout,
         registrar=registrar,
     )
     return y
