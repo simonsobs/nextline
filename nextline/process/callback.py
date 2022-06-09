@@ -7,9 +7,10 @@ from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
 
-from typing import TYPE_CHECKING, Callable, Tuple, Set
+from typing import TYPE_CHECKING, Any, Callable, Tuple, Set
 from typing import Dict, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
+from types import FrameType
 
 from ..registrar import Registrar
 from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
@@ -101,11 +102,12 @@ class Callback:
         self,
         trace_no: TraceNo,
         prompt_no: PromptNo,
-        event: str,
-        file_name: str,
-        line_no: int,
+        trace_args: Tuple[FrameType, str, Any],
         out: str,
     ) -> None:
+        frame, event, _ = trace_args
+        file_name = self._to_canonic(frame.f_code.co_filename)
+        line_no = frame.f_lineno
         prompt_info = PromptInfo(
             run_no=self._run_no,
             trace_no=trace_no,

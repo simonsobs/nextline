@@ -52,10 +52,7 @@ class PdbCommandInterface:
         self._ended = False
         self._nprompts = 0
 
-        frame, event, _ = trace_args
-        self._event = event
-        self._file_name = pdb.canonic(frame.f_code.co_filename)
-        self._line_no = frame.f_lineno
+        self._trace_args = trace_args
         self._prompt_no = PromptNo(-1)
 
     def send_pdb_command(self, command: str) -> None:
@@ -90,9 +87,7 @@ class PdbCommandInterface:
             self._callback.prompt_start(
                 trace_no=self._trace_no,
                 prompt_no=self._prompt_no,
-                event=self._event,
-                file_name=self._file_name,
-                line_no=self._line_no,
+                trace_args=self._trace_args,
                 out=out,
             )
 
