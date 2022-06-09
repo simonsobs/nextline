@@ -26,8 +26,6 @@ class RunArg(TypedDict, total=False):
     statement: str
     filename: str
     registrar: Registrar
-    callback: Callback
-    pdb_ci_map: PdbCiMap
 
 
 class Context(TypedDict):
@@ -58,11 +56,10 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
         return
 
     pdb_ci_map: PdbCiMap = {}
-    run_arg["pdb_ci_map"] = pdb_ci_map
     modules_to_trace: Set[str] = set()
 
     with Callback(run_no=run_no, registrar=registrar) as callback:
-        run_arg["callback"] = callback
+
         context = Context(
             callback=callback,
             pdb_ci_map=pdb_ci_map,
