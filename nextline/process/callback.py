@@ -39,6 +39,7 @@ class Callback:
         self._tasks_and_threads: Set[Task | Thread] = set()
         self._prompt_info_map: PromptInfoMap = {}
         self._pdbi_map: PdbIMap = {}
+        self._to_canonic = ToCanonic()
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
@@ -97,7 +98,13 @@ class Callback:
         self._registrar.put_trace_info(trace_info)
 
     def prompt_start(
-        self, trace_no, prompt_no, event, file_name, line_no, out
+        self,
+        trace_no: TraceNo,
+        prompt_no: PromptNo,
+        event: str,
+        file_name: str,
+        line_no: int,
+        out: str,
     ) -> None:
         prompt_info = PromptInfo(
             run_no=self._run_no,
@@ -115,7 +122,7 @@ class Callback:
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     def prompt_end(
-        self, trace_no: TraceNo, prompt_no: PromptNo, command
+        self, trace_no: TraceNo, prompt_no: PromptNo, command: str
     ) -> None:
         prompt_info = self._prompt_info_map.pop((trace_no, prompt_no))
         prompt_info = dataclasses.replace(
