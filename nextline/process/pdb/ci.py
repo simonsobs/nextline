@@ -39,7 +39,7 @@ class PdbCommandInterface:
         trace_no: TraceNo,
         callback: Callback,
         trace_args: Tuple[FrameType, str, Any],
-        pdb_prompt="(Pdb) ",
+        prompt="(Pdb) ",
     ):
         self._queue_in = queue_in
         self._queue_out: Queue[str | None] = queue_out  # type: ignore
@@ -48,11 +48,11 @@ class PdbCommandInterface:
         self._trace_no = trace_no
         self._callback = callback
         self._trace_args = trace_args
-        self._pdb_prompt = pdb_prompt
+        self._prompt = prompt
 
         self._prompt_no = PromptNo(-1)
 
-    def send_pdb_command(self, command: str) -> None:
+    def send_command(self, command: str) -> None:
         """send a command to pdb"""
         self._callback.prompt_end(
             trace_no=self._trace_no, prompt_no=self._prompt_no, command=command
@@ -62,21 +62,19 @@ class PdbCommandInterface:
 
     def start(self) -> None:
         """start interfacing the pdb"""
-        self._fut = self._executor.submit(self._receive_pdb_stdout)
+        self._fut = self._executor.submit(self.wait_prompt)
 
     def end(self) -> None:
         """end interfacing the pdb"""
         self._queue_out.put(None)  # end the thread
         self._fut.result()
 
-    def _receive_pdb_stdout(self) -> None:
+    def wait_prompt(self) -> None:
         """receive stdout from pdb
 
         This method runs in its own thread during pdb._cmdloop()
         """
-        while out := self._read_until_prompt(
-            self._queue_out, self._pdb_prompt
-        ):
+        while out := self._read_until_prompt(self._queue_out, self._prompt):
             self._prompt_no = self._counter()
             self._stdout = out
             self._callback.prompt_start(
