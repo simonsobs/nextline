@@ -48,19 +48,7 @@ def Trace(
     context: TraceArg,
     modules_to_trace: Optional[Set[str]] = None,
 ) -> TraceFunc:
-    """Create the main trace function
-
-
-    Parameters
-    ----------
-    context : dict
-        An instance of Context
-    modules_to_trace : set, optional
-        The names of modules to trace. The module in which the trace
-        is first time called will be always traced even if not in the
-        set.
-
-    """
+    """Create the main trace function"""
 
     if modules_to_trace is None:
         modules_to_trace = set()
