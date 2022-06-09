@@ -21,8 +21,8 @@ from typing import (
 from types import FrameType
 
 if TYPE_CHECKING:
-    from ..run import Context
     from sys import _TraceFunc as TraceFunc
+    from ..run import Context
 
 
 def PdbInterfaceTrace(context: Context) -> Callable[[], TraceFunc]:
