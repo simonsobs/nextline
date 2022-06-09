@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from concurrent.futures import Executor
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
@@ -23,8 +22,7 @@ class PdbCommandInterface:
     def __init__(
         self,
         queue_in: Queue[str],
-        queue_out: Queue[str],
-        executor: Executor,
+        queue_out: Queue[str | None],
         counter: Callable[[], PromptNo],
         trace_no: TraceNo,
         callback: Callback,
@@ -32,8 +30,7 @@ class PdbCommandInterface:
         prompt="(Pdb) ",
     ):
         self._queue_in = queue_in
-        self._queue_out: Queue[str | None] = queue_out  # type: ignore
-        self._executor = executor
+        self._queue_out = queue_out
         self._counter = counter
         self._trace_no = trace_no
         self._callback = callback
@@ -49,19 +46,10 @@ class PdbCommandInterface:
         )
         self._queue_in.put(command)
 
-    def start(self) -> None:
-        """start interfacing the pdb"""
-        self._fut = self._executor.submit(self.wait_prompt)
-
-    def end(self) -> None:
-        """end interfacing the pdb"""
-        self._queue_out.put(None)  # end the thread
-        self._fut.result()
-
     def wait_prompt(self) -> None:
         """receive stdout from pdb
 
-        This method runs in its own thread during pdb._cmdloop()
+        To be run in a thread during pdb._cmdloop()
         """
         while out := self._read_until_prompt(self._queue_out, self._prompt):
             self._prompt_no = self._counter()

@@ -84,12 +84,12 @@ class PdbInterface:
         self._opened = False
 
         self._q_stdin: Queue[str] = Queue()
-        self._q_stdout: Queue[str] = Queue()
+        self._q_stdout: Queue[str | None] = Queue()
 
         self._pdb = CustomizedPdb(
             pdbi=self,
             stdin=StreamIn(self._q_stdin),
-            stdout=StreamOut(self._q_stdout),
+            stdout=StreamOut(self._q_stdout),  # type: ignore
             readrc=False,
         )
 
@@ -138,14 +138,13 @@ class PdbInterface:
         self._pdb_ci = PdbCommandInterface(
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
-            executor=self._executor,
             counter=self._prompt_no_counter,
             trace_no=self._trace_no,
             callback=self._context["callback"],
             trace_args=self._trace_args,
             prompt=self._pdb.prompt,
         )
-        self._pdb_ci.start()
+        self._fut = self._executor.submit(self._pdb_ci.wait_prompt)
 
         self._ci_map[self._trace_no] = self._pdb_ci.send_command
 
@@ -153,7 +152,8 @@ class PdbInterface:
         """To be called by the custom Pdb after _cmdloop()"""
 
         del self._ci_map[self._trace_no]
-        self._pdb_ci.end()
+        self._q_stdout.put(None)  # end the thread
+        self._fut.result()
 
     def close(self):
         self._executor.shutdown()
