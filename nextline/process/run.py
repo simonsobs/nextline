@@ -39,8 +39,10 @@ def run(context: Context, q_commands: QCommands, q_done: QDone):
 
 def _run(context: Context, q_commands: QCommands, q_done: QDone):
 
+    run_no = context["run_no"]
     statement = context.get("statement")
     filename = context.get("script_file_name", "<string>")
+    registrar = context["registrar"]
 
     try:
         code = _compile(statement, filename)
@@ -51,9 +53,7 @@ def _run(context: Context, q_commands: QCommands, q_done: QDone):
     pdb_ci_map: PdbCiMap = {}
     context["pdb_ci_map"] = pdb_ci_map
 
-    with Callback(
-        run_no=context["run_no"], registrar=context["registrar"]
-    ) as callback:
+    with Callback(run_no=run_no, registrar=registrar) as callback:
         context["callback"] = callback
 
         trace = Trace(context=context)
