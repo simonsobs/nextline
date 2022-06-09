@@ -30,20 +30,20 @@ class RunArg(TypedDict, total=False):
     pdb_ci_map: PdbCiMap
 
 
-def run(context: RunArg, q_commands: QueueCommands, q_done: QueueDone):
+def run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
     try:
-        _run(context, q_commands, q_done)
+        _run(run_arg, q_commands, q_done)
     except BaseException:
         q_done.put((None, None))
         raise
 
 
-def _run(context: RunArg, q_commands: QueueCommands, q_done: QueueDone):
+def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
-    run_no = context["run_no"]
-    statement = context.get("statement")
-    filename = context.get("script_file_name", "<string>")
-    registrar = context["registrar"]
+    run_no = run_arg["run_no"]
+    statement = run_arg.get("statement")
+    filename = run_arg.get("script_file_name", "<string>")
+    registrar = run_arg["registrar"]
 
     try:
         code = _compile(statement, filename)
@@ -52,12 +52,12 @@ def _run(context: RunArg, q_commands: QueueCommands, q_done: QueueDone):
         return
 
     pdb_ci_map: PdbCiMap = {}
-    context["pdb_ci_map"] = pdb_ci_map
+    run_arg["pdb_ci_map"] = pdb_ci_map
 
     with Callback(run_no=run_no, registrar=registrar) as callback:
-        context["callback"] = callback
+        run_arg["callback"] = callback
 
-        trace = Trace(context=context)
+        trace = Trace(context=run_arg)
 
         func = script.compose(code)
 
