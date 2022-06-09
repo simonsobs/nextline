@@ -16,7 +16,6 @@ from typing import (
     Callable,
     Optional,
     Any,
-    Set,
     Tuple,
 )
 from types import FrameType
@@ -28,7 +27,6 @@ if TYPE_CHECKING:
 
 def PdbInterfaceFactory(
     context: Context,
-    modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
     trace_no_counter = TraceNoCounter(1)
@@ -40,7 +38,6 @@ def PdbInterfaceFactory(
             trace_no=trace_no,
             context=context,
             prompt_no_counter=prompt_no_counter,
-            modules_to_trace=modules_to_trace,
         )
         context["callback"].trace_start(trace_no, pdbi)
         return pdbi
@@ -56,11 +53,10 @@ class PdbInterface:
         trace_no: TraceNo,
         context: Context,
         prompt_no_counter: Callable[[], PromptNo],
-        modules_to_trace: Set[str],
     ):
         self._trace_no = trace_no
         self._ci_map = context["pdb_ci_map"]
-        self.modules_to_trace = modules_to_trace
+        self.modules_to_trace = context["modules_to_trace"]
         self._opened = False
 
         q_stdin: Queue[str] = Queue()

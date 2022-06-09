@@ -3,7 +3,7 @@ from __future__ import annotations
 from queue import Queue  # noqa F401
 import concurrent.futures
 
-from typing import Callable, TypedDict, MutableMapping
+from typing import Callable, Set, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -33,6 +33,7 @@ class RunArg(TypedDict, total=False):
 class Context(TypedDict):
     callback: Callback
     pdb_ci_map: PdbCiMap
+    modules_to_trace: Set[str]
 
 
 def run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
@@ -58,10 +59,15 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
     pdb_ci_map: PdbCiMap = {}
     run_arg["pdb_ci_map"] = pdb_ci_map
+    modules_to_trace: Set[str] = set()
 
     with Callback(run_no=run_no, registrar=registrar) as callback:
         run_arg["callback"] = callback
-        context = Context(callback=callback, pdb_ci_map=pdb_ci_map)
+        context = Context(
+            callback=callback,
+            pdb_ci_map=pdb_ci_map,
+            modules_to_trace=modules_to_trace,
+        )
 
         trace = Trace(context=context)
 

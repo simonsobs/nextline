@@ -44,19 +44,12 @@ MODULES_TO_SKIP = {
 }
 
 
-def Trace(
-    context: Context,
-    modules_to_trace: Optional[Set[str]] = None,
-) -> TraceFunc:
+def Trace(context: Context) -> TraceFunc:
     """Create the main trace function"""
 
-    if modules_to_trace is None:
-        modules_to_trace = set()
+    modules_to_trace = context["modules_to_trace"]
 
-    pdbi_factory = PdbInterfaceFactory(
-        context=context,
-        modules_to_trace=modules_to_trace,
-    )
+    pdbi_factory = PdbInterfaceFactory(context=context)
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
