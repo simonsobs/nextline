@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 
-from nextline.trace import TraceSkipLambda
+from nextline.process.trace import TraceSkipLambda
 
 from .funcs import TraceSummary
 

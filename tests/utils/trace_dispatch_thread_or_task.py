@@ -8,7 +8,7 @@ from unittest.mock import Mock
 from typing import List, Tuple, Set, Any
 
 from nextline.call import call_with_trace
-from nextline.trace import TraceDispatchThreadOrTask
+from nextline.process.trace import TraceDispatchThreadOrTask
 
 
 @pytest.fixture()

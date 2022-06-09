@@ -13,7 +13,7 @@ from typing import Any, Tuple, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from ..registrar import Registrar
-from ..trace import Trace
+from .trace import Trace
 from ..call import call_with_trace
 from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
 from ..pdb.ci import PdbCommandInterface  # noqa F401

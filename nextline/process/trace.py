@@ -7,12 +7,12 @@ import fnmatch
 from typing import TYPE_CHECKING, Any, Set, Optional, Callable
 from types import FrameType
 
-from .pdb.proxy import PdbInterfaceFactory
-from .utils import current_task_or_thread
+from ..pdb.proxy import PdbInterfaceFactory
+from ..utils import current_task_or_thread
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
-    from .process.run import Context
+    from .run import Context
 
 
 MODULES_TO_SKIP = {

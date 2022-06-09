@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 from typing import Set
 
-from nextline.trace import TraceAddFirstModule
+from nextline.process.trace import TraceAddFirstModule
 
 from .funcs import TraceSummary
 

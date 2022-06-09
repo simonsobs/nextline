@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from typing import Set
 
-from nextline.trace import Trace
+from nextline.process.trace import Trace
 from nextline.pdb.proxy import PdbInterfaceFactory, PdbInterface
 from nextline.utils import SubscribableDict
 
@@ -65,5 +65,5 @@ def mock_pdbi(probe_trace_func):
 def MockPdbInterfaceFactory(mock_pdbi, monkeypatch):
     mock_create_pdbi = Mock(return_value=mock_pdbi)
     y = Mock(spec=PdbInterfaceFactory, return_value=mock_create_pdbi)
-    monkeypatch.setattr("nextline.trace.PdbInterfaceFactory", y)
+    monkeypatch.setattr("nextline.process.trace.PdbInterfaceFactory", y)
     yield y

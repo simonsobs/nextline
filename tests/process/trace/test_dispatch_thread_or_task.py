@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 from typing import TYPE_CHECKING, Callable, Dict, Set
 
-from nextline.trace import TraceDispatchThreadOrTask
+from nextline.process.trace import TraceDispatchThreadOrTask
 from nextline.utils import current_task_or_thread
 from nextline.utils import ExcThread
 
