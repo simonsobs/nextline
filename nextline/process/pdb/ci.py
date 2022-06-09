@@ -49,8 +49,6 @@ class PdbCommandInterface:
         self._counter = counter
         self._trace_no = trace_no
         self._callback = callback
-        self._ended = False
-        self._nprompts = 0
 
         self._trace_args = trace_args
         self._prompt_no = PromptNo(-1)
@@ -69,7 +67,6 @@ class PdbCommandInterface:
 
     def end(self) -> None:
         """end interfacing the pdb"""
-        self._ended = True
         self._queue_out.put(None)  # end the thread
         self._fut.result()
 
@@ -81,7 +78,6 @@ class PdbCommandInterface:
         while out := self._read_until_prompt(
             self._queue_out, self._pdb.prompt
         ):
-            self._nprompts += 1
             self._prompt_no = self._counter()
             self._stdout = out
             self._callback.prompt_start(
