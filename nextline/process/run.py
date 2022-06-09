@@ -30,7 +30,7 @@ class RunArg(TypedDict, total=False):
     pdb_ci_map: PdbCiMap
 
 
-class TraceArg(TypedDict):
+class Context(TypedDict):
     callback: Callback
     pdb_ci_map: PdbCiMap
 
@@ -61,9 +61,9 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
     with Callback(run_no=run_no, registrar=registrar) as callback:
         run_arg["callback"] = callback
-        trace_arg = TraceArg(callback=callback, pdb_ci_map=pdb_ci_map)
+        context = Context(callback=callback, pdb_ci_map=pdb_ci_map)
 
-        trace = Trace(context=trace_arg)
+        trace = Trace(context=context)
 
         func = script.compose(code)
 
