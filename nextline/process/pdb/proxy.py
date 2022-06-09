@@ -5,7 +5,7 @@ from queue import Queue
 
 from ...types import PromptNo, TraceNo
 from ...count import PromptNoCounter, TraceNoCounter
-from .ci import PdbCommandInterface
+from .ci import pdb_command_interface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
@@ -135,7 +135,7 @@ class PdbInterface:
             # TODO: This should be done somewhere else
             self.modules_to_trace.add(module_name)
 
-        wait_prompt, send_command = PdbCommandInterface(
+        wait_prompt, send_command = pdb_command_interface(
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
             counter=self._prompt_no_counter,

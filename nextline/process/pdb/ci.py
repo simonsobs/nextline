@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from queue import Queue
 
 
-def PdbCommandInterface(
+def pdb_command_interface(
     queue_in: Queue[str],
     queue_out: Queue[str | None],
     counter: Callable[[], PromptNo],
