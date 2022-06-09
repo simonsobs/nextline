@@ -25,14 +25,12 @@ if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
 
 
-def PdbInterfaceFactory(
-    context: Context,
-) -> Callable[[], PdbInterface]:
+def PdbInterfaceTrace(context: Context) -> Callable[[], TraceFunc]:
 
     trace_no_counter = TraceNoCounter(1)
     prompt_no_counter = PromptNoCounter(1)
 
-    def factory() -> PdbInterface:
+    def factory() -> TraceFunc:
         trace_no = trace_no_counter()
         pdbi = PdbInterface(
             trace_no=trace_no,
@@ -40,7 +38,7 @@ def PdbInterfaceFactory(
             prompt_no_counter=prompt_no_counter,
         )
         context["callback"].trace_start(trace_no, pdbi)
-        return pdbi
+        return pdbi.trace
 
     return factory
 
