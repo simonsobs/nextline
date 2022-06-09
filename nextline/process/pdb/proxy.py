@@ -135,7 +135,7 @@ class PdbInterface:
             # TODO: This should be done somewhere else
             self.modules_to_trace.add(module_name)
 
-        self._pdb_ci = PdbCommandInterface(
+        wait_prompt, send_command = PdbCommandInterface(
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
             counter=self._prompt_no_counter,
@@ -144,9 +144,9 @@ class PdbInterface:
             trace_args=self._trace_args,
             prompt=self._pdb.prompt,
         )
-        self._fut = self._executor.submit(self._pdb_ci.wait_prompt)
+        self._fut = self._executor.submit(wait_prompt)
 
-        self._ci_map[self._trace_no] = self._pdb_ci.send_command
+        self._ci_map[self._trace_no] = send_command
 
     def exited_cmdloop(self) -> None:
         """To be called by the custom Pdb after _cmdloop()"""
