@@ -1,9 +1,7 @@
-##__________________________________________________________________||
 __all__ = ["Nextline"]
 
 from .main import Nextline
 
-##__________________________________________________________________||
 from ._version import get_versions
 
 __version__ = get_versions()["version"]
@@ -17,5 +15,3 @@ Versioneer: https://github.com/warner/python-versioneer
 """
 
 del get_versions
-
-##__________________________________________________________________||
