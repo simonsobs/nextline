@@ -1,17 +1,17 @@
 import pytest
 
 from nextline.state import Initialized, Running, Finished, Closed
-from nextline.process.run import Context
+from nextline.process.run import RunArg
 
 
 @pytest.fixture
-def context() -> Context:
-    y = Context()
+def context() -> RunArg:
+    y = RunArg()
     return y
 
 
 @pytest.mark.asyncio
-async def test_transition(context: Context):
+async def test_transition(context: RunArg):
 
     state = Initialized(context=context)
     assert isinstance(state, Initialized)

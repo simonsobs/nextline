@@ -5,7 +5,7 @@ from queue import Queue
 from typing import Optional, Any
 
 from .utils import ExcThread, SubscribableDict, to_thread
-from .process.run import run, Context, QueueCommands, QueueDone
+from .process.run import run, RunArg, QueueCommands, QueueDone
 from .registrar import Registrar
 from .types import RunNo, TraceNo
 from .count import RunNoCounter
@@ -48,7 +48,7 @@ class Machine:
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._registrar = Registrar(self.registry)
 
-        self.context = Context(
+        self.context = RunArg(
             statement=statement,
             filename=filename,
             registrar=self._registrar,
@@ -206,7 +206,7 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, context: Context):
+    def __init__(self, context: RunArg):
         self._context = context
 
     def run(self):
@@ -238,7 +238,7 @@ class Running(State):
 
     name = "running"
 
-    def __init__(self, context: Context):
+    def __init__(self, context: RunArg):
         self._context = context
         self._q_commands: QueueCommands = Queue()
         self._q_done: QueueDone = Queue()
@@ -280,7 +280,7 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, context: Context, result, exception):
+    def __init__(self, context: RunArg, result, exception):
         self._result = result
         self._exception = exception
 

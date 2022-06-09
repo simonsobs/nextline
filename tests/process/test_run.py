@@ -8,7 +8,7 @@ from weakref import WeakKeyDictionary
 import pytest
 from unittest.mock import Mock
 
-from nextline.process.run import run, Context
+from nextline.process.run import run, RunArg
 from nextline.registrar import Registrar
 from nextline.utils import SubscribableDict
 from nextline.utils.func import to_thread
@@ -16,7 +16,7 @@ from nextline.utils.func import to_thread
 
 def test_q_done_on_exception(q_done, monkey_patch_run):
     del monkey_patch_run
-    context = Context()
+    context = RunArg()
     q_commands = Mock()
     with pytest.raises(MockError):
         run(context, q_commands, q_done)
@@ -37,7 +37,7 @@ def monkey_patch_run(monkeypatch):
 @pytest.mark.asyncio
 async def test_one(
     expected_exception,
-    context: Context,
+    context: RunArg,
     q_commands,
     q_done,
     task_send_commands,
@@ -72,7 +72,7 @@ async def respond_prompt(registry, q_commands):
 
 @pytest.fixture
 def context(statement, registrar, registry):
-    y = Context(
+    y = RunArg(
         run_no=1,
         statement=statement,
         filename="<string>",

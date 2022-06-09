@@ -21,7 +21,7 @@ QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 PdbCiMap: TypeAlias = "MutableMapping[TraceNo, PdbCommandInterface]"
 
 
-class Context(TypedDict, total=False):
+class RunArg(TypedDict, total=False):
     run_no: RunNo
     statement: str
     filename: str
@@ -30,7 +30,7 @@ class Context(TypedDict, total=False):
     pdb_ci_map: PdbCiMap
 
 
-def run(context: Context, q_commands: QueueCommands, q_done: QueueDone):
+def run(context: RunArg, q_commands: QueueCommands, q_done: QueueDone):
     try:
         _run(context, q_commands, q_done)
     except BaseException:
@@ -38,7 +38,7 @@ def run(context: Context, q_commands: QueueCommands, q_done: QueueDone):
         raise
 
 
-def _run(context: Context, q_commands: QueueCommands, q_done: QueueDone):
+def _run(context: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
     run_no = context["run_no"]
     statement = context.get("statement")

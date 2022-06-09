@@ -21,12 +21,12 @@ from typing import (
 from types import FrameType
 
 if TYPE_CHECKING:
-    from ..run import Context
+    from ..run import RunArg
     from sys import _TraceFunc as TraceFunc
 
 
 def PdbInterfaceFactory(
-    context: Context,
+    context: RunArg,
     modules_to_trace: Set[str],
 ) -> Callable[[], PdbInterface]:
 
@@ -72,7 +72,7 @@ class PdbInterface:
     def __init__(
         self,
         trace_no: TraceNo,
-        context: Context,
+        context: RunArg,
         prompt_no_counter: Callable[[], PromptNo],
         modules_to_trace: Set[str],
     ):

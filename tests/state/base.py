@@ -15,7 +15,7 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.process.run import QueueCommands, QueueDone, Context
+from nextline.process.run import QueueCommands, QueueDone, RunArg
 from nextline.types import TraceNo
 
 
@@ -43,7 +43,7 @@ class BaseTestState(ABC):
         mock_run_result_exception: Tuple[Any, Any],
     ):
         def run(
-            context: Context,
+            context: RunArg,
             q_commands: QueueCommands,
             q_done: QueueDone,
         ) -> None:
@@ -55,13 +55,13 @@ class BaseTestState(ABC):
         return wrap
 
     @pytest.fixture
-    def context(self) -> Context:
-        y = Context()
+    def context(self) -> RunArg:
+        y = RunArg()
         return y
 
     @pytest.fixture()
     def initialized(
-        self, context: Context
+        self, context: RunArg
     ) -> Generator[Initialized, None, None]:
         y = Initialized(context=context)
         yield y

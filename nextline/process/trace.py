@@ -12,7 +12,7 @@ from ..utils import current_task_or_thread
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
-    from .run import Context
+    from .run import RunArg
 
 
 MODULES_TO_SKIP = {
@@ -45,7 +45,7 @@ MODULES_TO_SKIP = {
 
 
 def Trace(
-    context: Context,
+    context: RunArg,
     modules_to_trace: Optional[Set[str]] = None,
 ) -> TraceFunc:
     """Create the main trace function
