@@ -15,7 +15,7 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.process.run import QCommands, QDone, Context
+from nextline.process.run import QueueCommands, QueueDone, Context
 
 
 class BaseTestState(ABC):
@@ -43,8 +43,8 @@ class BaseTestState(ABC):
     ):
         def run(
             context: Context,
-            q_commands: QCommands,
-            q_done: QDone,
+            q_commands: QueueCommands,
+            q_done: QueueDone,
         ) -> None:
             del context, q_commands
             q_done.put(mock_run_result_exception)

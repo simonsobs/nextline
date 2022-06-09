@@ -16,8 +16,8 @@ from .pdb.ci import PdbCommandInterface  # noqa F401
 from .callback import Callback
 from . import script
 
-QCommands: TypeAlias = "Queue[Tuple[TraceNo, str] | None]"
-QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
+QueueCommands: TypeAlias = "Queue[Tuple[TraceNo, str] | None]"
+QueueDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 PdbCiMap: TypeAlias = "MutableMapping[TraceNo, PdbCommandInterface]"
 
 
@@ -30,7 +30,7 @@ class Context(TypedDict, total=False):
     pdb_ci_map: PdbCiMap
 
 
-def run(context: Context, q_commands: QCommands, q_done: QDone):
+def run(context: Context, q_commands: QueueCommands, q_done: QueueDone):
     try:
         _run(context, q_commands, q_done)
     except BaseException:
@@ -38,7 +38,7 @@ def run(context: Context, q_commands: QCommands, q_done: QDone):
         raise
 
 
-def _run(context: Context, q_commands: QCommands, q_done: QDone):
+def _run(context: Context, q_commands: QueueCommands, q_done: QueueDone):
 
     run_no = context["run_no"]
     statement = context.get("statement")
@@ -80,7 +80,7 @@ def _compile(code, filename):
     return code
 
 
-def _command(q_commands: QCommands, pdb_ci_map: PdbCiMap):
+def _command(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
     while m := q_commands.get():
         trace_id, command = m
         pdb_ci = pdb_ci_map[trace_id]

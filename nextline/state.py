@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import asyncio
 from queue import Queue
-from typing import Optional, Any, Tuple
+from typing import Optional, Any
 
 from .utils import ExcThread, SubscribableDict, to_thread
-from .process.run import run, Context
+from .process.run import run, Context, QueueCommands, QueueDone
 from .registrar import Registrar
 from .types import RunNo, TraceNo
 from .count import RunNoCounter
@@ -240,8 +240,8 @@ class Running(State):
 
     def __init__(self, context: Context):
         self._context = context
-        self._q_commands: Queue[Tuple[TraceNo, str]] = Queue()
-        self._q_done: Queue[Tuple[Any, Any]] = Queue()
+        self._q_commands: QueueCommands = Queue()
+        self._q_done: QueueDone = Queue()
 
         self._thread = ExcThread(
             target=run,
