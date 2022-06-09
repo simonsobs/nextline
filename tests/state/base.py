@@ -16,6 +16,7 @@ from nextline.state import (
     StateMethodError,
 )
 from nextline.process.run import QueueCommands, QueueDone, Context
+from nextline.types import TraceNo
 
 
 class BaseTestState(ABC):
@@ -136,7 +137,7 @@ class BaseTestState(ABC):
             state.reset()
 
     def test_send_pdb_command(self, state: State):
-        trace_id = 1
+        trace_id = TraceNo(1)
         command = "next"
         with pytest.raises(StateMethodError):
             state.send_pdb_command(trace_id, command)

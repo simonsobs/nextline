@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from nextline.state import State, Running, Finished, StateObsoleteError
+from nextline.types import TraceNo
 
 from .base import BaseTestState
 
@@ -43,7 +44,7 @@ class TestRunning(BaseTestState):
         del registry, q_commands, q_done
 
     def test_send_pdb_command(self, state: State, mock_run):  # type: ignore
-        trace_id = 1
+        trace_id = TraceNo(1)
         command = "next"
         state.send_pdb_command(trace_id, command)
         _, q_commands, _ = mock_run.call_args.args
