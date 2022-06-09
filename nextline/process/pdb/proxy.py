@@ -1,5 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 from queue import Queue
 
@@ -58,23 +59,32 @@ class PdbInterface:
         modules_to_trace: Set[str],
     ):
         self._trace_no = trace_no
-        self._context = context
         self._ci_map = context["pdb_ci_map"]
-        self._prompt_no_counter = prompt_no_counter
         self.modules_to_trace = modules_to_trace
         self._opened = False
 
-        self._q_stdin: Queue[str] = Queue()
+        q_stdin: Queue[str] = Queue()
         self._q_stdout: Queue[str | None] = Queue()
 
         self._pdb = CustomizedPdb(
             pdbi=self,
-            stdin=StreamIn(self._q_stdin),
+            stdin=StreamIn(q_stdin),
             stdout=StreamOut(self._q_stdout),  # type: ignore
             readrc=False,
         )
 
         self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
+
+        self._cmd_interface = partial(
+            pdb_command_interface,
+            trace_no=self._trace_no,
+            prompt_no_counter=prompt_no_counter,
+            queue_stdin=q_stdin,
+            queue_stdout=self._q_stdout,
+            callback=context["callback"],
+            prompt=self._pdb.prompt,
+        )
+
         self._executor = ThreadPoolExecutor(max_workers=1)
 
     def trace(self, frame, event, arg) -> Optional[TraceFunc]:
@@ -116,14 +126,8 @@ class PdbInterface:
             # TODO: This should be done somewhere else
             self.modules_to_trace.add(module_name)
 
-        wait_prompt, send_command = pdb_command_interface(
-            trace_no=self._trace_no,
-            prompt_no_counter=self._prompt_no_counter,
-            queue_stdin=self._q_stdin,
-            queue_stdout=self._q_stdout,
+        wait_prompt, send_command = self._cmd_interface(
             trace_args=self._trace_args,
-            callback=self._context["callback"],
-            prompt=self._pdb.prompt,
         )
         self._fut = self._executor.submit(wait_prompt)
 
