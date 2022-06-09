@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
 from ..callback import Callback
-from ...types import PromptNo
+from ...types import PromptNo, TraceNo
 
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ class PdbCommandInterface:
         queue_in: Queue[str],
         queue_out: Queue[str | None],
         counter: Callable[[], PromptNo],
-        trace_no: int,
+        trace_no: TraceNo,
         callback: Callback,
         trace_args: Tuple[FrameType, str, Any],
     ):
@@ -54,7 +54,7 @@ class PdbCommandInterface:
         self._event = event
         self._file_name = pdb.canonic(frame.f_code.co_filename)
         self._line_no = frame.f_lineno
-        self._prompt_no = -1
+        self._prompt_no = PromptNo(-1)
 
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
