@@ -1,4 +1,3 @@
-##__________________________________________________________________||
 class StreamOut:
     def __init__(self, queue):
         self.queue = queue
@@ -16,6 +15,3 @@ class StreamIn:
 
     def readline(self):
         return self.queue.get()
-
-
-##__________________________________________________________________||
