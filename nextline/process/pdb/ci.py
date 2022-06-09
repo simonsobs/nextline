@@ -18,16 +18,6 @@ class PdbCommandInterface:
 
     An instance of this class is created for each execution of the pdb
     command loop, pdb._cmdloop().
-
-    Parameters
-    ----------
-    pdb : Pdb
-        The Pdb instance executing _cmdloop()
-    queue_in : queue
-        The queue connected to stdin in pdb
-    queue_out : queue
-        The queue connected to stdout in pdb
-
     """
 
     def __init__(
