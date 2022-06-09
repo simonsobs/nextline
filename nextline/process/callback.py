@@ -18,6 +18,7 @@ from .io import peek_stdout_by_task_and_thread
 
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
+PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
 
 class Callback:
@@ -32,6 +33,7 @@ class Callback:
             done=self.task_or_thread_end
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
+        self._prompt_info_map: PromptInfoMap = {}
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
@@ -101,21 +103,18 @@ class Callback:
             stdout=out,
             started_at=datetime.datetime.now(),
         )
+        self._prompt_info_map[(trace_no, prompt_no)] = prompt_info
         self._registrar.put_prompt_info(prompt_info)
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
-    def prompt_end(
-        self, trace_no, prompt_no, event, file_name, line_no, command
-    ) -> None:
-        prompt_info = PromptInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            prompt_no=prompt_no,
+    def prompt_end(self, trace_no, prompt_no, command) -> None:
+        prompt_info = self._prompt_info_map.pop((trace_no, prompt_no))
+        prompt_info = dataclasses.replace(
+            prompt_info,
             open=False,
-            event=event,
-            file_name=file_name,
-            line_no=line_no,
+            stdout=None,
             command=command,
+            started_at=None,
             ended_at=datetime.datetime.now(),
         )
         self._registrar.put_prompt_info(prompt_info)

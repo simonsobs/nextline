@@ -59,12 +59,7 @@ class PdbCommandInterface:
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
         self._callback.prompt_end(
-            trace_no=self._trace_no,
-            prompt_no=self._prompt_no,
-            event=self._event,
-            file_name=self._file_name,
-            line_no=self._line_no,
-            command=command,
+            trace_no=self._trace_no, prompt_no=self._prompt_no, command=command
         )
         self._command = command
         self._queue_in.put(command)
