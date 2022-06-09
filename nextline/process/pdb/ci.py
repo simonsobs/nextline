@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-
-from typing import TYPE_CHECKING, Callable, Tuple, Any
+from types import FrameType
+from queue import Queue
+from typing import Callable, Tuple, Any
 
 from ..callback import Callback
-from ...types import PromptNo, TraceNo
-
-
-if TYPE_CHECKING:
-    from types import FrameType
-    from queue import Queue
+from ...types import TraceNo, PromptNo
 
 
 def pdb_command_interface(
@@ -20,12 +16,7 @@ def pdb_command_interface(
     callback: Callback,
     trace_args: Tuple[FrameType, str, Any],
     prompt="(Pdb) ",
-):
-    """Relay pdb command prompts and commands
-
-    An instance of this class is created for each execution of the pdb
-    command loop, pdb._cmdloop().
-    """
+) -> Tuple[Callable[[], None], Callable[[str], None]]:
 
     prompt_no = PromptNo(-1)
 
