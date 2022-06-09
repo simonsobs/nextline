@@ -4,14 +4,14 @@ import threading
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
-from ..types import PromptNo
+from ...types import PromptNo
 
 
 if TYPE_CHECKING:
     from types import FrameType
     from pdb import Pdb
     from queue import Queue
-    from ..process.run import Context
+    from ..run import Context
 
 
 class PdbCommandInterface:

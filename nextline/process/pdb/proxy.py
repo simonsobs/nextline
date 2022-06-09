@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import queue
 
-from ..types import PromptNo
-from ..count import PromptNoCounter, TraceNoCounter
+from ...types import PromptNo
+from ...count import PromptNoCounter, TraceNoCounter
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
@@ -21,7 +21,7 @@ from typing import (
 from types import FrameType
 
 if TYPE_CHECKING:
-    from ..process.run import Context
+    from ..run import Context
     from sys import _TraceFunc as TraceFunc
 
 

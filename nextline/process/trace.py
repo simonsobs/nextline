@@ -7,7 +7,7 @@ import fnmatch
 from typing import TYPE_CHECKING, Any, Set, Optional, Callable
 from types import FrameType
 
-from ..pdb.proxy import PdbInterfaceFactory
+from .pdb.proxy import PdbInterfaceFactory
 from ..utils import current_task_or_thread
 
 if TYPE_CHECKING:

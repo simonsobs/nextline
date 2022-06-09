@@ -4,7 +4,7 @@ from unittest.mock import Mock
 from typing import Set
 
 from nextline.process.trace import Trace
-from nextline.pdb.proxy import PdbInterfaceFactory, PdbInterface
+from nextline.process.pdb.proxy import PdbInterfaceFactory, PdbInterface
 from nextline.utils import SubscribableDict
 
 from .funcs import TraceSummary
