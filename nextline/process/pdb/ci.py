@@ -18,7 +18,7 @@ def pdb_command_interface(
     prompt="(Pdb) ",
 ) -> Tuple[Callable[[], None], Callable[[str], None]]:
 
-    prompt_no = PromptNo(-1)
+    prompt_no: PromptNo
 
     def wait_prompt() -> None:
         """receive stdout from pdb
