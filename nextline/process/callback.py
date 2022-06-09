@@ -6,7 +6,7 @@ from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
 
-from typing import Tuple, Set
+from typing import TYPE_CHECKING, Tuple, Set
 from typing import Dict, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -15,10 +15,13 @@ from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
 from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 from .io import peek_stdout_by_task_and_thread
 
+if TYPE_CHECKING:
+    from .pdb.proxy import PdbInterface
 
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
+PdbIMap: TypeAlias = "Dict[TraceNo, PdbInterface]"
 
 
 class Callback:
@@ -34,12 +37,14 @@ class Callback:
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
         self._prompt_info_map: PromptInfoMap = {}
+        self._pdbi_map: PdbIMap = {}
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
         self.trace_end(trace_no)
 
-    def trace_start(self, trace_no: TraceNo):
+    def trace_start(self, trace_no: TraceNo, pdbi: PdbInterface):
+        self._pdbi_map[trace_no] = pdbi
 
         # TODO: Putting a prompt info for now because otherwise tests get stuck
         # sometimes for an unknown reason. Need to investigate
@@ -73,6 +78,7 @@ class Callback:
 
     def trace_end(self, trace_no: TraceNo):
         self._registrar.end_prompt_info_for_trace(trace_no)
+        self._pdbi_map.pop(trace_no).close()
 
         nosl = list(self._trace_nos)
         nosl.remove(trace_no)

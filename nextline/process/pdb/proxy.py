@@ -35,14 +35,13 @@ def PdbInterfaceFactory(
 
     def factory() -> PdbInterface:
         trace_no = trace_no_counter()
-        context["callback"].trace_start(trace_no)
-
         pdbi = PdbInterface(
             trace_no=trace_no,
             context=context,
             prompt_no_counter=prompt_no_counter,
             modules_to_trace=modules_to_trace,
         )
+        context["callback"].trace_start(trace_no, pdbi)
         return pdbi
 
     return factory
@@ -152,3 +151,6 @@ class PdbInterface:
 
         del self._ci_map[self._trace_no]
         self._pdb_ci.end()
+
+    def close(self):
+        pass
