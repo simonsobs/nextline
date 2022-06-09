@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from types import FrameType
     from pdb import Pdb
     from queue import Queue
-    from ..run import RunArg
+    from ..run import TraceArg
 
 
 class PdbCommandInterface:
@@ -38,7 +38,7 @@ class PdbCommandInterface:
         queue_out: Queue,
         counter: Callable[[], PromptNo],
         trace_no: int,
-        context: RunArg,
+        context: TraceArg,
         trace_args: Tuple[FrameType, str, Any],
     ):
         self._pdb = pdb
