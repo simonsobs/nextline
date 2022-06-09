@@ -3,8 +3,8 @@ from __future__ import annotations
 from queue import Queue  # noqa F401
 import concurrent.futures
 
-from typing import Callable, TypedDict, MutableMapping  
-from typing import Any, Tuple # noqa F401
+from typing import Callable, TypedDict, MutableMapping
+from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
 from ..registrar import Registrar
