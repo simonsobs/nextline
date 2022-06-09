@@ -20,7 +20,7 @@ from ..pdb.ci import PdbCommandInterface  # noqa F401
 from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 from ..io import peek_stdout_by_task_and_thread
 
-from .. import script
+from . import script
 
 QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
