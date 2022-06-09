@@ -14,7 +14,6 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     Optional,
-    Union,
     Any,
     Set,
     Tuple,
@@ -106,7 +105,7 @@ class PdbInterface:
             self._trace_args = None
 
         def create_local_trace() -> TraceFunc:
-            pdb_trace: Union[TraceFunc, None] = self._pdb.trace_dispatch
+            pdb_trace: TraceFunc | None = self._pdb.trace_dispatch
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal pdb_trace
