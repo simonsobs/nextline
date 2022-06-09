@@ -65,11 +65,11 @@ class PdbCommandInterface:
 def _read_until_prompt(queue: Queue[str | None], prompt: str) -> str | None:
     """read the queue up to the prompt"""
     out = ""
-    while True:
-        m = queue.get()
-        if m is None:  # end
-            return None
+    while (m := queue.get()) is not None:
         out += m
         if prompt == m:
             break
+    else:
+        return None
+
     return out
