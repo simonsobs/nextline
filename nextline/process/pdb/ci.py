@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
@@ -36,6 +36,7 @@ class PdbCommandInterface:
         pdb: Pdb,
         queue_in: Queue[str],
         queue_out: Queue[str],
+        executor: Executor,
         counter: Callable[[], PromptNo],
         trace_no: TraceNo,
         callback: Callback,
@@ -44,6 +45,7 @@ class PdbCommandInterface:
         self._pdb = pdb
         self._queue_in = queue_in
         self._queue_out: Queue[str | None] = queue_out  # type: ignore
+        self._executor = executor
         self._counter = counter
         self._trace_no = trace_no
         self._callback = callback
@@ -66,7 +68,6 @@ class PdbCommandInterface:
 
     def start(self) -> None:
         """start interfacing the pdb"""
-        self._executor = ThreadPoolExecutor(max_workers=1)
         self._fut = self._executor.submit(self._receive_pdb_stdout)
 
     def end(self) -> None:
@@ -74,7 +75,6 @@ class PdbCommandInterface:
         self._ended = True
         self._queue_out.put(None)  # end the thread
         self._fut.result()
-        self._executor.shutdown()
 
     def _receive_pdb_stdout(self) -> None:
         """receive stdout from pdb

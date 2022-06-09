@@ -1,4 +1,5 @@
 from __future__ import annotations
+from concurrent.futures import ThreadPoolExecutor
 
 from queue import Queue
 
@@ -93,6 +94,7 @@ class PdbInterface:
         )
 
         self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
+        self._executor = ThreadPoolExecutor(max_workers=1)
 
     def trace(self, frame, event, arg) -> Optional[TraceFunc]:
         """Call Pdb while storing trace args"""
@@ -137,6 +139,7 @@ class PdbInterface:
             pdb=self._pdb,
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
+            executor=self._executor,
             counter=self._prompt_no_counter,
             trace_no=self._trace_no,
             callback=self._context["callback"],
@@ -153,4 +156,4 @@ class PdbInterface:
         self._pdb_ci.end()
 
     def close(self):
-        pass
+        self._executor.shutdown()
