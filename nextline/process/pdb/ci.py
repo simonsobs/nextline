@@ -4,6 +4,7 @@ import threading
 
 from typing import TYPE_CHECKING, Callable, Tuple, Any
 
+from ..callback import Callback
 from ...types import PromptNo
 
 
@@ -11,7 +12,6 @@ if TYPE_CHECKING:
     from types import FrameType
     from pdb import Pdb
     from queue import Queue
-    from ..run import TraceArg
 
 
 class PdbCommandInterface:
@@ -38,7 +38,7 @@ class PdbCommandInterface:
         queue_out: Queue[str | None],
         counter: Callable[[], PromptNo],
         trace_no: int,
-        context: TraceArg,
+        callback: Callback,
         trace_args: Tuple[FrameType, str, Any],
     ):
         self._pdb = pdb
@@ -46,7 +46,7 @@ class PdbCommandInterface:
         self._queue_out = queue_out
         self._counter = counter
         self._trace_no = trace_no
-        self._context = context
+        self._callback = callback
         self._ended = False
         self._nprompts = 0
 
@@ -58,7 +58,7 @@ class PdbCommandInterface:
 
     def send_pdb_command(self, command: str) -> None:
         """send a command to pdb"""
-        self._context["callback"].prompt_end(
+        self._callback.prompt_end(
             trace_no=self._trace_no,
             prompt_no=self._prompt_no,
             event=self._event,
@@ -91,7 +91,7 @@ class PdbCommandInterface:
             self._nprompts += 1
             self._prompt_no = self._counter()
             self._stdout = out
-            self._context["callback"].prompt_start(
+            self._callback.prompt_start(
                 trace_no=self._trace_no,
                 prompt_no=self._prompt_no,
                 event=self._event,

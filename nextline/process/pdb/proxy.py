@@ -140,7 +140,7 @@ class PdbInterface:
             queue_out=self._q_stdout,
             counter=self._prompt_no_counter,
             trace_no=self._trace_no,
-            context=self._context,
+            callback=self._context["callback"],
             trace_args=self._trace_args,
         )
         self._pdb_ci.start()
