@@ -5,7 +5,7 @@ import traceback
 import pytest
 from unittest.mock import Mock
 
-from nextline.call import call_with_trace
+from nextline.process.call import call_with_trace
 
 
 @pytest.fixture()

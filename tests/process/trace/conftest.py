@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 from typing import TYPE_CHECKING, Callable, Any, Set
 
-from nextline.call import call_with_trace
+from nextline.process.call import call_with_trace
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc

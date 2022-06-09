@@ -14,7 +14,7 @@ from typing_extensions import TypeAlias
 
 from ..registrar import Registrar
 from .trace import Trace
-from ..call import call_with_trace
+from .call import call_with_trace
 from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
 from ..pdb.ci import PdbCommandInterface  # noqa F401
 from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
