@@ -145,7 +145,7 @@ class PdbInterface:
         )
         self._pdb_ci.start()
 
-        self._ci_map[self._trace_no] = self._pdb_ci
+        self._ci_map[self._trace_no] = self._pdb_ci.send_pdb_command
 
     def exited_cmdloop(self) -> None:
         """To be called by the custom Pdb after _cmdloop()"""

@@ -3,22 +3,22 @@ from __future__ import annotations
 from queue import Queue  # noqa F401
 import concurrent.futures
 
-from typing import TypedDict
-from typing import Any, Tuple, MutableMapping  # noqa F401
+from typing import Callable, TypedDict, MutableMapping  
+from typing import Any, Tuple # noqa F401
 from typing_extensions import TypeAlias
 
 from ..registrar import Registrar
-from ..types import RunNo
-from ..types import TraceNo  # noqa F401
+from ..types import RunNo, TraceNo
 from .trace import Trace
 from .call import call_with_trace
-from .pdb.ci import PdbCommandInterface  # noqa F401
 from .callback import Callback
 from . import script
 
-QueueCommands: TypeAlias = "Queue[Tuple[TraceNo, str] | None]"
 QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
-PdbCiMap: TypeAlias = "MutableMapping[TraceNo, PdbCommandInterface]"
+
+PdbCommand: TypeAlias = str
+QueueCommands: TypeAlias = "Queue[Tuple[TraceNo, PdbCommand] | None]"
+PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand], Any]]
 
 
 class RunArg(TypedDict, total=False):
@@ -61,7 +61,7 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
     with Callback(run_no=run_no, registrar=registrar) as callback:
         run_arg["callback"] = callback
-        trace_arg = TraceArg(callback=callback, pdb_ci_map=pdb_ci_map)   
+        trace_arg = TraceArg(callback=callback, pdb_ci_map=pdb_ci_map)
 
         trace = Trace(context=trace_arg)
 
@@ -90,6 +90,6 @@ def _command(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
     while m := q_commands.get():
         trace_id, command = m
         pdb_ci = pdb_ci_map[trace_id]
-        pdb_ci.send_pdb_command(command)
+        pdb_ci(command)
         q_commands.task_done()
     q_commands.task_done()
