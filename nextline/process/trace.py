@@ -53,11 +53,6 @@ def Trace(
     if modules_to_trace is None:
         modules_to_trace = set()
 
-    modules_to_trace = set(modules_to_trace)
-    # Make a copy so that the original won't be modified.
-    # modules_to_trace will be shared and modified by
-    # multiple objects.
-
     pdbi_factory = PdbInterfaceFactory(
         context=context,
         modules_to_trace=modules_to_trace,
