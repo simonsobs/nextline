@@ -49,11 +49,11 @@ def Trace(context: Context) -> TraceFunc:
 
     modules_to_trace = context["modules_to_trace"]
 
-    pdbi_factory = PdbInterfaceTraceFuncFactory(context=context)
+    trace_func_factory = PdbInterfaceTraceFuncFactory(context=context)
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
-        trace_call_pdb = TraceFromFactory(factory=pdbi_factory)
+        trace_call_pdb = TraceFromFactory(factory=trace_func_factory)
         return TraceSelectFirstModule(
             trace=trace_call_pdb,
             modules_to_trace=modules_to_trace,
