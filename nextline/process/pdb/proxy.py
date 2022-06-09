@@ -48,25 +48,7 @@ def PdbInterfaceFactory(
 
 
 class PdbInterface:
-    """Instantiate Pdb and register its command loops
-
-    TODO: Update parameters
-
-    Parameters
-    ----------
-    trace_id : object
-        The Id to distinguish each instance of Pdb
-    modules_to_trace: set
-        The set of modules to trace. This object is shared by multiple
-        objects. Modules in which Pdb commands are prompted will be
-        added.
-    registry: object
-        A registry
-    ci_map: object
-        A registry
-    prompting_counter : callable
-        Used to count the Pdb command loops
-    """
+    """Instantiate Pdb and register its command loops"""
 
     def __init__(
         self,
