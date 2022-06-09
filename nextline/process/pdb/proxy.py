@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import queue
+from queue import Queue
 
 from ...types import PromptNo, TraceNo
 from ...count import PromptNoCounter, TraceNoCounter
@@ -82,8 +82,8 @@ class PdbInterface:
         self.modules_to_trace = modules_to_trace
         self._opened = False
 
-        self._q_stdin: queue.Queue = queue.Queue()
-        self._q_stdout: queue.Queue = queue.Queue()
+        self._q_stdin: Queue[str] = Queue()
+        self._q_stdout: Queue[str | None] = Queue()
 
         self._pdb = CustomizedPdb(
             pdbi=self,
