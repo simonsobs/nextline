@@ -17,7 +17,7 @@ from .callback import Callback
 from . import script
 
 QueueCommands: TypeAlias = "Queue[Tuple[TraceNo, str] | None]"
-QueueDone: TypeAlias = "Queue[Tuple[Any, Any]]"
+QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 PdbCiMap: TypeAlias = "MutableMapping[TraceNo, PdbCommandInterface]"
 
 
