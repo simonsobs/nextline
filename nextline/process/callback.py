@@ -27,9 +27,12 @@ PdbIMap: TypeAlias = "Dict[TraceNo, PdbInterface]"
 
 
 class Callback:
-    def __init__(self, run_no: RunNo, registrar: Registrar):
+    def __init__(
+        self, run_no: RunNo, registrar: Registrar, modules_to_trace: Set[str]
+    ):
         self._run_no = run_no
         self._registrar = registrar
+        self._modules_to_trace = modules_to_trace
         self._trace_nos: Tuple[TraceNo, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
@@ -108,6 +111,8 @@ class Callback:
         frame, event, _ = trace_args
         file_name = self._to_canonic(frame.f_code.co_filename)
         line_no = frame.f_lineno
+        if module_name := frame.f_globals.get("__name__"):
+            self._modules_to_trace.add(module_name)
         prompt_info = PromptInfo(
             run_no=self._run_no,
             trace_no=trace_no,

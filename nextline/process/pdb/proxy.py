@@ -54,7 +54,6 @@ class PdbInterface:
     ):
         self._trace_no = trace_no
         self._ci_map = context["pdb_ci_map"]
-        self.modules_to_trace = context["modules_to_trace"]
         self._opened = False
 
         q_stdin: Queue[str] = Queue()
@@ -113,12 +112,6 @@ class PdbInterface:
 
         if not self._trace_args:
             raise RuntimeError("calling_trace() must be called first")
-
-        frame, *_ = self._trace_args
-
-        if module_name := frame.f_globals.get("__name__"):
-            # TODO: This should be done somewhere else
-            self.modules_to_trace.add(module_name)
 
         wait_prompt, send_command = self._cmd_interface(
             trace_args=self._trace_args,

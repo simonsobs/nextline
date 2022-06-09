@@ -58,7 +58,9 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
 
-    with Callback(run_no=run_no, registrar=registrar) as callback:
+    with Callback(
+        run_no=run_no, registrar=registrar, modules_to_trace=modules_to_trace
+    ) as callback:
 
         context = Context(
             callback=callback,
