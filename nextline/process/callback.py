@@ -7,7 +7,7 @@ import datetime
 import dataclasses
 
 from typing import Tuple, Set
-from typing import MutableMapping  # noqa F401
+from typing import Dict, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
 from ..registrar import Registrar
@@ -17,7 +17,7 @@ from .io import peek_stdout_by_task_and_thread
 
 
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
-TraceInfoMap: TypeAlias = "MutableMapping[TraceNo, TraceInfo]"
+TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 
 
 class Callback:
