@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from ..run import Context
 
 
-def PdbInterfaceTrace(context: Context) -> Callable[[], TraceFunc]:
+def PdbInterfaceTraceFuncFactory(context: Context) -> Callable[[], TraceFunc]:
 
     trace_no_counter = TraceNoCounter(1)
     prompt_no_counter = PromptNoCounter(1)

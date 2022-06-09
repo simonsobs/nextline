@@ -7,7 +7,7 @@ import fnmatch
 from typing import TYPE_CHECKING, Any, Set, Optional, Callable
 from types import FrameType
 
-from .pdb.proxy import PdbInterfaceTrace
+from .pdb.proxy import PdbInterfaceTraceFuncFactory
 from ..utils import current_task_or_thread
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ def Trace(context: Context) -> TraceFunc:
 
     modules_to_trace = context["modules_to_trace"]
 
-    pdbi_factory = PdbInterfaceTrace(context=context)
+    pdbi_factory = PdbInterfaceTraceFuncFactory(context=context)
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
