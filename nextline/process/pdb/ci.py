@@ -34,8 +34,8 @@ class PdbCommandInterface:
     def __init__(
         self,
         pdb: Pdb,
-        queue_in: Queue,
-        queue_out: Queue,
+        queue_in: Queue[str],
+        queue_out: Queue[str | None],
         counter: Callable[[], PromptNo],
         trace_no: int,
         context: TraceArg,
@@ -80,7 +80,7 @@ class PdbCommandInterface:
         self._queue_out.put(None)  # end the thread
         self._thread.join()
 
-    def _receive_pdb_stdout(self):
+    def _receive_pdb_stdout(self) -> None:
         """receive stdout from pdb
 
         This method runs in its own thread during pdb._cmdloop()
@@ -100,7 +100,9 @@ class PdbCommandInterface:
                 out=out,
             )
 
-    def _read_until_prompt(self, queue, prompt):
+    def _read_until_prompt(
+        self, queue: Queue[str | None], prompt: str
+    ) -> str | None:
         """read the queue up to the prompt"""
         out = ""
         while True:
