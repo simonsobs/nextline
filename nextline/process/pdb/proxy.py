@@ -83,7 +83,7 @@ class PdbInterface:
         self._opened = False
 
         self._q_stdin: Queue[str] = Queue()
-        self._q_stdout: Queue[str | None] = Queue()
+        self._q_stdout: Queue[str] = Queue()
 
         self._pdb = CustomizedPdb(
             pdbi=self,

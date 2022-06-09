@@ -35,7 +35,7 @@ class PdbCommandInterface:
         self,
         pdb: Pdb,
         queue_in: Queue[str],
-        queue_out: Queue[str | None],
+        queue_out: Queue[str],
         counter: Callable[[], PromptNo],
         trace_no: TraceNo,
         callback: Callback,
@@ -43,7 +43,7 @@ class PdbCommandInterface:
     ):
         self._pdb = pdb
         self._queue_in = queue_in
-        self._queue_out = queue_out
+        self._queue_out: Queue[str | None] = queue_out  # type: ignore
         self._counter = counter
         self._trace_no = trace_no
         self._callback = callback

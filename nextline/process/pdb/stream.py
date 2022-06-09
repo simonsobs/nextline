@@ -1,16 +1,22 @@
-class StreamOut:
-    def __init__(self, queue):
+from __future__ import annotations
+from io import TextIOWrapper
+from queue import Queue
+
+
+class StreamOut(TextIOWrapper):
+    def __init__(self, queue: Queue[str]):
         self.queue = queue
 
-    def write(self, s):
+    def write(self, s: str, /) -> int:
         self.queue.put(s)
+        return len(s)
 
     def flush(self):
         pass
 
 
-class StreamIn:
-    def __init__(self, queue):
+class StreamIn(TextIOWrapper):
+    def __init__(self, queue: Queue[str]):
         self.queue = queue
 
     def readline(self):
