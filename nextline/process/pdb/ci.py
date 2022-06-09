@@ -9,11 +9,11 @@ from ...types import TraceNo, PromptNo
 
 
 def pdb_command_interface(
+    trace_args: Tuple[FrameType, str, Any],
     trace_no: TraceNo,
     prompt_no_counter: Callable[[], PromptNo],
     queue_stdin: Queue[str],
     queue_stdout: Queue[str | None],
-    trace_args: Tuple[FrameType, str, Any],
     callback: Callback,
     prompt="(Pdb) ",
 ) -> Tuple[Callable[[], None], Callable[[str], None]]:
