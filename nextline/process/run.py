@@ -9,6 +9,7 @@ from typing_extensions import TypeAlias
 
 from ..registrar import Registrar
 from ..types import RunNo
+from ..types import TraceNo  # noqa F401
 from .trace import Trace
 from .call import call_with_trace
 from .pdb.ci import PdbCommandInterface  # noqa F401
@@ -17,7 +18,7 @@ from . import script
 
 QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
-PdbCiMap: TypeAlias = "MutableMapping[int, PdbCommandInterface]"
+PdbCiMap: TypeAlias = "MutableMapping[TraceNo, PdbCommandInterface]"
 
 
 class Context(TypedDict, total=False):

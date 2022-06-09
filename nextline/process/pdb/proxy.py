@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import queue
 
-from ...types import PromptNo
+from ...types import PromptNo, TraceNo
 from ...count import PromptNoCounter, TraceNoCounter
 from .ci import PdbCommandInterface
 from .custom import CustomizedPdb
@@ -71,7 +71,7 @@ class PdbInterface:
 
     def __init__(
         self,
-        trace_no: int,
+        trace_no: TraceNo,
         context: Context,
         prompt_no_counter: Callable[[], PromptNo],
         modules_to_trace: Set[str],
