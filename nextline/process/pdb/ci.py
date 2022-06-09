@@ -51,7 +51,7 @@ class PdbCommandInterface:
 
         To be run in a thread during pdb._cmdloop()
         """
-        while out := self._read_until_prompt(self._queue_out, self._prompt):
+        while out := _read_until_prompt(self._queue_out, self._prompt):
             self._prompt_no = self._counter()
             self._stdout = out
             self._callback.prompt_start(
@@ -61,16 +61,15 @@ class PdbCommandInterface:
                 out=out,
             )
 
-    def _read_until_prompt(
-        self, queue: Queue[str | None], prompt: str
-    ) -> str | None:
-        """read the queue up to the prompt"""
-        out = ""
-        while True:
-            m = queue.get()
-            if m is None:  # end
-                return None
-            out += m
-            if prompt == m:
-                break
-        return out
+
+def _read_until_prompt(queue: Queue[str | None], prompt: str) -> str | None:
+    """read the queue up to the prompt"""
+    out = ""
+    while True:
+        m = queue.get()
+        if m is None:  # end
+            return None
+        out += m
+        if prompt == m:
+            break
+    return out
