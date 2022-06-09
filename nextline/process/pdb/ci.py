@@ -9,12 +9,12 @@ from ...types import TraceNo, PromptNo
 
 
 def pdb_command_interface(
-    queue_in: Queue[str],
-    queue_out: Queue[str | None],
-    counter: Callable[[], PromptNo],
     trace_no: TraceNo,
-    callback: Callback,
+    prompt_no_counter: Callable[[], PromptNo],
+    queue_stdin: Queue[str],
+    queue_stdout: Queue[str | None],
     trace_args: Tuple[FrameType, str, Any],
+    callback: Callback,
     prompt="(Pdb) ",
 ) -> Tuple[Callable[[], None], Callable[[str], None]]:
 
@@ -26,8 +26,8 @@ def pdb_command_interface(
         To be run in a thread during pdb._cmdloop()
         """
         nonlocal prompt_no
-        while out := _read_until_prompt(queue_out, prompt):
-            prompt_no = counter()
+        while out := _read_until_prompt(queue_stdout, prompt):
+            prompt_no = prompt_no_counter()
             callback.prompt_start(
                 trace_no=trace_no,
                 prompt_no=prompt_no,
@@ -40,7 +40,7 @@ def pdb_command_interface(
         callback.prompt_end(
             trace_no=trace_no, prompt_no=prompt_no, command=command
         )
-        queue_in.put(command)
+        queue_stdin.put(command)
 
     return wait_prompt, send_command
 

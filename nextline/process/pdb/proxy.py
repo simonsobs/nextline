@@ -136,12 +136,12 @@ class PdbInterface:
             self.modules_to_trace.add(module_name)
 
         wait_prompt, send_command = pdb_command_interface(
-            queue_in=self._q_stdin,
-            queue_out=self._q_stdout,
-            counter=self._prompt_no_counter,
             trace_no=self._trace_no,
-            callback=self._context["callback"],
+            prompt_no_counter=self._prompt_no_counter,
+            queue_stdin=self._q_stdin,
+            queue_stdout=self._q_stdout,
             trace_args=self._trace_args,
+            callback=self._context["callback"],
             prompt=self._pdb.prompt,
         )
         self._fut = self._executor.submit(wait_prompt)
