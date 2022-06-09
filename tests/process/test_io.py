@@ -9,7 +9,7 @@ from threading import Thread
 from typing import Iterator, Optional, TextIO
 
 
-from nextline.io import peek_stdout_by_task_and_thread
+from nextline.process.io import peek_stdout_by_task_and_thread
 
 
 from unittest.mock import Mock

@@ -18,7 +18,7 @@ from .call import call_with_trace
 from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
 from ..pdb.ci import PdbCommandInterface  # noqa F401
 from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
-from ..io import peek_stdout_by_task_and_thread
+from .io import peek_stdout_by_task_and_thread
 
 from . import script
 
