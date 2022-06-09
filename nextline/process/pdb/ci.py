@@ -32,7 +32,6 @@ class PdbCommandInterface:
 
     def __init__(
         self,
-        pdb_prompt: str,
         queue_in: Queue[str],
         queue_out: Queue[str],
         executor: Executor,
@@ -40,16 +39,17 @@ class PdbCommandInterface:
         trace_no: TraceNo,
         callback: Callback,
         trace_args: Tuple[FrameType, str, Any],
+        pdb_prompt="(Pdb) ",
     ):
-        self._pdb_prompt = pdb_prompt
         self._queue_in = queue_in
         self._queue_out: Queue[str | None] = queue_out  # type: ignore
         self._executor = executor
         self._counter = counter
         self._trace_no = trace_no
         self._callback = callback
-
         self._trace_args = trace_args
+        self._pdb_prompt = pdb_prompt
+
         self._prompt_no = PromptNo(-1)
 
     def send_pdb_command(self, command: str) -> None:
