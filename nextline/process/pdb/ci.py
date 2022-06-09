@@ -47,7 +47,6 @@ class PdbCommandInterface:
         self._callback.prompt_end(
             trace_no=self._trace_no, prompt_no=self._prompt_no, command=command
         )
-        self._command = command
         self._queue_in.put(command)
 
     def start(self) -> None:
