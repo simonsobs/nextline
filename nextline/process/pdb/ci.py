@@ -10,7 +10,6 @@ from ...types import PromptNo, TraceNo
 
 if TYPE_CHECKING:
     from types import FrameType
-    from pdb import Pdb
     from queue import Queue
 
 
@@ -33,7 +32,7 @@ class PdbCommandInterface:
 
     def __init__(
         self,
-        pdb: Pdb,
+        pdb_prompt: str,
         queue_in: Queue[str],
         queue_out: Queue[str],
         executor: Executor,
@@ -42,7 +41,7 @@ class PdbCommandInterface:
         callback: Callback,
         trace_args: Tuple[FrameType, str, Any],
     ):
-        self._pdb = pdb
+        self._pdb_prompt = pdb_prompt
         self._queue_in = queue_in
         self._queue_out: Queue[str | None] = queue_out  # type: ignore
         self._executor = executor
@@ -76,7 +75,7 @@ class PdbCommandInterface:
         This method runs in its own thread during pdb._cmdloop()
         """
         while out := self._read_until_prompt(
-            self._queue_out, self._pdb.prompt
+            self._queue_out, self._pdb_prompt
         ):
             self._prompt_no = self._counter()
             self._stdout = out

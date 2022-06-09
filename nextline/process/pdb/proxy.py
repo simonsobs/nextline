@@ -136,7 +136,7 @@ class PdbInterface:
             self.modules_to_trace.add(module_name)
 
         self._pdb_ci = PdbCommandInterface(
-            pdb=self._pdb,
+            pdb_prompt=self._pdb.prompt,
             queue_in=self._q_stdin,
             queue_out=self._q_stdout,
             executor=self._executor,
