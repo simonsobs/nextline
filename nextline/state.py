@@ -7,7 +7,7 @@ from typing import Optional, Any, Tuple
 from .utils import ExcThread, SubscribableDict, to_thread
 from .process.run import run, Context
 from .registrar import Registrar
-from .types import RunNo
+from .types import RunNo, TraceNo
 from .count import RunNoCounter
 
 
@@ -183,7 +183,7 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, trace_id: int, command: str) -> None:
+    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
         del trace_id, command
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -240,7 +240,7 @@ class Running(State):
 
     def __init__(self, context: Context):
         self._context = context
-        self._q_commands: Queue[Tuple[int, str]] = Queue()
+        self._q_commands: Queue[Tuple[TraceNo, str]] = Queue()
         self._q_done: Queue[Tuple[Any, Any]] = Queue()
 
         self._thread = ExcThread(
@@ -258,7 +258,7 @@ class Running(State):
         self.obsolete()
         return finished
 
-    def send_pdb_command(self, trace_id: int, command: str) -> None:
+    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
         self._q_commands.put((trace_id, command))
 
 

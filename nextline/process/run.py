@@ -16,7 +16,7 @@ from .pdb.ci import PdbCommandInterface  # noqa F401
 from .callback import Callback
 from . import script
 
-QCommands: TypeAlias = "Queue[Tuple[int, str] | None]"
+QCommands: TypeAlias = "Queue[Tuple[TraceNo, str] | None]"
 QDone: TypeAlias = "Queue[Tuple[Any, Any]]"
 PdbCiMap: TypeAlias = "MutableMapping[TraceNo, PdbCommandInterface]"
 
