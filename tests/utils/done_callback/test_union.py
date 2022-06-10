@@ -2,7 +2,7 @@ import time
 import random
 
 from threading import Thread
-from asyncio import create_task
+import asyncio
 
 import pytest
 
@@ -41,6 +41,7 @@ def test_thread(done: Done):
     obj = ThreadTaskDoneCallback(done=done)
     t = Thread(target=target, args=(obj,))
     t.start()
+    time.sleep(0.005)
     obj.close()
     assert {t} == done.args
     t.join()
@@ -49,7 +50,42 @@ def test_thread(done: Done):
 @pytest.mark.asyncio
 async def test_task(done: Done):
     obj = ThreadTaskDoneCallback(done=done)
-    t = create_task(atarget(obj))
+    t = asyncio.create_task(atarget(obj))
     await t
     await obj.aclose()
     assert {t} == done.args
+
+
+def test_with_thread(done: Done):
+    with ThreadTaskDoneCallback(done=done) as obj:
+        t = Thread(target=target, args=(obj,))
+        t.start()
+        time.sleep(0.005)
+    assert {t} == done.args
+    t.join()
+
+
+@pytest.mark.asyncio
+async def test_with_task(done: Done):
+    async with ThreadTaskDoneCallback(done=done) as obj:
+        t = asyncio.create_task(atarget(obj))
+        await t
+    assert {t} == done.args
+
+
+def test_done_none_thread():
+    with ThreadTaskDoneCallback() as obj:
+        t = Thread(target=target, args=(obj,))
+        t.start()
+        time.sleep(0.005)
+    assert not t.is_alive()
+    t.join()
+
+
+@pytest.mark.asyncio
+async def test_done_none_task():
+    async with ThreadTaskDoneCallback() as obj:
+        t = asyncio.create_task(atarget(obj))
+        await asyncio.sleep(0)  # let the task be registered
+    assert t.done()  # finished after exited
+    await t

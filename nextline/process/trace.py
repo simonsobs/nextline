@@ -1,19 +1,19 @@
 from __future__ import annotations
 
+from asyncio import Task
+from threading import Thread
 from weakref import WeakKeyDictionary
-
 import fnmatch
 
-from typing import TYPE_CHECKING, Any, Set, Dict, Optional, Union, Callable
+from typing import TYPE_CHECKING, Set, Optional, Callable
 from types import FrameType
 
-from .pdb.proxy import PdbInterfaceFactory
-from .utils import current_task_or_thread
+from .pdb.proxy import PdbInterfaceTraceFuncFactory
+from ..utils import current_task_or_thread
 
 if TYPE_CHECKING:
-    from .types import TraceFunc
-    from .utils import SubscribableDict
-    from .pdb.ci import PdbCommandInterface
+    from sys import _TraceFunc as TraceFunc
+    from .run import Context
 
 
 MODULES_TO_SKIP = {
@@ -45,42 +45,16 @@ MODULES_TO_SKIP = {
 }
 
 
-def Trace(
-    registry: SubscribableDict,
-    pdb_ci_map: Dict[int, PdbCommandInterface],
-    modules_to_trace: Optional[Set[str]] = None,
-) -> TraceFunc:
-    """Create the main trace function
+def Trace(context: Context) -> TraceFunc:
+    """Create the main trace function"""
 
+    modules_to_trace = context["modules_to_trace"]
 
-    Parameters
-    ----------
-    registry : object
-        An instance of Registry
-    modules_to_trace : set, optional
-        The names of modules to trace. The module in which the trace
-        is first time called will be always traced even if not in the
-        set.
-
-    """
-
-    if modules_to_trace is None:
-        modules_to_trace = set()
-
-    modules_to_trace = set(modules_to_trace)
-    # Make a copy so that the original won't be modified.
-    # modules_to_trace will be shared and modified by
-    # multiple objects.
-
-    pdbi_factory = PdbInterfaceFactory(
-        registry=registry,
-        pdb_ci_map=pdb_ci_map,
-        modules_to_trace=modules_to_trace,
-    )
+    trace_func_factory = PdbInterfaceTraceFuncFactory(context=context)
 
     def create_trace_for_single_thread_or_task():
         """To be called in the thread or task to be traced"""
-        trace_call_pdb = TraceFromFactory(factory=lambda: pdbi_factory().trace)
+        trace_call_pdb = TraceFromFactory(factory=trace_func_factory)
         return TraceSelectFirstModule(
             trace=trace_call_pdb,
             modules_to_trace=modules_to_trace,
@@ -129,7 +103,7 @@ def TraceAddFirstModule(
             return trace(frame, event, arg)
 
         def create_local_trace() -> TraceFunc:
-            next_trace: Union[TraceFunc, None] = trace
+            next_trace: TraceFunc | None = trace
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal first, next_trace
@@ -154,7 +128,7 @@ def TraceAddFirstModule(
 def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
     """Create a trace that creates a new trace for each thread or asyncio task"""
 
-    map: WeakKeyDictionary[Any, TraceFunc] = WeakKeyDictionary()
+    map: WeakKeyDictionary[Task | Thread, TraceFunc] = WeakKeyDictionary()
 
     def ret(frame, event, arg) -> Optional[TraceFunc]:
         key = current_task_or_thread()
@@ -193,7 +167,7 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     It is used to avoid creating instances of Pdb in threads or async tasks
     that are not traced.
     """
-    trace: Union[TraceFunc, None] = None
+    trace: TraceFunc | None = None
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
         nonlocal trace
@@ -203,7 +177,7 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     return global_trace
 
 
-def _is_matched_to_any(word: Union[str, None], patterns: Set[str]) -> bool:
+def _is_matched_to_any(word: str | None, patterns: Set[str]) -> bool:
     """Test if the word matches any of the patterns
 
     This function is based on Bdb.is_skipped_module():

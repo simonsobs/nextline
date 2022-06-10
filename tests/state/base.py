@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import itertools
 from typing import Any, AsyncGenerator, Generator, Tuple
 
 import pytest
@@ -16,8 +15,8 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.utils import SubscribableDict, ThreadTaskIdComposer
-from nextline.run import QCommands, QDone
+from nextline.process.run import QueueCommands, QueueDone, RunArg
+from nextline.types import TraceNo
 
 
 class BaseTestState(ABC):
@@ -44,30 +43,27 @@ class BaseTestState(ABC):
         mock_run_result_exception: Tuple[Any, Any],
     ):
         def run(
-            registry: SubscribableDict,
-            q_commands: QCommands,
-            q_done: QDone,
+            run_arg: RunArg,
+            q_commands: QueueCommands,
+            q_done: QueueDone,
         ) -> None:
-            del registry, q_commands
+            del run_arg, q_commands
             q_done.put(mock_run_result_exception)
 
         wrap = Mock(wraps=run)
         monkeypatch.setattr("nextline.state.run", wrap)
         return wrap
 
-    @pytest.fixture()
-    def registry(self):
-        y = SubscribableDict()
-        y["run_no_count"] = itertools.count().__next__
-        y["trace_id_factory"] = ThreadTaskIdComposer()
-        yield y
-        y.close()
+    @pytest.fixture
+    def context(self) -> RunArg:
+        y = RunArg()
+        return y
 
     @pytest.fixture()
     def initialized(
-        self, registry: SubscribableDict
+        self, context: RunArg
     ) -> Generator[Initialized, None, None]:
-        y = Initialized(registry=registry)
+        y = Initialized(context=context)
         yield y
         if y.is_obsolete():
             return
@@ -141,7 +137,7 @@ class BaseTestState(ABC):
             state.reset()
 
     def test_send_pdb_command(self, state: State):
-        trace_id = 1
+        trace_id = TraceNo(1)
         command = "next"
         with pytest.raises(StateMethodError):
             state.send_pdb_command(trace_id, command)

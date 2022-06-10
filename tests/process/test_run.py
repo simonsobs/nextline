@@ -2,24 +2,25 @@ from __future__ import annotations
 
 import asyncio
 import queue
-import sys
 from typing import Any
 from weakref import WeakKeyDictionary
 
 import pytest
 from unittest.mock import Mock
 
-from nextline.run import run
-from nextline.utils import SubscribableDict, ThreadTaskIdComposer
+from nextline.process.run import run, RunArg
+from nextline.registrar import Registrar
+from nextline.types import RunNo
+from nextline.utils import SubscribableDict
 from nextline.utils.func import to_thread
 
 
 def test_q_done_on_exception(q_done, monkey_patch_run):
     del monkey_patch_run
-    registry = Mock()
+    context = RunArg()
     q_commands = Mock()
     with pytest.raises(MockError):
-        run(registry, q_commands, q_done)
+        run(context, q_commands, q_done)
     assert (None, None) == q_done.get()
 
 
@@ -30,20 +31,20 @@ class MockError(Exception):
 @pytest.fixture
 def monkey_patch_run(monkeypatch):
     y = Mock(side_effect=MockError)
-    monkeypatch.setattr("nextline.run._run", y)
+    monkeypatch.setattr("nextline.process.run._run", y)
     yield y
 
 
 @pytest.mark.asyncio
 async def test_one(
     expected_exception,
-    registry,
+    context: RunArg,
     q_commands,
     q_done,
     task_send_commands,
 ):
     del task_send_commands
-    await to_thread(run, registry, q_commands, q_done)
+    await to_thread(run, context, q_commands, q_done)
     result, exception = q_done.get()
     assert result is None
     if expected_exception:
@@ -71,14 +72,28 @@ async def respond_prompt(registry, q_commands):
 
 
 @pytest.fixture
-def registry(statement):
+def context(statement: str, registrar: Registrar) -> RunArg:
+    y = RunArg(
+        run_no=RunNo(1),
+        statement=statement,
+        filename="<string>",
+        queue=registrar.queue,
+    )
+    return y
+
+
+@pytest.fixture
+def registrar(registry: SubscribableDict):
+    y = Registrar(registry=registry)
+    return y
+
+
+@pytest.fixture
+def registry():
     y = SubscribableDict[str, Any]()
-    y["statement"] = statement
     y["run_no"] = 1
     y["run_no_map"] = WeakKeyDictionary()
     y["trace_no_map"] = WeakKeyDictionary()
-    y["trace_id_factory"] = ThreadTaskIdComposer()
-    y["create_capture_stdout"] = lambda _: sys.stdout
     yield y
 
 

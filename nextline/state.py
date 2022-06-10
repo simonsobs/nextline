@@ -1,26 +1,17 @@
 from __future__ import annotations
 
 import asyncio
-import dataclasses
-import datetime
-import itertools
-import traceback
-import json
-import queue
-import janus
-from weakref import WeakKeyDictionary
-from typing import Optional, Any, Tuple
+from multiprocessing import Queue, Process
+from tblib import pickling_support
+from typing import Optional, Any
 
-from .io import IOSubscription
-from .utils import (
-    ExcThread,
-    SubscribableDict,
-    ThreadTaskIdComposer,
-    to_thread,
-)
-from .run import run
-from .types import RunInfo
+from .utils import SubscribableDict, to_thread
+from .process.run import run, RunArg, QueueCommands, QueueDone
+from .registrar import Registrar
+from .types import RunNo, TraceNo
+from .count import RunNoCounter
 
+pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -53,26 +44,22 @@ class Machine:
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
+        filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
+        self._run_no = RunNo(run_no_start_from - 1)
+        self._run_no_count = RunNoCounter(run_no_start_from)
+        self._registrar = Registrar(self.registry)
 
-        self.registry["statement"] = statement
-        self.registry["script_file_name"] = SCRIPT_FILE_NAME
+        self.context = RunArg(
+            statement=statement, filename=filename, queue=self._registrar.queue
+        )
 
-        run_no_count = itertools.count(run_no_start_from).__next__
-        self.registry["run_no_count"] = run_no_count
-
-        self.registry["trace_id_factory"] = ThreadTaskIdComposer()
-
-        self.registry["run_no_map"] = WeakKeyDictionary()
-        self.registry["trace_no_map"] = WeakKeyDictionary()
+        self._registrar.script_change(script=statement, filename=filename)
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
 
-        self._state: State = Initialized(self.registry)
-        self._io_sub = IOSubscription(self.registry)
-        self.registry["create_capture_stdout"] = self._io_sub.create_out
-
+        self._state: State = Initialized(self.context)
         self._state_changed()
 
     def __repr__(self):
@@ -80,35 +67,15 @@ class Machine:
         return f"<{self.__class__.__name__} {self.state_name!r}>"
 
     def _state_changed(self) -> None:
-        self.registry["state_name"] = self.state_name
-        if self.state_name == "running":
-            self._run_info = RunInfo(
-                run_no=self.registry["run_no"],
-                state=self.state_name,
-                script=self.registry["statement"],
-                started_at=datetime.datetime.now(),
-            )
-            self.registry["run_info"] = self._run_info
-        if self.state_name == "finished":
-            exception = None
-            if exc := self.exception():
-                exception = "".join(
-                    traceback.format_exception(
-                        type(exc), exc, exc.__traceback__
-                    )
-                )
-            result = None
-            if not exception:
-                result = json.dumps(self.result())
-            self._run_info = dataclasses.replace(
-                self._run_info,
-                state=self.state_name,
-                result=result,
-                exception=exception,
-                ended_at=datetime.datetime.now(),
-            )
-            # TODO: check if run_no matches
-            self.registry["run_info"] = self._run_info
+        self._registrar.state_change(self._state)
+        if self._state.name == "initialized":
+            self._run_no = self._run_no_count()
+            self.context["run_no"] = self._run_no
+            self._registrar.state_initialized(self._run_no)
+        elif self._state.name == "running":
+            self._registrar.run_start(self._run_no)
+        elif self._state.name == "finished":
+            self._registrar.run_end(state=self._state)
 
     @property
     def state_name(self) -> str:
@@ -133,7 +100,8 @@ class Machine:
             self._state_changed()
 
     def exception(self) -> Optional[Exception]:
-        return self._state.exception()
+        ret = self._state.exception()
+        return ret
 
     def result(self) -> Any:
         return self._state.result()
@@ -145,10 +113,13 @@ class Machine:
     ) -> None:
         """Enter the initialized state"""
         if statement:
-            self.registry["statement"] = statement
+            self.context["statement"] = statement
+            self._registrar.script_change(
+                script=statement, filename=SCRIPT_FILE_NAME
+            )
         if run_no_start_from is not None:
-            run_no_count = itertools.count(run_no_start_from).__next__
-            self.registry["run_no_count"] = run_no_count
+            self._run_no_count = RunNoCounter(run_no_start_from)
+            # self._registrar.reset_run_no_count(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
 
@@ -157,6 +128,7 @@ class Machine:
         async with self._lock_close:
             self._state = self._state.close()
             self._state_changed()
+            await to_thread(self._registrar.close)
             await to_thread(self.registry.close)
 
 
@@ -212,7 +184,7 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, trace_id: int, command: str) -> None:
+    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
         del trace_id, command
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -228,34 +200,31 @@ class Initialized(State):
 
     Parameters
     ----------
-    registry : object
-        An instance of Registry.
+    context : dict
+        An instance of Context
 
     """
 
     name = "initialized"
 
-    def __init__(self, registry: SubscribableDict):
-        self.registry = registry
-        run_no = self.registry.get("run_no_count")()  # type: ignore
-        self.registry["run_no"] = run_no
-        self.registry["trace_id_factory"].reset()  # type: ignore
+    def __init__(self, context: RunArg):
+        self._context = context
 
     def run(self):
         self.assert_not_obsolete()
-        running = Running(self.registry)
+        running = Running(self._context)
         self.obsolete()
         return running
 
     def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(registry=self.registry)
+        initialized = Initialized(context=self._context)
         self.obsolete()
         return initialized
 
     def close(self):
         self.assert_not_obsolete()
-        closed = Closed(self.registry)
+        closed = Closed()
         self.obsolete()
         return closed
 
@@ -265,33 +234,36 @@ class Running(State):
 
     Parameters
     ----------
-    registry : object
-        An instance of Registry
+        An instance of Context
     """
 
     name = "running"
 
-    def __init__(self, registry: SubscribableDict):
-        self.registry = registry
-        self._q_commands: queue.Queue[Tuple[int, str]] = queue.Queue()
-        self._q_done: janus.Queue[Tuple[Any, Any]] = janus.Queue()
+    def __init__(self, context: RunArg):
+        self._context = context
+        self._q_commands: QueueCommands = Queue()
+        self._q_done: QueueDone = Queue()
 
-        self._thread = ExcThread(
+        self._p = Process(
             target=run,
-            args=(self.registry, self._q_commands, self._q_done.sync_q),
+            args=(context, self._q_commands, self._q_done),
             daemon=True,
         )
-        self._thread.start()
+        self._p.start()
 
     async def finish(self):
         self.assert_not_obsolete()
-        result, exception = await self._q_done.async_q.get()
-        await to_thread(self._thread.join)
-        finished = Finished(self.registry, result=result, exception=exception)
+        ret, exc = await to_thread(self._q_done.get)
+
+        # not always possible to join in a thread for unknown reason
+        # await to_thread(self._p.join)
+        self._p.join()
+
+        finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
 
-    def send_pdb_command(self, trace_id: int, command: str) -> None:
+    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
         self._q_commands.put((trace_id, command))
 
 
@@ -302,8 +274,8 @@ class Finished(State):
 
     Parameters
     ----------
-    registry : object
-        An instance of Registry
+    context : dict
+        An instance of Context
     result : any
         The result of the script execution, always None
     exception : exception or None
@@ -313,11 +285,11 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, registry: SubscribableDict, result, exception):
+    def __init__(self, context: RunArg, result, exception):
         self._result = result
         self._exception = exception
 
-        self.registry = registry
+        self._context = context
 
     def exception(self):
         """Return the exception of the script execution
@@ -351,30 +323,21 @@ class Finished(State):
 
     def reset(self):
         self.assert_not_obsolete()
-        initialized = Initialized(registry=self.registry)
+        initialized = Initialized(context=self._context)
         self.obsolete()
         return initialized
 
     def close(self):
         self.assert_not_obsolete()
-        closed = Closed(self.registry)
+        closed = Closed()
         self.obsolete()
         return closed
 
 
 class Closed(State):
-    """The state "closed"
-
-    Parameters
-    ----------
-    registry : object
-        An instance of Registry
-    """
+    """The state "closed" """
 
     name = "closed"
-
-    def __init__(self, registry: SubscribableDict):
-        self.registry = registry
 
     def close(self):
         self.assert_not_obsolete()

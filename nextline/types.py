@@ -1,29 +1,25 @@
+from __future__ import annotations
 import dataclasses
 import datetime
-from typing import Callable, Any, Optional, Union
-from types import FrameType
+from typing import Optional, NewType
 
 
-ThreadNo = int
-TaskNo = Union[int, None]
+RunNo = NewType("RunNo", int)
+TraceNo = NewType("TraceNo", int)
+ThreadNo = NewType("ThreadNo", int)
+TaskNo = NewType("TaskNo", int)
+PromptNo = NewType("PromptNo", int)
 
 
 @dataclasses.dataclass(frozen=True)
 class ThreadTaskId:
     thread_no: ThreadNo
-    task_no: TaskNo
-
-
-TraceFunc = Callable[
-    [FrameType, str, Any], Optional[Callable[[FrameType, str, Any], Any]]
-]
-# Copied from (because not sure how to import)
-# https://github.com/python/typeshed/blob/b88a6f19cdcf/stdlib/sys.pyi#L245
+    task_no: TaskNo | None
 
 
 @dataclasses.dataclass(frozen=True)
 class RunInfo:
-    run_no: int
+    run_no: RunNo
     state: str
     script: Optional[str] = None
     result: Optional[str] = None
@@ -34,20 +30,20 @@ class RunInfo:
 
 @dataclasses.dataclass(frozen=True)
 class TraceInfo:
-    run_no: int
+    run_no: RunNo
     state: str
-    trace_no: int
-    thread_no: int
-    task_no: Optional[int] = None
+    trace_no: TraceNo
+    thread_no: ThreadNo
+    task_no: Optional[TaskNo] = None
     started_at: Optional[datetime.datetime] = None
     ended_at: Optional[datetime.datetime] = None
 
 
 @dataclasses.dataclass(frozen=True)
 class PromptInfo:
-    run_no: int
-    trace_no: int
-    prompt_no: int
+    run_no: RunNo
+    trace_no: TraceNo
+    prompt_no: PromptNo
     open: bool
     event: Optional[str] = None
     file_name: Optional[str] = None
@@ -60,7 +56,7 @@ class PromptInfo:
 
 @dataclasses.dataclass(frozen=True)
 class StdoutInfo:
-    run_no: int
-    trace_no: int
+    run_no: RunNo
+    trace_no: TraceNo
     text: Optional[str] = None
     written_at: Optional[datetime.datetime] = None

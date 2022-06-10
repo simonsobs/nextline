@@ -3,6 +3,7 @@ import asyncio
 import pytest
 
 from nextline import Nextline
+from nextline.utils import ExcThread
 
 
 SOURCE = """
@@ -17,6 +18,12 @@ x = 2
 SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
+
+
+@pytest.fixture(autouse=True)
+def monkey_patch_process(monkeypatch):
+    monkeypatch.setattr("nextline.state.Process", ExcThread)
+    yield
 
 
 @pytest.fixture(autouse=True)
@@ -87,5 +94,14 @@ async def test_reset_with_statement():
     await nextline.run()
     nextline.reset(statement=SOURCE_TWO)
     assert SOURCE_TWO.split("\n") == nextline.get_source()
+    await nextline.run()
+    await nextline.close()
+
+
+@pytest.mark.asyncio
+async def test_reset_with_run_no():
+    nextline = Nextline(SOURCE)
+    await nextline.run()
+    nextline.reset(run_no_start_from=5)
     await nextline.run()
     await nextline.close()

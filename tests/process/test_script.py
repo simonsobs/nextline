@@ -1,6 +1,6 @@
 import pytest
 
-from nextline import script
+from nextline.process import script
 
 
 SOURCE = """

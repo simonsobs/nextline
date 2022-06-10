@@ -26,7 +26,10 @@ setup(
     ],
     packages=find_packages(exclude=["docs", "tests"]),
     include_package_data=True,
-    install_requires=["janus>=0.6"],
+    install_requires=[
+        "janus>=0.6",
+        "tblib>=1.7",
+    ],
     extras_require={
         "tests": [
             "pytest>=7.0",

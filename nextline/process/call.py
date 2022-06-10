@@ -3,18 +3,20 @@ from __future__ import annotations
 import sys
 import threading
 
-from typing import Callable, TypeVar
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar
 
-from .types import TraceFunc
+
+if TYPE_CHECKING:
+    from sys import _TraceFunc as TraceFunc
 
 T = TypeVar("T")
 
 
 def call_with_trace(
-    func: Callable[[], T],
+    func: Callable[[], T | None],
     trace: TraceFunc,
-    thread: bool = True,
-) -> T | None:
+    thread: Optional[bool] = True,
+) -> Tuple[T | None, BaseException | None]:
     """Set the trace function while running the function
 
     Notes
@@ -28,7 +30,7 @@ def call_with_trace(
     ----------
     func : callable
         A function to be called without any args. Use functools.partial to
-        provide args. A return value and an exception will be given to `done`.
+        provide args.
     trace: callable
         A trace function.
     thread: bool, default True
@@ -36,14 +38,11 @@ def call_with_trace(
 
     Returns
     -------
-    any
-        The return value of func().
+    tuple
+        A tuple with two elements. The first is the return value of func() or
+        None if an exception is raised in func(). The second is the exception
+        raised in func() or None if no exception is rased.
 
-    Raises
-    ------
-    any
-        An exception raised in func(). The exception is re-raised after the
-        original trace function is put back.
     """
 
     ret = None
@@ -61,6 +60,16 @@ def call_with_trace(
         sys.settrace(trace_org)
         if thread:
             threading.settrace(trace_org)  # type: ignore
+
         if exc:
-            raise exc
-        return ret
+
+            # How to print the exception in the same way as the interpreter.
+            # import traceback
+            # traceback.print_exception(type(exc), exc, exc.__traceback__)
+
+            if exc.__traceback__:
+                # remove this frame from the traceback.
+                # Note: exc.__traceback__ is sys._getframe()
+                exc.__traceback__ = exc.__traceback__.tb_next
+
+        return ret, exc

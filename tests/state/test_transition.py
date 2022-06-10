@@ -1,24 +1,19 @@
-import itertools
-
 import pytest
 
 from nextline.state import Initialized, Running, Finished, Closed
-from nextline.utils import SubscribableDict, ThreadTaskIdComposer
+from nextline.process.run import RunArg
 
 
-@pytest.fixture()
-def registry():
-    y = SubscribableDict()
-    y["run_no_count"] = itertools.count().__next__
-    y["trace_id_factory"] = ThreadTaskIdComposer()
-    yield y
-    y.close()
+@pytest.fixture
+def context() -> RunArg:
+    y = RunArg()
+    return y
 
 
 @pytest.mark.asyncio
-async def test_transition(registry):
+async def test_transition(context: RunArg):
 
-    state = Initialized(registry=registry)
+    state = Initialized(context=context)
     assert isinstance(state, Initialized)
 
     state = state.run()

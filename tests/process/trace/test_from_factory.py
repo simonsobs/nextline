@@ -1,6 +1,6 @@
 import pytest
 
-from nextline.trace import TraceFromFactory
+from nextline.process.trace import TraceFromFactory
 
 from .funcs import TraceSummary
 

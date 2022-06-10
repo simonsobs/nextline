@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from typing import Set
 
-from nextline.trace import TraceSkipModule
+from nextline.process.trace import TraceSkipModule
 
 from .funcs import TraceSummary
 
