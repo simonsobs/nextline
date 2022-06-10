@@ -85,7 +85,7 @@ class PdbInterface:
         """Call Pdb while storing trace args"""
 
         @contextmanager
-        def calling_trace(frame, event, arg):
+        def capture(frame, event, arg):
             self._trace_args = (frame, event, arg)
             try:
                 yield
@@ -93,13 +93,13 @@ class PdbInterface:
                 self._trace_args = None
 
         def create_local_trace() -> TraceFunc:
-            pdb_trace: TraceFunc | None = self._pdb.trace_dispatch
+            next_trace: TraceFunc | None = self._pdb.trace_dispatch
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
-                nonlocal pdb_trace
-                assert pdb_trace
-                with calling_trace(frame, event, arg):
-                    if pdb_trace := pdb_trace(frame, event, arg):
+                nonlocal next_trace
+                assert next_trace
+                with capture(frame, event, arg):
+                    if next_trace := next_trace(frame, event, arg):
                         return local_trace
                     return None
 
