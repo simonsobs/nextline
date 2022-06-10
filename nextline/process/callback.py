@@ -28,7 +28,10 @@ PdbIMap: TypeAlias = "Dict[TraceNo, PdbInterface]"
 
 class Callback:
     def __init__(
-        self, run_no: RunNo, registrar: Registrar, modules_to_trace: Set[str]
+        self,
+        run_no: RunNo,
+        registrar: RegistrarProxy,
+        modules_to_trace: Set[str],
     ):
         self._run_no = run_no
         self._registrar = registrar
@@ -166,6 +169,31 @@ class Callback:
     def __exit__(self, exc_type, exc_value, traceback):
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
         self.close()
+
+
+class RegistrarProxy:
+    def __init__(self, registrar: Registrar):
+        self._registrar = registrar
+
+    def put_trace_nos(self, trace_nos: Tuple[TraceNo, ...]) -> None:
+        self._registrar.put_trace_nos(trace_nos)
+
+    def put_trace_info(self, trace_info: TraceInfo) -> None:
+        self._registrar.put_trace_info(trace_info)
+
+    def put_prompt_info(self, prompt_info: PromptInfo) -> None:
+        self._registrar.put_prompt_info(prompt_info)
+
+    def put_prompt_info_for_trace(
+        self, trace_no: TraceNo, prompt_info: PromptInfo
+    ) -> None:
+        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+
+    def end_prompt_info_for_trace(self, trace_no: TraceNo) -> None:
+        self._registrar.end_prompt_info_for_trace(trace_no)
+
+    def put_stdout_info(self, stdout_info: StdoutInfo) -> None:
+        self._registrar.put_stdout_info(stdout_info)
 
 
 def ToCanonic() -> Callable[[str], str]:

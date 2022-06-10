@@ -11,7 +11,7 @@ from ..registrar import Registrar
 from ..types import RunNo, TraceNo
 from .trace import Trace
 from .call import call_with_trace
-from .callback import Callback
+from .callback import Callback, RegistrarProxy
 from . import script
 
 QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
@@ -59,7 +59,9 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
     modules_to_trace: Set[str] = set()
 
     with Callback(
-        run_no=run_no, registrar=registrar, modules_to_trace=modules_to_trace
+        run_no=run_no,
+        registrar=RegistrarProxy(registrar),
+        modules_to_trace=modules_to_trace,
     ) as callback:
 
         context = Context(
