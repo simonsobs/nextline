@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from asyncio import Task
+from threading import Thread
 from weakref import WeakKeyDictionary
-
 import fnmatch
 
-from typing import TYPE_CHECKING, Any, Set, Optional, Callable
+from typing import TYPE_CHECKING, Set, Optional, Callable
 from types import FrameType
 
 from .pdb.proxy import PdbInterfaceTraceFuncFactory
@@ -127,7 +128,7 @@ def TraceAddFirstModule(
 def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
     """Create a trace that creates a new trace for each thread or asyncio task"""
 
-    map: WeakKeyDictionary[Any, TraceFunc] = WeakKeyDictionary()
+    map: WeakKeyDictionary[Task | Thread, TraceFunc] = WeakKeyDictionary()
 
     def ret(frame, event, arg) -> Optional[TraceFunc]:
         key = current_task_or_thread()
