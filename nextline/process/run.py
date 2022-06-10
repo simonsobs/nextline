@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import multiprocessing
-from queue import Queue  # noqa F401
+from multiprocessing import Queue
 import concurrent.futures
 
 from typing import Callable, Set, TypedDict, MutableMapping
@@ -25,7 +24,7 @@ class RunArg(TypedDict, total=False):
     run_no: RunNo
     statement: str
     filename: str
-    queue: multiprocessing.Queue[Tuple[str, Any, bool]]
+    queue: Queue[Tuple[str, Any, bool]]
 
 
 class Context(TypedDict):
@@ -98,5 +97,3 @@ def _command(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
         trace_id, command = m
         pdb_ci = pdb_ci_map[trace_id]
         pdb_ci(command)
-        q_commands.task_done()
-    q_commands.task_done()

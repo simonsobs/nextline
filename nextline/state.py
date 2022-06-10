@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from queue import Queue
+from multiprocessing import Queue
 from typing import Optional, Any
 
 from .utils import ExcThread, SubscribableDict, to_thread
