@@ -1,5 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from functools import partial
 
 from queue import Queue
@@ -83,11 +84,13 @@ class PdbInterface:
     def trace(self, frame, event, arg) -> Optional[TraceFunc]:
         """Call Pdb while storing trace args"""
 
-        def calling_trace(frame, event, arg) -> None:
+        @contextmanager
+        def calling_trace(frame, event, arg):
             self._trace_args = (frame, event, arg)
-
-        def exited_trace() -> None:
-            self._trace_args = None
+            try:
+                yield
+            finally:
+                self._trace_args = None
 
         def create_local_trace() -> TraceFunc:
             pdb_trace: TraceFunc | None = self._pdb.trace_dispatch
@@ -95,13 +98,10 @@ class PdbInterface:
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
                 nonlocal pdb_trace
                 assert pdb_trace
-                calling_trace(frame, event, arg)
-                try:
+                with calling_trace(frame, event, arg):
                     if pdb_trace := pdb_trace(frame, event, arg):
                         return local_trace
                     return None
-                finally:
-                    exited_trace()
 
             return local_trace
 
