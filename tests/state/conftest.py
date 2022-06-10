@@ -1,6 +1,14 @@
 import pytest
 from unittest.mock import Mock
 
+from nextline.utils import ExcThread
+
+
+@pytest.fixture(autouse=True)
+def monkey_patch_process(monkeypatch):
+    monkeypatch.setattr("nextline.state.Process", ExcThread)
+    yield
+
 
 @pytest.fixture
 def monkey_patch_run(monkeypatch):

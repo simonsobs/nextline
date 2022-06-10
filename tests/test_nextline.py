@@ -3,6 +3,7 @@ import asyncio
 import pytest
 
 from nextline import Nextline
+from nextline.utils import ExcThread
 
 
 SOURCE = """
@@ -17,6 +18,12 @@ x = 2
 SOURCE_RAISE = """
 raise Exception('foo', 'bar')
 """.strip()
+
+
+@pytest.fixture(autouse=True)
+def monkey_patch_process(monkeypatch):
+    monkeypatch.setattr("nextline.state.Process", ExcThread)
+    yield
 
 
 @pytest.fixture(autouse=True)

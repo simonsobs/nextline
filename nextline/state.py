@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import asyncio
-from multiprocessing import Queue
+from multiprocessing import Queue, Process
+from tblib import pickling_support
 from typing import Optional, Any
 
-from .utils import ExcThread, SubscribableDict, to_thread
+from .utils import SubscribableDict, to_thread
 from .process.run import run, RunArg, QueueCommands, QueueDone
 from .registrar import Registrar
 from .types import RunNo, TraceNo
 from .count import RunNoCounter
 
+pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -49,9 +51,7 @@ class Machine:
         self._registrar = Registrar(self.registry)
 
         self.context = RunArg(
-            statement=statement,
-            filename=filename,
-            queue=self._registrar.queue
+            statement=statement, filename=filename, queue=self._registrar.queue
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -244,17 +244,21 @@ class Running(State):
         self._q_commands: QueueCommands = Queue()
         self._q_done: QueueDone = Queue()
 
-        self._thread = ExcThread(
+        self._p = Process(
             target=run,
             args=(context, self._q_commands, self._q_done),
             daemon=True,
         )
-        self._thread.start()
+        self._p.start()
 
     async def finish(self):
         self.assert_not_obsolete()
         ret, exc = await to_thread(self._q_done.get)
-        await to_thread(self._thread.join)
+
+        # not always possible to join in a thread for unknown reason
+        # await to_thread(self._p.join)
+        self._p.join()
+
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
