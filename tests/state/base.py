@@ -43,11 +43,11 @@ class BaseTestState(ABC):
         mock_run_result_exception: Tuple[Any, Any],
     ):
         def run(
-            context: RunArg,
+            run_arg: RunArg,
             q_commands: QueueCommands,
             q_done: QueueDone,
         ) -> None:
-            del context, q_commands
+            del run_arg, q_commands
             q_done.put(mock_run_result_exception)
 
         wrap = Mock(wraps=run)
