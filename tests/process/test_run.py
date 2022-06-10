@@ -10,6 +10,7 @@ from unittest.mock import Mock
 
 from nextline.process.run import run, RunArg
 from nextline.registrar import Registrar
+from nextline.types import RunNo
 from nextline.utils import SubscribableDict
 from nextline.utils.func import to_thread
 
@@ -71,12 +72,12 @@ async def respond_prompt(registry, q_commands):
 
 
 @pytest.fixture
-def context(statement, registrar, registry):
+def context(statement: str, registrar: Registrar) -> RunArg:
     y = RunArg(
-        run_no=1,
+        run_no=RunNo(1),
         statement=statement,
         filename="<string>",
-        registrar=registrar,
+        queue=registrar.queue,
     )
     return y
 

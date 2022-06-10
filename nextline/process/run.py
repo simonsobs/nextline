@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import multiprocessing
 from queue import Queue  # noqa F401
 import concurrent.futures
 
@@ -7,7 +8,6 @@ from typing import Callable, Set, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
-from ..registrar import Registrar
 from ..types import RunNo, TraceNo
 from .trace import Trace
 from .call import call_with_trace
@@ -25,7 +25,7 @@ class RunArg(TypedDict, total=False):
     run_no: RunNo
     statement: str
     filename: str
-    registrar: Registrar
+    queue: multiprocessing.Queue[Tuple[str, Any, bool]]
 
 
 class Context(TypedDict):
@@ -47,7 +47,7 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
     filename = run_arg.get("script_file_name", "<string>")
-    registrar = run_arg["registrar"]
+    queue = run_arg["queue"]
 
     try:
         code = _compile(statement, filename)
@@ -60,7 +60,7 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
     with Callback(
         run_no=run_no,
-        registrar=RegistrarProxy(registrar),
+        registrar=RegistrarProxy(queue),
         modules_to_trace=modules_to_trace,
     ) as callback:
 

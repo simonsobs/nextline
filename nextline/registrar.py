@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 from asyncio import Task  # noqa F401
+from multiprocessing import Queue
 from threading import Thread  # noqa F401
 import dataclasses
 import datetime
 import traceback
 import json
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
-from .types import RunNo, TraceNo, RunInfo, StdoutInfo, TraceInfo, PromptInfo
+from .types import RunNo, RunInfo
+from .types import TraceInfo  # noqa F401
+from .utils import ExcThread
 
 if TYPE_CHECKING:
     from .state import State
@@ -26,6 +29,28 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 class Registrar:
     def __init__(self, registry: MutableMapping):
         self._registry = registry
+        self._queue: Queue[Tuple[str, Any, bool]] = Queue()
+        self._thread = ExcThread(target=self._relay, daemon=True)
+        self._thread.start()
+
+    @property
+    def queue(self) -> Queue[Tuple[str, Any, bool]]:
+        return self._queue
+
+    def close(self):
+        self._queue.put(None)
+        self._thread.join()
+
+    def _relay(self) -> None:
+        while (m := self._queue.get()) is not None:
+            key, value, close = m
+            if close:
+                try:
+                    del self._registry[key]
+                except KeyError:
+                    pass
+                continue
+            self._registry[key] = value
 
     def script_change(self, script: str, filename: str) -> None:
         self._registry["statement"] = script
@@ -65,28 +90,3 @@ class Registrar:
         )
         # TODO: check if run_no matches
         self._registry["run_info"] = self._run_info
-
-    def put_trace_nos(self, trace_nos: Tuple[TraceNo, ...]) -> None:
-        self._registry["trace_nos"] = trace_nos
-
-    def put_trace_info(self, trace_info: TraceInfo) -> None:
-        self._registry["trace_info"] = trace_info
-
-    def put_prompt_info(self, prompt_info: PromptInfo) -> None:
-        self._registry["prompt_info"] = prompt_info
-
-    def put_prompt_info_for_trace(
-        self, trace_no: TraceNo, prompt_info: PromptInfo
-    ) -> None:
-        key = f"prompt_info_{trace_no}"
-        self._registry[key] = prompt_info
-
-    def end_prompt_info_for_trace(self, trace_no: TraceNo) -> None:
-        key = f"prompt_info_{trace_no}"
-        try:
-            del self._registry[key]
-        except KeyError:
-            pass
-
-    def put_stdout_info(self, stdout_info: StdoutInfo) -> None:
-        self._registry["stdout"] = stdout_info

@@ -51,7 +51,7 @@ class Machine:
         self.context = RunArg(
             statement=statement,
             filename=filename,
-            registrar=self._registrar,
+            queue=self._registrar.queue
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -128,6 +128,7 @@ class Machine:
         async with self._lock_close:
             self._state = self._state.close()
             self._state_changed()
+            await to_thread(self._registrar.close)
             await to_thread(self.registry.close)
 
 

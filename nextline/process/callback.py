@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from asyncio import Task
 from threading import Thread
+import multiprocessing
 from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
@@ -12,7 +13,6 @@ from typing import Dict, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 from types import FrameType
 
-from ..registrar import Registrar
 from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
 from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
 from .io import peek_stdout_by_task_and_thread
@@ -172,28 +172,30 @@ class Callback:
 
 
 class RegistrarProxy:
-    def __init__(self, registrar: Registrar):
-        self._registrar = registrar
+    def __init__(self, queue: multiprocessing.Queue[Tuple[str, Any, bool]]):
+        self._queue = queue
 
     def put_trace_nos(self, trace_nos: Tuple[TraceNo, ...]) -> None:
-        self._registrar.put_trace_nos(trace_nos)
+        self._queue.put(("trace_nos", trace_nos, False))
 
     def put_trace_info(self, trace_info: TraceInfo) -> None:
-        self._registrar.put_trace_info(trace_info)
+        self._queue.put(("trace_info", trace_info, False))
 
     def put_prompt_info(self, prompt_info: PromptInfo) -> None:
-        self._registrar.put_prompt_info(prompt_info)
+        self._queue.put(("prompt_info", prompt_info, False))
 
     def put_prompt_info_for_trace(
         self, trace_no: TraceNo, prompt_info: PromptInfo
     ) -> None:
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+        key = f"prompt_info_{trace_no}"
+        self._queue.put((key, prompt_info, False))
 
     def end_prompt_info_for_trace(self, trace_no: TraceNo) -> None:
-        self._registrar.end_prompt_info_for_trace(trace_no)
+        key = f"prompt_info_{trace_no}"
+        self._queue.put((key, None, True))
 
     def put_stdout_info(self, stdout_info: StdoutInfo) -> None:
-        self._registrar.put_stdout_info(stdout_info)
+        self._queue.put(("stdout", stdout_info, False))
 
 
 def ToCanonic() -> Callable[[str], str]:
