@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 
 import pytest
+from unittest.mock import Mock
 
 from nextline import Nextline
-from nextline.utils import ExcThread
+from nextline.state import Machine
+from nextline.utils import SubscribableDict
 
 
 SOURCE = """
@@ -15,93 +19,33 @@ SOURCE_TWO = """
 x = 2
 """.strip()
 
-SOURCE_RAISE = """
-raise Exception('foo', 'bar')
-""".strip()
-
-
-@pytest.fixture(autouse=True)
-def monkey_patch_process(monkeypatch):
-    monkeypatch.setattr("nextline.state.Process", ExcThread)
-    yield
-
-
-@pytest.fixture(autouse=True)
-def monkey_patch_trace(monkey_patch_trace):
-    yield monkey_patch_trace
-
-
-def test_repr():
-    nextline = Nextline(SOURCE)
-    repr(nextline)
-
-
-def test_statement():
-    nextline = Nextline(SOURCE)
-    assert SOURCE == nextline.statement
-
 
 @pytest.mark.asyncio
-async def test_states():
-    async def initialized(nextline: Nextline):
-        async for s in nextline.subscribe_state():
-            if s == "initialized":
-                await asyncio.sleep(0)
-                break
-
-    async def subscribe_state(nextline: Nextline):
-        return [s async for s in nextline.subscribe_state()]
-
+async def test_one(machine: Machine) -> None:
+    del machine
     nextline = Nextline(SOURCE)
-    task_monitor_state = asyncio.create_task(subscribe_state(nextline))
-
-    await initialized(nextline)
-
-    await nextline.run()
-
-    await nextline.close()
-
-    states = await task_monitor_state
-
-    expected = ["initialized", "running", "finished", "closed"]
-    assert expected == states
-
-
-@pytest.mark.asyncio
-async def test_raise():
-    nextline = Nextline(SOURCE_RAISE)
-    await nextline.run()
-    with pytest.raises(Exception) as exc:
-        nextline.result()
-    assert ("foo", "bar") == exc.value.args
-    assert ("foo", "bar") == nextline.exception().args
-    await nextline.close()
-
-
-@pytest.mark.asyncio
-async def test_reset():
-    nextline = Nextline(SOURCE)
-    await nextline.run()
+    task = asyncio.create_task(nextline.run())
+    nextline.send_pdb_command(1, "continue")
+    await task
+    nextline.exception()
     nextline.reset()
+    nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
     await nextline.run()
     await nextline.close()
 
 
-@pytest.mark.asyncio
-async def test_reset_with_statement():
+def test_repr(machine):
+    del machine
     nextline = Nextline(SOURCE)
-    assert SOURCE.split("\n") == nextline.get_source()
-    await nextline.run()
-    nextline.reset(statement=SOURCE_TWO)
-    assert SOURCE_TWO.split("\n") == nextline.get_source()
-    await nextline.run()
-    await nextline.close()
+    assert repr(nextline)
 
 
-@pytest.mark.asyncio
-async def test_reset_with_run_no():
-    nextline = Nextline(SOURCE)
-    await nextline.run()
-    nextline.reset(run_no_start_from=5)
-    await nextline.run()
-    await nextline.close()
+@pytest.fixture
+async def machine(monkeypatch):
+    spec_set = Machine("")
+    await spec_set.close()
+    instance = Mock(spec_set=spec_set)
+    instance.registry = Mock(spec=SubscribableDict)
+    class_ = Mock(return_value=instance)
+    monkeypatch.setattr("nextline.main.Machine", class_)
+    return instance
