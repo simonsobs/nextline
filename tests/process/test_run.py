@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import queue
-from typing import Any
-from weakref import WeakKeyDictionary
+import multiprocessing
+from typing import Any, Tuple
+
+# from weakref import WeakKeyDictionary
 
 import pytest
 from unittest.mock import Mock
 
 from nextline.process.run import run, RunArg
-from nextline.registrar import Registrar
 from nextline.types import RunNo
-from nextline.utils import SubscribableDict
 from nextline.utils.func import to_thread
 
 
@@ -55,46 +55,43 @@ async def test_one(
 
 
 @pytest.fixture
-async def task_send_commands(registry, q_commands):
-    y = asyncio.create_task(respond_prompt(registry, q_commands))
+async def task_send_commands(q_registrar, q_commands):
+    y = asyncio.create_task(to_thread(respond_prompt, q_registrar, q_commands))
     yield y
-    registry["prompt_info"] = None
+    q_registrar.put(None)
     await y
 
 
-async def respond_prompt(registry, q_commands):
-    async for prompt_info in registry.subscribe("prompt_info"):
+def respond_prompt(q_registrar, q_commands):
+    while (m := q_registrar.get()) is not None:
+        key, value, _ = m
+        if key != "prompt_info":
+            continue
+        prompt_info = value
         if prompt_info is None:
-            break
+            continue
         if not prompt_info.open:
             continue
         q_commands.put((prompt_info.trace_no, "next"))
 
 
 @pytest.fixture
-def context(statement: str, registrar: Registrar) -> RunArg:
+def context(
+    statement: str,
+    q_registrar: multiprocessing.Queue[Tuple[str, Any, bool]],
+) -> RunArg:
     y = RunArg(
         run_no=RunNo(1),
         statement=statement,
         filename="<string>",
-        queue=registrar.queue,
+        queue=q_registrar,
     )
     return y
 
 
 @pytest.fixture
-def registrar(registry: SubscribableDict):
-    y = Registrar(registry=registry)
-    return y
-
-
-@pytest.fixture
-def registry():
-    y = SubscribableDict[str, Any]()
-    y["run_no"] = 1
-    y["run_no_map"] = WeakKeyDictionary()
-    y["trace_no_map"] = WeakKeyDictionary()
-    yield y
+def q_registrar():
+    return multiprocessing.Queue()
 
 
 @pytest.fixture
