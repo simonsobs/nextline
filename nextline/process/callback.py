@@ -2,19 +2,24 @@ from __future__ import annotations
 
 import os
 from asyncio import Task
+import threading
 from threading import Thread
 import multiprocessing
 from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
 
-from typing import TYPE_CHECKING, Any, Callable, Tuple, Set
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Set
 from typing import Dict, MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 from types import FrameType
 
 from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
-from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer
+from ..utils import (
+    ThreadTaskDoneCallback,
+    ThreadTaskIdComposer,
+    current_task_or_thread,
+)
 from .io import peek_stdout_by_task_and_thread
 
 if TYPE_CHECKING:
@@ -47,6 +52,19 @@ class Callback:
         self._prompt_info_map: PromptInfoMap = {}
         self._pdbi_map: PdbIMap = {}
         self._to_canonic = ToCanonic()
+        self._entering_thread: Optional[Thread] = None
+
+    def task_or_thread_start(
+        self, trace_no: TraceNo, pdbi: PdbInterface
+    ) -> None:
+        self.trace_start(trace_no, pdbi)
+
+        task_or_thread = current_task_or_thread()
+        self._trace_no_map[task_or_thread] = trace_no
+
+        if task_or_thread is not self._entering_thread:
+            self._thread_task_done_callback.register(task_or_thread)
+            self._tasks_and_threads.add(task_or_thread)
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
@@ -80,10 +98,6 @@ class Callback:
         )
         self._trace_info_map[trace_no] = trace_info
         self._registrar.put_trace_info(trace_info)
-
-        task_or_thread = self._thread_task_done_callback.register()
-        self._trace_no_map[task_or_thread] = trace_no
-        self._tasks_and_threads.add(task_or_thread)
 
     def trace_end(self, trace_no: TraceNo):
         self._registrar.end_prompt_info_for_trace(trace_no)
@@ -163,12 +177,16 @@ class Callback:
         self._peek_stdout = peek_stdout_by_task_and_thread(
             to_peek=self._tasks_and_threads, callback=self.stdout
         )
+        self._entering_thread = threading.current_thread()
         self._peek_stdout.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
         self.close()
+        if self._entering_thread:
+            if trace_no := self._trace_no_map.get(self._entering_thread):
+                self.trace_end(trace_no)
 
 
 class RegistrarProxy:
