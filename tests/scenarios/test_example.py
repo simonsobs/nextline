@@ -130,7 +130,7 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     actual = Counter(r.line_no is not None for r in results)
     assert actual == expected
 
-    expected = {True: 58, False: 58}
+    expected = {True: 116}
     actual = Counter(r.stdout is not None for r in results)
     assert actual == expected
 
@@ -138,7 +138,7 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     actual = Counter(r.command for r in results)
     assert actual == expected
 
-    expected = {True: 58, False: 58}
+    expected = {True: 116}
     actual = Counter(r.started_at is not None for r in results)
     assert actual == expected
 

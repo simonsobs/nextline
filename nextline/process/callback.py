@@ -152,9 +152,7 @@ class Callback:
         prompt_info = dataclasses.replace(
             prompt_info,
             open=False,
-            stdout=None,
             command=command,
-            started_at=None,
             ended_at=datetime.datetime.now(),
         )
         self._registrar.put_prompt_info(prompt_info)
