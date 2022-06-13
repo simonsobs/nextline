@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from multiprocessing import Queue
-import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 
 from typing import Callable, Set, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
@@ -73,14 +74,8 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
         func = script.compose(code)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            # TODO: Handle exceptions occurred in _command()
-            future_to_command = executor.submit(
-                _command, q_commands, pdb_ci_map
-            )
+        with relay_commands(q_commands, pdb_ci_map):
             result, exception = call_with_trace(func, trace)
-            q_commands.put(None)
-            future_to_command.result()
 
     q_done.put((result, exception))
 
@@ -89,6 +84,17 @@ def _compile(code, filename):
     if isinstance(code, str):
         code = compile(code, filename, "exec")
     return code
+
+
+@contextmanager
+def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(_command, q_commands, pdb_ci_map)
+        try:
+            yield
+        finally:
+            q_commands.put(None)
+            future.result()
 
 
 def _command(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
