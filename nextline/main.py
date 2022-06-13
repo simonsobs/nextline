@@ -47,6 +47,12 @@ class Nextline:
         self.machine.run()
         await self.machine.finish()
 
+    def send_pdb_command(self, trace_id: int, command: str):
+        self.machine.send_pdb_command(trace_id, command)
+
+    def interrupt(self) -> None:
+        self.machine.interrupt()
+
     def exception(self) -> Optional[Exception]:
         """Uncaught exception from the last run"""
         return self.machine.exception()
@@ -97,12 +103,6 @@ class Nextline:
 
     def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int]]:
         return self.subscribe("trace_nos")
-
-    def send_pdb_command(self, trace_id: int, command: str):
-        self.machine.send_pdb_command(trace_id, command)
-
-    def interrupt(self) -> None:
-        self.machine.interrupt()
 
     def get_source(self, file_name=None):
         if not file_name or file_name == self.registry.get("script_file_name"):
