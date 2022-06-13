@@ -88,17 +88,16 @@ def _compile(code, filename):
 
 @contextmanager
 def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
+    def fn():
+        while m := q_commands.get():
+            trace_id, command = m
+            pdb_ci = pdb_ci_map[trace_id]
+            pdb_ci(command)
+
     with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(_command, q_commands, pdb_ci_map)
+        future = executor.submit(fn)
         try:
             yield
         finally:
             q_commands.put(None)
             future.result()
-
-
-def _command(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
-    while m := q_commands.get():
-        trace_id, command = m
-        pdb_ci = pdb_ci_map[trace_id]
-        pdb_ci(command)
