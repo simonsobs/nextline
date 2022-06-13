@@ -73,13 +73,12 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
         func = script.compose(code)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             # TODO: Handle exceptions occurred in _command()
             future_to_command = executor.submit(
                 _command, q_commands, pdb_ci_map
             )
-            future_to_call = executor.submit(call_with_trace, func, trace)
-            result, exception = future_to_call.result()
+            result, exception = call_with_trace(func, trace)
             q_commands.put(None)
             future_to_command.result()
 
