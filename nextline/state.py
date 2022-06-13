@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import signal
 import asyncio
 from multiprocessing import Queue, Process
 from tblib import pickling_support
@@ -92,6 +94,9 @@ class Machine:
 
     def send_pdb_command(self, trace_id, command) -> None:
         self._state.send_pdb_command(trace_id, command)
+
+    def interrupt(self) -> None:
+        self._state.interrupt()
 
     async def finish(self) -> None:
         """Enter the finished state"""
@@ -188,6 +193,9 @@ class State(ObsoleteMixin):
         del trace_id, command
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
+    def interrupt(self) -> None:
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     def exception(self) -> Optional[Exception]:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -265,6 +273,10 @@ class Running(State):
 
     def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
         self._q_commands.put((trace_id, command))
+
+    def interrupt(self) -> None:
+        if self._p.pid:
+            os.kill(self._p.pid, signal.SIGINT)
 
 
 class Finished(State):

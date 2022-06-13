@@ -101,6 +101,9 @@ class Nextline:
     def send_pdb_command(self, trace_id: int, command: str):
         self.machine.send_pdb_command(trace_id, command)
 
+    def interrupt(self) -> None:
+        self.machine.interrupt()
+
     def get_source(self, file_name=None):
         if not file_name or file_name == self.registry.get("script_file_name"):
             return self.get("statement").split("\n")
