@@ -3,8 +3,9 @@ from __future__ import annotations
 from multiprocessing import Queue
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from logging import getLogger
 
-from typing import Callable, Set, TypedDict, MutableMapping
+from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -13,6 +14,8 @@ from .trace import Trace
 from .call import call_with_trace
 from .callback import Callback, RegistrarProxy
 from . import script
+
+_T = TypeVar("_T")
 
 QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 
@@ -95,9 +98,20 @@ def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
             pdb_ci(command)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(fn)
+        future = executor.submit(try_again_on_error, fn)
         try:
             yield
         finally:
             q_commands.put(None)
             future.result()
+
+
+def try_again_on_error(func: Callable[[], _T]) -> _T:
+    while True:
+        try:
+            return func()
+        # except KeyboardInterrupt:
+        #     raise
+        except BaseException:
+            logger = getLogger(__name__)
+            logger.exception("")
