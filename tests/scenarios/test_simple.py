@@ -1,43 +1,48 @@
+from __future__ import annotations
+
 import asyncio
 import pytest
 
 from nextline import Nextline
 
-statement = """
+STATEMENT = """
 import time
 
 time.sleep(0.01)
-"""
+""".lstrip()
 
 
 @pytest.mark.asyncio
-async def test_run():
-
-    nextline = Nextline(statement)
+async def test_run(nextline: Nextline):
     assert nextline.state == "initialized"
 
-    run = asyncio.create_task(nextline.run())
-
-    await asyncio.sleep(0.01)
-
-    async for s in nextline.subscribe_state():
-        if s == "running":
-            break
-
-    async for trace_ids in nextline.subscribe_trace_ids():
-        if trace_ids:
-            trace_id = trace_ids[0]
-            break
-
-    n_prompting = 0
-    async for s in nextline.subscribe_prompt_info_for(trace_id):
-        if not s.open:
-            continue
-        n_prompting += 1
-        nextline.send_pdb_command(trace_id, "next")
-    assert 3 == n_prompting
-
-    await run
-    assert nextline.state == "finished"
-    await nextline.close()
+    await asyncio.gather(
+        control(nextline),
+        run(nextline),
+    )
     assert nextline.state == "closed"
+
+
+async def run(nextline: Nextline):
+    await asyncio.sleep(0.01)
+    await nextline.run()
+    nextline.exception()
+    nextline.result()
+    await nextline.close()
+
+
+async def control(nextline: Nextline):
+    async for prompt_info in nextline.subscribe_prompt_info():
+        if not prompt_info.open:
+            continue
+        nextline.send_pdb_command(prompt_info.trace_no, "next")
+
+
+@pytest.fixture
+def nextline(statement):
+    return Nextline(statement)
+
+
+@pytest.fixture
+def statement():
+    return STATEMENT
