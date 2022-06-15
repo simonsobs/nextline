@@ -64,7 +64,8 @@ class Callback:
 
         if task_or_thread is not self._entering_thread:
             self._thread_task_done_callback.register(task_or_thread)
-            self._tasks_and_threads.add(task_or_thread)
+
+        self._tasks_and_threads.add(task_or_thread)
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
