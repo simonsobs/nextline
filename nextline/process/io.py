@@ -18,34 +18,36 @@ def peek_stdout_by_task_and_thread(
     to_peek: Collection[Task | Thread],
     callback: Callable[[Task | Thread, str], Any],
 ):
-    key_factory = KeyFactory(to_register=to_peek)
-    read_lines = ReadLines(callback)
-    assign_key = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
+    key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
+    callback_ = ReadLinesByKey(callback)
+    assign_key = AssignKey(key_factory=key_factory, callback=callback_)  # type: ignore
     with peek_stdout(assign_key) as t:
         yield t
 
 
-def KeyFactory(
-    to_register: Collection[Task | Thread],
+def CurrentTaskOrThreadIfInCollection(
+    collection: Collection[Task | Thread],
 ) -> Callable[[], Task | Thread | None]:
-    def key_factory() -> Task | Thread | None:
-        if (key := current_task_or_thread()) in to_register:
+    def fn() -> Task | Thread | None:
+        if (key := current_task_or_thread()) in collection:
             return key
         return None
 
-    return key_factory
+    return fn
 
 
-def ReadLines(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], Any]:
+def ReadLinesByKey(
+    callback: Callable[[_T, str], Any]
+) -> Callable[[_T, str], Any]:
     buffer: DefaultDict[_T, str] = defaultdict(str)
 
-    def read_lines(key: _T, s: str) -> None:
+    def read_lines_by_key(key: _T, s: str) -> None:
         buffer[key] += s
         if s.endswith("\n"):
             line = buffer.pop(key)
             callback(key, line)
 
-    return read_lines
+    return read_lines_by_key
 
 
 def AssignKey(
