@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-from asyncio import Task
 from collections import defaultdict
 from contextlib import contextmanager
-from threading import Thread
+from asyncio import Task  # noqa F401
+from threading import Thread  # noqa F401
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
+from typing_extensions import TypeAlias
 
 
 from ..utils import current_task_or_thread, peek_stdout
 
 
 _T = TypeVar("_T")
+_Key: TypeAlias = "Task | Thread"
 
 
 @contextmanager
 def peek_stdout_by_task_and_thread(
-    to_peek: Collection[Task | Thread],
-    callback: Callable[[Task | Thread, str], Any],
+    to_peek: Collection[_Key],
+    callback: Callable[[_Key, str], Any],
 ):
     key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
     callback_ = ReadLinesByKey(callback)
@@ -26,9 +28,9 @@ def peek_stdout_by_task_and_thread(
 
 
 def CurrentTaskOrThreadIfInCollection(
-    collection: Collection[Task | Thread],
-) -> Callable[[], Task | Thread | None]:
-    def fn() -> Task | Thread | None:
+    collection: Collection[_Key],
+) -> Callable[[], _Key | None]:
+    def fn() -> _Key | None:
         if (key := current_task_or_thread()) in collection:
             return key
         return None
