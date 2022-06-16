@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from asyncio import Task
 from collections import defaultdict
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from threading import Thread
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
 
-from ..utils import ThreadTaskDoneCallback, current_task_or_thread, peek_stdout
+from ..utils import current_task_or_thread, peek_stdout
 
 
 _T = TypeVar("_T")
@@ -18,26 +18,20 @@ def peek_stdout_by_task_and_thread(
     to_peek: Collection[Task | Thread],
     callback: Callable[[Task | Thread, str], Any],
 ):
-    thread_task_done = ThreadTaskDoneCallback()
-    key_factory = KeyFactory(
-        to_register=to_peek,
-        register=thread_task_done.register,
-    )
+    key_factory = KeyFactory(to_register=to_peek)
     read_lines = ReadLines(callback)
     assign_key = AssignKey(key_factory=key_factory, callback=read_lines)  # type: ignore
     with peek_stdout(assign_key) as t:
-        with closing(thread_task_done):
-            yield t
+        yield t
 
 
 def KeyFactory(
     to_register: Collection[Task | Thread],
-    register: Callable[[], Task | Thread],
 ) -> Callable[[], Task | Thread | None]:
     def key_factory() -> Task | Thread | None:
-        if current_task_or_thread() not in to_register:
-            return None
-        return register()
+        if (key := current_task_or_thread()) in to_register:
+            return key
+        return None
 
     return key_factory
 
