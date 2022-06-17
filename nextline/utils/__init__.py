@@ -15,6 +15,7 @@ __all__ = [
     "to_thread",
     "agen_with_wait",
     "merge_aiters",
+    "profile_func",
 ]
 
 from .subscribablequeue import SubscribableQueue
@@ -35,3 +36,4 @@ from .func import (
     agen_with_wait,
     merge_aiters,
 )
+from .profile import profile_func
