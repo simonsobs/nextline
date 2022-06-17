@@ -6,7 +6,9 @@ from threading import Thread
 from weakref import WeakKeyDictionary
 import fnmatch
 
-from typing import TYPE_CHECKING, Set, Optional, Callable
+from collections.abc import Set, MutableSet
+
+from typing import TYPE_CHECKING, Optional, Callable
 from types import FrameType
 
 from .pdb.proxy import PdbInterfaceTraceFuncFactory
@@ -75,7 +77,7 @@ def Trace(context: Context) -> TraceFunc:
 
 
 def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
-    skip = set(skip)
+    skip = frozenset(skip)
 
     @lru_cache
     def to_skip(module_name: str | None) -> bool:
@@ -102,7 +104,7 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
 
 
 def TraceAddFirstModule(
-    trace: TraceFunc, modules_to_trace: Set[str]
+    trace: TraceFunc, modules_to_trace: MutableSet[str]
 ) -> TraceFunc:
     first = True
 
