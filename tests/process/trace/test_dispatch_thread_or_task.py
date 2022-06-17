@@ -7,7 +7,15 @@ from threading import Thread
 import pytest
 from unittest.mock import Mock
 
-from typing import TYPE_CHECKING, Callable, Dict, Set
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Mapping,
+    MutableMapping,
+    Set,
+)
 
 from nextline.process.trace import TraceDispatchThreadOrTask
 from nextline.utils import current_task_or_thread
@@ -25,10 +33,10 @@ def test_one(
     target: TraceSummary,
     probe: TraceSummary,
     ref: TraceSummary,
-    factory: Mock | Callable[[], Mock | TraceFunc],
-    probes: Dict[Task | Thread, TraceSummary],
-    probe_trace_funcs: Dict[Task | Thread, Mock | TraceFunc],
-    task_or_threads: Dict[Task | Thread, Set[Task | Thread]],
+    factory: Mock,
+    probes: Mapping[Task | Thread, TraceSummary],
+    probe_trace_funcs: Mapping[Task | Thread, Mock],
+    task_or_threads: Mapping[Task | Thread, Set[Task | Thread]],
     modules_in_summary: Set[str],
 ):
     assert modules_in_summary is not None
@@ -50,7 +58,7 @@ def test_one(
 
 @pytest.fixture()
 def modules_in_summary():
-    yield {__name__, module_a.__name__, module_b.__name__}
+    return {__name__, module_a.__name__, module_b.__name__}
 
 
 def f1():
@@ -77,36 +85,38 @@ def f4():
 
 
 @pytest.fixture(params=[f1, f2, f3, f4])
-def func(request):
-    yield request.param
+def func(request) -> Callable[[], Any]:
+    return request.param
 
 
 @pytest.fixture()
-def target_trace_func(factory: Mock):
-    y = TraceDispatchThreadOrTask(factory=factory)
-    yield y
+def target_trace_func(factory: Mock) -> TraceFunc:
+    return TraceDispatchThreadOrTask(factory=factory)
 
 
 @pytest.fixture(params=[True, False])
-def thread(request):
-    y = request.param
-    yield y
+def thread(request) -> bool:
+    return request.param
 
 
 @pytest.fixture()
 def probes(
-    probe_trace_funcs: Dict[Task | Thread, Mock | TraceFunc],
+    probe_trace_funcs: MutableMapping[Task | Thread, Mock],
     modules_in_summary: Set[str] | None,
 ):
     y = {
         k: summarize_trace_calls(v, modules=modules_in_summary)
         for k, v in probe_trace_funcs.items()
     }
-    yield y
+    return y
 
 
 @pytest.fixture()
-def factory(probe_trace_funcs, task_or_threads, probe_trace_func):
+def factory(
+    probe_trace_funcs: MutableMapping[Task | Thread, Mock],
+    task_or_threads: MutableMapping[Task | Thread, Set[Task | Thread]],
+    probe_trace_func: Mock,
+) -> Mock:
     def factory_():
         called_in = set()
 
@@ -126,14 +136,14 @@ def factory(probe_trace_funcs, task_or_threads, probe_trace_func):
         probe_trace_funcs[created_in] = wrap_trace
         return wrap_trace
 
-    yield Mock(wraps=factory_)
+    return Mock(wraps=factory_)
 
 
 @pytest.fixture()
-def probe_trace_funcs():
-    yield {}
+def probe_trace_funcs() -> Dict[Task | Thread, Mock]:
+    return {}
 
 
 @pytest.fixture()
 def task_or_threads():
-    yield {}
+    return {}
