@@ -253,22 +253,22 @@ class Running(State):
     def __init__(self, context: RunArg):
         self._context = context
         self._q_commands: QueueCommands = Queue()
-        self._q_done: QueueDone = Queue()
         self._event = Event()
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._f = self._executor.submit(self._run)
         self._event.wait()
 
     def _run(self):
+        q_done: QueueDone = Queue()
         self._p = Process(
             target=run,
-            args=(self._context, self._q_commands, self._q_done),
+            args=(self._context, self._q_commands, q_done),
             daemon=True,
         )
         self._p.start()
         self._event.set()
-        ret, exc = self._q_done.get()
         self._p.join()
+        ret, exc = q_done.get()
         return ret, exc
 
     async def finish(self):
