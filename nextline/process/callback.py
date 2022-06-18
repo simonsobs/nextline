@@ -146,6 +146,7 @@ class Callback:
             event=event,
             file_name=file_name,
             line_no=line_no,
+            trace_call_end=True,
         )
         self._registrar.put_prompt_info(prompt_info)
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)

@@ -52,6 +52,7 @@ class PromptInfo:
     command: Optional[str] = None
     started_at: Optional[datetime.datetime] = None
     ended_at: Optional[datetime.datetime] = None
+    trace_call_end: Optional[bool] = False  # TODO: remove when possible
 
 
 @dataclasses.dataclass(frozen=True)
