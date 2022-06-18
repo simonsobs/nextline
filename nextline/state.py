@@ -268,7 +268,7 @@ class Running(State):
         self._p.start()
         self._event.set()
         self._p.join()
-        ret, exc = q_done.get()
+        ret, exc = q_done.get(timeout=2.0)
         return ret, exc
 
     async def finish(self):
