@@ -4,6 +4,8 @@ import os
 import signal
 import asyncio
 from multiprocessing import Queue, Process
+from threading import Event
+from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support
 from typing import Optional, Any
 
@@ -252,18 +254,27 @@ class Running(State):
         self._context = context
         self._q_commands: QueueCommands = Queue()
         self._q_done: QueueDone = Queue()
+        self._event = Event()
+        self._executor = ThreadPoolExecutor(max_workers=1)
+        self._f = self._executor.submit(self._run)
+        self._event.wait()
 
+    def _run(self):
         self._p = Process(
             target=run,
-            args=(context, self._q_commands, self._q_done),
+            args=(self._context, self._q_commands, self._q_done),
             daemon=True,
         )
         self._p.start()
+        self._event.set()
+        ret, exc = self._q_done.get()
+        self._p.join()
+        return ret, exc
 
     async def finish(self):
         self.assert_not_obsolete()
-        ret, exc = await to_thread(self._q_done.get)
-        await to_thread(self._p.join)
+        ret, exc = await to_thread(self._f.result)
+        self._executor.shutdown()
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
