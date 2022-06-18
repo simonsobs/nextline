@@ -101,6 +101,9 @@ class Machine:
     def interrupt(self) -> None:
         self._state.interrupt()
 
+    def terminate(self) -> None:
+        self._state.terminate()
+
     async def finish(self) -> None:
         """Enter the finished state"""
         async with self._lock_finish:
@@ -200,6 +203,9 @@ class State(ObsoleteMixin):
     def interrupt(self) -> None:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
+    def terminate(self) -> None:
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     def exception(self) -> Optional[Exception]:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -288,6 +294,9 @@ class Running(State):
     def interrupt(self) -> None:
         if self._p.pid:
             os.kill(self._p.pid, signal.SIGINT)
+
+    def terminate(self) -> None:
+        self._p.terminate()
 
 
 class Finished(State):
