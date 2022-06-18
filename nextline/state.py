@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import signal
 import asyncio
+from queue import Empty
 from multiprocessing import Queue, Process
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
@@ -268,8 +269,10 @@ class Running(State):
         self._p.start()
         self._event.set()
         self._p.join()
-        ret, exc = q_done.get(timeout=2.0)
-        return ret, exc
+        try:
+            return q_done.get(timeout=0.1)
+        except Empty:
+            return None, None  # ret, exc
 
     async def finish(self):
         self.assert_not_obsolete()
