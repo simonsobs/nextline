@@ -187,6 +187,7 @@ class State(ObsoleteMixin):
 
     def close(self) -> State:
         self.assert_not_obsolete()
+        print(self.name)
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
@@ -262,11 +263,7 @@ class Running(State):
     async def finish(self):
         self.assert_not_obsolete()
         ret, exc = await to_thread(self._q_done.get)
-
-        # not always possible to join in a thread for unknown reason
-        # await to_thread(self._p.join)
-        self._p.join()
-
+        await to_thread(self._p.join)
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
