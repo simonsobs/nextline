@@ -256,7 +256,7 @@ class Running(State):
         self._event = Event()
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._f = self._executor.submit(self._run)
-        self._event.wait()
+        assert self._event.wait(2.0)
 
     def _run(self):
         q_done: QueueDone = Queue()
