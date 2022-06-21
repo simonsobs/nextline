@@ -41,8 +41,11 @@ class CustomizedPdb(Pdb):
             # "step" at the last line
             # https://github.com/simonsobs/nextline/issues/1
             return
-        super()._cmdloop()
-        self._pdbi.exited_cmdloop()
+        try:
+            # super()._cmdloop()  # This catches KeyboardInterrupt
+            super().cmdloop()
+        finally:
+            self._pdbi.exited_cmdloop()
 
     def set_continue(self):
         """override bdb.set_continue()

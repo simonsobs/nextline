@@ -53,6 +53,9 @@ class Nextline:
     def interrupt(self) -> None:
         self.machine.interrupt()
 
+    def terminate(self) -> None:
+        self.machine.terminate()
+
     def exception(self) -> Optional[Exception]:
         """Uncaught exception from the last run"""
         return self.machine.exception()

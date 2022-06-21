@@ -10,20 +10,20 @@ from nextline.process.call import call_with_trace
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
 
-from .funcs import summarize_trace_calls
+from .funcs import TraceSummary, summarize_trace_calls
 
 
 @pytest.fixture()
 def target(
-    wrap_target_trace_func: TraceFunc | Mock,
+    wrap_target_trace_func: Mock,
     modules_in_summary: Set[str] | None,
     run_target,
-):
+) -> TraceSummary:
     _ = run_target
     y = summarize_trace_calls(
-        wrap_target_trace_func, modules=modules_in_summary  # type: ignore
+        wrap_target_trace_func, modules=modules_in_summary
     )
-    yield y
+    return y
 
 
 @pytest.fixture()
@@ -31,10 +31,10 @@ def probe(
     probe_trace_func: Mock,
     modules_in_summary: Set[str] | None,
     run_target,
-):
+) -> TraceSummary:
     _ = run_target
     y = summarize_trace_calls(probe_trace_func, modules=modules_in_summary)
-    yield y
+    return y
 
 
 @pytest.fixture()
@@ -42,39 +42,39 @@ def ref(
     ref_trace_func: Mock,
     modules_in_summary: Set[str] | None,
     run_ref,
-):
+) -> TraceSummary:
     _ = run_ref
     y = summarize_trace_calls(ref_trace_func, modules=modules_in_summary)
-    yield y
+    return y
 
 
 @pytest.fixture()
-def modules_in_summary():
-    yield None
+def modules_in_summary() -> Set[str] | None:
+    return None
 
 
 @pytest.fixture()
 def run_target(
     func: Callable[[], Any],
-    wrap_target_trace_func: TraceFunc | Mock,
+    wrap_target_trace_func: Mock,
     thread: bool,
-):
+) -> None:
     call_with_trace(func=func, trace=wrap_target_trace_func, thread=thread)
-    yield
+    return
 
 
 @pytest.fixture()
 def run_ref(
     func: Callable[[], Any],
-    ref_trace_func: TraceFunc | Mock,
+    ref_trace_func: Mock,
     thread: bool,
-):
+) -> None:
     call_with_trace(func=func, trace=ref_trace_func, thread=thread)
-    yield
+    return
 
 
 @pytest.fixture()
-def wrap_target_trace_func(target_trace_func: TraceFunc):
+def wrap_target_trace_func(target_trace_func: TraceFunc) -> Mock:
     wrap = Mock(wraps=target_trace_func)
 
     def side_effect(*a, **k):
@@ -84,18 +84,18 @@ def wrap_target_trace_func(target_trace_func: TraceFunc):
         return local_trace_func
 
     wrap.side_effect = side_effect
-    yield wrap
+    return wrap
 
 
 @pytest.fixture()
-def probe_trace_func():
+def probe_trace_func() -> Mock:
     y = Mock()
     y.return_value = y
-    yield y
+    return y
 
 
 @pytest.fixture()
-def ref_trace_func():
+def ref_trace_func() -> Mock:
     y = Mock()
     y.return_value = y
-    yield y
+    return y

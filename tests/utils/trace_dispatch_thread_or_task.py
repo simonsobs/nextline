@@ -5,20 +5,20 @@ from itertools import permutations
 import pytest
 from unittest.mock import Mock
 
-from typing import List, Tuple, Set, Any
+from typing import List, MutableSequence, Sequence, Tuple, Set, Any
 
 from nextline.process.call import call_with_trace
 from nextline.process.trace import TraceDispatchThreadOrTask
 
 
 @pytest.fixture()
-def created():
+def created() -> List[Mock]:
     """List of mock objects created by the factory fixture"""
-    yield []
+    return []
 
 
 @pytest.fixture()
-def factory(created: List[Mock]):
+def factory(created: MutableSequence[Mock]) -> Mock:
     """Function that creates a Mock object that returns itself
 
     Created Mock objects are used as trace functions.
@@ -33,7 +33,7 @@ def factory(created: List[Mock]):
         return trace_func
 
     y = Mock(side_effect=side_effect)
-    yield y
+    return y
 
 
 def f_pass():
@@ -118,7 +118,7 @@ params = [
 
 
 @pytest.mark.parametrize("func, expected", params)
-def test_one(factory: Mock, created: List[Mock], func, expected):
+def test_one(factory: Mock, created: MutableSequence[Mock], func, expected):
     obj = TraceDispatchThreadOrTask(factory=factory)
     call_with_trace(func, obj)
     print()
@@ -129,7 +129,7 @@ def test_one(factory: Mock, created: List[Mock], func, expected):
     assert is_unordered_list_of_subsets(expected, actual)
 
 
-def traced(created: List[Mock]) -> List[Set[Tuple[str, str]]]:
+def traced(created: Sequence[Mock]) -> List[Set[Tuple[str, str]]]:
     """A list of sets, each with tuples of traced module and func names
 
     e.g., [{("module", "func"), ...}, ...]
@@ -147,7 +147,9 @@ def traced(created: List[Mock]) -> List[Set[Tuple[str, str]]]:
     ]
 
 
-def is_list_of_subsets(sets1: List[Set[Any]], sets2: List[Set[Any]]) -> bool:
+def is_list_of_subsets(
+    sets1: Sequence[Set[Any]], sets2: Sequence[Set[Any]]
+) -> bool:
     if not len(sets1) <= len(sets2):
         return False
     intersections = [s1 & s2 for s1, s2 in zip(sets1, sets2)]
@@ -155,7 +157,7 @@ def is_list_of_subsets(sets1: List[Set[Any]], sets2: List[Set[Any]]) -> bool:
 
 
 def is_unordered_list_of_subsets(
-    sets1: List[Set[Any]], sets2: List[Set[Any]]
+    sets1: Sequence[Set[Any]], sets2: Sequence[Set[Any]]
 ) -> bool:
     for p in permutations(sets2):
         if is_list_of_subsets(sets1, p):
@@ -183,6 +185,6 @@ params = [
 
 @pytest.mark.parametrize("sets1, sets2, expected", params)
 def test_is_unordered_list_of_subset(
-    sets1: List[Set[Any]], sets2: List[Set[Any]], expected: bool
+    sets1: Sequence[Set[Any]], sets2: Sequence[Set[Any]], expected: bool
 ):
     assert is_unordered_list_of_subsets(sets1, sets2) is expected

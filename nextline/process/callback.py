@@ -53,6 +53,10 @@ class Callback:
         self._pdbi_map: PdbIMap = {}
         self._to_canonic = ToCanonic()
         self._entering_thread: Optional[Thread] = None
+        self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
+        self._current_trace_call_map: Dict[
+            TraceNo, Tuple[FrameType, str, Any]
+        ] = {}
 
     def task_or_thread_start(
         self, trace_no: TraceNo, pdbi: PdbInterface
@@ -119,6 +123,34 @@ class Callback:
 
         self._registrar.put_trace_info(trace_info)
 
+    def trace_call_start(
+        self,
+        trace_no: TraceNo,
+        trace_args: Tuple[FrameType, str, Any],
+    ):
+        self._current_trace_call_map[trace_no] = trace_args
+
+    def trace_call_end(self, trace_no: TraceNo):
+        frame, event, _ = self._current_trace_call_map[trace_no]
+        file_name = self._to_canonic(frame.f_code.co_filename)
+        line_no = frame.f_lineno
+
+        if frame is not self._last_prompt_frame_map.get(trace_no):
+            return
+
+        prompt_info = PromptInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            prompt_no=PromptNo(-1),
+            open=False,
+            event=event,
+            file_name=file_name,
+            line_no=line_no,
+            trace_call_end=True,
+        )
+        self._registrar.put_prompt_info(prompt_info)
+        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+
     def prompt_start(
         self,
         trace_no: TraceNo,
@@ -145,6 +177,7 @@ class Callback:
         self._prompt_info_map[(trace_no, prompt_no)] = prompt_info
         self._registrar.put_prompt_info(prompt_info)
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+        self._last_prompt_frame_map[trace_no] = frame
 
     def prompt_end(
         self, trace_no: TraceNo, prompt_no: PromptNo, command: str

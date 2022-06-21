@@ -3,7 +3,10 @@ from __future__ import annotations
 import os
 import signal
 import asyncio
+from queue import Empty
 from multiprocessing import Queue, Process
+from threading import Event
+from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support
 from typing import Optional, Any
 
@@ -98,6 +101,9 @@ class Machine:
     def interrupt(self) -> None:
         self._state.interrupt()
 
+    def terminate(self) -> None:
+        self._state.terminate()
+
     async def finish(self) -> None:
         """Enter the finished state"""
         async with self._lock_finish:
@@ -187,6 +193,7 @@ class State(ObsoleteMixin):
 
     def close(self) -> State:
         self.assert_not_obsolete()
+        print(self.name)
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
@@ -194,6 +201,9 @@ class State(ObsoleteMixin):
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def interrupt(self) -> None:
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
+    def terminate(self) -> None:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def exception(self) -> Optional[Exception]:
@@ -250,23 +260,30 @@ class Running(State):
     def __init__(self, context: RunArg):
         self._context = context
         self._q_commands: QueueCommands = Queue()
-        self._q_done: QueueDone = Queue()
+        self._event = Event()
+        self._executor = ThreadPoolExecutor(max_workers=1)
+        self._f = self._executor.submit(self._run)
+        assert self._event.wait(2.0)
 
+    def _run(self):
+        q_done: QueueDone = Queue()
         self._p = Process(
             target=run,
-            args=(context, self._q_commands, self._q_done),
+            args=(self._context, self._q_commands, q_done),
             daemon=True,
         )
         self._p.start()
+        self._event.set()
+        self._p.join()
+        try:
+            return q_done.get(timeout=0.1)
+        except Empty:
+            return None, None  # ret, exc
 
     async def finish(self):
         self.assert_not_obsolete()
-        ret, exc = await to_thread(self._q_done.get)
-
-        # not always possible to join in a thread for unknown reason
-        # await to_thread(self._p.join)
-        self._p.join()
-
+        ret, exc = await to_thread(self._f.result)
+        self._executor.shutdown()
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
@@ -277,6 +294,9 @@ class Running(State):
     def interrupt(self) -> None:
         if self._p.pid:
             os.kill(self._p.pid, signal.SIGINT)
+
+    def terminate(self) -> None:
+        self._p.terminate()
 
 
 class Finished(State):

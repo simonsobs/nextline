@@ -103,46 +103,46 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     results = [s async for s in nextline.subscribe_prompt_info()]
     assert {run_no} == {r.run_no for r in results}
 
-    assert 116 == len(results)
+    assert 191 == len(results)
 
     expected: Dict[Any, int]
     actual: Counter[Any]
 
-    expected = {1: 48, 2: 26, 3: 26, 4: 10, 5: 6}
+    expected = {1: 72, 2: 39, 3: 39, 4: 25, 5: 16}
     actual = Counter(r.trace_no for r in results)
     assert actual == expected
 
     assert [r.prompt_no for r in results]
 
-    expected = {True: 58, False: 58}
+    expected = {True: 58, False: 133}
     actual = Counter(r.open for r in results)
     assert actual == expected
 
-    expected = {"line": 102, "return": 10, "call": 4}
+    expected = {"line": 153, "return": 22, "call": 11, "exception": 5}
     actual = Counter(r.event for r in results)
     assert actual == expected
 
-    expected = {True: 116}
+    expected = {True: 191}
     actual = Counter(r.file_name is not None for r in results)
     assert actual == expected
 
-    expected = {True: 116}
+    expected = {True: 191}
     actual = Counter(r.line_no is not None for r in results)
     assert actual == expected
 
-    expected = {True: 116}
+    expected = {True: 116, False: 75}
     actual = Counter(r.stdout is not None for r in results)
     assert actual == expected
 
-    expected = {None: 58, "next": 56, "step": 2}
+    expected = {None: 133, "next": 56, "step": 2}
     actual = Counter(r.command for r in results)
     assert actual == expected
 
-    expected = {True: 116}
+    expected = {True: 116, False: 75}
     actual = Counter(r.started_at is not None for r in results)
     assert actual == expected
 
-    expected = {True: 58, False: 58}
+    expected = {True: 58, False: 133}
     actual = Counter(r.ended_at is not None for r in results)
     assert actual == expected
 

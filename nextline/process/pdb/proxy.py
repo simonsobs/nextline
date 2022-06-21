@@ -55,6 +55,7 @@ class PdbInterface:
     ):
         self._trace_no = trace_no
         self._ci_map = context["pdb_ci_map"]
+        self._callback = context["callback"]
         self._opened = False
 
         q_stdin: Queue[str] = Queue()
@@ -87,10 +88,12 @@ class PdbInterface:
         @contextmanager
         def capture(frame, event, arg):
             self._trace_args = (frame, event, arg)
+            self._callback.trace_call_start(self._trace_no, self._trace_args)
             try:
                 yield
             finally:
                 self._trace_args = None
+                self._callback.trace_call_end(self._trace_no)
 
         def create_local_trace() -> TraceFunc:
             next_trace: TraceFunc | None = self._pdb.trace_dispatch

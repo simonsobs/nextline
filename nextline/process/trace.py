@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from asyncio import Task
+from functools import lru_cache
 from threading import Thread
 from weakref import WeakKeyDictionary
 import fnmatch
 
-from typing import TYPE_CHECKING, Set, Optional, Callable
+from collections.abc import Set, MutableSet
+
+from typing import TYPE_CHECKING, Optional, Callable
 from types import FrameType
 
 from .pdb.proxy import PdbInterfaceTraceFuncFactory
@@ -74,9 +77,16 @@ def Trace(context: Context) -> TraceFunc:
 
 
 def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
+    skip = frozenset(skip)
+
+    @lru_cache
+    def to_skip(module_name: str | None) -> bool:
+        # NOTE: _is_matched_to_any() is slow
+        return _is_matched_to_any(module_name, skip)
+
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         module_name = frame.f_globals.get("__name__")
-        if _is_matched_to_any(module_name, skip):
+        if to_skip(module_name):
             return None
         return trace(frame, event, arg)
 
@@ -94,7 +104,7 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
 
 
 def TraceAddFirstModule(
-    trace: TraceFunc, modules_to_trace: Set[str]
+    trace: TraceFunc, modules_to_trace: MutableSet[str]
 ) -> TraceFunc:
     first = True
 

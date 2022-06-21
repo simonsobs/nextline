@@ -36,8 +36,8 @@ def test_one(capsys):
     with peek_stdout_by_task_and_thread(to_peek=to_return, callback=callback):
         for t in threads:
             t.start()
-    for t in threads:
-        t.join()
+        for t in threads:
+            t.join()
     results = {
         k: "".join(v[1] for v in v)
         for k, v in groupby(
