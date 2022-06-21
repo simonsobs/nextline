@@ -65,6 +65,7 @@ class PdbInterface:
             pdbi=self,
             stdin=StreamIn(q_stdin),
             stdout=StreamOut(self._q_stdout),  # type: ignore
+            nosigint=True,
             readrc=False,
         )
 
