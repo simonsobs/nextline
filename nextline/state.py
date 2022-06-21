@@ -95,7 +95,7 @@ class Machine:
         self._state = self._state.run()
         self._state_changed()
 
-    def send_pdb_command(self, trace_id, command) -> None:
+    def send_pdb_command(self, trace_id: int, command: str) -> None:
         self._state.send_pdb_command(trace_id, command)
 
     def interrupt(self) -> None:
