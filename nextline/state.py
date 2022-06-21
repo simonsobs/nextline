@@ -7,7 +7,7 @@ from queue import Empty
 from multiprocessing import Queue, Process
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
-from tblib import pickling_support
+from tblib import pickling_support  # type: ignore
 from typing import Optional, Any
 
 from .utils import SubscribableDict, to_thread
