@@ -4,7 +4,8 @@ import os
 import signal
 import asyncio
 from queue import Empty
-from multiprocessing import Queue, Process
+
+import multiprocessing as mp
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
@@ -15,6 +16,8 @@ from .process.run import run, RunArg, QueueCommands, QueueDone
 from .registrar import Registrar
 from .types import RunNo, TraceNo
 from .count import RunNoCounter
+
+_mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
 
 pickling_support.install()
 
@@ -53,10 +56,11 @@ class Machine:
         self.registry = SubscribableDict[Any, Any]()
         self._run_no = RunNo(run_no_start_from - 1)
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._registrar = Registrar(self.registry)
+        queue = _mp.Queue()
+        self._registrar = Registrar(self.registry, queue)
 
         self.context = RunArg(
-            statement=statement, filename=filename, queue=self._registrar.queue
+            statement=statement, filename=filename, queue=queue
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -259,15 +263,15 @@ class Running(State):
 
     def __init__(self, context: RunArg):
         self._context = context
-        self._q_commands: QueueCommands = Queue()
+        self._q_commands: QueueCommands = _mp.Queue()
         self._event = Event()
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._f = self._executor.submit(self._run)
         assert self._event.wait(2.0)
 
     def _run(self):
-        q_done: QueueDone = Queue()
-        self._p = Process(
+        q_done: QueueDone = _mp.Queue()
+        self._p = _mp.Process(
             target=run,
             args=(self._context, self._q_commands, q_done),
             daemon=True,
@@ -283,6 +287,8 @@ class Running(State):
     async def finish(self):
         self.assert_not_obsolete()
         ret, exc = await to_thread(self._f.result)
+        print(type(exc), exc)
+        print(self._p)
         self._executor.shutdown()
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
@@ -293,6 +299,7 @@ class Running(State):
 
     def interrupt(self) -> None:
         if self._p.pid:
+            print(self._p.pid)
             os.kill(self._p.pid, signal.SIGINT)
 
     def terminate(self) -> None:
