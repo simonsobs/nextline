@@ -38,7 +38,9 @@ async def control(nextline: Nextline):
     async for prompt_info in nextline.subscribe_prompt_info():
         if not prompt_info.open:
             continue
-        nextline.send_pdb_command(prompt_info.trace_no, "next")
+        nextline.send_pdb_command(
+            "next", prompt_info.prompt_no, prompt_info.trace_no
+        )
         if prompt_info.event == "line" and prompt_info.line_no == 3:  # sleep()
             await asyncio.sleep(0.005)
             nextline.interrupt()

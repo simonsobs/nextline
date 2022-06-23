@@ -35,7 +35,9 @@ async def control(nextline: Nextline):
     async for prompt_info in nextline.subscribe_prompt_info():
         if not prompt_info.open:
             continue
-        nextline.send_pdb_command(prompt_info.trace_no, "next")
+        nextline.send_pdb_command(
+            "next", prompt_info.prompt_no, prompt_info.trace_no
+        )
 
 
 @pytest.fixture

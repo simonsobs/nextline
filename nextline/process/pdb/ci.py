@@ -16,26 +16,27 @@ def pdb_command_interface(
     queue_stdout: Queue[str | None],
     callback: Callback,
     prompt="(Pdb) ",
-) -> Tuple[Callable[[], None], Callable[[str], None]]:
+) -> Tuple[Callable[[], None], Callable[[str, PromptNo], None]]:
 
-    prompt_no: PromptNo
+    _prompt_no: PromptNo
 
     def wait_prompt() -> None:
         """receive stdout from pdb
 
         To be run in a thread during pdb._cmdloop()
         """
-        nonlocal prompt_no
+        nonlocal _prompt_no
         while out := _read_until_prompt(queue_stdout, prompt):
-            prompt_no = prompt_no_counter()
+            _prompt_no = prompt_no_counter()
+            # print(_prompt_no)
             callback.prompt_start(
                 trace_no=trace_no,
-                prompt_no=prompt_no,
+                prompt_no=_prompt_no,
                 trace_args=trace_args,
                 out=out,
             )
 
-    def send_command(command: str) -> None:
+    def send_command(command: str, prompt_no: PromptNo) -> None:
         """send a command to pdb"""
         callback.prompt_end(
             trace_no=trace_no, prompt_no=prompt_no, command=command

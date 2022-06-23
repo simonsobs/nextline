@@ -25,7 +25,7 @@ async def test_one(machine: Machine) -> None:
     del machine
     nextline = Nextline(SOURCE)
     task = asyncio.create_task(nextline.run())
-    nextline.send_pdb_command(1, "continue")
+    nextline.send_pdb_command("continue", 1, 1)
     await task
     nextline.exception()
     nextline.reset()
