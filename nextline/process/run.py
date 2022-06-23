@@ -9,8 +9,7 @@ from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
-from ..types import RunNo, TaskNo
-from ..types import TraceNo  # noqa: F401
+from ..types import RunNo, TraceNo
 from .trace import Trace
 from .call import call_with_trace
 from .callback import Callback, RegistrarProxy
@@ -22,7 +21,7 @@ QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[TraceNo, PdbCommand] | None]"
-PdbCiMap: TypeAlias = MutableMapping[TaskNo, Callable[[PdbCommand], Any]]
+PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand], Any]]
 
 
 class RunArg(TypedDict, total=False):
