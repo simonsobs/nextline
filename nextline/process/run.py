@@ -10,7 +10,7 @@ from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
 from ..types import RunNo, TaskNo
-from ..types import TraceNo  # noqa: F401 
+from ..types import TraceNo  # noqa: F401
 from .trace import Trace
 from .call import call_with_trace
 from .callback import Callback, RegistrarProxy
