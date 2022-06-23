@@ -99,8 +99,8 @@ class Machine:
         self._state = self._state.run()
         self._state_changed()
 
-    def send_pdb_command(self, trace_id: int, command: str) -> None:
-        self._state.send_pdb_command(trace_id, command)
+    def send_pdb_command(self, trace_no: int, command: str) -> None:
+        self._state.send_pdb_command(trace_no, command)
 
     def interrupt(self) -> None:
         self._state.interrupt()
@@ -199,8 +199,8 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
-        del trace_id, command
+    def send_pdb_command(self, trace_no: TraceNo, command: str) -> None:
+        del trace_no, command
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def interrupt(self) -> None:
@@ -291,8 +291,8 @@ class Running(State):
         self.obsolete()
         return finished
 
-    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
-        self._q_commands.put((trace_id, command))
+    def send_pdb_command(self, trace_no: TraceNo, command: str) -> None:
+        self._q_commands.put((trace_no, command))
 
     def interrupt(self) -> None:
         if self._p.pid:

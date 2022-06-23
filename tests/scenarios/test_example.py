@@ -186,10 +186,10 @@ async def control_execution(nextline: Nextline):
     await asyncio.gather(*pending)
 
 
-async def control_trace(nextline: Nextline, trace_id):
-    # print(f"control_trace({trace_id})")
+async def control_trace(nextline: Nextline, trace_no):
+    # print(f"control_trace({trace_no})")
     file_name = ""
-    async for s in nextline.subscribe_prompt_info_for(trace_id):
+    async for s in nextline.subscribe_prompt_info_for(trace_no):
         # await asyncio.sleep(0.01)
         if not s.open:
             continue
@@ -205,7 +205,7 @@ async def control_trace(nextline: Nextline, trace_id):
                 file_name=s.file_name,
             )
             command = find_command(line) or command
-        nextline.send_pdb_command(trace_id, command)
+        nextline.send_pdb_command(trace_no, command)
         # await asyncio.sleep(0.01)
 
 

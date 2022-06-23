@@ -93,8 +93,8 @@ def _compile(code, filename):
 def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
     def fn():
         while m := q_commands.get():
-            trace_id, command = m
-            pdb_ci = pdb_ci_map[trace_id]
+            trace_no, command = m
+            pdb_ci = pdb_ci_map[trace_no]
             pdb_ci(command)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
