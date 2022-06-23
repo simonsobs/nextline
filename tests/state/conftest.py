@@ -2,12 +2,17 @@ import pytest
 from unittest.mock import Mock
 
 from nextline.utils import ExcThread
+from queue import Queue
 
 
 @pytest.fixture(autouse=True)
-def monkey_patch_process(monkeypatch):
-    monkeypatch.setattr("nextline.state.Process", ExcThread)
-    yield
+def monkey_patch_mp(monkeypatch):
+    class mock_context:
+        Queue = Queue
+        Process = ExcThread
+
+    monkeypatch.setattr("nextline.state._mp", mock_context)
+    return
 
 
 @pytest.fixture

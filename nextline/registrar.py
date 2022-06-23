@@ -27,15 +27,13 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(self, registry: MutableMapping):
+    def __init__(
+        self, registry: MutableMapping, queue: Queue[Tuple[str, Any, bool]]
+    ):
         self._registry = registry
-        self._queue: Queue[Tuple[str, Any, bool]] = Queue()
+        self._queue = queue
         self._thread = ExcThread(target=self._relay, daemon=True)
         self._thread.start()
-
-    @property
-    def queue(self) -> Queue[Tuple[str, Any, bool]]:
-        return self._queue
 
     def close(self):
         self._queue.put(None)
