@@ -5,7 +5,7 @@ from operator import attrgetter
 from itertools import groupby
 from collections import Counter
 from pathlib import Path
-from typing import Optional, Set, Tuple
+from typing import Optional, Sequence, Set
 
 import pytest
 
@@ -172,7 +172,7 @@ async def run(nextline: Nextline):
 async def control_execution(nextline: Nextline):
     prev_ids: Set[int] = set()
     agen = agen_with_wait(nextline.subscribe_trace_ids())
-    pending: Tuple[asyncio.Future] = ()
+    pending: Sequence[asyncio.Future] = ()
     async for ids_ in agen:
         ids = set(ids_)
         new_ids, prev_ids = ids - prev_ids, ids  # type: ignore
