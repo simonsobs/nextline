@@ -5,7 +5,7 @@ from operator import attrgetter
 from itertools import groupby
 from collections import Counter
 from pathlib import Path
-from typing import Optional, Set, Tuple
+from typing import Optional, Sequence, Set
 
 import pytest
 
@@ -172,7 +172,7 @@ async def run(nextline: Nextline):
 async def control_execution(nextline: Nextline):
     prev_ids: Set[int] = set()
     agen = agen_with_wait(nextline.subscribe_trace_ids())
-    pending: Tuple[asyncio.Future] = ()
+    pending: Sequence[asyncio.Future] = ()
     async for ids_ in agen:
         ids = set(ids_)
         new_ids, prev_ids = ids - prev_ids, ids  # type: ignore
@@ -186,10 +186,10 @@ async def control_execution(nextline: Nextline):
     await asyncio.gather(*pending)
 
 
-async def control_trace(nextline: Nextline, trace_id):
-    # print(f"control_trace({trace_id})")
+async def control_trace(nextline: Nextline, trace_no):
+    # print(f"control_trace({trace_no})")
     file_name = ""
-    async for s in nextline.subscribe_prompt_info_for(trace_id):
+    async for s in nextline.subscribe_prompt_info_for(trace_no):
         # await asyncio.sleep(0.01)
         if not s.open:
             continue
@@ -205,7 +205,7 @@ async def control_trace(nextline: Nextline, trace_id):
                 file_name=s.file_name,
             )
             command = find_command(line) or command
-        nextline.send_pdb_command(trace_id, command)
+        nextline.send_pdb_command(command, s.prompt_no, trace_no)
         # await asyncio.sleep(0.01)
 
 

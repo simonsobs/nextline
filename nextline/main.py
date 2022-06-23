@@ -47,8 +47,8 @@ class Nextline:
         self.machine.run()
         await self.machine.finish()
 
-    def send_pdb_command(self, trace_id: int, command: str):
-        self.machine.send_pdb_command(trace_id, command)
+    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int):
+        self.machine.send_pdb_command(command, prompt_no, trace_no)
 
     def interrupt(self) -> None:
         self.machine.interrupt()

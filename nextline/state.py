@@ -14,7 +14,7 @@ from typing import Optional, Any
 from .utils import SubscribableDict, to_thread
 from .process.run import run, RunArg, QueueCommands, QueueDone
 from .registrar import Registrar
-from .types import RunNo, TraceNo
+from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
 
 _mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
@@ -99,8 +99,12 @@ class Machine:
         self._state = self._state.run()
         self._state_changed()
 
-    def send_pdb_command(self, trace_id: int, command: str) -> None:
-        self._state.send_pdb_command(trace_id, command)
+    def send_pdb_command(
+        self, command: str, prompt_no: int, trace_no: int
+    ) -> None:
+        self._state.send_pdb_command(
+            command, PromptNo(prompt_no), TraceNo(trace_no)
+        )
 
     def interrupt(self) -> None:
         self._state.interrupt()
@@ -197,11 +201,12 @@ class State(ObsoleteMixin):
 
     def close(self) -> State:
         self.assert_not_obsolete()
-        print(self.name)
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
-        del trace_id, command
+    def send_pdb_command(
+        self, command: str, prompt_no: PromptNo, trace_no: TraceNo
+    ) -> None:
+        del command, prompt_no, trace_no
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def interrupt(self) -> None:
@@ -287,19 +292,18 @@ class Running(State):
     async def finish(self):
         self.assert_not_obsolete()
         ret, exc = await to_thread(self._f.result)
-        print(type(exc), exc)
-        print(self._p)
         self._executor.shutdown()
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
 
-    def send_pdb_command(self, trace_id: TraceNo, command: str) -> None:
-        self._q_commands.put((trace_id, command))
+    def send_pdb_command(
+        self, command: str, prompt_no: PromptNo, trace_no: TraceNo
+    ) -> None:
+        self._q_commands.put((command, prompt_no, trace_no))
 
     def interrupt(self) -> None:
         if self._p.pid:
-            print(self._p.pid)
             os.kill(self._p.pid, signal.SIGINT)
 
     def terminate(self) -> None:

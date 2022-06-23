@@ -9,7 +9,7 @@ from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
-from ..types import RunNo, TraceNo
+from ..types import RunNo, TraceNo, PromptNo
 from .trace import Trace
 from .call import call_with_trace
 from .callback import Callback, RegistrarProxy
@@ -20,8 +20,10 @@ _T = TypeVar("_T")
 QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 
 PdbCommand: TypeAlias = str
-QueueCommands: TypeAlias = "Queue[Tuple[TraceNo, PdbCommand] | None]"
-PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand], Any]]
+QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
+PdbCiMap: TypeAlias = MutableMapping[
+    TraceNo, Callable[[PdbCommand, PromptNo], Any]
+]
 
 
 class RunArg(TypedDict, total=False):
@@ -91,14 +93,14 @@ def _compile(code, filename):
 
 @contextmanager
 def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
-    def fn():
+    def fn() -> None:
         while m := q_commands.get():
-            trace_id, command = m
-            pdb_ci = pdb_ci_map[trace_id]
-            pdb_ci(command)
+            command, prompt_no, trace_no = m
+            pdb_ci = pdb_ci_map[trace_no]
+            pdb_ci(command, prompt_no)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(try_again_on_error, fn)
+        future = executor.submit(try_again_on_error, fn)  # type: ignore
         try:
             yield
         finally:

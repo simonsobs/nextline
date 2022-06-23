@@ -72,7 +72,7 @@ def respond_prompt(q_registrar, q_commands):
             continue
         if not prompt_info.open:
             continue
-        q_commands.put((prompt_info.trace_no, "next"))
+        q_commands.put(("next", prompt_info.prompt_no, prompt_info.trace_no))
 
 
 @pytest.fixture
