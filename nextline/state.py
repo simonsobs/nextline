@@ -9,10 +9,11 @@ import multiprocessing as mp
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
+import logging
 from typing import Optional, Any
 
 from .utils import SubscribableDict, to_thread
-from .process.run import run, RunArg, QueueCommands, QueueDone
+from .process.run import run, RunArg, QueueCommands, QueueDone, QueueLogging
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
@@ -275,15 +276,25 @@ class Running(State):
         assert self._event.wait(2.0)
 
     def _run(self):
+        q_logging: QueueLogging = _mp.Queue()
         q_done: QueueDone = _mp.Queue()
+
         self._p = _mp.Process(
             target=run,
-            args=(self._context, self._q_commands, q_done),
+            args=(self._context, self._q_commands, q_done, q_logging),
             daemon=True,
         )
-        self._p.start()
-        self._event.set()
-        self._p.join()
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            ft = executor.submit(logger_thread, q_logging)
+
+            self._p.start()
+            self._event.set()
+            self._p.join()
+
+            q_logging.put(None)
+            ft.result()
+
         try:
             return q_done.get(timeout=0.1)
         except Empty:
@@ -385,3 +396,12 @@ class Closed(State):
     def close(self):
         self.assert_not_obsolete()
         return self
+
+
+def logger_thread(queue: QueueLogging):
+    # https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
+    # https://github.com/alphatwirl/mantichora/blob/v0.12.0/mantichora/hubmp.py
+    while (record := queue.get()) is not None:
+        logger = logging.getLogger(record.name)
+        if logger.getEffectiveLevel() <= record.levelno:
+            logger.handle(record)

@@ -19,8 +19,9 @@ def test_q_done_on_exception(q_done, monkey_patch_run):
     del monkey_patch_run
     context = RunArg()
     q_commands = Mock()
+    q_logging = Mock()
     with pytest.raises(MockError):
-        run(context, q_commands, q_done)
+        run(context, q_commands, q_done, q_logging)
     assert (None, None) == q_done.get()
 
 
@@ -41,10 +42,11 @@ async def test_one(
     context: RunArg,
     q_commands,
     q_done,
+    q_logging,
     task_send_commands,
 ):
     del task_send_commands
-    await to_thread(run, context, q_commands, q_done)
+    await to_thread(run, context, q_commands, q_done, q_logging)
     result, exception = q_done.get()
     assert result is None
     if expected_exception:
@@ -140,5 +142,11 @@ def q_commands():
 
 @pytest.fixture
 def q_done():
+    y = queue.Queue()
+    return y
+
+
+@pytest.fixture
+def q_logging():
     y = queue.Queue()
     return y

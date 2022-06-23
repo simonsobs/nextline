@@ -3,7 +3,9 @@ from __future__ import annotations
 from multiprocessing import Queue
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from logging import getLogger
+from logging import getLogger, DEBUG
+from logging import LogRecord  # noqa: F401
+from logging.handlers import QueueHandler
 
 from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
@@ -18,6 +20,7 @@ from . import script
 _T = TypeVar("_T")
 
 QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
+QueueLogging: TypeAlias = "Queue[LogRecord]"
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
@@ -39,12 +42,25 @@ class Context(TypedDict):
     modules_to_trace: Set[str]
 
 
-def run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
+def run(
+    run_arg: RunArg,
+    q_commands: QueueCommands,
+    q_done: QueueDone,
+    q_logging: QueueLogging,
+):
     try:
+        _configure_logger(q_logging)
         _run(run_arg, q_commands, q_done)
     except BaseException:
         q_done.put((None, None))
         raise
+
+
+def _configure_logger(q_logging: QueueLogging):
+    handler = QueueHandler(q_logging)
+    logger = getLogger()
+    logger.setLevel(DEBUG)
+    logger.addHandler(handler)
 
 
 def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
