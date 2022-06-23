@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from multiprocessing import Queue
+from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger, DEBUG

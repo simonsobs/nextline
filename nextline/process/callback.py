@@ -4,7 +4,7 @@ import os
 from asyncio import Task
 import threading
 from threading import Thread
-import multiprocessing
+from queue import Queue
 from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
@@ -222,7 +222,7 @@ class Callback:
 
 
 class RegistrarProxy:
-    def __init__(self, queue: multiprocessing.Queue[Tuple[str, Any, bool]]):
+    def __init__(self, queue: Queue[Tuple[str, Any, bool]]):
         self._queue = queue
 
     def put_trace_nos(self, trace_nos: Tuple[TraceNo, ...]) -> None:
