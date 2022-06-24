@@ -15,7 +15,7 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.process.run import QueueCommands, QueueDone, QueueLogging, RunArg
+from nextline.process.run import QueueCommands, QueueDone, RunArg
 from nextline.types import PromptNo, TraceNo
 
 
@@ -46,9 +46,8 @@ class BaseTestState(ABC):
             run_arg: RunArg,
             q_commands: QueueCommands,
             q_done: QueueDone,
-            q_logging: QueueLogging,
         ) -> None:
-            del run_arg, q_commands, q_logging
+            del run_arg, q_commands
             q_done.put(mock_run_result_exception)
 
         wrap = Mock(wraps=run)
