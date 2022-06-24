@@ -270,17 +270,6 @@ class Initialized(State):
         return closed
 
 
-class ConfigureLogger:
-    def __init__(self, queue: QueueLogging):
-        self._queue = queue
-
-    def __call__(self):
-        handler = QueueHandler(self._queue)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(handler)
-
-
 class Running(State):
     """The state "running", the script is being executed.
 
@@ -413,6 +402,17 @@ class Closed(State):
     def close(self):
         self.assert_not_obsolete()
         return self
+
+
+class ConfigureLogger:
+    def __init__(self, queue: QueueLogging):
+        self._queue = queue
+
+    def __call__(self):
+        handler = QueueHandler(self._queue)
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
 
 
 def logger_thread(queue: QueueLogging):
