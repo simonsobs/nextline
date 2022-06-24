@@ -19,9 +19,8 @@ def test_q_done_on_exception(q_done, monkey_patch_run):
     del monkey_patch_run
     context = RunArg()
     q_commands = Mock()
-    q_logging = Mock()
     with pytest.raises(MockError):
-        run(context, q_commands, q_done, q_logging)
+        run(context, q_commands, q_done)
     assert (None, None) == q_done.get()
 
 
@@ -42,11 +41,10 @@ async def test_one(
     context: RunArg,
     q_commands,
     q_done,
-    q_logging,
     task_send_commands,
 ):
     del task_send_commands
-    await to_thread(run, context, q_commands, q_done, q_logging)
+    await to_thread(run, context, q_commands, q_done)
     result, exception = q_done.get()
     assert result is None
     if expected_exception:
@@ -81,12 +79,14 @@ def respond_prompt(q_registrar, q_commands):
 def context(
     statement: str,
     q_registrar: multiprocessing.Queue[Tuple[str, Any, bool]],
+    q_logging,
 ) -> RunArg:
     y = RunArg(
         run_no=RunNo(1),
         statement=statement,
         filename="<string>",
         queue=q_registrar,
+        q_logging=q_logging,
     )
     return y
 

@@ -278,10 +278,11 @@ class Running(State):
     def _run(self):
         q_logging: QueueLogging = _mp.Queue()
         q_done: QueueDone = _mp.Queue()
+        self._context["q_logging"] = q_logging
 
         self._p = _mp.Process(
             target=run,
-            args=(self._context, self._q_commands, q_done, q_logging),
+            args=(self._context, self._q_commands, q_done),
             daemon=True,
         )
 
