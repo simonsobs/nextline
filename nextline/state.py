@@ -4,17 +4,20 @@ import os
 import signal
 import asyncio
 from queue import Empty
+from queue import Queue  # noqa F401
 
 import multiprocessing as mp
+from multiprocessing.context import BaseContext
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
 import logging
 from logging.handlers import QueueHandler
 from typing import Optional, Any
+from typing_extensions import TypeAlias
 
 from .utils import SubscribableDict, to_thread
-from .process.run import run, RunArg, QueueCommands, QueueDone, QueueLogging
+from .process.run import run, RunArg, QueueCommands, QueueDone
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
@@ -24,6 +27,8 @@ _mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
 pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
+
+QueueLogging: TypeAlias = "Queue[logging.LogRecord]"
 
 
 class Machine:
@@ -61,17 +66,13 @@ class Machine:
         queue = _mp.Queue()
         self._registrar = Registrar(self.registry, queue)
 
-        self._executor = ThreadPoolExecutor(max_workers=1)
-        self._q_logging: QueueLogging = _mp.Queue()
-        self._fut_logger = self._executor.submit(
-            logger_thread, self._q_logging
-        )
+        self._mp_logging = MultiprocessingLogging(context=_mp)
 
         self.context = RunArg(
             statement=statement,
             filename=filename,
             queue=queue,
-            init=ConfigureLogger(self._q_logging),
+            init=self._mp_logging.init,
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -160,9 +161,7 @@ class Machine:
             self._state_changed()
             await to_thread(self._registrar.close)
             await to_thread(self.registry.close)
-            self._q_logging.put(None)  # type: ignore
-            await to_thread(self._fut_logger.result)
-            await to_thread(self._executor.shutdown)
+            await to_thread(self._mp_logging.close)
 
 
 class StateObsoleteError(Exception):
@@ -422,3 +421,20 @@ def logger_thread(queue: QueueLogging):
         logger = logging.getLogger(record.name)
         if logger.getEffectiveLevel() <= record.levelno:
             logger.handle(record)
+
+
+class MultiprocessingLogging:
+    def __init__(self, context: BaseContext):
+        self._executor = ThreadPoolExecutor(max_workers=1)
+        self._q: QueueLogging = context.Queue()
+        self._fut = self._executor.submit(logger_thread, self._q)
+        self._init = ConfigureLogger(self._q)
+
+    @property
+    def init(self):
+        return self._init
+
+    def close(self) -> None:
+        self._q.put(None)  # type: ignore
+        self._fut.result()
+        self._executor.shutdown()

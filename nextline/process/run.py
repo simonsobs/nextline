@@ -4,7 +4,6 @@ from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
-from logging import LogRecord  # noqa: F401
 
 from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
@@ -19,7 +18,6 @@ from . import script
 _T = TypeVar("_T")
 
 QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
-QueueLogging: TypeAlias = "Queue[LogRecord]"
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
