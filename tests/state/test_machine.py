@@ -22,30 +22,27 @@ x = 2
 
 @pytest.mark.asyncio
 async def test_init():
-    obj = Machine(SOURCE)
-    assert "initialized" == obj.state_name
-    assert isinstance(obj.registry, SubscribableDict)
-    assert SOURCE == obj.registry.get("statement")
-    assert "<string>" == obj.registry.get("script_file_name")
-    await obj.close()
+    with Machine(SOURCE) as obj:
+        assert "initialized" == obj.state_name
+        assert isinstance(obj.registry, SubscribableDict)
+        assert SOURCE == obj.registry.get("statement")
+        assert "<string>" == obj.registry.get("script_file_name")
 
 
 @pytest.mark.asyncio
 async def test_repr():
-    obj = Machine(SOURCE)
-    repr(obj)
-    await obj.close()
+    with Machine(SOURCE) as obj:
+        repr(obj)
 
 
 @pytest.mark.asyncio
 async def test_state_name_unknown(monkeypatch):
-    obj = Machine(SOURCE)
-    with monkeypatch.context() as m:
-        m.setattr(obj, "_state", None)
-        assert "unknown" == obj.state_name
-        del obj._state
-        assert "unknown" == obj.state_name
-    await obj.close()
+    with Machine(SOURCE) as obj:
+        with monkeypatch.context() as m:
+            m.setattr(obj, "_state", None)
+            assert "unknown" == obj.state_name
+            del obj._state
+            assert "unknown" == obj.state_name
 
 
 @pytest.mark.asyncio
@@ -53,30 +50,29 @@ async def test_transitions():
     async def subscribe():
         return [y async for y in registry.subscribe("state_name")]
 
-    obj = Machine(SOURCE)
-    registry = obj.registry
-    t = asyncio.create_task(subscribe())
-    await asyncio.sleep(0)
-    assert "initialized" == obj.state_name
-    obj.run()
-    assert "running" == obj.state_name
-    await obj.finish()
-    assert "finished" == obj.state_name
-    obj.result()
-    obj.exception()
-    obj.reset()
-    assert "initialized" == obj.state_name
-    await obj.close()
-    assert "closed" == obj.state_name
-    expected = [
-        "initialized",
-        "running",
-        "finished",
-        "initialized",
-        "closed",
-    ]
-    assert expected == await t
-    await obj.close()
+    with Machine(SOURCE) as obj:
+        registry = obj.registry
+        t = asyncio.create_task(subscribe())
+        await asyncio.sleep(0)
+        assert "initialized" == obj.state_name
+        obj.run()
+        assert "running" == obj.state_name
+        await obj.finish()
+        assert "finished" == obj.state_name
+        obj.result()
+        obj.exception()
+        obj.reset()
+        assert "initialized" == obj.state_name
+        await obj.close()
+        assert "closed" == obj.state_name
+        expected = [
+            "initialized",
+            "running",
+            "finished",
+            "initialized",
+            "closed",
+        ]
+        assert expected == await t
 
 
 @pytest.mark.asyncio
@@ -84,29 +80,28 @@ async def test_reset_with_statement():
     async def subscribe():
         return [y async for y in registry.subscribe("state_name")]
 
-    obj = Machine(SOURCE)
-    registry = obj.registry
-    t = asyncio.create_task(subscribe())
-    await asyncio.sleep(0)
-    assert SOURCE == obj.registry.get("statement")
-    obj.run()
-    await obj.finish()
-    obj.reset(statement=SOURCE_TWO)
-    assert SOURCE_TWO == obj.registry.get("statement")
-    obj.run()
-    await obj.finish()
-    await obj.close()
-    expected = [
-        "initialized",
-        "running",
-        "finished",
-        "initialized",
-        "running",
-        "finished",
-        "closed",
-    ]
-    assert expected == await t
-    await obj.close()
+    with Machine(SOURCE) as obj:
+        registry = obj.registry
+        t = asyncio.create_task(subscribe())
+        await asyncio.sleep(0)
+        assert SOURCE == obj.registry.get("statement")
+        obj.run()
+        await obj.finish()
+        obj.reset(statement=SOURCE_TWO)
+        assert SOURCE_TWO == obj.registry.get("statement")
+        obj.run()
+        await obj.finish()
+        await obj.close()
+        expected = [
+            "initialized",
+            "running",
+            "finished",
+            "initialized",
+            "running",
+            "finished",
+            "closed",
+        ]
+        assert expected == await t
 
 
 @pytest.fixture(autouse=True)

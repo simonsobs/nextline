@@ -160,6 +160,13 @@ class Machine:
         self.registry.close()
         self._mp_logging.close()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        self._close()
+
 
 class StateObsoleteError(Exception):
     """Operation on an obsolete state object."""
