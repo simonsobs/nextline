@@ -61,8 +61,15 @@ class Machine:
         queue = _mp.Queue()
         self._registrar = Registrar(self.registry, queue)
 
+        self._executor = ThreadPoolExecutor(max_workers=1)
+        self._q_logging: QueueLogging = _mp.Queue()
+        self._fut_logger = self._executor.submit(logger_thread, self._q_logging)
+
         self.context = RunArg(
-            statement=statement, filename=filename, queue=queue
+            statement=statement,
+            filename=filename,
+            queue=queue,
+            init=ConfigureLogger(self._q_logging),
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -151,6 +158,9 @@ class Machine:
             self._state_changed()
             await to_thread(self._registrar.close)
             await to_thread(self.registry.close)
+            self._q_logging.put(None)  # type: ignore
+            await to_thread(self._fut_logger.result)
+            await to_thread(self._executor.shutdown)
 
 
 class StateObsoleteError(Exception):
@@ -283,12 +293,7 @@ class Running(State):
         self._context = context
         self._q_commands: QueueCommands = _mp.Queue()
         self._event = Event()
-        self._q_logging: QueueLogging = _mp.Queue()
-        self._context["init"] = ConfigureLogger(self._q_logging)
-        self._executor = ThreadPoolExecutor(max_workers=2)
-        self._fut_logger = self._executor.submit(
-            logger_thread, self._q_logging
-        )
+        self._executor = ThreadPoolExecutor(max_workers=1)
         self._fut_run = self._executor.submit(self._run)
         assert self._event.wait(2.0)
 
@@ -313,8 +318,6 @@ class Running(State):
     async def finish(self):
         self.assert_not_obsolete()
         ret, exc = await to_thread(self._fut_run.result)
-        self._q_logging.put(None)
-        await to_thread(self._fut_logger.result)
         self._executor.shutdown()
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()

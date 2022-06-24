@@ -27,21 +27,25 @@ async def test_init():
     assert isinstance(obj.registry, SubscribableDict)
     assert SOURCE == obj.registry.get("statement")
     assert "<string>" == obj.registry.get("script_file_name")
+    await obj.close()
 
 
 @pytest.mark.asyncio
 async def test_repr():
     obj = Machine(SOURCE)
     repr(obj)
+    await obj.close()
 
 
 @pytest.mark.asyncio
-async def test_state_name_unknown():
+async def test_state_name_unknown(monkeypatch):
     obj = Machine(SOURCE)
-    obj._state = None
-    assert "unknown" == obj.state_name
-    del obj._state
-    assert "unknown" == obj.state_name
+    with monkeypatch.context() as m:
+        m.setattr(obj, "_state", None)
+        assert "unknown" == obj.state_name
+        del obj._state
+        assert "unknown" == obj.state_name
+    await obj.close()
 
 
 @pytest.mark.asyncio
@@ -72,6 +76,7 @@ async def test_transitions():
         "closed",
     ]
     assert expected == await t
+    await obj.close()
 
 
 @pytest.mark.asyncio
@@ -101,6 +106,7 @@ async def test_reset_with_statement():
         "closed",
     ]
     assert expected == await t
+    await obj.close()
 
 
 @pytest.fixture(autouse=True)
