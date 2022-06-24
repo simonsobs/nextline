@@ -63,7 +63,9 @@ class Machine:
 
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._q_logging: QueueLogging = _mp.Queue()
-        self._fut_logger = self._executor.submit(logger_thread, self._q_logging)
+        self._fut_logger = self._executor.submit(
+            logger_thread, self._q_logging
+        )
 
         self.context = RunArg(
             statement=statement,
