@@ -41,6 +41,7 @@ async def test_one(
     context: RunArg,
     q_commands,
     q_done,
+    init,
     task_send_commands,
 ):
     del task_send_commands
@@ -52,6 +53,7 @@ async def test_one(
             raise exception
     else:
         exception is None
+    assert init.called
 
 
 @pytest.fixture
@@ -79,14 +81,14 @@ def respond_prompt(q_registrar, q_commands):
 def context(
     statement: str,
     q_registrar: multiprocessing.Queue[Tuple[str, Any, bool]],
-    q_logging,
+    init,
 ) -> RunArg:
     y = RunArg(
         run_no=RunNo(1),
         statement=statement,
         filename="<string>",
         queue=q_registrar,
-        q_logging=q_logging,
+        init=init,
     )
     return y
 
@@ -147,6 +149,5 @@ def q_done():
 
 
 @pytest.fixture
-def q_logging():
-    y = queue.Queue()
-    return y
+def init():
+    return Mock()

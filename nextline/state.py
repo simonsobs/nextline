@@ -10,6 +10,7 @@ from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
 import logging
+from logging.handlers import QueueHandler
 from typing import Optional, Any
 
 from .utils import SubscribableDict, to_thread
@@ -257,6 +258,17 @@ class Initialized(State):
         return closed
 
 
+class ConfigureLogger:
+    def __init__(self, queue: QueueLogging):
+        self._queue = queue
+
+    def __call__(self):
+        handler = QueueHandler(self._queue)
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
+
+
 class Running(State):
     """The state "running", the script is being executed.
 
@@ -278,7 +290,7 @@ class Running(State):
     def _run(self):
         q_logging: QueueLogging = _mp.Queue()
         q_done: QueueDone = _mp.Queue()
-        self._context["q_logging"] = q_logging
+        self._context["init"] = ConfigureLogger(q_logging)
 
         self._p = _mp.Process(
             target=run,

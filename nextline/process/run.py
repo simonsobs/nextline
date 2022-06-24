@@ -3,9 +3,8 @@ from __future__ import annotations
 from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from logging import getLogger, DEBUG
+from logging import getLogger
 from logging import LogRecord  # noqa: F401
-from logging.handlers import QueueHandler
 
 from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
 from typing import Any, Tuple  # noqa F401
@@ -34,7 +33,7 @@ class RunArg(TypedDict, total=False):
     statement: str
     filename: str
     queue: Queue[Tuple[str, Any, bool]]
-    q_logging: QueueLogging
+    init: Callable[[], Any]
 
 
 class Context(TypedDict):
@@ -55,17 +54,9 @@ def run(
         raise
 
 
-def _configure_logger(q_logging: QueueLogging):
-    handler = QueueHandler(q_logging)
-    logger = getLogger()
-    logger.setLevel(DEBUG)
-    logger.addHandler(handler)
-
-
 def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
 
-    q_logging = run_arg["q_logging"]
-    _configure_logger(q_logging)
+    run_arg["init"]()
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
