@@ -3,6 +3,7 @@ __all__ = [
     "ThreadTaskIdComposer",
     "ThreadSafeAsyncioEvent",
     "ToLoop",
+    "MultiprocessingLogging",
     "peek_stdout",
     "peek_stderr",
     "peek_textio",
@@ -22,6 +23,7 @@ from .subscribablequeue import SubscribableQueue
 from .thread_task_id import ThreadTaskIdComposer
 from .thread_safe_event import ThreadSafeAsyncioEvent
 from .loop import ToLoop
+from .multiprocessing_logging import MultiprocessingLogging
 from .peek import peek_stdout, peek_stderr, peek_textio
 from .subscribabledict import SubscribableDict
 from .thread_exception import ExcThread

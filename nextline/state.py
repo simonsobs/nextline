@@ -7,16 +7,12 @@ from queue import Empty
 from queue import Queue  # noqa F401
 
 import multiprocessing as mp
-from multiprocessing.context import BaseContext
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
-import logging
-from logging.handlers import QueueHandler
 from typing import Optional, Any
-from typing_extensions import TypeAlias
 
-from .utils import SubscribableDict, to_thread
+from .utils import SubscribableDict, to_thread, MultiprocessingLogging
 from .process.run import run, RunArg, QueueCommands, QueueDone
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
@@ -27,8 +23,6 @@ _mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
 pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
-
-QueueLogging: TypeAlias = "Queue[logging.LogRecord]"
 
 
 class Machine:
@@ -401,40 +395,3 @@ class Closed(State):
     def close(self):
         self.assert_not_obsolete()
         return self
-
-
-class ConfigureLogger:
-    def __init__(self, queue: QueueLogging):
-        self._queue = queue
-
-    def __call__(self):
-        handler = QueueHandler(self._queue)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(handler)
-
-
-def logger_thread(queue: QueueLogging):
-    # https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
-    # https://github.com/alphatwirl/mantichora/blob/v0.12.0/mantichora/hubmp.py
-    while (record := queue.get()) is not None:
-        logger = logging.getLogger(record.name)
-        if logger.getEffectiveLevel() <= record.levelno:
-            logger.handle(record)
-
-
-class MultiprocessingLogging:
-    def __init__(self, context: BaseContext):
-        self._executor = ThreadPoolExecutor(max_workers=1)
-        self._q: QueueLogging = context.Queue()
-        self._fut = self._executor.submit(logger_thread, self._q)
-        self._init = ConfigureLogger(self._q)
-
-    @property
-    def init(self):
-        return self._init
-
-    def close(self) -> None:
-        self._q.put(None)  # type: ignore
-        self._fut.result()
-        self._executor.shutdown()
