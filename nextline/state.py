@@ -151,11 +151,14 @@ class Machine:
     async def close(self) -> None:
         """Enter the closed state"""
         async with self._lock_close:
-            self._state = self._state.close()
-            self._state_changed()
-            await to_thread(self._registrar.close)
-            await to_thread(self.registry.close)
-            await to_thread(self._mp_logging.close)
+            await to_thread(self._close)
+
+    def _close(self) -> None:
+        self._state = self._state.close()
+        self._state_changed()
+        self._registrar.close()
+        self.registry.close()
+        self._mp_logging.close()
 
 
 class StateObsoleteError(Exception):
