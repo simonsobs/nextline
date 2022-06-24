@@ -283,14 +283,17 @@ class Running(State):
         self._context = context
         self._q_commands: QueueCommands = _mp.Queue()
         self._event = Event()
-        self._executor = ThreadPoolExecutor(max_workers=1)
-        self._f = self._executor.submit(self._run)
+        self._q_logging: QueueLogging = _mp.Queue()
+        self._context["init"] = ConfigureLogger(self._q_logging)
+        self._executor = ThreadPoolExecutor(max_workers=2)
+        self._fut_logger = self._executor.submit(
+            logger_thread, self._q_logging
+        )
+        self._fut_run = self._executor.submit(self._run)
         assert self._event.wait(2.0)
 
     def _run(self):
-        q_logging: QueueLogging = _mp.Queue()
         q_done: QueueDone = _mp.Queue()
-        self._context["init"] = ConfigureLogger(q_logging)
 
         self._p = _mp.Process(
             target=run,
@@ -298,15 +301,9 @@ class Running(State):
             daemon=True,
         )
 
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            ft = executor.submit(logger_thread, q_logging)
-
-            self._p.start()
-            self._event.set()
-            self._p.join()
-
-            q_logging.put(None)
-            ft.result()
+        self._p.start()
+        self._event.set()
+        self._p.join()
 
         try:
             return q_done.get(timeout=0.1)
@@ -315,7 +312,9 @@ class Running(State):
 
     async def finish(self):
         self.assert_not_obsolete()
-        ret, exc = await to_thread(self._f.result)
+        ret, exc = await to_thread(self._fut_run.result)
+        self._q_logging.put(None)
+        await to_thread(self._fut_logger.result)
         self._executor.shutdown()
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
