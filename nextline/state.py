@@ -4,7 +4,6 @@ import os
 import signal
 import asyncio
 from queue import Empty
-from queue import Queue  # noqa F401
 
 import multiprocessing as mp
 from threading import Event
