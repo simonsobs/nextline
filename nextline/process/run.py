@@ -72,7 +72,7 @@ def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 
         func = script.compose(code)
 
-        with relay_commands(q_commands, pdb_ci_map):
+        with relay_commands(pdb_ci_map):
             result, exception = call_with_trace(func, trace)
 
     return result, exception
@@ -85,8 +85,11 @@ def _compile(code, filename):
 
 
 @contextmanager
-def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
+def relay_commands(pdb_ci_map: PdbCiMap):
+    assert q_commands
+
     def fn() -> None:
+        assert q_commands
         while m := q_commands.get():
             command, prompt_no, trace_no = m
             pdb_ci = pdb_ci_map[trace_no]
