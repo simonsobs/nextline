@@ -24,6 +24,8 @@ PdbCiMap: TypeAlias = MutableMapping[
     TraceNo, Callable[[PdbCommand, PromptNo], Any]
 ]
 
+q_commands: QueueCommands | None = None
+
 
 class RunArg(TypedDict, total=False):
     run_no: RunNo
@@ -39,9 +41,7 @@ class Context(TypedDict):
     modules_to_trace: Set[str]
 
 
-def run(
-    run_arg: RunArg, q_commands: QueueCommands
-) -> Tuple[Any, BaseException | None]:
+def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")

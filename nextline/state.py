@@ -11,7 +11,8 @@ from tblib import pickling_support  # type: ignore
 from typing import Optional, Any, Tuple
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
-from .process.run import run, RunArg, QueueCommands
+from .process import run
+from .process.run import RunArg, QueueCommands
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
@@ -276,12 +277,13 @@ _run_args = []  # type: ignore
 
 def initializer(run_arg: RunArg, q_commands: QueueCommands):
     run_arg["init"]()
-    _run_args[:] = [run_arg, q_commands]
+    run.q_commands = q_commands
+    _run_args[:] = [run_arg]
 
 
 def _run():
     # print("_run()")
-    return run(*_run_args)
+    return run.run(*_run_args)
 
 
 class Running(State):
