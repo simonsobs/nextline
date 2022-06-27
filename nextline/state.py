@@ -6,9 +6,8 @@ import asyncio
 from queue import Empty
 
 import multiprocessing as mp
-from threading import Event
 from tblib import pickling_support  # type: ignore
-from typing import Optional, Any
+from typing import Optional, Any, Tuple
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
 from .process.run import run, RunArg, QueueCommands, QueueDone
@@ -284,17 +283,17 @@ class Running(State):
     @classmethod
     async def create(cls, context: RunArg):
         self = cls(context)
+        self._fut_run = asyncio.create_task(self._run())
+        assert await self._event.wait()
         return self
 
     def __init__(self, context: RunArg):
         self._context = context
         self._q_commands: QueueCommands = _mp.Queue()
-        self._event = Event()
-        loop = asyncio.get_running_loop()
-        self._fut_run = loop.run_in_executor(None, self._run)
-        assert self._event.wait(2.0)
+        self._event = asyncio.Event()
+        self._fut_run: asyncio.Future[Tuple[Any, Any]]
 
-    def _run(self):
+    async def _run(self):
         q_done: QueueDone = _mp.Queue()
 
         self._p = _mp.Process(
@@ -305,7 +304,7 @@ class Running(State):
 
         self._p.start()
         self._event.set()
-        self._p.join()
+        await to_thread(self._p.join)
 
         try:
             return q_done.get(timeout=0.1)
