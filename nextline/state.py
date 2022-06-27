@@ -275,6 +275,7 @@ _run_args = []  # type: ignore
 
 
 def initializer(run_arg: RunArg, q_commands: QueueCommands):
+    run_arg["init"]()
     _run_args[:] = [run_arg, q_commands]
 
 

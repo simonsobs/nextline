@@ -43,8 +43,6 @@ def run(
     run_arg: RunArg, q_commands: QueueCommands
 ) -> Tuple[Any, BaseException | None]:
 
-    run_arg["init"]()
-
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
     filename = run_arg.get("script_file_name", "<string>")
