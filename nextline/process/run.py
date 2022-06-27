@@ -25,6 +25,7 @@ PdbCiMap: TypeAlias = MutableMapping[
 ]
 
 q_commands: QueueCommands | None = None
+q_registry: Queue[Tuple[str, Any, bool]] | None = None
 
 
 class RunArg(TypedDict, total=False):
@@ -42,11 +43,11 @@ class Context(TypedDict):
 
 
 def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
+    assert q_registry
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
     filename = run_arg.get("script_file_name", "<string>")
-    queue = run_arg["queue"]
 
     try:
         code = _compile(statement, filename)
@@ -58,7 +59,7 @@ def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 
     with Callback(
         run_no=run_no,
-        registrar=RegistrarProxy(queue),
+        registrar=RegistrarProxy(q_registry),
         modules_to_trace=modules_to_trace,
     ) as callback:
 
