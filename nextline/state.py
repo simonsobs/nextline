@@ -5,14 +5,13 @@ from concurrent.futures.process import BrokenProcessPool
 import os
 import signal
 import asyncio
-from queue import Empty
 
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
 from typing import Optional, Any, Tuple
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
-from .process.run import run, RunArg, QueueCommands, QueueDone
+from .process.run import run, RunArg, QueueCommands
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
@@ -275,18 +274,13 @@ class Initialized(State):
 _run_args = []  # type: ignore
 
 
-def initializer(
-    run_arg: RunArg,
-    q_commands: QueueCommands,
-    q_done: QueueDone,
-):
-    _run_args[:] = [run_arg, q_commands, q_done]
+def initializer(run_arg: RunArg, q_commands: QueueCommands):
+    _run_args[:] = [run_arg, q_commands]
 
 
 def _run():
-    print("_run()")
-    run(*_run_args)
-    # print(_run_args)
+    # print("_run()")
+    return run(*_run_args)
 
 
 class Running(State):
@@ -313,31 +307,28 @@ class Running(State):
         self._fut_run: asyncio.Future[Tuple[Any, Any]]
 
     async def _run(self):
-        q_done: QueueDone = _mp.Queue()
 
         with ProcessPoolExecutor(
             max_workers=1,
             mp_context=_mp,
             initializer=initializer,
-            initargs=(self._context, self._q_commands, q_done),
+            initargs=(self._context, self._q_commands),
         ) as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(executor, _run)
             self._p = list(executor._processes.values())[0]
             self._event.set()
             try:
-                await f
+                return await f
             except BrokenProcessPool:
-                pass
-
-        try:
-            return q_done.get(timeout=0.1)
-        except Empty:
-            return None, None  # ret, exc
+                return None, None
 
     async def finish(self):
         self.assert_not_obsolete()
-        ret, exc = await self._fut_run
+        res = await self._fut_run
+        print(res)
+        ret, exc = res
+        # ret, exc = await self._fut_run
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished

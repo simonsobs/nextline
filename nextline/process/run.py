@@ -17,7 +17,6 @@ from . import script
 
 _T = TypeVar("_T")
 
-QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
@@ -41,18 +40,8 @@ class Context(TypedDict):
 
 
 def run(
-    run_arg: RunArg,
-    q_commands: QueueCommands,
-    q_done: QueueDone,
-):
-    try:
-        _run(run_arg, q_commands, q_done)
-    except BaseException:
-        q_done.put((None, None))
-        raise
-
-
-def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
+    run_arg: RunArg, q_commands: QueueCommands
+) -> Tuple[Any, BaseException | None]:
 
     run_arg["init"]()
 
@@ -64,8 +53,7 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
     try:
         code = _compile(statement, filename)
     except BaseException as e:
-        q_done.put((None, e))
-        return
+        return None, e
 
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
@@ -89,7 +77,7 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
         with relay_commands(q_commands, pdb_ci_map):
             result, exception = call_with_trace(func, trace)
 
-    q_done.put((result, exception))
+    return result, exception
 
 
 def _compile(code, filename):
