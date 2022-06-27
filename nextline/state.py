@@ -7,7 +7,6 @@ from queue import Empty
 
 import multiprocessing as mp
 from threading import Event
-from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
 from typing import Optional, Any
 
@@ -286,8 +285,8 @@ class Running(State):
         self._context = context
         self._q_commands: QueueCommands = _mp.Queue()
         self._event = Event()
-        self._executor = ThreadPoolExecutor(max_workers=1)
-        self._fut_run = self._executor.submit(self._run)
+        loop = asyncio.get_running_loop()
+        self._fut_run = loop.run_in_executor(None, self._run)
         assert self._event.wait(2.0)
 
     def _run(self):
@@ -310,8 +309,7 @@ class Running(State):
 
     async def finish(self):
         self.assert_not_obsolete()
-        ret, exc = await to_thread(self._fut_run.result)
-        self._executor.shutdown()
+        ret, exc = await self._fut_run
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
