@@ -1,4 +1,6 @@
 from __future__ import annotations
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 
 import os
 import signal
@@ -270,6 +272,23 @@ class Initialized(State):
         return closed
 
 
+_run_args = []  # type: ignore
+
+
+def initializer(
+    run_arg: RunArg,
+    q_commands: QueueCommands,
+    q_done: QueueDone,
+):
+    _run_args[:] = [run_arg, q_commands, q_done]
+
+
+def _run():
+    print("_run()")
+    run(*_run_args)
+    # print(_run_args)
+
+
 class Running(State):
     """The state "running", the script is being executed.
 
@@ -296,15 +315,20 @@ class Running(State):
     async def _run(self):
         q_done: QueueDone = _mp.Queue()
 
-        self._p = _mp.Process(
-            target=run,
-            args=(self._context, self._q_commands, q_done),
-            daemon=True,
-        )
-
-        self._p.start()
-        self._event.set()
-        await to_thread(self._p.join)
+        with ProcessPoolExecutor(
+            max_workers=1,
+            mp_context=_mp,
+            initializer=initializer,
+            initargs=(self._context, self._q_commands, q_done),
+        ) as executor:
+            loop = asyncio.get_running_loop()
+            f = loop.run_in_executor(executor, _run)
+            self._p = list(executor._processes.values())[0]
+            self._event.set()
+            try:
+                await f
+            except BrokenProcessPool:
+                pass
 
         try:
             return q_done.get(timeout=0.1)
