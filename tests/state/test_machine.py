@@ -55,7 +55,7 @@ async def test_transitions():
         t = asyncio.create_task(subscribe())
         await asyncio.sleep(0)
         assert "initialized" == obj.state_name
-        obj.run()
+        await obj.run()
         assert "running" == obj.state_name
         await obj.finish()
         assert "finished" == obj.state_name
@@ -85,11 +85,11 @@ async def test_reset_with_statement():
         t = asyncio.create_task(subscribe())
         await asyncio.sleep(0)
         assert SOURCE == obj.registry.get("statement")
-        obj.run()
+        await obj.run()
         await obj.finish()
         obj.reset(statement=SOURCE_TWO)
         assert SOURCE_TWO == obj.registry.get("statement")
-        obj.run()
+        await obj.run()
         await obj.finish()
         await obj.close()
         expected = [

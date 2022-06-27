@@ -44,7 +44,7 @@ class Nextline:
 
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
-        self.machine.run()
+        await self.machine.run()
         await self.machine.finish()
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int):

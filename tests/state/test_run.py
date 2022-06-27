@@ -20,7 +20,7 @@ class TestRunning(BaseTestState):
         assert "obsolete" in repr(state)
 
         with pytest.raises(StateObsoleteError):
-            state.run()
+            await state.run()
 
         with pytest.raises(StateObsoleteError):
             await state.finish()

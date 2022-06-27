@@ -16,7 +16,7 @@ async def test_transition(context: RunArg):
     state = Initialized(context=context)
     assert isinstance(state, Initialized)
 
-    state = state.run()
+    state = await state.run()
     assert isinstance(state, Running)
 
     state = await state.finish()

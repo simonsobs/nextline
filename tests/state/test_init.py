@@ -17,7 +17,7 @@ class TestInitialized(BaseTestState):
 
     @pytest.mark.asyncio
     async def test_run(self, state: State):
-        running = state.run()
+        running = await state.run()
         assert isinstance(running, Running)
         await self.assert_obsolete(state)
         finished = await running.finish()

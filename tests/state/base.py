@@ -73,7 +73,7 @@ class BaseTestState(ABC):
     async def running(
         self, initialized: Initialized
     ) -> AsyncGenerator[Running, None]:
-        y = initialized.run()
+        y = await initialized.run()
         yield y
         if y.is_obsolete():
             return
@@ -112,7 +112,7 @@ class BaseTestState(ABC):
         assert "obsolete" in repr(state)
 
         with pytest.raises(StateObsoleteError):
-            state.run()
+            await state.run()
 
         with pytest.raises(StateObsoleteError):
             await state.finish()
@@ -123,9 +123,9 @@ class BaseTestState(ABC):
         with pytest.raises(StateObsoleteError):
             state.close()
 
-    def test_run(self, state: State):
+    async def test_run(self, state: State):
         with pytest.raises(StateMethodError):
-            state.run()
+            await state.run()
 
     @pytest.mark.asyncio
     async def test_finish(self, state: State):

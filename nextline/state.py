@@ -98,9 +98,9 @@ class Machine:
         except BaseException:
             return "unknown"
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """Enter the running state"""
-        self._state = self._state.run()
+        self._state = await self._state.run()
         self._state_changed()
 
     def send_pdb_command(
@@ -202,7 +202,7 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
-    def run(self) -> State:
+    async def run(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -252,9 +252,9 @@ class Initialized(State):
     def __init__(self, context: RunArg):
         self._context = context
 
-    def run(self):
+    async def run(self):
         self.assert_not_obsolete()
-        running = Running(self._context)
+        running = await Running.create(self._context)
         self.obsolete()
         return running
 
@@ -280,6 +280,11 @@ class Running(State):
     """
 
     name = "running"
+
+    @classmethod
+    async def create(cls, context: RunArg):
+        self = cls(context)
+        return self
 
     def __init__(self, context: RunArg):
         self._context = context
