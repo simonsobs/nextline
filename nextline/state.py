@@ -121,9 +121,7 @@ class Machine:
     def send_pdb_command(
         self, command: str, prompt_no: int, trace_no: int
     ) -> None:
-        self._state.send_pdb_command(
-            command, PromptNo(prompt_no), TraceNo(trace_no)
-        )
+        self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
         self._state.interrupt()
@@ -233,12 +231,6 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def send_pdb_command(
-        self, command: str, prompt_no: PromptNo, trace_no: TraceNo
-    ) -> None:
-        del command, prompt_no, trace_no
-        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
-
     def interrupt(self) -> None:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -311,7 +303,6 @@ class Running(State):
 
     def __init__(self, context: Context):
         self._context = context
-        self._q_commands = context["q_commands"]
         self._event = asyncio.Event()
         self._fut_run: asyncio.Future[Tuple[Any, Any]]
 
@@ -343,11 +334,6 @@ class Running(State):
         finished = Finished(self._context, result=ret, exception=exc)
         self.obsolete()
         return finished
-
-    def send_pdb_command(
-        self, command: str, prompt_no: PromptNo, trace_no: TraceNo
-    ) -> None:
-        self._q_commands.put((command, prompt_no, trace_no))
 
     def interrupt(self) -> None:
         if self._p.pid:
