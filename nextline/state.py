@@ -8,7 +8,7 @@ import asyncio
 
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
-from typing import Optional, Any, Tuple
+from typing import Optional, Any, Tuple, TypedDict
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
 from .process import run
@@ -22,6 +22,10 @@ _mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
 pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
+
+
+class Context(TypedDict):
+    run_arg: RunArg
 
 
 class Machine:
@@ -61,11 +65,13 @@ class Machine:
 
         self._mp_logging = MultiprocessingLogging(context=_mp)
 
-        self.context = RunArg(
-            statement=statement,
-            filename=filename,
-            queue=queue,
-            init=self._mp_logging.init,
+        self.context = Context(
+            run_arg=RunArg(
+                statement=statement,
+                filename=filename,
+                queue=queue,
+                init=self._mp_logging.init,
+            )
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -84,7 +90,7 @@ class Machine:
         self._registrar.state_change(self._state)
         if self._state.name == "initialized":
             self._run_no = self._run_no_count()
-            self.context["run_no"] = self._run_no
+            self.context["run_arg"]["run_no"] = self._run_no
             self._registrar.state_initialized(self._run_no)
         elif self._state.name == "running":
             self._registrar.run_start(self._run_no)
@@ -137,7 +143,7 @@ class Machine:
     ) -> None:
         """Enter the initialized state"""
         if statement:
-            self.context["statement"] = statement
+            self.context["run_arg"]["statement"] = statement
             self._registrar.script_change(
                 script=statement, filename=SCRIPT_FILE_NAME
             )
@@ -250,22 +256,22 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, context: RunArg):
+    def __init__(self, context: Context):
         self._context = context
 
-    async def run(self):
+    async def run(self) -> Running:
         self.assert_not_obsolete()
         running = await Running.create(self._context)
         self.obsolete()
         return running
 
-    def reset(self):
+    def reset(self) -> Initialized:
         self.assert_not_obsolete()
         initialized = Initialized(context=self._context)
         self.obsolete()
         return initialized
 
-    def close(self):
+    def close(self) -> Closed:
         self.assert_not_obsolete()
         closed = Closed()
         self.obsolete()
@@ -298,13 +304,13 @@ class Running(State):
     name = "running"
 
     @classmethod
-    async def create(cls, context: RunArg):
+    async def create(cls, context: Context):
         self = cls(context)
         self._fut_run = asyncio.create_task(self._run())
         assert await self._event.wait()
         return self
 
-    def __init__(self, context: RunArg):
+    def __init__(self, context: Context):
         self._context = context
         self._q_commands: QueueCommands = _mp.Queue()
         self._event = asyncio.Event()
@@ -316,7 +322,7 @@ class Running(State):
             max_workers=1,
             mp_context=_mp,
             initializer=initializer,
-            initargs=(self._context, self._q_commands),
+            initargs=(self._context["run_arg"], self._q_commands),
         ) as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(executor, _run)
@@ -327,7 +333,7 @@ class Running(State):
             except BrokenProcessPool:
                 return None, None
 
-    async def finish(self):
+    async def finish(self) -> Finished:
         self.assert_not_obsolete()
         res = await self._fut_run
         print(res)
@@ -368,7 +374,7 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, context: RunArg, result, exception):
+    def __init__(self, context: Context, result, exception):
         self._result = result
         self._exception = exception
 
@@ -398,19 +404,19 @@ class Finished(State):
 
         return self._result
 
-    async def finish(self):
+    async def finish(self) -> Finished:
         # This method can be called when Nextline.finish() is
         # asynchronously called multiple times.
         self.assert_not_obsolete()
         return self
 
-    def reset(self):
+    def reset(self) -> Initialized:
         self.assert_not_obsolete()
         initialized = Initialized(context=self._context)
         self.obsolete()
         return initialized
 
-    def close(self):
+    def close(self) -> Closed:
         self.assert_not_obsolete()
         closed = Closed()
         self.obsolete()
@@ -422,6 +428,6 @@ class Closed(State):
 
     name = "closed"
 
-    def close(self):
+    def close(self) -> Closed:
         self.assert_not_obsolete()
         return self
