@@ -43,6 +43,54 @@ def initializer(
     run.q_registry = q_registry
 
 
+async def run_(context: Context) -> Run:
+    return await Run.create(context)
+
+
+class Run:
+    @classmethod
+    async def create(cls, context: Context):
+        self = cls(context)
+        assert await self._event.wait()
+        return self
+
+    def __init__(self, context: Context):
+        self._context = context
+        self._event = asyncio.Event()
+        self._t = asyncio.create_task(self._run())
+
+    async def _run(self) -> Optional[Tuple[Any, Any]]:
+
+        executor_factory = self._context["executor_factory"]
+        with executor_factory() as executor:
+            loop = asyncio.get_running_loop()
+            f = loop.run_in_executor(
+                executor, self._context["run"], self._context["run_arg"]
+            )
+            if isinstance(executor, ProcessPoolExecutor):
+                self._p = list(executor._processes.values())[0]
+            self._event.set()
+            try:
+                return await f
+            except BrokenProcessPool:
+                return None, None
+
+    def interrupt(self) -> None:
+        if self._p and self._p.pid:
+            os.kill(self._p.pid, signal.SIGINT)
+
+    def terminate(self) -> None:
+        if self._p:
+            self._p.terminate()
+
+    def kill(self) -> None:
+        if self._p:
+            self._p.kill()
+
+    def __await__(self):
+        return self._t.__await__()
+
+
 class Machine:
     """State machine
 
@@ -299,54 +347,6 @@ class Initialized(State):
         closed = Closed()
         self.obsolete()
         return closed
-
-
-async def run_(context: Context) -> Run:
-    return await Run.create(context)
-
-
-class Run:
-    @classmethod
-    async def create(cls, context: Context):
-        self = cls(context)
-        assert await self._event.wait()
-        return self
-
-    def __init__(self, context: Context):
-        self._context = context
-        self._event = asyncio.Event()
-        self._t = asyncio.create_task(self._run())
-
-    async def _run(self) -> Optional[Tuple[Any, Any]]:
-
-        executor_factory = self._context["executor_factory"]
-        with executor_factory() as executor:
-            loop = asyncio.get_running_loop()
-            f = loop.run_in_executor(
-                executor, self._context["run"], self._context["run_arg"]
-            )
-            if isinstance(executor, ProcessPoolExecutor):
-                self._p = list(executor._processes.values())[0]
-            self._event.set()
-            try:
-                return await f
-            except BrokenProcessPool:
-                return None, None
-
-    def interrupt(self) -> None:
-        if self._p and self._p.pid:
-            os.kill(self._p.pid, signal.SIGINT)
-
-    def terminate(self) -> None:
-        if self._p:
-            self._p.terminate()
-
-    def kill(self) -> None:
-        if self._p:
-            self._p.kill()
-
-    def __await__(self):
-        return self._t.__await__()
 
 
 class Running(State):
