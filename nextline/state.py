@@ -46,7 +46,7 @@ async def run_(
     func: Callable[_P, Tuple[_T | None, BaseException | None]],
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
-) -> Run:
+) -> Run[_T, _P]:
     return await Run.create(executor_factory, func, *func_args, **func_kwargs)
 
 
