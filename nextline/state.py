@@ -47,11 +47,13 @@ _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 
-async def run_(context: Context) -> Run:
-    executor_factory = context["executor_factory"]
-    func = context["run"]
-    func_arg = context["run_arg"]
-    return await Run.create(executor_factory, func, func_arg)
+async def run_(
+    executor_factory: Callable[[], Executor],
+    func: Callable[_P, Tuple[_T | None, BaseException | None]],
+    *func_args: _P.args,
+    **func_kwargs: _P.kwargs,
+) -> Run:
+    return await Run.create(executor_factory, func, *func_args, **func_kwargs)
 
 
 class Run(Generic[_T, _P]):
@@ -383,7 +385,10 @@ class Running(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        self._run = await run_(context)
+        executor_factory = context["executor_factory"]
+        func = context["run"]
+        func_arg = context["run_arg"]
+        self._run = await run_(executor_factory, func, func_arg)
         return self
 
     def __init__(self, context: Context):
