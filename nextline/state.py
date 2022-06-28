@@ -11,7 +11,8 @@ import asyncio
 from functools import partial
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
-from typing import Callable, Optional, Any, Tuple, TypedDict
+from typing import Callable, Generic, Optional, Any, Tuple, TypedDict, TypeVar
+from typing_extensions import ParamSpec
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
 from .process import run
@@ -43,29 +44,50 @@ def initializer(
     run.q_registry = q_registry
 
 
+_T = TypeVar("_T")
+_P = ParamSpec("_P")
+
+
 async def run_(context: Context) -> Run:
-    return await Run.create(context)
+    executor_factory = context["executor_factory"]
+    func = context["run"]
+    func_arg = context["run_arg"]
+    return await Run.create(executor_factory, func, func_arg)
 
 
-class Run:
+class Run(Generic[_T]):
     @classmethod
-    async def create(cls, context: Context):
-        self = cls(context)
+    async def create(
+        cls,
+        executor_factory: Callable[[], Executor],
+        func: Callable[_P, Tuple[_T | None, BaseException | None]],
+        *func_args: _P.args,
+        **func_kwargs: _P.kwargs,
+    ):
+        self = cls(executor_factory, func, *func_args, **func_kwargs)
         assert await self._event.wait()
         return self
 
-    def __init__(self, context: Context):
-        self._context = context
+    def __init__(
+        self,
+        executor_factory: Callable[[], Executor],
+        func: Callable[_P, Tuple[_T | None, BaseException | None]],
+        *func_args: _P.args,
+        **func_kwargs: _P.kwargs,
+    ):
+        self._executor_factory = executor_factory
+        self._func = func
+        self._func_args = func_args
+        self._func_kwargs = func_kwargs
         self._event = asyncio.Event()
         self._task = asyncio.create_task(self._run())
 
-    async def _run(self) -> Optional[Tuple[Any, Any]]:
+    async def _run(self) -> Tuple[Optional[_T], Optional[BaseException]]:
 
-        executor_factory = self._context["executor_factory"]
-        with executor_factory() as executor:
+        with self._executor_factory() as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(
-                executor, self._context["run"], self._context["run_arg"]
+                executor, self._func, *self._func_args, **self._func_kwargs
             )
             if isinstance(executor, ProcessPoolExecutor):
                 self._process = list(executor._processes.values())[0]
