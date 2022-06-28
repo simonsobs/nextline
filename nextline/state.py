@@ -282,20 +282,10 @@ class Initialized(State):
         return closed
 
 
-_run_args = []  # type: ignore
-
-
 def initializer(context: Context, q_commands: QueueCommands):
-    run_arg = context["run_arg"]
     context["init"]()
     run.q_commands = q_commands
     run.q_registry = context["q_registry"]
-    _run_args[:] = [run_arg]
-
-
-def _run():
-    # print("_run()")
-    return run.run(*_run_args)
 
 
 class Running(State):
@@ -330,7 +320,9 @@ class Running(State):
             initargs=(self._context, self._q_commands),
         ) as executor:
             loop = asyncio.get_running_loop()
-            f = loop.run_in_executor(executor, _run)
+            f = loop.run_in_executor(
+                executor, run.run, self._context["run_arg"]
+            )
             self._p = list(executor._processes.values())[0]
             self._event.set()
             try:
