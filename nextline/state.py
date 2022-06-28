@@ -10,7 +10,7 @@ import asyncio
 
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
-from typing import Optional, Any, Tuple, TypedDict
+from typing import Callable, Optional, Any, Tuple, TypedDict
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
 from .process import run
@@ -28,6 +28,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 class Context(TypedDict):
     q_registry: Queue[Tuple[str, Any, bool]]
+    init: Callable[[], Any]
     run_arg: RunArg
 
 
@@ -70,10 +71,10 @@ class Machine:
 
         self.context = Context(
             q_registry=queue,
+            init=self._mp_logging.init,
             run_arg=RunArg(
                 statement=statement,
                 filename=filename,
-                init=self._mp_logging.init,
             ),
         )
 
@@ -286,7 +287,7 @@ _run_args = []  # type: ignore
 
 def initializer(context: Context, q_commands: QueueCommands):
     run_arg = context["run_arg"]
-    run_arg["init"]()
+    context["init"]()
     run.q_commands = q_commands
     run.q_registry = context["q_registry"]
     _run_args[:] = [run_arg]

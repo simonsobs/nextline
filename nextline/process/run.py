@@ -32,7 +32,6 @@ class RunArg(TypedDict, total=False):
     run_no: RunNo
     statement: str
     filename: str
-    init: Callable[[], Any]
 
 
 class Context(TypedDict):
