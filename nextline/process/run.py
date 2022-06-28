@@ -32,7 +32,6 @@ class RunArg(TypedDict, total=False):
     run_no: RunNo
     statement: str
     filename: str
-    queue: Queue[Tuple[str, Any, bool]]
     init: Callable[[], Any]
 
 

@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from queue import Queue
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 
@@ -25,6 +27,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 
 class Context(TypedDict):
+    q_registry: Queue[Tuple[str, Any, bool]]
     run_arg: RunArg
 
 
@@ -66,12 +69,12 @@ class Machine:
         self._mp_logging = MultiprocessingLogging(context=_mp)
 
         self.context = Context(
+            q_registry=queue,
             run_arg=RunArg(
                 statement=statement,
                 filename=filename,
-                queue=queue,
                 init=self._mp_logging.init,
-            )
+            ),
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -281,10 +284,11 @@ class Initialized(State):
 _run_args = []  # type: ignore
 
 
-def initializer(run_arg: RunArg, q_commands: QueueCommands):
+def initializer(context: Context, q_commands: QueueCommands):
+    run_arg = context["run_arg"]
     run_arg["init"]()
     run.q_commands = q_commands
-    run.q_registry = run_arg["queue"]
+    run.q_registry = context["q_registry"]
     _run_args[:] = [run_arg]
 
 
@@ -316,13 +320,13 @@ class Running(State):
         self._event = asyncio.Event()
         self._fut_run: asyncio.Future[Tuple[Any, Any]]
 
-    async def _run(self):
+    async def _run(self) -> Tuple[Any, Any]:
 
         with ProcessPoolExecutor(
             max_workers=1,
             mp_context=_mp,
             initializer=initializer,
-            initargs=(self._context["run_arg"], self._q_commands),
+            initargs=(self._context, self._q_commands),
         ) as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(executor, _run)
