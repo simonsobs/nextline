@@ -11,7 +11,17 @@ import asyncio
 from functools import partial
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
-from typing import Callable, Generic, Optional, Any, Tuple, TypedDict, TypeVar
+from typing import (
+    Callable,
+    Coroutine,
+    Dict,
+    Generic,
+    Optional,
+    Any,
+    Tuple,
+    TypedDict,
+    TypeVar,
+)
 from typing_extensions import ParamSpec
 
 from .utils import SubscribableDict, to_thread, MultiprocessingLogging
@@ -105,9 +115,9 @@ class Run(Generic[_T, _P]):
 
 
 class Context(TypedDict):
-    executor_factory: Callable[[], Executor]
-    run: Callable[..., Any]
-    run_arg: RunArg
+    run: Callable[..., Coroutine[Any, Any, Run]]
+    run_args: Tuple
+    run_kwargs: Dict
 
 
 class Machine:
@@ -163,9 +173,9 @@ class Machine:
         )
 
         self.context = Context(
-            executor_factory=executor_factory,
-            run=run.run,
-            run_arg=self._run_arg,
+            run=run_,
+            run_args=(executor_factory, run.run, self._run_arg),
+            run_kwargs={},
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -383,10 +393,10 @@ class Running(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        executor_factory = context["executor_factory"]
-        func = context["run"]
-        func_arg = context["run_arg"]
-        self._run = await run_(executor_factory, func, func_arg)
+        run = context["run"]
+        run_args = context["run_args"]
+        run_kwargs = context["run_kwargs"]
+        self._run = await run(*run_args, **run_kwargs)
         return self
 
     def __init__(self, context: Context):
