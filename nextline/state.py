@@ -71,9 +71,7 @@ class Run(Generic[_T, _P]):
         **func_kwargs: _P.kwargs,
     ):
         self._executor_factory = executor_factory
-        self._func = func
-        self._func_args = func_args
-        self._func_kwargs = func_kwargs
+        self._func_call = partial(func, *func_args, **func_kwargs)
         self._event = asyncio.Event()
         self._task = asyncio.create_task(self._run())
 
@@ -81,9 +79,7 @@ class Run(Generic[_T, _P]):
 
         with self._executor_factory() as executor:
             loop = asyncio.get_running_loop()
-            f = loop.run_in_executor(
-                executor, self._func, *self._func_args, **self._func_kwargs
-            )
+            f = loop.run_in_executor(executor, self._func_call)
             if isinstance(executor, ProcessPoolExecutor):
                 self._process = list(executor._processes.values())[0]
             self._event.set()
