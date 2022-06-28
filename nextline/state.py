@@ -28,6 +28,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 class Context(TypedDict):
     q_registry: Queue[Tuple[str, Any, bool]]
+    q_commands: QueueCommands
     init: Callable[[], Any]
     run_arg: RunArg
 
@@ -67,10 +68,13 @@ class Machine:
         queue = _mp.Queue()
         self._registrar = Registrar(self.registry, queue)
 
+        self._q_commands: QueueCommands = _mp.Queue()
+
         self._mp_logging = MultiprocessingLogging(context=_mp)
 
         self.context = Context(
             q_registry=queue,
+            q_commands=self._q_commands,
             init=self._mp_logging.init,
             run_arg=RunArg(
                 statement=statement,
@@ -282,9 +286,9 @@ class Initialized(State):
         return closed
 
 
-def initializer(context: Context, q_commands: QueueCommands):
+def initializer(context: Context):
     context["init"]()
-    run.q_commands = q_commands
+    run.q_commands = context["q_commands"]
     run.q_registry = context["q_registry"]
 
 
@@ -307,7 +311,7 @@ class Running(State):
 
     def __init__(self, context: Context):
         self._context = context
-        self._q_commands: QueueCommands = _mp.Queue()
+        self._q_commands = context["q_commands"]
         self._event = asyncio.Event()
         self._fut_run: asyncio.Future[Tuple[Any, Any]]
 
@@ -317,7 +321,7 @@ class Running(State):
             max_workers=1,
             mp_context=_mp,
             initializer=initializer,
-            initargs=(self._context, self._q_commands),
+            initargs=(self._context,),
         ) as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(
