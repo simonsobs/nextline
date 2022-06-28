@@ -24,8 +24,16 @@ PdbCiMap: TypeAlias = MutableMapping[
     TraceNo, Callable[[PdbCommand, PromptNo], Any]
 ]
 
-q_commands: QueueCommands | None = None
-q_registry: Queue[Tuple[str, Any, bool]] | None = None
+_q_commands: QueueCommands | None = None
+_q_registry: Queue[Tuple[str, Any, bool]] | None = None
+
+
+def set_queues(
+    q_commands: QueueCommands, q_registry: Queue[Tuple[str, Any, bool]]
+) -> None:
+    global _q_commands, _q_registry
+    _q_commands = q_commands
+    _q_registry = q_registry
 
 
 class RunArg(TypedDict, total=False):
@@ -41,7 +49,7 @@ class Context(TypedDict):
 
 
 def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
-    assert q_registry
+    assert _q_registry
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
@@ -57,7 +65,7 @@ def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 
     with Callback(
         run_no=run_no,
-        registrar=RegistrarProxy(q_registry),
+        registrar=RegistrarProxy(_q_registry),
         modules_to_trace=modules_to_trace,
     ) as callback:
 
@@ -85,11 +93,11 @@ def _compile(code, filename):
 
 @contextmanager
 def relay_commands(pdb_ci_map: PdbCiMap):
-    assert q_commands
+    assert _q_commands
 
     def fn() -> None:
-        assert q_commands
-        while m := q_commands.get():
+        assert _q_commands
+        while m := _q_commands.get():
             command, prompt_no, trace_no = m
             pdb_ci = pdb_ci_map[trace_no]
             pdb_ci(command, prompt_no)
@@ -99,7 +107,7 @@ def relay_commands(pdb_ci_map: PdbCiMap):
         try:
             yield
         finally:
-            q_commands.put(None)
+            _q_commands.put(None)
             future.result()
 
 

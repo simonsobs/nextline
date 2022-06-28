@@ -40,8 +40,7 @@ def initializer(
     q_registry: Queue[Tuple[str, Any, bool]],
 ):
     init_logging()
-    run.q_commands = q_commands
-    run.q_registry = q_registry
+    run.set_queues(q_commands, q_registry)
 
 
 _T = TypeVar("_T")
