@@ -29,6 +29,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 class Context(TypedDict):
     executor_factory: Callable[[], Executor]
+    run: Callable[..., Any]
     run_arg: RunArg
 
 
@@ -91,6 +92,7 @@ class Machine:
 
         self.context = Context(
             executor_factory=executor_factory,
+            run=run.run,
             run_arg=RunArg(
                 statement=statement,
                 filename=filename,
@@ -322,7 +324,7 @@ class Running(State):
         with executor_factory() as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(
-                executor, run.run, self._context["run_arg"]
+                executor, self._context["run"], self._context["run_arg"]
             )
             if isinstance(executor, ProcessPoolExecutor):
                 self._p = list(executor._processes.values())[0]
