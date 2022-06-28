@@ -54,7 +54,7 @@ async def run_(context: Context) -> Run:
     return await Run.create(executor_factory, func, func_arg)
 
 
-class Run(Generic[_T]):
+class Run(Generic[_T, _P]):
     @classmethod
     async def create(
         cls,
