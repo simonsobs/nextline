@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from queue import Queue
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Executor, ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 
 import os
 import signal
 import asyncio
 
+from functools import partial
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
 from typing import Callable, Optional, Any, Tuple, TypedDict
@@ -27,8 +28,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 
 class Context(TypedDict):
-    initializer: Callable[..., Any]
-    initargs: Tuple[Any, ...]
+    executor_factory: Callable[[], Executor]
     run_arg: RunArg
 
 
@@ -81,9 +81,16 @@ class Machine:
 
         self._mp_logging = MultiprocessingLogging(context=_mp)
 
-        self.context = Context(
+        executor_factory = partial(
+            ProcessPoolExecutor,
+            max_workers=1,
+            mp_context=_mp,
             initializer=initializer,
             initargs=(self._mp_logging.init, self._q_commands, queue),
+        )
+
+        self.context = Context(
+            executor_factory=executor_factory,
             run_arg=RunArg(
                 statement=statement,
                 filename=filename,
@@ -307,20 +314,18 @@ class Running(State):
         self._context = context
         self._event = asyncio.Event()
         self._fut_run: asyncio.Future[Tuple[Any, Any]]
+        self._p: mp.Process | None = None
 
     async def _run(self) -> Tuple[Any, Any]:
 
-        with ProcessPoolExecutor(
-            max_workers=1,
-            mp_context=_mp,
-            initializer=self._context["initializer"],
-            initargs=self._context["initargs"],
-        ) as executor:
+        executor_factory = self._context["executor_factory"]
+        with executor_factory() as executor:
             loop = asyncio.get_running_loop()
             f = loop.run_in_executor(
                 executor, run.run, self._context["run_arg"]
             )
-            self._p = list(executor._processes.values())[0]
+            if isinstance(executor, ProcessPoolExecutor):
+                self._p = list(executor._processes.values())[0]
             self._event.set()
             try:
                 return await f
@@ -338,11 +343,12 @@ class Running(State):
         return finished
 
     def interrupt(self) -> None:
-        if self._p.pid:
+        if self._p and self._p.pid:
             os.kill(self._p.pid, signal.SIGINT)
 
     def terminate(self) -> None:
-        self._p.terminate()
+        if self._p:
+            self._p.terminate()
 
 
 class Finished(State):
