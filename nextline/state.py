@@ -57,7 +57,7 @@ class Run:
     def __init__(self, context: Context):
         self._context = context
         self._event = asyncio.Event()
-        self._t = asyncio.create_task(self._run())
+        self._task = asyncio.create_task(self._run())
 
     async def _run(self) -> Optional[Tuple[Any, Any]]:
 
@@ -68,7 +68,7 @@ class Run:
                 executor, self._context["run"], self._context["run_arg"]
             )
             if isinstance(executor, ProcessPoolExecutor):
-                self._p = list(executor._processes.values())[0]
+                self._process = list(executor._processes.values())[0]
             self._event.set()
             try:
                 return await f
@@ -76,19 +76,19 @@ class Run:
                 return None, None
 
     def interrupt(self) -> None:
-        if self._p and self._p.pid:
-            os.kill(self._p.pid, signal.SIGINT)
+        if self._process and self._process.pid:
+            os.kill(self._process.pid, signal.SIGINT)
 
     def terminate(self) -> None:
-        if self._p:
-            self._p.terminate()
+        if self._process:
+            self._process.terminate()
 
     def kill(self) -> None:
-        if self._p:
-            self._p.kill()
+        if self._process:
+            self._process.kill()
 
     def __await__(self):
-        return self._t.__await__()
+        return self._task.__await__()
 
 
 class Machine:
