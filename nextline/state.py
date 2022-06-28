@@ -28,12 +28,6 @@ pickling_support.install()
 SCRIPT_FILE_NAME = "<string>"
 
 
-class Context(TypedDict):
-    executor_factory: Callable[[], Executor]
-    run: Callable[..., Any]
-    run_arg: RunArg
-
-
 def initializer(
     init_logging: Callable[[], Any],
     q_commands: QueueCommands,
@@ -112,6 +106,12 @@ class Run(Generic[_T, _P]):
 
     def __await__(self):
         return self._task.__await__()
+
+
+class Context(TypedDict):
+    executor_factory: Callable[[], Executor]
+    run: Callable[..., Any]
+    run_arg: RunArg
 
 
 class Machine:
