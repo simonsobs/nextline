@@ -295,30 +295,23 @@ class Initialized(State):
         return closed
 
 
-class Running(State):
-    """The state "running", the script is being executed.
+async def run_(context: Context) -> Run:
+    return await Run.create(context)
 
-    Parameters
-    ----------
-        An instance of Context
-    """
 
-    name = "running"
-
+class Run:
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        self._fut_run = asyncio.create_task(self._run())
         assert await self._event.wait()
         return self
 
     def __init__(self, context: Context):
         self._context = context
         self._event = asyncio.Event()
-        self._fut_run: asyncio.Future[Tuple[Any, Any]]
-        self._p: mp.Process | None = None
+        self._t = asyncio.create_task(self._run())
 
-    async def _run(self) -> Tuple[Any, Any]:
+    async def _run(self) -> Optional[Tuple[Any, Any]]:
 
         executor_factory = self._context["executor_factory"]
         with executor_factory() as executor:
@@ -334,16 +327,6 @@ class Running(State):
             except BrokenProcessPool:
                 return None, None
 
-    async def finish(self) -> Finished:
-        self.assert_not_obsolete()
-        res = await self._fut_run
-        print(res)
-        ret, exc = res
-        # ret, exc = await self._fut_run
-        finished = Finished(self._context, result=ret, exception=exc)
-        self.obsolete()
-        return finished
-
     def interrupt(self) -> None:
         if self._p and self._p.pid:
             os.kill(self._p.pid, signal.SIGINT)
@@ -351,6 +334,46 @@ class Running(State):
     def terminate(self) -> None:
         if self._p:
             self._p.terminate()
+
+    def __await__(self):
+        return self._t.__await__()
+
+
+class Running(State):
+    """The state "running", the script is being executed.
+
+    Parameters
+    ----------
+        An instance of Context
+    """
+
+    name = "running"
+
+    @classmethod
+    async def create(cls, context: Context):
+        self = cls(context)
+        self._run = await run_(context)
+        return self
+
+    def __init__(self, context: Context):
+        self._context = context
+        self._run: Optional[Run] = None
+
+    async def finish(self) -> Finished:
+        self.assert_not_obsolete()
+        assert self._run
+        ret, exc = await self._run
+        finished = Finished(self._context, result=ret, exception=exc)
+        self.obsolete()
+        return finished
+
+    def interrupt(self) -> None:
+        if self._run:
+            self._run.interrupt()
+
+    def terminate(self) -> None:
+        if self._run:
+            self._run.terminate()
 
 
 class Finished(State):
