@@ -348,8 +348,6 @@ class Running(State):
 class Finished(State):
     """The state "finished", the script execution has finished
 
-    The thread which executed the script has been joined.
-
     Parameters
     ----------
     context : dict
