@@ -161,13 +161,15 @@ class Machine:
             initargs=(self._mp_logging.init, self._q_commands, queue),
         )
 
+        self._run_arg = RunArg(
+            statement=statement,
+            filename=filename,
+        )
+
         self.context = Context(
             executor_factory=executor_factory,
             run=run.run,
-            run_arg=RunArg(
-                statement=statement,
-                filename=filename,
-            ),
+            run_arg=self._run_arg,
         )
 
         self._registrar.script_change(script=statement, filename=filename)
@@ -186,7 +188,7 @@ class Machine:
         self._registrar.state_change(self._state)
         if self._state.name == "initialized":
             self._run_no = self._run_no_count()
-            self.context["run_arg"]["run_no"] = self._run_no
+            self._run_arg["run_no"] = self._run_no
             self._registrar.state_initialized(self._run_no)
         elif self._state.name == "running":
             self._registrar.run_start(self._run_no)
@@ -240,7 +242,7 @@ class Machine:
     ) -> None:
         """Enter the initialized state"""
         if statement:
-            self.context["run_arg"]["statement"] = statement
+            self._run_arg["statement"] = statement
             self._registrar.script_change(
                 script=statement, filename=SCRIPT_FILE_NAME
             )
