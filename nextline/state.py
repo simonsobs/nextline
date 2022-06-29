@@ -15,7 +15,6 @@ from tblib import pickling_support  # type: ignore
 from typing import (
     Callable,
     Coroutine,
-    Dict,
     Generic,
     Optional,
     Any,
@@ -121,9 +120,9 @@ class Context:
     run_no: RunNo
     statement: str
     filename: str
-    run: Callable[..., Coroutine[Any, Any, Run]]
-    run_args: Tuple
-    run_kwargs: Dict
+    runner: Callable[..., Coroutine[Any, Any, Run]]
+    func: Callable
+    run: Optional[Callable] = None
 
 
 class Machine:
@@ -173,24 +172,19 @@ class Machine:
 
         run_no = RunNo(run_no_start_from - 1)
 
-        self._run_arg = RunArg(
-            run_no=run_no,
-            statement=statement,
-            filename=filename,
-        )
-
         self._context = Context(
             registrar=self._registrar,
             run_no_count=RunNoCounter(run_no_start_from),
             run_no=run_no,
             statement=statement,
             filename=filename,
-            run=run_,
-            run_args=(executor_factory, run.run, self._run_arg),
-            run_kwargs={},
+            runner=partial(run_, executor_factory),
+            func=run.run,
         )
 
-        self._context.registrar.script_change(script=statement, filename=filename)
+        self._context.registrar.script_change(
+            script=statement, filename=filename
+        )
 
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
@@ -206,7 +200,6 @@ class Machine:
         self._context.registrar.state_change(self._state)
         if self._state.name == "initialized":
             self._context.run_no = self._context.run_no_count()
-            self._run_arg["run_no"] = self._context.run_no
             self._context.registrar.state_initialized(self._context.run_no)
         elif self._state.name == "running":
             self._context.registrar.run_start(self._context.run_no)
@@ -261,7 +254,6 @@ class Machine:
         """Enter the initialized state"""
         if statement:
             self._context.statement = statement
-            self._run_arg["statement"] = statement
             self._context.registrar.script_change(
                 script=statement, filename=SCRIPT_FILE_NAME
             )
@@ -405,10 +397,14 @@ class Running(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        run = context.run
-        run_args = context.run_args
-        run_kwargs = context.run_kwargs
-        self._run = await run(*run_args, **run_kwargs)
+        self._run = await context.runner(
+            context.func,
+            RunArg(
+                run_no=context.run_no,
+                statement=context.statement,
+                filename=context.filename,
+            ),
+        )
         return self
 
     def __init__(self, context: Context):
