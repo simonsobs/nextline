@@ -255,7 +255,6 @@ class Machine:
             )
         if run_no_start_from is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
-            # self._registrar.reset_run_no_count(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
 
