@@ -36,7 +36,7 @@ def set_queues(
     _q_registry = q_registry
 
 
-class RunArg(TypedDict, total=False):
+class RunArg(TypedDict):
     run_no: RunNo
     statement: str
     filename: str

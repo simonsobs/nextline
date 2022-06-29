@@ -168,6 +168,7 @@ class Machine:
         )
 
         self._run_arg = RunArg(
+            run_no=run_no_start_from,
             statement=statement,
             filename=filename,
         )
