@@ -8,6 +8,7 @@ import os
 import signal
 import asyncio
 
+import dataclasses
 from functools import partial
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
@@ -19,7 +20,6 @@ from typing import (
     Optional,
     Any,
     Tuple,
-    TypedDict,
     TypeVar,
 )
 from typing_extensions import ParamSpec
@@ -114,7 +114,8 @@ class Run(Generic[_T, _P]):
         return self._task.__await__()
 
 
-class Context(TypedDict):
+@dataclasses.dataclass
+class Context:
     run: Callable[..., Coroutine[Any, Any, Run]]
     run_args: Tuple
     run_kwargs: Dict
@@ -393,9 +394,9 @@ class Running(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        run = context["run"]
-        run_args = context["run_args"]
-        run_kwargs = context["run_kwargs"]
+        run = context.run
+        run_args = context.run_args
+        run_kwargs = context.run_kwargs
         self._run = await run(*run_args, **run_kwargs)
         return self
 
