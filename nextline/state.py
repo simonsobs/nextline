@@ -117,8 +117,10 @@ class Run(Generic[_T, _P]):
 @dataclasses.dataclass
 class Context:
     registrar: Registrar
-    run_no: RunNo
     run_no_count: Callable[[], RunNo]
+    run_no: RunNo
+    statement: str
+    filename: str
     run: Callable[..., Coroutine[Any, Any, Run]]
     run_args: Tuple
     run_kwargs: Dict
@@ -179,8 +181,10 @@ class Machine:
 
         self._context = Context(
             registrar=self._registrar,
-            run_no=run_no,
             run_no_count=RunNoCounter(run_no_start_from),
+            run_no=run_no,
+            statement=statement,
+            filename=filename,
             run=run_,
             run_args=(executor_factory, run.run, self._run_arg),
             run_kwargs={},
@@ -256,6 +260,7 @@ class Machine:
     ) -> None:
         """Enter the initialized state"""
         if statement:
+            self._context.statement = statement
             self._run_arg["statement"] = statement
             self._context.registrar.script_change(
                 script=statement, filename=SCRIPT_FILE_NAME
