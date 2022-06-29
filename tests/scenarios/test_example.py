@@ -40,21 +40,29 @@ async def assert_subscriptions(nextline: Nextline):
 
 
 async def assert_subscribe_state(nextline: Nextline):
-    expected = ["initialized", "running", "finished", "closed"]
+    expected = [
+        "initialized",
+        "running",
+        "finished",
+        "initialized",
+        "running",
+        "finished",
+        "closed",
+    ]
     actual = [s async for s in nextline.subscribe_state()]
     assert actual == expected
 
 
 async def assert_subscribe_run_no(nextline: Nextline):
-    expected = [1]
+    expected = [1, 2]
     actual = [s async for s in nextline.subscribe_run_no()]
     assert actual == expected
 
 
 async def assert_subscribe_run_info(nextline: Nextline):
-    run_no = 1
     results = [s async for s in nextline.subscribe_run_info()]
-    info0, info1 = results
+    info0, info1, info2, info3 = results
+    run_no = 1
     assert info0.run_no == info1.run_no == run_no
     assert info0.state == "running"
     assert info1.state == "finished"
@@ -69,12 +77,26 @@ async def assert_subscribe_run_info(nextline: Nextline):
     assert not info0.ended_at
     assert info1.ended_at
 
+    run_no = 2
+    assert info2.run_no == info3.run_no == run_no
+    assert info2.state == "running"
+    assert info3.state == "finished"
+    assert info2.script
+    assert info2.script == info3.script
+    assert info2.result is None
+    assert info3.result == "null"
+    assert info2.exception is None
+    assert info3.exception is None
+    assert info2.started_at
+    assert info2.started_at == info3.started_at
+    assert not info2.ended_at
+    assert info3.ended_at
+
 
 async def assert_subscribe_trace_info(nextline: Nextline):
-    run_no = 1
     results = [s async for s in nextline.subscribe_trace_info()]
-    assert {run_no} == {r.run_no for r in results}
-    assert {"running": 5, "finished": 5} == Counter(r.state for r in results)
+    assert {1, 2} == {r.run_no for r in results}
+    assert {"running": 10, "finished": 10} == Counter(r.state for r in results)
 
     groupby_state_ = groupby(
         sorted(results, key=attrgetter("state")),
@@ -99,50 +121,49 @@ async def assert_subscribe_trace_info(nextline: Nextline):
 
 
 async def assert_subscribe_prompt_info(nextline: Nextline):
-    run_no = 1
     results = [s async for s in nextline.subscribe_prompt_info()]
-    assert {run_no} == {r.run_no for r in results}
+    assert {1, 2} == {r.run_no for r in results}
 
-    assert 191 == len(results)
+    assert 382 == len(results)
 
     expected: Dict[Any, int]
     actual: Counter[Any]
 
-    expected = {1: 72, 2: 39, 3: 39, 4: 25, 5: 16}
+    expected = {1: 144, 2: 78, 3: 78, 4: 50, 5: 32}
     actual = Counter(r.trace_no for r in results)
     assert actual == expected
 
     assert [r.prompt_no for r in results]
 
-    expected = {True: 58, False: 133}
+    expected = {True: 116, False: 266}
     actual = Counter(r.open for r in results)
     assert actual == expected
 
-    expected = {"line": 153, "return": 22, "call": 11, "exception": 5}
+    expected = {"line": 306, "return": 44, "call": 22, "exception": 10}
     actual = Counter(r.event for r in results)
     assert actual == expected
 
-    expected = {True: 191}
+    expected = {True: 382}
     actual = Counter(r.file_name is not None for r in results)
     assert actual == expected
 
-    expected = {True: 191}
+    expected = {True: 382}
     actual = Counter(r.line_no is not None for r in results)
     assert actual == expected
 
-    expected = {True: 116, False: 75}
+    expected = {True: 232, False: 150}
     actual = Counter(r.stdout is not None for r in results)
     assert actual == expected
 
-    expected = {None: 133, "next": 56, "step": 2}
+    expected = {None: 266, "next": 112, "step": 4}
     actual = Counter(r.command for r in results)
     assert actual == expected
 
-    expected = {True: 116, False: 75}
+    expected = {True: 232, False: 150}
     actual = Counter(r.started_at is not None for r in results)
     assert actual == expected
 
-    expected = {True: 58, False: 133}
+    expected = {True: 116, False: 266}
     actual = Counter(r.ended_at is not None for r in results)
     assert actual == expected
 
@@ -163,6 +184,10 @@ async def assert_subscribe_stdout(nextline: Nextline):
 
 async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
+    await nextline.run()
+    nextline.exception()
+    nextline.result()
+    nextline.reset()
     await nextline.run()
     nextline.exception()
     nextline.result()
