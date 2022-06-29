@@ -173,7 +173,7 @@ class Machine:
             filename=filename,
         )
 
-        self.context = Context(
+        self._context = Context(
             run=run_,
             run_args=(executor_factory, run.run, self._run_arg),
             run_kwargs={},
@@ -184,7 +184,7 @@ class Machine:
         self._lock_finish = asyncio.Condition()
         self._lock_close = asyncio.Condition()
 
-        self._state: State = Initialized(self.context)
+        self._state: State = Initialized(self._context)
         self._state_changed()
 
     def __repr__(self):
