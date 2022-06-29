@@ -117,6 +117,7 @@ class Run(Generic[_T, _P]):
 @dataclasses.dataclass
 class Context:
     run_no: RunNo
+    run_no_count: Callable[[], RunNo]
     run: Callable[..., Coroutine[Any, Any, Run]]
     run_args: Tuple
     run_kwargs: Dict
@@ -152,8 +153,6 @@ class Machine:
     def __init__(self, statement: str, run_no_start_from=1):
         filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
-        run_no = RunNo(run_no_start_from - 1)
-        self._run_no_count = RunNoCounter(run_no_start_from)
         queue = _mp.Queue()
         self._registrar = Registrar(self.registry, queue)
 
@@ -169,6 +168,8 @@ class Machine:
             initargs=(self._mp_logging.init, self._q_commands, queue),
         )
 
+        run_no = RunNo(run_no_start_from - 1)
+
         self._run_arg = RunArg(
             run_no=run_no,
             statement=statement,
@@ -177,6 +178,7 @@ class Machine:
 
         self._context = Context(
             run_no=run_no,
+            run_no_count=RunNoCounter(run_no_start_from),
             run=run_,
             run_args=(executor_factory, run.run, self._run_arg),
             run_kwargs={},
@@ -197,7 +199,7 @@ class Machine:
     def _state_changed(self) -> None:
         self._registrar.state_change(self._state)
         if self._state.name == "initialized":
-            self._context.run_no = self._run_no_count()
+            self._context.run_no = self._context.run_no_count()
             self._run_arg["run_no"] = self._context.run_no
             self._registrar.state_initialized(self._context.run_no)
         elif self._state.name == "running":
@@ -257,7 +259,7 @@ class Machine:
                 script=statement, filename=SCRIPT_FILE_NAME
             )
         if run_no_start_from is not None:
-            self._run_no_count = RunNoCounter(run_no_start_from)
+            self._context.run_no_count = RunNoCounter(run_no_start_from)
         self._state = self._state.reset()
         self._state_changed()
 
