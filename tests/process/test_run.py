@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import queue
-import multiprocessing
-from typing import Any, Tuple
 
 import pytest
 
@@ -57,21 +55,14 @@ def respond_prompt(q_registrar, q_commands):
 
 
 @pytest.fixture
-def run_arg(
-    statement: str,
-    q_registrar: multiprocessing.Queue[Tuple[str, Any, bool]],
-) -> RunArg:
-    y = RunArg(
-        run_no=RunNo(1),
-        statement=statement,
-        filename="<string>",
-    )
+def run_arg(statement: str) -> RunArg:
+    y = RunArg(run_no=RunNo(1), statement=statement, filename="<string>")
     return y
 
 
 @pytest.fixture
 def q_registrar():
-    return multiprocessing.Queue()
+    return queue.Queue()
 
 
 @pytest.fixture
