@@ -116,6 +116,7 @@ class Run(Generic[_T, _P]):
 @dataclasses.dataclass
 class Context:
     registrar: Registrar
+    mp_logging: MultiprocessingLogging
     run_no_count: Callable[[], RunNo]
     run_no: RunNo
     statement: str
@@ -161,24 +162,25 @@ class Machine:
         filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
         queue = _mp.Queue()
-        self._registrar = Registrar(self.registry, queue)
 
         self._q_commands: QueueCommands = _mp.Queue()
 
-        self._mp_logging = MultiprocessingLogging(context=_mp)
+        mp_logging = MultiprocessingLogging(context=_mp)
 
         executor_factory = partial(
             ProcessPoolExecutor,
             max_workers=1,
             mp_context=_mp,
             initializer=initializer,
-            initargs=(self._mp_logging.init, self._q_commands, queue),
+            initargs=(mp_logging.init, self._q_commands, queue),
         )
 
         run_no = RunNo(run_no_start_from - 1)
+        registrar = Registrar(self.registry, queue)
 
         self._context = Context(
-            registrar=self._registrar,
+            registrar=registrar,
+            mp_logging=mp_logging,
             run_no_count=RunNoCounter(run_no_start_from),
             run_no=run_no,
             statement=statement,
@@ -187,11 +189,13 @@ class Machine:
             func=run.run,
         )
 
-        self._context.registrar.script_change(
-            script=statement, filename=filename
+        self._state: State = Created(
+            self._context,
+            self.registry,
+            self._q_commands,
+            statement,
+            run_no_start_from,
         )
-
-        self._state: State = Created(self._context)
         self._state = self._state.initialize()
 
     def __repr__(self):
@@ -256,9 +260,8 @@ class Machine:
 
     def _close(self) -> None:
         self._state = self._state.close()
-        self._registrar.close()
         self.registry.close()
-        self._mp_logging.close()
+        self._context.mp_logging.close()
 
     def __enter__(self):
         return self
@@ -345,8 +348,19 @@ class Created(State):
 
     name = "created"
 
-    def __init__(self, context: Context):
+    def __init__(
+        self,
+        context: Context,
+        registry: SubscribableDict[Any, Any],
+        q_commands: QueueCommands,
+        statement: str,
+        run_no_start_from: int,
+    ):
+        filename = SCRIPT_FILE_NAME
         self._context = context
+        self._context.registrar.script_change(
+            script=statement, filename=filename
+        )
 
     def initialize(self) -> Initialized:
         self.assert_not_obsolete()
