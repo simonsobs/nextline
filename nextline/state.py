@@ -198,13 +198,6 @@ class Machine:
 
     def _state_changed(self) -> None:
         self._context.registrar.state_change(self._state)
-        if self._state.name == "initialized":
-            self._context.run_no = self._context.run_no_count()
-            self._context.registrar.state_initialized(self._context.run_no)
-        elif self._state.name == "running":
-            self._context.registrar.run_start(self._context.run_no)
-        elif self._state.name == "finished":
-            self._context.registrar.run_end(state=self._state)
 
     @property
     def state_name(self) -> str:
@@ -364,6 +357,8 @@ class Initialized(State):
 
     def __init__(self, context: Context):
         self._context = context
+        self._context.run_no = self._context.run_no_count()
+        self._context.registrar.state_initialized(self._context.run_no)
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
@@ -408,6 +403,7 @@ class Running(State):
         )
         assert context.run
         self._run = await context.run()
+        self._context.registrar.run_start(self._context.run_no)
         return self
 
     def __init__(self, context: Context):
@@ -454,8 +450,8 @@ class Finished(State):
     def __init__(self, context: Context, result, exception):
         self._result = result
         self._exception = exception
-
         self._context = context
+        self._context.registrar.run_end(state=self)
 
     def exception(self):
         """Return the exception of the script execution
