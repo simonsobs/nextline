@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import queue
 
 import pytest
 
 from nextline.process.run import run, RunArg, set_queues
 from nextline.types import RunNo
-from nextline.utils.func import to_thread
 
 
-@pytest.mark.asyncio
-async def test_one(
+def test_one(
     expected_exception,
     run_arg: RunArg,
     call_set_queues,
     task_send_commands,
 ):
     del call_set_queues, task_send_commands
-    result, exception = await to_thread(run, run_arg)
+    result, exception = run(run_arg)
     assert result is None
     if expected_exception:
+        assert exception
         with pytest.raises(expected_exception):
             raise exception
     else:
@@ -34,11 +33,12 @@ def call_set_queues(q_registrar, q_commands):
 
 
 @pytest.fixture
-async def task_send_commands(q_registrar, q_commands):
-    y = asyncio.create_task(to_thread(respond_prompt, q_registrar, q_commands))
-    yield y
-    q_registrar.put(None)
-    await y
+def task_send_commands(q_registrar, q_commands):
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        fut = executor.submit(respond_prompt, q_registrar, q_commands)
+        yield
+        q_registrar.put(None)
+        fut.result()
 
 
 def respond_prompt(q_registrar, q_commands):
