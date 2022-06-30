@@ -51,7 +51,7 @@ class MultiprocessingLogging:
 
     @property
     def init(self) -> Callable[[], None]:
-        """A setup function to be called in other processes"""
+        """A (picklable) setup function to be called in other processes"""
         return self._init
 
     def close(self) -> None:
