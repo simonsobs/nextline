@@ -7,9 +7,10 @@ https://github.com/alphatwirl/mantichora/blob/v0.12.0/mantichora/hubmp.py
 
 from __future__ import annotations
 
+from functools import partial
 from queue import Queue  # noqa F401
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 import multiprocessing as mp
 from multiprocessing.context import BaseContext
@@ -18,7 +19,26 @@ from logging import LogRecord, getLogger, DEBUG
 from logging.handlers import QueueHandler
 from typing import Callable, Optional
 
-__all__ = ["MultiprocessingLogging"]
+__all__ = ["ProcessPoolExecutorWithLogging", "MultiprocessingLogging"]
+
+
+def _initializer(init_logging, initializer, *initargs):
+    init_logging()
+    if initializer is not None:
+        initializer(*initargs)
+
+
+class ProcessPoolExecutorWithLogging(ProcessPoolExecutor):
+    def __init__(
+        self, max_workers=None, mp_context=None, initializer=None, initargs=()
+    ):
+        self._mp_logging = MultiprocessingLogging()
+        initializer = partial(_initializer, self._mp_logging.init, initializer)
+        super().__init__(max_workers, mp_context, initializer, initargs)
+
+    def shutdown(self, wait=True):
+        self._mp_logging.close()
+        super().shutdown(wait)
 
 
 class MultiprocessingLogging:
