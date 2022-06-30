@@ -249,11 +249,8 @@ class Machine:
 
     async def close(self) -> None:
         """Enter the closed state"""
-        await to_thread(self._close)
-
-    def _close(self) -> None:
-        self._state = self._state.close()
-        self.registry.close()
+        self._state = await self._state.close()
+        await to_thread(self.registry.close)
 
     def __enter__(self):
         return self
@@ -320,7 +317,7 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def close(self) -> State:
+    async def close(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -411,9 +408,9 @@ class Initialized(State):
         self.obsolete()
         return initialized
 
-    def close(self) -> Closed:
+    async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = Closed(self._context)
+        closed = await Closed.create(self._context)
         self.obsolete()
         return closed
 
@@ -534,9 +531,9 @@ class Finished(State):
         self.obsolete()
         return initialized
 
-    def close(self) -> Closed:
+    async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = Closed(self._context)
+        closed = await Closed.create(self._context)
         self.obsolete()
         return closed
 
@@ -546,12 +543,17 @@ class Closed(State):
 
     name = "closed"
 
+    @classmethod
+    async def create(cls, context: Context):
+        self = cls(context)
+        await to_thread(self._context.registrar.close)
+        await to_thread(self._context.mp_logging.close)
+        return self
+
     def __init__(self, context: Context):
         self._context = context
         self._context.registrar.state_change(self)
-        self._context.registrar.close()
-        self._context.mp_logging.close()
 
-    def close(self) -> Closed:
+    async def close(self) -> Closed:
         self.assert_not_obsolete()
         return self
