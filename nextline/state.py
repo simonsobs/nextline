@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from queue import Queue
 from concurrent.futures import Executor, ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 
@@ -23,7 +22,7 @@ from typing import (
 )
 from typing_extensions import ParamSpec
 
-from .utils import SubscribableDict, to_thread, MultiprocessingLogging
+from .utils import SubscribableDict, to_thread, ProcessPoolExecutorWithLogging
 from .process import run
 from .process.run import RunArg, QueueCommands
 from .registrar import Registrar
@@ -35,15 +34,6 @@ _mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
 pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
-
-
-def initializer(
-    init_logging: Callable[[], Any],
-    q_commands: QueueCommands,
-    q_registry: Queue[Tuple[str, Any, bool]],
-):
-    init_logging()
-    run.set_queues(q_commands, q_registry)
 
 
 _T = TypeVar("_T")
@@ -116,7 +106,6 @@ class Run(Generic[_T, _P]):
 @dataclasses.dataclass
 class Context:
     registrar: Registrar
-    mp_logging: MultiprocessingLogging
     run_no_count: Callable[[], RunNo]
     run_no: RunNo
     statement: str
@@ -322,19 +311,17 @@ class Created(State):
     ):
         filename = SCRIPT_FILE_NAME
         queue = _mp.Queue()
-        mp_logging = MultiprocessingLogging(context=_mp)
         executor_factory = partial(
-            ProcessPoolExecutor,
+            ProcessPoolExecutorWithLogging,
             max_workers=1,
             mp_context=_mp,
-            initializer=initializer,
-            initargs=(mp_logging.init, q_commands, queue),
+            initializer=run.set_queues,
+            initargs=(q_commands, queue),
         )
         run_no = RunNo(run_no_start_from - 1)
         registrar = Registrar(registry, queue)
         self._context = Context(
             registrar=registrar,
-            mp_logging=mp_logging,
             run_no_count=RunNoCounter(run_no_start_from),
             run_no=run_no,
             statement=statement,
@@ -538,7 +525,6 @@ class Closed(State):
     async def create(cls, context: Context):
         self = cls(context)
         await to_thread(self._context.registrar.close)
-        await to_thread(self._context.mp_logging.close)
         return self
 
     def __init__(self, context: Context):
