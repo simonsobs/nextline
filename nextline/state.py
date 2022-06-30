@@ -129,6 +129,11 @@ class Machine:
     """State machine
 
                  .-------------.
+                 |   Created   |
+                 '-------------'
+                       |
+                       V
+                 .-------------.
             .--->| Initialized |---.
     reset() |    '-------------'   |
             |      |   | run()     |
@@ -186,7 +191,8 @@ class Machine:
             script=statement, filename=filename
         )
 
-        self._state: State = Initialized(self._context)
+        self._state: State = Created(self._context)
+        self._state = self._state.initialize()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -298,6 +304,10 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
+    def initialize(self) -> State:
+        self.assert_not_obsolete()
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
     async def run(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
@@ -328,6 +338,21 @@ class State(ObsoleteMixin):
 
     def result(self) -> Any:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
+
+class Created(State):
+    """The state "created" """
+
+    name = "created"
+
+    def __init__(self, context: Context):
+        self._context = context
+
+    def initialize(self) -> Initialized:
+        self.assert_not_obsolete()
+        initialized = Initialized(self._context)
+        self.obsolete()
+        return initialized
 
 
 class Initialized(State):
