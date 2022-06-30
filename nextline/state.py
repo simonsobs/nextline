@@ -245,14 +245,7 @@ class Machine:
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Enter the initialized state"""
-        if statement:
-            self._context.statement = statement
-            self._context.registrar.script_change(
-                script=statement, filename=SCRIPT_FILE_NAME
-            )
-        if run_no_start_from is not None:
-            self._context.run_no_count = RunNoCounter(run_no_start_from)
-        self._state = self._state.reset()
+        self._state = self._state.reset(statement, run_no_start_from)
 
     async def close(self) -> None:
         """Enter the closed state"""
@@ -319,7 +312,12 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self) -> State:
+    def reset(
+        self,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ) -> State:
+        del statement, run_no_start_from
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -356,10 +354,9 @@ class Created(State):
         statement: str,
         run_no_start_from: int,
     ):
-        filename = SCRIPT_FILE_NAME
         self._context = context
         self._context.registrar.script_change(
-            script=statement, filename=filename
+            script=self._context.statement, filename=self._context.filename
         )
 
     def initialize(self) -> Initialized:
@@ -381,8 +378,20 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, context: Context):
+    def __init__(
+        self,
+        context: Context,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ):
         self._context = context
+        if statement:
+            self._context.statement = statement
+            self._context.registrar.script_change(
+                script=statement, filename=self._context.filename
+            )
+        if run_no_start_from is not None:
+            self._context.run_no_count = RunNoCounter(run_no_start_from)
         self._context.run_no = self._context.run_no_count()
         self._context.registrar.state_initialized(self._context.run_no)
         self._context.registrar.state_change(self)
@@ -393,9 +402,13 @@ class Initialized(State):
         self.obsolete()
         return running
 
-    def reset(self) -> Initialized:
+    def reset(
+        self,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(context=self._context)
+        initialized = Initialized(self._context, statement, run_no_start_from)
         self.obsolete()
         return initialized
 
@@ -512,9 +525,13 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(self) -> Initialized:
+    def reset(
+        self,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(context=self._context)
+        initialized = Initialized(self._context, statement, run_no_start_from)
         self.obsolete()
         return initialized
 
