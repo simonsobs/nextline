@@ -550,6 +550,7 @@ class Closed(State):
     def __init__(self, context: Context):
         self._context = context
         self._context.registrar.state_change(self)
+        self._context.registrar.close()
 
     def close(self) -> Closed:
         self.assert_not_obsolete()
