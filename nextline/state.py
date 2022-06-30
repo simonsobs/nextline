@@ -186,9 +186,6 @@ class Machine:
             script=statement, filename=filename
         )
 
-        self._lock_finish = asyncio.Condition()
-        self._lock_close = asyncio.Condition()
-
         self._state: State = Initialized(self._context)
 
     def __repr__(self):
@@ -223,8 +220,7 @@ class Machine:
 
     async def finish(self) -> None:
         """Enter the finished state"""
-        async with self._lock_finish:
-            self._state = await self._state.finish()
+        self._state = await self._state.finish()
 
     def exception(self) -> Optional[Exception]:
         ret = self._state.exception()
@@ -250,8 +246,7 @@ class Machine:
 
     async def close(self) -> None:
         """Enter the closed state"""
-        async with self._lock_close:
-            await to_thread(self._close)
+        await to_thread(self._close)
 
     def _close(self) -> None:
         self._state = self._state.close()
