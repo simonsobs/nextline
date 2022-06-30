@@ -39,6 +39,13 @@ class MultiprocessingLogging:
         self._fut.result()
         self._executor.shutdown()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        del exc_type, exc_value, traceback
+        self.close()
+
 
 class _ConfigureLogger:
     def __init__(self, queue: Queue[LogRecord]):
