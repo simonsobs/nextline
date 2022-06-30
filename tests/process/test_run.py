@@ -5,55 +5,34 @@ import queue
 import multiprocessing
 from typing import Any, Tuple
 
-# from weakref import WeakKeyDictionary
-
 import pytest
-from unittest.mock import Mock
 
-from nextline.process.run import run, RunArg
+from nextline.process.run import run, RunArg, set_queues
 from nextline.types import RunNo
 from nextline.utils.func import to_thread
-
-
-def test_q_done_on_exception(q_done, monkey_patch_run):
-    del monkey_patch_run
-    context = RunArg()
-    q_commands = Mock()
-    with pytest.raises(MockError):
-        run(context, q_commands, q_done)
-    assert (None, None) == q_done.get()
-
-
-class MockError(Exception):
-    pass
-
-
-@pytest.fixture
-def monkey_patch_run(monkeypatch):
-    y = Mock(side_effect=MockError)
-    monkeypatch.setattr("nextline.process.run._run", y)
-    yield y
 
 
 @pytest.mark.asyncio
 async def test_one(
     expected_exception,
-    context: RunArg,
-    q_commands,
-    q_done,
-    init,
+    run_arg: RunArg,
+    call_set_queues,
     task_send_commands,
 ):
-    del task_send_commands
-    await to_thread(run, context, q_commands, q_done)
-    result, exception = q_done.get()
+    del call_set_queues, task_send_commands
+    result, exception = await to_thread(run, run_arg)
     assert result is None
     if expected_exception:
         with pytest.raises(expected_exception):
             raise exception
     else:
         exception is None
-    assert init.called
+
+
+@pytest.fixture
+def call_set_queues(q_registrar, q_commands):
+    set_queues(q_commands, q_registrar)
+    yield
 
 
 @pytest.fixture
@@ -78,17 +57,14 @@ def respond_prompt(q_registrar, q_commands):
 
 
 @pytest.fixture
-def context(
+def run_arg(
     statement: str,
     q_registrar: multiprocessing.Queue[Tuple[str, Any, bool]],
-    init,
 ) -> RunArg:
     y = RunArg(
         run_no=RunNo(1),
         statement=statement,
         filename="<string>",
-        queue=q_registrar,
-        init=init,
     )
     return y
 
@@ -140,14 +116,3 @@ def statement_params(request):
 def q_commands():
     y = queue.Queue()
     return y
-
-
-@pytest.fixture
-def q_done():
-    y = queue.Queue()
-    return y
-
-
-@pytest.fixture
-def init():
-    return Mock()
