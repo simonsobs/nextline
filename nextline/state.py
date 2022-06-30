@@ -190,14 +190,10 @@ class Machine:
         self._lock_close = asyncio.Condition()
 
         self._state: State = Initialized(self._context)
-        self._state_changed()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
         return f"<{self.__class__.__name__} {self.state_name!r}>"
-
-    def _state_changed(self) -> None:
-        self._context.registrar.state_change(self._state)
 
     @property
     def state_name(self) -> str:
@@ -210,7 +206,6 @@ class Machine:
     async def run(self) -> None:
         """Enter the running state"""
         self._state = await self._state.run()
-        self._state_changed()
 
     def send_pdb_command(
         self, command: str, prompt_no: int, trace_no: int
@@ -230,7 +225,6 @@ class Machine:
         """Enter the finished state"""
         async with self._lock_finish:
             self._state = await self._state.finish()
-            self._state_changed()
 
     def exception(self) -> Optional[Exception]:
         ret = self._state.exception()
@@ -253,7 +247,6 @@ class Machine:
         if run_no_start_from is not None:
             self._context.run_no_count = RunNoCounter(run_no_start_from)
         self._state = self._state.reset()
-        self._state_changed()
 
     async def close(self) -> None:
         """Enter the closed state"""
@@ -262,7 +255,6 @@ class Machine:
 
     def _close(self) -> None:
         self._state = self._state.close()
-        self._state_changed()
         self._registrar.close()
         self.registry.close()
         self._mp_logging.close()
@@ -359,6 +351,7 @@ class Initialized(State):
         self._context = context
         self._context.run_no = self._context.run_no_count()
         self._context.registrar.state_initialized(self._context.run_no)
+        self._context.registrar.state_change(self)
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
@@ -404,6 +397,7 @@ class Running(State):
         assert context.run
         self._run = await context.run()
         self._context.registrar.run_start(self._context.run_no)
+        self._context.registrar.state_change(self)
         return self
 
     def __init__(self, context: Context):
@@ -452,6 +446,7 @@ class Finished(State):
         self._exception = exception
         self._context = context
         self._context.registrar.run_end(state=self)
+        self._context.registrar.state_change(self)
 
     def exception(self):
         """Return the exception of the script execution
@@ -503,6 +498,7 @@ class Closed(State):
 
     def __init__(self, context: Context):
         self._context = context
+        self._context.registrar.state_change(self)
 
     def close(self) -> Closed:
         self.assert_not_obsolete()
