@@ -159,38 +159,9 @@ class Machine:
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
-        filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
-        queue = _mp.Queue()
-
         self._q_commands: QueueCommands = _mp.Queue()
-
-        mp_logging = MultiprocessingLogging(context=_mp)
-
-        executor_factory = partial(
-            ProcessPoolExecutor,
-            max_workers=1,
-            mp_context=_mp,
-            initializer=initializer,
-            initargs=(mp_logging.init, self._q_commands, queue),
-        )
-
-        run_no = RunNo(run_no_start_from - 1)
-        registrar = Registrar(self.registry, queue)
-
-        self._context = Context(
-            registrar=registrar,
-            mp_logging=mp_logging,
-            run_no_count=RunNoCounter(run_no_start_from),
-            run_no=run_no,
-            statement=statement,
-            filename=filename,
-            runner=partial(run_, executor_factory),
-            func=run.run,
-        )
-
         self._state: State = Created(
-            self._context,
             self.registry,
             self._q_commands,
             statement,
@@ -344,13 +315,33 @@ class Created(State):
 
     def __init__(
         self,
-        context: Context,
         registry: SubscribableDict[Any, Any],
         q_commands: QueueCommands,
         statement: str,
         run_no_start_from: int,
     ):
-        self._context = context
+        filename = SCRIPT_FILE_NAME
+        queue = _mp.Queue()
+        mp_logging = MultiprocessingLogging(context=_mp)
+        executor_factory = partial(
+            ProcessPoolExecutor,
+            max_workers=1,
+            mp_context=_mp,
+            initializer=initializer,
+            initargs=(mp_logging.init, q_commands, queue),
+        )
+        run_no = RunNo(run_no_start_from - 1)
+        registrar = Registrar(registry, queue)
+        self._context = Context(
+            registrar=registrar,
+            mp_logging=mp_logging,
+            run_no_count=RunNoCounter(run_no_start_from),
+            run_no=run_no,
+            statement=statement,
+            filename=filename,
+            runner=partial(run_, executor_factory),
+            func=run.run,
+        )
         self._context.registrar.script_change(
             script=self._context.statement, filename=self._context.filename
         )
