@@ -397,7 +397,8 @@ class Running(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        self._run = await context.runner(
+        context.run = partial(
+            context.runner,
             context.func,
             RunArg(
                 run_no=context.run_no,
@@ -405,6 +406,8 @@ class Running(State):
                 filename=context.filename,
             ),
         )
+        assert context.run
+        self._run = await context.run()
         return self
 
     def __init__(self, context: Context):
