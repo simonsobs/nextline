@@ -144,6 +144,8 @@ class Machine:
     ----------
     statement : str
         A Python code as a string.
+    run_no_start_from : int
+        The run number of the first run
 
     """
 
@@ -192,7 +194,7 @@ class Machine:
         """Enter the finished state"""
         self._state = await self._state.finish()
 
-    def exception(self) -> Optional[Exception]:
+    def exception(self) -> Optional[BaseException]:
         ret = self._state.exception()
         return ret
 
@@ -290,7 +292,7 @@ class State(ObsoleteMixin):
     def kill(self) -> None:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def exception(self) -> Optional[Exception]:
+    def exception(self) -> Optional[BaseException]:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def result(self) -> Any:
@@ -341,14 +343,7 @@ class Created(State):
 
 
 class Initialized(State):
-    """The state "initialized", ready to run
-
-    Parameters
-    ----------
-    context : dict
-        An instance of Context
-
-    """
+    """The state "initialized", ready to run"""
 
     name = "initialized"
 
@@ -394,12 +389,7 @@ class Initialized(State):
 
 
 class Running(State):
-    """The state "running", the script is being executed.
-
-    Parameters
-    ----------
-        An instance of Context
-    """
+    """The state "running", the script is being executed."""
 
     name = "running"
 
@@ -451,7 +441,7 @@ class Finished(State):
 
     Parameters
     ----------
-    context : dict
+    context : object
         An instance of Context
     result : any
         The result of the script execution, always None
@@ -462,14 +452,16 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(self, context: Context, result, exception):
+    def __init__(
+        self, context: Context, result: Any, exception: BaseException | None
+    ):
         self._result = result
         self._exception = exception
         self._context = context
         self._context.registrar.run_end(state=self)
         self._context.registrar.state_change(self)
 
-    def exception(self):
+    def exception(self) -> Optional[BaseException]:
         """Return the exception of the script execution
 
         Return None if no exception has been raised.
@@ -477,7 +469,7 @@ class Finished(State):
         """
         return self._exception
 
-    def result(self):
+    def result(self) -> Any:
         """Return the result of the script execution
 
         None in the current implementation as the build-in function
