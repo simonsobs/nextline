@@ -50,6 +50,15 @@ class Context(TypedDict):
 
 def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
     assert _q_registry
+    assert _q_commands
+    return run_(run_arg, _q_commands, _q_registry)
+
+
+def run_(
+    run_arg: RunArg,
+    q_commands: QueueCommands,
+    q_registry: Queue[Tuple[str, Any, bool]],
+) -> Tuple[Any, BaseException | None]:
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
@@ -65,7 +74,7 @@ def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 
     with Callback(
         run_no=run_no,
-        registrar=RegistrarProxy(_q_registry),
+        registrar=RegistrarProxy(q_registry),
         modules_to_trace=modules_to_trace,
     ) as callback:
 
@@ -79,7 +88,7 @@ def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 
         func = script.compose(code)
 
-        with relay_commands(pdb_ci_map):
+        with relay_commands(q_commands, pdb_ci_map):
             result, exception = call_with_trace(func, trace)
 
     return result, exception
@@ -92,12 +101,10 @@ def _compile(code, filename):
 
 
 @contextmanager
-def relay_commands(pdb_ci_map: PdbCiMap):
-    assert _q_commands
-
+def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
     def fn() -> None:
-        assert _q_commands
-        while m := _q_commands.get():
+        assert q_commands
+        while m := q_commands.get():
             command, prompt_no, trace_no = m
             pdb_ci = pdb_ci_map[trace_no]
             pdb_ci(command, prompt_no)
@@ -107,7 +114,7 @@ def relay_commands(pdb_ci_map: PdbCiMap):
         try:
             yield
         finally:
-            _q_commands.put(None)
+            q_commands.put(None)
             future.result()
 
 
