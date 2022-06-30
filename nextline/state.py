@@ -254,7 +254,6 @@ class Machine:
     def _close(self) -> None:
         self._state = self._state.close()
         self.registry.close()
-        self._context.mp_logging.close()
 
     def __enter__(self):
         return self
@@ -551,6 +550,7 @@ class Closed(State):
         self._context = context
         self._context.registrar.state_change(self)
         self._context.registrar.close()
+        self._context.mp_logging.close()
 
     def close(self) -> Closed:
         self.assert_not_obsolete()
