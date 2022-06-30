@@ -374,7 +374,7 @@ class Initialized(State):
 
     def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = Closed()
+        closed = Closed(self._context)
         self.obsolete()
         return closed
 
@@ -491,7 +491,7 @@ class Finished(State):
 
     def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = Closed()
+        closed = Closed(self._context)
         self.obsolete()
         return closed
 
@@ -500,6 +500,9 @@ class Closed(State):
     """The state "closed" """
 
     name = "closed"
+
+    def __init__(self, context: Context):
+        self._context = context
 
     def close(self) -> Closed:
         self.assert_not_obsolete()
