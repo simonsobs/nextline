@@ -505,8 +505,6 @@ class Finished(State):
         return self._context.result
 
     async def finish(self) -> Finished:
-        # This method can be called when Nextline.finish() is
-        # asynchronously called multiple times.
         self.assert_not_obsolete()
         return self
 
