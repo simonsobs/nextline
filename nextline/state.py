@@ -187,11 +187,11 @@ class Machine:
     """State machine
 
                  .-------------.
-                 |   Created   |
-                 '-------------'
-                       |
-                       V
-                 .-------------.
+                 |   Created   |---.
+                 '-------------'   |
+                       |           |
+                       V           |
+                 .-------------.   |
             .--->| Initialized |---.
     reset() |    '-------------'   |
             |      |   | run()     |
@@ -393,6 +393,12 @@ class Created(State):
         initialized = Initialized(self)
         self.obsolete()
         return initialized
+
+    async def close(self) -> Closed:
+        self.assert_not_obsolete()
+        closed = await Closed.create(self)
+        self.obsolete()
+        return closed
 
 
 class Initialized(State):
