@@ -445,32 +445,32 @@ class Running(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        self._run = await self._context.run(self)
+        self._future = await self._context.run(self)
         return self
 
     def __init__(self, prev: State):
         self._context = prev._context
-        self._run: Optional[Run] = None
+        self._future: Optional[Run] = None
 
     async def finish(self) -> Finished:
         self.assert_not_obsolete()
-        assert self._run
-        ret, exc = await self._run
+        assert self._future
+        ret, exc = await self._future
         finished = Finished(self, result=ret, exception=exc)
         self.obsolete()
         return finished
 
     def interrupt(self) -> None:
-        if self._run:
-            self._run.interrupt()
+        if self._future:
+            self._future.interrupt()
 
     def terminate(self) -> None:
-        if self._run:
-            self._run.terminate()
+        if self._future:
+            self._future.terminate()
 
     def kill(self) -> None:
-        if self._run:
-            self._run.kill()
+        if self._future:
+            self._future.kill()
 
 
 class Finished(State):
