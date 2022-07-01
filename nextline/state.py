@@ -11,15 +11,7 @@ import dataclasses
 from functools import partial
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
-from typing import (
-    Callable,
-    Coroutine,
-    Generic,
-    Optional,
-    Any,
-    Tuple,
-    TypeVar,
-)
+from typing import Callable, Coroutine, Generic, Optional, Any, Tuple, TypeVar
 from typing_extensions import ParamSpec
 
 from .utils import SubscribableDict, to_thread, ProcessPoolExecutorWithLogging
@@ -152,9 +144,19 @@ class Machine:
     def __init__(self, statement: str, run_no_start_from=1):
         self.registry = SubscribableDict[Any, Any]()
         self._q_commands: QueueCommands = _mp.Queue()
+        q_registry: QueueRegistry = _mp.Queue()
+        executor_factory = partial(
+            ProcessPoolExecutorWithLogging,
+            max_workers=1,
+            mp_context=_mp,
+            initializer=run.set_queues,
+            initargs=(self._q_commands, q_registry),
+        )
+        runner = partial(run_, executor_factory)  # type: ignore
         self._state: State = Created(
             self.registry,
-            self._q_commands,
+            q_registry,
+            runner,
             statement,
             run_no_start_from,
         )
@@ -307,19 +309,12 @@ class Created(State):
     def __init__(
         self,
         registry: SubscribableDict[Any, Any],
-        q_commands: QueueCommands,
+        q_registry: QueueRegistry,
+        runner: Callable[..., Coroutine[Any, Any, Run]],
         statement: str,
         run_no_start_from: int,
     ):
         filename = SCRIPT_FILE_NAME
-        q_registry: QueueRegistry = _mp.Queue()
-        executor_factory = partial(
-            ProcessPoolExecutorWithLogging,
-            max_workers=1,
-            mp_context=_mp,
-            initializer=run.set_queues,
-            initargs=(q_commands, q_registry),
-        )
         run_no = RunNo(run_no_start_from - 1)
         registrar = Registrar(registry, q_registry)
         self._context = Context(
@@ -328,7 +323,7 @@ class Created(State):
             run_no=run_no,
             statement=statement,
             filename=filename,
-            runner=partial(run_, executor_factory),
+            runner=runner,
             func=run.run,
         )
         self._context.registrar.script_change(
