@@ -294,6 +294,9 @@ class State(ObsoleteMixin):
 
     name = "state"
 
+    def __init__(self):
+        self._context: Context
+
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
@@ -368,7 +371,7 @@ class Created(State):
 
     def initialize(self) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(self._context)
+        initialized = Initialized(self)
         self.obsolete()
         return initialized
 
@@ -378,8 +381,8 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(self, context: Context):
-        self._context = context
+    def __init__(self, prev: State):
+        self._context = prev._context
         self._context.run_no = self._context.run_no_count()
         self._context.registrar.state_initialized(self._context.run_no)
         self._context.registrar.state_change(self)
@@ -387,16 +390,16 @@ class Initialized(State):
     @classmethod
     def as_reset(
         cls,
-        context: Context,
+        prev: State,
         statement: Optional[str] = None,
         run_no_start_from: Optional[int] = None,
     ):
-        context.reset(statement, run_no_start_from)
-        return cls(context)
+        prev._context.reset(statement, run_no_start_from)
+        return cls(prev)
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
-        running = await Running.create(self._context)
+        running = await Running.create(self)
         self.obsolete()
         return running
 
@@ -406,15 +409,13 @@ class Initialized(State):
         run_no_start_from: Optional[int] = None,
     ) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized.as_reset(
-            self._context, statement, run_no_start_from
-        )
+        initialized = Initialized.as_reset(self, statement, run_no_start_from)
         self.obsolete()
         return initialized
 
     async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = await Closed.create(self._context)
+        closed = await Closed.create(self)
         self.obsolete()
         return closed
 
@@ -425,22 +426,22 @@ class Running(State):
     name = "running"
 
     @classmethod
-    async def create(cls, context: Context):
-        self = cls(context)
-        self._run = await context.run()
+    async def create(cls, prev: State):
+        self = cls(prev)
+        self._run = await self._context.run()
         self._context.registrar.run_start(self._context.run_no)
         self._context.registrar.state_change(self)
         return self
 
-    def __init__(self, context: Context):
-        self._context = context
+    def __init__(self, prev: State):
+        self._context = prev._context
         self._run: Optional[Run] = None
 
     async def finish(self) -> Finished:
         self.assert_not_obsolete()
         assert self._run
         ret, exc = await self._run
-        finished = Finished(self._context, result=ret, exception=exc)
+        finished = Finished(self, result=ret, exception=exc)
         self.obsolete()
         return finished
 
@@ -474,11 +475,11 @@ class Finished(State):
     name = "finished"
 
     def __init__(
-        self, context: Context, result: Any, exception: BaseException | None
+        self, prev: State, result: Any, exception: BaseException | None
     ):
         self._result = result
         self._exception = exception
-        self._context = context
+        self._context = prev._context
         self._context.registrar.run_end(state=self)
         self._context.registrar.state_change(self)
 
@@ -518,15 +519,13 @@ class Finished(State):
         run_no_start_from: Optional[int] = None,
     ) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized.as_reset(
-            self._context, statement, run_no_start_from
-        )
+        initialized = Initialized.as_reset(self, statement, run_no_start_from)
         self.obsolete()
         return initialized
 
     async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = await Closed.create(self._context)
+        closed = await Closed.create(self)
         self.obsolete()
         return closed
 
@@ -537,13 +536,13 @@ class Closed(State):
     name = "closed"
 
     @classmethod
-    async def create(cls, context: Context):
-        self = cls(context)
+    async def create(cls, prev: State):
+        self = cls(prev)
         await self._context.close()
         return self
 
-    def __init__(self, context: Context):
-        self._context = context
+    def __init__(self, prev: State):
+        self._context = prev._context
         self._context.registrar.state_change(self)
 
     async def close(self) -> Closed:
