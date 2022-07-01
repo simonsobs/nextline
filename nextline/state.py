@@ -351,12 +351,7 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(
-        self,
-        statement: Optional[str] = None,
-        run_no_start_from: Optional[int] = None,
-    ) -> State:
-        del statement, run_no_start_from
+    def reset(self, *_, **__) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -427,13 +422,9 @@ class Initialized(State):
         self.obsolete()
         return running
 
-    def reset(
-        self,
-        statement: Optional[str] = None,
-        run_no_start_from: Optional[int] = None,
-    ) -> Initialized:
+    def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        self._context.reset(statement, run_no_start_from)
+        self._context.reset(*args, **kwargs)
         initialized = Initialized(self)
         self.obsolete()
         return initialized
@@ -519,13 +510,9 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(
-        self,
-        statement: Optional[str] = None,
-        run_no_start_from: Optional[int] = None,
-    ) -> Initialized:
+    def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        self._context.reset(statement, run_no_start_from)
+        self._context.reset(*args, **kwargs)
         initialized = Initialized(self)
         self.obsolete()
         return initialized
