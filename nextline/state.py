@@ -122,6 +122,19 @@ class Context:
             script=self.statement, filename=self.filename
         )
 
+    def reset(
+        self,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ):
+        if statement:
+            self.statement = statement
+            self.registrar.script_change(
+                script=statement, filename=self.filename
+            )
+        if run_no_start_from is not None:
+            self.run_no_count = RunNoCounter(run_no_start_from)
+
     async def close(self):
         await to_thread(self.registrar.close)
 
@@ -363,13 +376,7 @@ class Initialized(State):
         run_no_start_from: Optional[int] = None,
     ):
         self._context = context
-        if statement:
-            self._context.statement = statement
-            self._context.registrar.script_change(
-                script=statement, filename=self._context.filename
-            )
-        if run_no_start_from is not None:
-            self._context.run_no_count = RunNoCounter(run_no_start_from)
+        self._context.reset(statement, run_no_start_from)
         self._context.run_no = self._context.run_no_count()
         self._context.registrar.state_initialized(self._context.run_no)
         self._context.registrar.state_change(self)
