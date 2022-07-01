@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from unittest.mock import Mock, call, sentinel
 
 from typing import Any
 
@@ -21,6 +22,10 @@ class TestFinished(BaseTestState):
     def state(self, finished: State) -> State:
         return finished
 
+    def test_state(self, state: State, context: Mock):
+        super().test_state(state, context)
+        assert [call(state)] == context.finish.call_args_list
+
     @pytest.mark.asyncio
     async def test_finish(self, state: State):
         # The same object should be returned no matter
@@ -31,14 +36,15 @@ class TestFinished(BaseTestState):
         assert "obsolete" not in repr(state)
 
     @pytest.mark.asyncio
-    async def test_reset(self, state: State):
-        reset = state.reset()
+    async def test_reset(self, state: State, context: Mock):
+        reset = state.reset(sentinel.args)
         assert isinstance(reset, Initialized)
         await self.assert_obsolete(state)
+        assert [call(sentinel.args)] == context.reset.call_args_list
 
     @pytest.mark.asyncio
     async def test_close(self, state: State):
-        closed = state.close()
+        closed = await state.close()
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
 

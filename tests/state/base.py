@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, AsyncGenerator, Generator, Tuple
+from typing import Any, Tuple
 
 import pytest
 from unittest.mock import Mock
 
 from nextline.state import (
+    Context,
     State,
+    Created,
     Initialized,
     Running,
     Finished,
@@ -15,8 +17,6 @@ from nextline.state import (
     StateObsoleteError,
     StateMethodError,
 )
-from nextline.process.run import QueueCommands, QueueDone, RunArg
-from nextline.types import PromptNo, TraceNo
 
 
 class BaseTestState(ABC):
@@ -36,64 +36,34 @@ class BaseTestState(ABC):
         result = None
         return result, mock_run_exception
 
-    @pytest.fixture(autouse=True)
-    def mock_run(
+    @pytest.fixture
+    def context(
         self,
-        monkeypatch,
         mock_run_result_exception: Tuple[Any, Any],
-    ):
-        def run(
-            run_arg: RunArg,
-            q_commands: QueueCommands,
-            q_done: QueueDone,
-        ) -> None:
-            del run_arg, q_commands
-            q_done.put(mock_run_result_exception)
-
-        wrap = Mock(wraps=run)
-        monkeypatch.setattr("nextline.state.run", wrap)
-        return wrap
+    ) -> Context:
+        y = Mock(spec=Context)
+        y.result, y.exception = mock_run_result_exception
+        return y
 
     @pytest.fixture
-    def context(self) -> RunArg:
-        y = RunArg()
-        return y
+    def created(self, context: Context) -> Created:
+        return Created(context)
+
+    @pytest.fixture
+    async def initialized(self, created: Created) -> Initialized:
+        return created.initialize()
+
+    @pytest.fixture
+    async def running(self, initialized: Initialized) -> Running:
+        return await initialized.run()
 
     @pytest.fixture()
-    def initialized(
-        self, context: RunArg
-    ) -> Generator[Initialized, None, None]:
-        y = Initialized(context=context)
-        yield y
-        if y.is_obsolete():
-            return
-        y.close()
+    async def finished(self, running: Running) -> Finished:
+        return await running.finish()
 
     @pytest.fixture()
-    async def running(
-        self, initialized: Initialized
-    ) -> AsyncGenerator[Running, None]:
-        y = await initialized.run()
-        yield y
-        if y.is_obsolete():
-            return
-        finished = await y.finish()
-        finished.close()
-
-    @pytest.fixture()
-    async def finished(
-        self, running: Running
-    ) -> AsyncGenerator[Finished, None]:
-        y = await running.finish()
-        yield y
-        if y.is_obsolete():
-            return
-        y.close()
-
-    @pytest.fixture()
-    def closed(self, finished: Finished) -> Closed:
-        y = finished.close()
-        return y
+    async def closed(self, finished: Finished) -> Closed:
+        return await finished.close()
 
     @abstractmethod
     def state(self, _):
@@ -103,7 +73,8 @@ class BaseTestState(ABC):
         """
         pass
 
-    def test_state(self, state: State):
+    def test_state(self, state: State, context: Mock):
+        del context
         assert self.state_class is not None
         assert isinstance(state, self.state_class)
         assert "obsolete" not in repr(state)
@@ -121,13 +92,16 @@ class BaseTestState(ABC):
             state.reset()
 
         with pytest.raises(StateObsoleteError):
-            state.close()
+            await state.close()
+
+    def test_initialize(self, state: State):
+        with pytest.raises(StateMethodError):
+            state.initialize()
 
     async def test_run(self, state: State):
         with pytest.raises(StateMethodError):
             await state.run()
 
-    @pytest.mark.asyncio
     async def test_finish(self, state: State):
         with pytest.raises(StateMethodError):
             await state.finish()
@@ -135,13 +109,6 @@ class BaseTestState(ABC):
     def test_reset(self, state: State):
         with pytest.raises(StateMethodError):
             state.reset()
-
-    def test_send_pdb_command(self, state: State):
-        trace_no = TraceNo(1)
-        prompt_no = PromptNo(1)
-        command = "next"
-        with pytest.raises(StateMethodError):
-            state.send_pdb_command(command, prompt_no, trace_no)
 
     def test_exception(self, state: State):
         with pytest.raises(StateMethodError):
