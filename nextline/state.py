@@ -97,7 +97,6 @@ class Run(Generic[_T, _P]):
 
 @dataclass
 class Context:
-    state: State
     statement: str
     filename: str
     runner: Callable[..., Coroutine[Any, Any, Run]]
@@ -105,6 +104,7 @@ class Context:
     registry: InitVar[SubscribableDict[Any, Any]]
     q_registry: InitVar[QueueRegistry]
     run_no_start_from: InitVar[int]
+    state: Optional[State] = None
     future: Optional[Run] = None
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
@@ -229,13 +229,17 @@ class Machine:
             initargs=(self._q_commands, q_registry),
         )
         runner = partial(run_, executor_factory)  # type: ignore
-        self._state: State = Created(
-            self.registry,
-            q_registry,
-            runner,
-            statement,
-            run_no_start_from,
+        filename = SCRIPT_FILE_NAME
+        self._context = Context(
+            registry=self.registry,
+            q_registry=q_registry,
+            run_no_start_from=run_no_start_from,
+            statement=statement,
+            filename=filename,
+            runner=runner,
+            func=run.run,
         )
+        self._state: State = Created(self._context)
         self._state = self._state.initialize()
 
     def __repr__(self):
@@ -290,6 +294,7 @@ class Machine:
     async def close(self) -> None:
         """Enter the closed state"""
         self._state = await self._state.close()
+        await self._context.close(self._state)
         await to_thread(self.registry.close)
 
     def __enter__(self):
@@ -380,25 +385,8 @@ class Created(State):
 
     name = "created"
 
-    def __init__(
-        self,
-        registry: SubscribableDict[Any, Any],
-        q_registry: QueueRegistry,
-        runner: Callable[..., Coroutine[Any, Any, Run]],
-        statement: str,
-        run_no_start_from: int,
-    ):
-        filename = SCRIPT_FILE_NAME
-        self._context = Context(
-            state=self,
-            registry=registry,
-            q_registry=q_registry,
-            run_no_start_from=run_no_start_from,
-            statement=statement,
-            filename=filename,
-            runner=runner,
-            func=run.run,
-        )
+    def __init__(self, context: Context):
+        self._context = context
 
     def initialize(self) -> Initialized:
         self.assert_not_obsolete()
@@ -529,9 +517,7 @@ class Closed(State):
 
     @classmethod
     async def create(cls, prev: State):
-        self = cls(prev)
-        await self._context.close(self)
-        return self
+        return cls(prev)
 
     def __init__(self, prev: State):
         self._context = prev._context
