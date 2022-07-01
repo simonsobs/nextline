@@ -105,6 +105,9 @@ class Context:
     registry: InitVar[SubscribableDict[Any, Any]]
     q_registry: InitVar[QueueRegistry]
     run_no_start_from: InitVar[int]
+    future: Optional[Run] = None
+    result: Optional[Any] = None
+    exception: Optional[BaseException] = None
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
@@ -142,7 +145,7 @@ class Context:
             self.run_no_count = RunNoCounter(run_no_start_from)
 
     async def run(self, state: State) -> Run:
-        ret = await self.runner(
+        self.future = await self.runner(
             self.func,
             RunArg(
                 run_no=self.run_no,
@@ -153,9 +156,23 @@ class Context:
         self.registrar.run_start(self.run_no)
         self.registrar.state_change(state)
         self.state = state
-        return ret
+        return self.future
 
-    def finish(self, state: State):
+    def interrupt(self) -> None:
+        if self.future:
+            self.future.interrupt()
+
+    def terminate(self) -> None:
+        if self.future:
+            self.future.terminate()
+
+    def kill(self) -> None:
+        if self.future:
+            self.future.kill()
+
+    async def finish(self, state: State) -> None:
+        assert self.future
+        self.result, self.exception = await self.future
         self.registrar.run_end(state=state)
         self.registrar.state_change(state)
         self.state = state
@@ -445,32 +462,26 @@ class Running(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        self._future = await self._context.run(self)
+        await self._context.run(self)
         return self
 
     def __init__(self, prev: State):
         self._context = prev._context
-        self._future: Optional[Run] = None
 
     async def finish(self) -> Finished:
         self.assert_not_obsolete()
-        assert self._future
-        ret, exc = await self._future
-        finished = Finished(self, result=ret, exception=exc)
+        finished = await Finished.create(self)
         self.obsolete()
         return finished
 
     def interrupt(self) -> None:
-        if self._future:
-            self._future.interrupt()
+        self._context.interrupt()
 
     def terminate(self) -> None:
-        if self._future:
-            self._future.terminate()
+        self._context.terminate()
 
     def kill(self) -> None:
-        if self._future:
-            self._future.kill()
+        self._context.kill()
 
 
 class Finished(State):
@@ -489,13 +500,14 @@ class Finished(State):
 
     name = "finished"
 
-    def __init__(
-        self, prev: State, result: Any, exception: BaseException | None
-    ):
-        self._result = result
-        self._exception = exception
+    @classmethod
+    async def create(cls, prev: State):
+        self = cls(prev)
+        await self._context.finish(self)
+        return self
+
+    def __init__(self, prev: State):
         self._context = prev._context
-        self._context.finish(self)
 
     def exception(self) -> Optional[BaseException]:
         """Return the exception of the script execution
@@ -503,7 +515,7 @@ class Finished(State):
         Return None if no exception has been raised.
 
         """
-        return self._exception
+        return self._context.exception
 
     def result(self) -> Any:
         """Return the result of the script execution
@@ -516,10 +528,10 @@ class Finished(State):
 
         """
 
-        if self._exception:
-            raise self._exception
+        if exc := self._context.exception:
+            raise exc
 
-        return self._result
+        return self._context.result
 
     async def finish(self) -> Finished:
         # This method can be called when Nextline.finish() is
