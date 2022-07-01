@@ -378,17 +378,21 @@ class Initialized(State):
 
     name = "initialized"
 
-    def __init__(
-        self,
+    def __init__(self, context: Context):
+        self._context = context
+        self._context.run_no = self._context.run_no_count()
+        self._context.registrar.state_initialized(self._context.run_no)
+        self._context.registrar.state_change(self)
+
+    @classmethod
+    def as_reset(
+        cls,
         context: Context,
         statement: Optional[str] = None,
         run_no_start_from: Optional[int] = None,
     ):
-        self._context = context
-        self._context.reset(statement, run_no_start_from)
-        self._context.run_no = self._context.run_no_count()
-        self._context.registrar.state_initialized(self._context.run_no)
-        self._context.registrar.state_change(self)
+        context.reset(statement, run_no_start_from)
+        return cls(context)
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
@@ -402,7 +406,9 @@ class Initialized(State):
         run_no_start_from: Optional[int] = None,
     ) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(self._context, statement, run_no_start_from)
+        initialized = Initialized.as_reset(
+            self._context, statement, run_no_start_from
+        )
         self.obsolete()
         return initialized
 
@@ -512,7 +518,9 @@ class Finished(State):
         run_no_start_from: Optional[int] = None,
     ) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(self._context, statement, run_no_start_from)
+        initialized = Initialized.as_reset(
+            self._context, statement, run_no_start_from
+        )
         self.obsolete()
         return initialized
 
