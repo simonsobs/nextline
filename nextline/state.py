@@ -106,6 +106,9 @@ class Context:
     func: Callable
     run: Optional[Callable] = None
 
+    async def close(self):
+        await to_thread(self.registrar.close)
+
 
 class Machine:
     """State machine
@@ -511,7 +514,7 @@ class Closed(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        await to_thread(self._context.registrar.close)
+        await self._context.close()
         return self
 
     def __init__(self, context: Context):
