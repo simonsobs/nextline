@@ -485,18 +485,7 @@ class Running(State):
 
 
 class Finished(State):
-    """The state "finished", the script execution has finished
-
-    Parameters
-    ----------
-    context : object
-        An instance of Context
-    result : any
-        The result of the script execution, always None
-    exception : exception or None
-        The exception of the script execution if any. Otherwise None
-
-    """
+    """The state "finished", the script execution has finished"""
 
     name = "finished"
 
