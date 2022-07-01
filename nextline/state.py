@@ -97,6 +97,7 @@ class Run(Generic[_T, _P]):
 
 @dataclass
 class Context:
+    state: State
     statement: str
     filename: str
     runner: Callable[..., Coroutine[Any, Any, Run]]
@@ -121,9 +122,11 @@ class Context:
             script=self.statement, filename=self.filename
         )
 
-    def initialize(self):
+    def initialize(self, state: State):
         self.run_no = self.run_no_count()
         self.registrar.state_initialized(self.run_no)
+        self.registrar.state_change(state)
+        self.state = state
 
     def reset(
         self,
@@ -138,8 +141,8 @@ class Context:
         if run_no_start_from is not None:
             self.run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self):
-        return await self.runner(
+    async def run(self, state: State) -> Run:
+        ret = await self.runner(
             self.func,
             RunArg(
                 run_no=self.run_no,
@@ -147,9 +150,20 @@ class Context:
                 filename=self.filename,
             ),
         )
+        self.registrar.run_start(self.run_no)
+        self.registrar.state_change(state)
+        self.state = state
+        return ret
 
-    async def close(self):
+    def finish(self, state: State):
+        self.registrar.run_end(state=state)
+        self.registrar.state_change(state)
+        self.state = state
+
+    async def close(self, state: State):
+        self.registrar.state_change(state)
         await to_thread(self.registrar.close)
+        self.state = state
 
 
 class Machine:
@@ -364,6 +378,7 @@ class Created(State):
     ):
         filename = SCRIPT_FILE_NAME
         self._context = Context(
+            state=self,
             registry=registry,
             q_registry=q_registry,
             run_no_start_from=run_no_start_from,
@@ -387,8 +402,7 @@ class Initialized(State):
 
     def __init__(self, prev: State):
         self._context = prev._context
-        self._context.initialize()
-        self._context.registrar.state_change(self)
+        self._context.initialize(self)
 
     @classmethod
     def as_reset(
@@ -431,9 +445,7 @@ class Running(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        self._run = await self._context.run()
-        self._context.registrar.run_start(self._context.run_no)
-        self._context.registrar.state_change(self)
+        self._run = await self._context.run(self)
         return self
 
     def __init__(self, prev: State):
@@ -483,8 +495,7 @@ class Finished(State):
         self._result = result
         self._exception = exception
         self._context = prev._context
-        self._context.registrar.run_end(state=self)
-        self._context.registrar.state_change(self)
+        self._context.finish(self)
 
     def exception(self) -> Optional[BaseException]:
         """Return the exception of the script execution
@@ -541,12 +552,11 @@ class Closed(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        await self._context.close()
+        await self._context.close(self)
         return self
 
     def __init__(self, prev: State):
         self._context = prev._context
-        self._context.registrar.state_change(self)
 
     async def close(self) -> Closed:
         self.assert_not_obsolete()
