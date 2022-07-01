@@ -121,6 +121,10 @@ class Context:
             script=self.statement, filename=self.filename
         )
 
+    def initialize(self):
+        self.run_no = self.run_no_count()
+        self.registrar.state_initialized(self.run_no)
+
     def reset(
         self,
         statement: Optional[str] = None,
@@ -383,8 +387,7 @@ class Initialized(State):
 
     def __init__(self, prev: State):
         self._context = prev._context
-        self._context.run_no = self._context.run_no_count()
-        self._context.registrar.state_initialized(self._context.run_no)
+        self._context.initialize()
         self._context.registrar.state_change(self)
 
     @classmethod
