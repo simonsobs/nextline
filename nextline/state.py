@@ -107,7 +107,6 @@ class Context:
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
-    run: Optional[Callable] = None
 
     def __post_init__(
         self,
@@ -134,6 +133,16 @@ class Context:
             )
         if run_no_start_from is not None:
             self.run_no_count = RunNoCounter(run_no_start_from)
+
+    async def run(self):
+        return await self.runner(
+            self.func,
+            RunArg(
+                run_no=self.run_no,
+                statement=self.statement,
+                filename=self.filename,
+            ),
+        )
 
     async def close(self):
         await to_thread(self.registrar.close)
@@ -412,16 +421,6 @@ class Running(State):
     @classmethod
     async def create(cls, context: Context):
         self = cls(context)
-        context.run = partial(
-            context.runner,
-            context.func,
-            RunArg(
-                run_no=context.run_no,
-                statement=context.statement,
-                filename=context.filename,
-            ),
-        )
-        assert context.run
         self._run = await context.run()
         self._context.registrar.run_start(self._context.run_no)
         self._context.registrar.state_change(self)
