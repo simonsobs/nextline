@@ -312,16 +312,16 @@ class Created(State):
         run_no_start_from: int,
     ):
         filename = SCRIPT_FILE_NAME
-        queue = _mp.Queue()
+        q_registry = _mp.Queue()
         executor_factory = partial(
             ProcessPoolExecutorWithLogging,
             max_workers=1,
             mp_context=_mp,
             initializer=run.set_queues,
-            initargs=(q_commands, queue),
+            initargs=(q_commands, q_registry),
         )
         run_no = RunNo(run_no_start_from - 1)
-        registrar = Registrar(registry, queue)
+        registrar = Registrar(registry, q_registry)
         self._context = Context(
             registrar=registrar,
             run_no_count=RunNoCounter(run_no_start_from),
