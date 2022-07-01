@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from queue import Queue
+from queue import Queue  # noqa F401
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
@@ -20,17 +20,16 @@ _T = TypeVar("_T")
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
+QueueRegistry: TypeAlias = "Queue[Tuple[str, Any, bool]]"
 PdbCiMap: TypeAlias = MutableMapping[
     TraceNo, Callable[[PdbCommand, PromptNo], Any]
 ]
 
 _q_commands: QueueCommands | None = None
-_q_registry: Queue[Tuple[str, Any, bool]] | None = None
+_q_registry: QueueRegistry | None = None
 
 
-def set_queues(
-    q_commands: QueueCommands, q_registry: Queue[Tuple[str, Any, bool]]
-) -> None:
+def set_queues(q_commands: QueueCommands, q_registry: QueueRegistry) -> None:
     global _q_commands, _q_registry
     _q_commands = q_commands
     _q_registry = q_registry
@@ -57,7 +56,7 @@ def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
 def run_(
     run_arg: RunArg,
     q_commands: QueueCommands,
-    q_registry: Queue[Tuple[str, Any, bool]],
+    q_registry: QueueRegistry,
 ) -> Tuple[Any, BaseException | None]:
 
     run_no = run_arg["run_no"]

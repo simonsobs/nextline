@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from asyncio import Task  # noqa F401
-from multiprocessing import Queue
 from threading import Thread  # noqa F401
 import dataclasses
 import datetime
 import traceback
 import json
 
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -18,6 +17,7 @@ from .utils import ExcThread
 
 if TYPE_CHECKING:
     from .state import State
+    from .process.run import QueueRegistry
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -27,9 +27,7 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(
-        self, registry: MutableMapping, queue: Queue[Tuple[str, Any, bool]]
-    ):
+    def __init__(self, registry: MutableMapping, queue: QueueRegistry):
         self._registry = registry
         self._queue = queue
         self._thread = ExcThread(target=self._relay, daemon=True)

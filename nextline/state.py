@@ -24,7 +24,7 @@ from typing_extensions import ParamSpec
 
 from .utils import SubscribableDict, to_thread, ProcessPoolExecutorWithLogging
 from .process import run
-from .process.run import RunArg, QueueCommands
+from .process.run import QueueRegistry, RunArg, QueueCommands
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
@@ -312,7 +312,7 @@ class Created(State):
         run_no_start_from: int,
     ):
         filename = SCRIPT_FILE_NAME
-        q_registry = _mp.Queue()
+        q_registry: QueueRegistry = _mp.Queue()
         executor_factory = partial(
             ProcessPoolExecutorWithLogging,
             max_workers=1,

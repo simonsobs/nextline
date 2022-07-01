@@ -4,7 +4,6 @@ import os
 from asyncio import Task
 import threading
 from threading import Thread
-from queue import Queue
 from weakref import WeakKeyDictionary
 import datetime
 import dataclasses
@@ -24,6 +23,7 @@ from .io import peek_stdout_by_task_and_thread
 
 if TYPE_CHECKING:
     from .pdb.proxy import PdbInterface
+    from .run import QueueRegistry
 
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
@@ -222,7 +222,7 @@ class Callback:
 
 
 class RegistrarProxy:
-    def __init__(self, queue: Queue[Tuple[str, Any, bool]]):
+    def __init__(self, queue: QueueRegistry):
         self._queue = queue
 
     def put_trace_nos(self, trace_nos: Tuple[TraceNo, ...]) -> None:
