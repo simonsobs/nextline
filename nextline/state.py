@@ -7,7 +7,7 @@ import os
 import signal
 import asyncio
 
-import dataclasses
+from dataclasses import dataclass, InitVar, field
 from functools import partial
 import multiprocessing as mp
 from tblib import pickling_support  # type: ignore
@@ -95,16 +95,32 @@ class Run(Generic[_T, _P]):
         return self._task.__await__()
 
 
-@dataclasses.dataclass
+@dataclass
 class Context:
-    registrar: Registrar
-    run_no_count: Callable[[], RunNo]
-    run_no: RunNo
     statement: str
     filename: str
     runner: Callable[..., Coroutine[Any, Any, Run]]
     func: Callable
+    registry: InitVar[SubscribableDict[Any, Any]]
+    q_registry: InitVar[QueueRegistry]
+    run_no_start_from: InitVar[int]
+    registrar: Registrar = field(init=False)
+    run_no: RunNo = field(init=False)
+    run_no_count: Callable[[], RunNo] = field(init=False)
     run: Optional[Callable] = None
+
+    def __post_init__(
+        self,
+        registry: SubscribableDict[Any, Any],
+        q_registry: QueueRegistry,
+        run_no_start_from: int,
+    ):
+        self.registrar = Registrar(registry, q_registry)
+        self.run_no = RunNo(run_no_start_from - 1)
+        self.run_no_count = RunNoCounter(run_no_start_from)
+        self.registrar.script_change(
+            script=self.statement, filename=self.filename
+        )
 
     async def close(self):
         await to_thread(self.registrar.close)
@@ -318,19 +334,14 @@ class Created(State):
         run_no_start_from: int,
     ):
         filename = SCRIPT_FILE_NAME
-        run_no = RunNo(run_no_start_from - 1)
-        registrar = Registrar(registry, q_registry)
         self._context = Context(
-            registrar=registrar,
-            run_no_count=RunNoCounter(run_no_start_from),
-            run_no=run_no,
+            registry=registry,
+            q_registry=q_registry,
+            run_no_start_from=run_no_start_from,
             statement=statement,
             filename=filename,
             runner=runner,
             func=run.run,
-        )
-        self._context.registrar.script_change(
-            script=self._context.statement, filename=self._context.filename
         )
 
     def initialize(self) -> Initialized:
