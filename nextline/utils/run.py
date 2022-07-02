@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Executor, ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
+from multiprocessing import Process
 
 import os
 import signal
@@ -49,18 +50,28 @@ class Run(Generic[_T, _P]):
         self._func_call = partial(func, *func_args, **func_kwargs)
         self._event = asyncio.Event()
         self._task = asyncio.create_task(self._run())
+        self._process: Optional[Process] = None
+        self._future: Optional[asyncio.Future] = None
+        self._exc: Optional[BaseException] = None
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {self._process!r} {self._future}>"
 
     async def _run(self) -> Optional[_T]:
 
         with self._executor_factory() as executor:
             loop = asyncio.get_running_loop()
-            f = loop.run_in_executor(executor, self._func_call)
+            self._future = loop.run_in_executor(executor, self._func_call)
             if isinstance(executor, ProcessPoolExecutor):
                 self._process = list(executor._processes.values())[0]
             self._event.set()
             try:
-                return await f
+                return await self._future
             except BrokenProcessPool:
+                # NOTE: Not possible to use "as" for unknown reason.
+                return None
+            except BaseException as e:
+                self._exc = e
                 return None
 
     def interrupt(self) -> None:
@@ -76,4 +87,15 @@ class Run(Generic[_T, _P]):
             self._process.kill()
 
     def __await__(self):
-        return self._task.__await__()
+        # NOTE: this method can be as simple as the following one line if it
+        # only awaits for the task:
+        #
+        # return self._task.__await__()
+        #
+        # "yield from" is used to execute extra code.
+        # https://stackoverflow.com/a/48261042/7309855
+
+        ret = yield from self._task.__await__()
+        if self._exc:
+            raise self._exc
+        return ret
