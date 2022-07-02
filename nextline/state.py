@@ -21,7 +21,7 @@ from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
 
-_mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
+_mp = mp.get_context("spawn")
 
 pickling_support.install()
 
