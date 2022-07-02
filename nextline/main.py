@@ -7,7 +7,7 @@ from typing import Any, AsyncIterator, Optional, Tuple
 
 from .utils import merge_aiters
 from .state import Machine
-from .types import StdoutInfo
+from .types import PromptNo, TraceNo, StdoutInfo
 
 from .types import RunInfo, TraceInfo, PromptInfo
 
@@ -37,6 +37,7 @@ class Nextline:
 
         self._machine = Machine(statement, run_no_start_from)
         self._registry = self._machine.registry
+        self._q_commands = self._machine.q_commands
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -47,8 +48,10 @@ class Nextline:
         await self._machine.run()
         await self._machine.finish()
 
-    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int):
-        self._machine.send_pdb_command(command, prompt_no, trace_no)
+    def send_pdb_command(
+        self, command: str, prompt_no: int, trace_no: int
+    ) -> None:
+        self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
         self._machine.interrupt()
@@ -111,7 +114,9 @@ class Nextline:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == self._registry.get("script_file_name"):
+        if not file_name or file_name == self._registry.get(
+            "script_file_name"
+        ):
             return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 

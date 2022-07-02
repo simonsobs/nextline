@@ -16,7 +16,7 @@ from .utils import (
 from .process import run
 from .process.run import QueueRegistry, RunArg, QueueCommands
 from .registrar import Registrar
-from .types import PromptNo, RunNo, TraceNo
+from .types import RunNo
 from .count import RunNoCounter
 
 _mp = mp.get_context("spawn")
@@ -156,14 +156,14 @@ class Machine:
 
     def __init__(self, statement: str, run_no_start_from=1):
         self.registry = SubscribableDict[Any, Any]()
-        self._q_commands: QueueCommands = _mp.Queue()
+        self.q_commands: QueueCommands = _mp.Queue()
         q_registry: QueueRegistry = _mp.Queue()
         executor_factory = partial(
             ProcessPoolExecutorWithLogging,
             max_workers=1,
             mp_context=_mp,
             initializer=run.set_queues,
-            initargs=(self._q_commands, q_registry),
+            initargs=(self.q_commands, q_registry),
         )
         runner = partial(run_in_process, executor_factory)  # type: ignore
         filename = SCRIPT_FILE_NAME
@@ -194,11 +194,6 @@ class Machine:
     async def run(self) -> None:
         """Enter the running state"""
         self._state = await self._state.run()
-
-    def send_pdb_command(
-        self, command: str, prompt_no: int, trace_no: int
-    ) -> None:
-        self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
         self._state.interrupt()
