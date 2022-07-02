@@ -297,12 +297,12 @@ class Machine:
         await self._context.close(self._state)
         await to_thread(self.registry.close)
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):
         del exc_type, exc_value, traceback
-        self._close()
+        await self.close()
 
 
 class StateObsoleteError(Exception):
