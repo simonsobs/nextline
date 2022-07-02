@@ -35,8 +35,8 @@ class Nextline:
         logger.debug(f"statement starts with {statement[:25]!r}")
         logger.debug(f"The next run number will be {run_no_start_from}")
 
-        self.machine = Machine(statement, run_no_start_from)
-        self.registry = self.machine.registry
+        self._machine = Machine(statement, run_no_start_from)
+        self._registry = self._machine.registry
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -44,28 +44,28 @@ class Nextline:
 
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
-        await self.machine.run()
-        await self.machine.finish()
+        await self._machine.run()
+        await self._machine.finish()
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int):
-        self.machine.send_pdb_command(command, prompt_no, trace_no)
+        self._machine.send_pdb_command(command, prompt_no, trace_no)
 
     def interrupt(self) -> None:
-        self.machine.interrupt()
+        self._machine.interrupt()
 
     def terminate(self) -> None:
-        self.machine.terminate()
+        self._machine.terminate()
 
     def kill(self) -> None:
-        self.machine.kill()
+        self._machine.kill()
 
     def exception(self) -> Optional[BaseException]:
         """Uncaught exception from the last run"""
-        return self.machine.exception()
+        return self._machine.exception()
 
     def result(self) -> Any:
         """Return value of the last run. always None"""
-        return self.machine.result()
+        return self._machine.result()
 
     def reset(
         self,
@@ -73,14 +73,14 @@ class Nextline:
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""
-        self.machine.reset(
+        self._machine.reset(
             statement=statement,
             run_no_start_from=run_no_start_from,
         )
 
     async def close(self) -> None:
         """End gracefully"""
-        await self.machine.close()
+        await self._machine.close()
 
     @property
     def statement(self) -> str:
@@ -94,7 +94,7 @@ class Nextline:
         The possible values are "initialized", "running", "finished",
         "closed"
         """
-        return self.machine.state_name
+        return self._machine.state_name
 
     def subscribe_state(self) -> AsyncIterator[str]:
         return self.subscribe("state_name")
@@ -111,7 +111,7 @@ class Nextline:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == self.registry.get("script_file_name"):
+        if not file_name or file_name == self._registry.get("script_file_name"):
             return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
@@ -162,12 +162,12 @@ class Nextline:
             yield info
 
     def get(self, key) -> Any:
-        return self.registry.get(key)
+        return self._registry.get(key)
 
     def subscribe(
         self, key, last: Optional[bool] = True
     ) -> AsyncIterator[Any]:
-        return self.registry.subscribe(key, last=last)
+        return self._registry.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
         return self.subscribe("stdout", last=False)
