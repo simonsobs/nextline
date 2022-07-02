@@ -61,7 +61,6 @@ class Run(Generic[_T, _P]):
             try:
                 return await f
             except BrokenProcessPool:
-                print("BrokenProcessPool")
                 return None
 
     def interrupt(self) -> None:
