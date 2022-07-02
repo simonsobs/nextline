@@ -59,7 +59,7 @@ class Nextline:
     def kill(self) -> None:
         self.machine.kill()
 
-    def exception(self) -> Optional[Exception]:
+    def exception(self) -> Optional[BaseException]:
         """Uncaught exception from the last run"""
         return self.machine.exception()
 
