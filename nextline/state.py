@@ -11,7 +11,7 @@ from .utils import (
     to_thread,
     ProcessPoolExecutorWithLogging,
     run_in_process,
-    Run,
+    RunInProcess,
 )
 from .process import run
 from .process.run import QueueRegistry, RunArg, QueueCommands
@@ -30,13 +30,13 @@ SCRIPT_FILE_NAME = "<string>"
 class Context:
     statement: str
     filename: str
-    runner: Callable[..., Coroutine[Any, Any, Run]]
+    runner: Callable[..., Coroutine[Any, Any, RunInProcess]]
     func: Callable
     registry: InitVar[SubscribableDict[Any, Any]]
     q_registry: InitVar[QueueRegistry]
     run_no_start_from: InitVar[int]
     state: Optional[State] = None
-    future: Optional[Run] = None
+    future: Optional[RunInProcess] = None
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
     registrar: Registrar = field(init=False)
@@ -77,7 +77,7 @@ class Context:
         if run_no_start_from is not None:
             self.run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self, state: State) -> Run:
+    async def run(self, state: State) -> RunInProcess:
         self.future = await self.runner(
             self.func,
             RunArg(

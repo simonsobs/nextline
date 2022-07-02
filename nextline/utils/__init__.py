@@ -19,14 +19,14 @@ __all__ = [
     "merge_aiters",
     "profile_func",
     "run_in_process",
-    "Run",
+    "RunInProcess",
 ]
 
 from .subscribablequeue import SubscribableQueue
 from .thread_task_id import ThreadTaskIdComposer
 from .thread_safe_event import ThreadSafeAsyncioEvent
 from .loop import ToLoop
-from .run import Run, run_in_process
+from .run import RunInProcess, run_in_process
 from .multiprocessing_logging import (
     ProcessPoolExecutorWithLogging,
     MultiprocessingLogging,

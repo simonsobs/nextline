@@ -22,11 +22,13 @@ async def run_in_process(
     func: Callable[_P, _T],
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
-) -> Run[_T, _P]:
-    return await Run.create(executor_factory, func, *func_args, **func_kwargs)
+) -> RunInProcess[_T, _P]:
+    return await RunInProcess.create(
+        executor_factory, func, *func_args, **func_kwargs
+    )
 
 
-class Run(Generic[_T, _P]):
+class RunInProcess(Generic[_T, _P]):
     @classmethod
     async def create(
         cls,
