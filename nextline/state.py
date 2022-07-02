@@ -215,13 +215,9 @@ class Machine:
     def result(self) -> Any:
         return self._state.result()
 
-    def reset(
-        self,
-        statement: Optional[str] = None,
-        run_no_start_from: Optional[int] = None,
-    ) -> None:
+    def reset(self, *args, **kwargs) -> None:
         """Enter the initialized state"""
-        self._state = self._state.reset(statement, run_no_start_from)
+        self._state = self._state.reset(*args, **kwargs)
 
     async def close(self) -> None:
         """Enter the closed state"""
