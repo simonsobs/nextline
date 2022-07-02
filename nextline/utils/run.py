@@ -8,7 +8,7 @@ import signal
 import asyncio
 
 from functools import partial
-from typing import Callable, Generic, Optional, Tuple, TypeVar
+from typing import Callable, Generic, Optional, TypeVar
 from typing_extensions import ParamSpec
 
 
@@ -18,7 +18,7 @@ _P = ParamSpec("_P")
 
 async def run_in_executor(
     executor_factory: Callable[[], Executor],
-    func: Callable[_P, Tuple[_T | None, BaseException | None]],
+    func: Callable[_P, _T | None],
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
 ) -> Run[_T, _P]:
@@ -30,7 +30,7 @@ class Run(Generic[_T, _P]):
     async def create(
         cls,
         executor_factory: Callable[[], Executor],
-        func: Callable[_P, Tuple[_T | None, BaseException | None]],
+        func: Callable[_P, _T | None],
         *func_args: _P.args,
         **func_kwargs: _P.kwargs,
     ):
@@ -41,7 +41,7 @@ class Run(Generic[_T, _P]):
     def __init__(
         self,
         executor_factory: Callable[[], Executor],
-        func: Callable[_P, Tuple[_T | None, BaseException | None]],
+        func: Callable[_P, _T | None],
         *func_args: _P.args,
         **func_kwargs: _P.kwargs,
     ):
@@ -50,7 +50,7 @@ class Run(Generic[_T, _P]):
         self._event = asyncio.Event()
         self._task = asyncio.create_task(self._run())
 
-    async def _run(self) -> Tuple[Optional[_T], Optional[BaseException]]:
+    async def _run(self) -> Optional[_T]:
 
         with self._executor_factory() as executor:
             loop = asyncio.get_running_loop()
@@ -61,7 +61,8 @@ class Run(Generic[_T, _P]):
             try:
                 return await f
             except BrokenProcessPool:
-                return None, None
+                print("BrokenProcessPool")
+                return None
 
     def interrupt(self) -> None:
         if self._process and self._process.pid:

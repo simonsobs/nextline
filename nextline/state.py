@@ -58,6 +58,8 @@ class Context:
 
     def initialize(self, state: State):
         self.run_no = self.run_no_count()
+        self.result = None
+        self.exception = None
         self.registrar.state_initialized(self.run_no)
         self.registrar.state_change(state)
         self.state = state
@@ -103,7 +105,11 @@ class Context:
 
     async def finish(self, state: State) -> None:
         assert self.future
-        self.result, self.exception = await self.future
+        try:
+            self.result, self.exception = await self.future
+        except TypeError:
+            # The process was terminated.
+            pass
         self.registrar.run_end(state=state)
         self.registrar.state_change(state)
         self.state = state
