@@ -7,7 +7,6 @@ from unittest.mock import Mock
 import pytest
 
 from nextline.state import Context, Machine
-from nextline.utils import SubscribableDict
 
 
 SOURCE = """
@@ -22,20 +21,19 @@ x = 2
 
 @pytest.mark.asyncio
 async def test_init():
-    async with Machine(SOURCE) as obj:
+    async with Machine(Mock()) as obj:
         assert "initialized" == obj.state_name
-        assert isinstance(obj.registry, SubscribableDict)
 
 
 @pytest.mark.asyncio
 async def test_repr():
-    async with Machine(SOURCE) as obj:
+    async with Machine(Mock()) as obj:
         repr(obj)
 
 
 @pytest.mark.asyncio
 async def test_state_name_unknown(monkeypatch):
-    async with Machine(SOURCE) as obj:
+    async with Machine(Mock()) as obj:
         with monkeypatch.context() as m:
             m.setattr(obj, "_state", None)
             assert "unknown" == obj.state_name
@@ -45,8 +43,10 @@ async def test_state_name_unknown(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_transitions():
+    context = Mock(spec=Context)
+    context.exception = None
 
-    async with Machine(SOURCE) as obj:
+    async with Machine(context) as obj:
         await asyncio.sleep(0)
         assert "initialized" == obj.state_name
         await obj.run()
@@ -62,8 +62,10 @@ async def test_transitions():
 
 @pytest.mark.asyncio
 async def test_reset_with_statement():
+    context = Mock(spec=Context)
+    context.exception = None
 
-    async with Machine(SOURCE) as obj:
+    async with Machine(context) as obj:
         await asyncio.sleep(0)
         await obj.run()
         await obj.finish()

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import multiprocessing as mp
 import linecache
 from logging import getLogger
 
 from typing import Any, AsyncIterator, Optional, Tuple
 
-from .utils import merge_aiters
-from .state import Machine
+from .process.run import QueueCommands
+from .utils import SubscribableDict, merge_aiters, to_thread
+from .state import Machine, build_context
 from .types import PromptNo, TraceNo, StdoutInfo
 
 from .types import RunInfo, TraceInfo, PromptInfo
@@ -35,9 +37,19 @@ class Nextline:
         logger.debug(f"statement starts with {statement[:25]!r}")
         logger.debug(f"The next run number will be {run_no_start_from}")
 
-        self._machine = Machine(statement, run_no_start_from)
-        self._registry = self._machine.registry
-        self._q_commands = self._machine.q_commands
+        mp_context = mp.get_context("spawn")
+
+        self._registry = SubscribableDict[Any, Any]()
+        self._q_commands: QueueCommands = mp_context.Queue()
+
+        self._context = build_context(
+            self._registry,
+            self._q_commands,
+            mp_context,
+            statement,
+            run_no_start_from,
+        )
+        self._machine = Machine(self._context)
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -84,6 +96,8 @@ class Nextline:
     async def close(self) -> None:
         """End gracefully"""
         await self._machine.close()
+        await self._context.close(self._machine._state)
+        await to_thread(self._registry.close)
 
     @property
     def statement(self) -> str:

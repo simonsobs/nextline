@@ -7,7 +7,6 @@ from unittest.mock import Mock
 
 from nextline import Nextline
 from nextline.state import Machine
-from nextline.utils import SubscribableDict
 
 
 SOURCE = """
@@ -42,10 +41,9 @@ def test_repr(machine):
 
 @pytest.fixture
 async def machine(monkeypatch):
-    spec_set = Machine("")
+    spec_set = Machine(Mock())
     await spec_set.close()
     instance = Mock(spec_set=spec_set)
-    instance.registry = Mock(spec=SubscribableDict)
     class_ = Mock(return_value=instance)
     monkeypatch.setattr("nextline.main.Machine", class_)
     return instance

@@ -19,8 +19,6 @@ from .registrar import Registrar
 from .types import RunNo
 from .count import RunNoCounter
 
-_mp = mp.get_context("spawn")
-
 pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
@@ -120,6 +118,34 @@ class Context:
         self.state = state
 
 
+def build_context(
+    registry: SubscribableDict[Any, Any],
+    q_commands: QueueCommands,
+    mp_context: mp.context.BaseContext,
+    statement: str,
+    run_no_start_from=1,
+):
+    q_registry: QueueRegistry = mp_context.Queue()
+    executor_factory = partial(
+        ProcessPoolExecutorWithLogging,
+        max_workers=1,
+        mp_context=mp_context,
+        initializer=run.set_queues,
+        initargs=(q_commands, q_registry),
+    )
+    runner = partial(run_in_process, executor_factory)  # type: ignore
+    filename = SCRIPT_FILE_NAME
+    return Context(
+        registry=registry,
+        q_registry=q_registry,
+        run_no_start_from=run_no_start_from,
+        statement=statement,
+        filename=filename,
+        runner=runner,
+        func=run.run,
+    )
+
+
 class Machine:
     """State machine
 
@@ -144,38 +170,10 @@ class Machine:
             '----|  Finished   |-------------->|   Closed    |
                  '-------------'               '-------------'
 
-
-    Parameters
-    ----------
-    statement : str
-        A Python code as a string.
-    run_no_start_from : int
-        The run number of the first run
-
     """
 
-    def __init__(self, statement: str, run_no_start_from=1):
-        self.registry = SubscribableDict[Any, Any]()
-        self.q_commands: QueueCommands = _mp.Queue()
-        q_registry: QueueRegistry = _mp.Queue()
-        executor_factory = partial(
-            ProcessPoolExecutorWithLogging,
-            max_workers=1,
-            mp_context=_mp,
-            initializer=run.set_queues,
-            initargs=(self.q_commands, q_registry),
-        )
-        runner = partial(run_in_process, executor_factory)  # type: ignore
-        filename = SCRIPT_FILE_NAME
-        self._context = Context(
-            registry=self.registry,
-            q_registry=q_registry,
-            run_no_start_from=run_no_start_from,
-            statement=statement,
-            filename=filename,
-            runner=runner,
-            func=run.run,
-        )
+    def __init__(self, context: Context):
+        self._context = context
         self._state: State = Created(self._context)
         self._state = self._state.initialize()
 
@@ -222,8 +220,6 @@ class Machine:
     async def close(self) -> None:
         """Enter the closed state"""
         self._state = await self._state.close()
-        await self._context.close(self._state)
-        await to_thread(self.registry.close)
 
     async def __aenter__(self):
         return self
