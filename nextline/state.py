@@ -32,7 +32,7 @@ _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 
-async def run_(
+async def run_in_executor(
     executor_factory: Callable[[], Executor],
     func: Callable[_P, Tuple[_T | None, BaseException | None]],
     *func_args: _P.args,
@@ -228,7 +228,7 @@ class Machine:
             initializer=run.set_queues,
             initargs=(self._q_commands, q_registry),
         )
-        runner = partial(run_, executor_factory)  # type: ignore
+        runner = partial(run_in_executor, executor_factory)  # type: ignore
         filename = SCRIPT_FILE_NAME
         self._context = Context(
             registry=self.registry,
