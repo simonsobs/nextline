@@ -390,15 +390,15 @@ class Created(State):
 
     def initialize(self) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(self)
+        next = Initialized(self)
         self.obsolete()
-        return initialized
+        return next
 
     async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = await Closed.create(self)
+        next = await Closed.create(self)
         self.obsolete()
-        return closed
+        return next
 
 
 class Initialized(State):
@@ -412,22 +412,22 @@ class Initialized(State):
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
-        running = await Running.create(self)
+        next = await Running.create(self)
         self.obsolete()
-        return running
+        return next
 
     def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
         self._context.reset(*args, **kwargs)
-        initialized = Initialized(self)
+        next = Initialized(self)
         self.obsolete()
-        return initialized
+        return next
 
     async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = await Closed.create(self)
+        next = await Closed.create(self)
         self.obsolete()
-        return closed
+        return next
 
 
 class Running(State):
@@ -446,9 +446,9 @@ class Running(State):
 
     async def finish(self) -> Finished:
         self.assert_not_obsolete()
-        finished = await Finished.create(self)
+        next = await Finished.create(self)
         self.obsolete()
-        return finished
+        return next
 
     def interrupt(self) -> None:
         self._context.interrupt()
@@ -505,15 +505,15 @@ class Finished(State):
     def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
         self._context.reset(*args, **kwargs)
-        initialized = Initialized(self)
+        next = Initialized(self)
         self.obsolete()
-        return initialized
+        return next
 
     async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = await Closed.create(self)
+        next = await Closed.create(self)
         self.obsolete()
-        return closed
+        return next
 
 
 class Closed(State):
