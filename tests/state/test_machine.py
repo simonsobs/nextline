@@ -6,7 +6,8 @@ import asyncio
 from unittest.mock import Mock
 import pytest
 
-from nextline.state import Context, Machine
+from nextline.context import Context
+from nextline.state import Machine
 
 
 SOURCE = """
@@ -72,12 +73,3 @@ async def test_reset_with_statement():
         obj.reset(statement=SOURCE_TWO)
         await obj.run()
         await obj.finish()
-
-
-@pytest.fixture(autouse=True)
-async def monkey_patch_context(monkeypatch: pytest.MonkeyPatch):
-    mock_instance = Mock(spec=Context)
-    mock_instance.exception = None
-    MockContext = Mock(return_value=mock_instance)
-    monkeypatch.setattr("nextline.state.Context", MockContext)
-    yield mock_instance

@@ -6,8 +6,8 @@ from typing import Any, Tuple
 import pytest
 from unittest.mock import Mock
 
+from nextline.context import Context
 from nextline.state import (
-    Context,
     State,
     Created,
     Initialized,

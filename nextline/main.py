@@ -8,7 +8,8 @@ from typing import Any, AsyncIterator, Optional, Tuple
 
 from .process.run import QueueCommands
 from .utils import SubscribableDict, merge_aiters, to_thread
-from .state import Machine, build_context
+from .context import build_context
+from .state import Machine
 from .types import PromptNo, TraceNo, StdoutInfo
 
 from .types import RunInfo, TraceInfo, PromptInfo
