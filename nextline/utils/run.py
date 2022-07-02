@@ -18,7 +18,7 @@ _P = ParamSpec("_P")
 
 async def run_in_executor(
     executor_factory: Callable[[], Executor],
-    func: Callable[_P, _T | None],
+    func: Callable[_P, _T],
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
 ) -> Run[_T, _P]:
@@ -30,7 +30,7 @@ class Run(Generic[_T, _P]):
     async def create(
         cls,
         executor_factory: Callable[[], Executor],
-        func: Callable[_P, _T | None],
+        func: Callable[_P, _T],
         *func_args: _P.args,
         **func_kwargs: _P.kwargs,
     ):
@@ -41,7 +41,7 @@ class Run(Generic[_T, _P]):
     def __init__(
         self,
         executor_factory: Callable[[], Executor],
-        func: Callable[_P, _T | None],
+        func: Callable[_P, _T],
         *func_args: _P.args,
         **func_kwargs: _P.kwargs,
     ):
