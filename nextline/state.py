@@ -1,33 +1,197 @@
 from __future__ import annotations
 
+from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
+
 import os
 import signal
 import asyncio
-from queue import Empty
 
+from dataclasses import dataclass, InitVar, field
+from functools import partial
 import multiprocessing as mp
-from threading import Event
-from concurrent.futures import ThreadPoolExecutor
 from tblib import pickling_support  # type: ignore
-from typing import Optional, Any
+from typing import Callable, Coroutine, Generic, Optional, Any, Tuple, TypeVar
+from typing_extensions import ParamSpec
 
-from .utils import SubscribableDict, to_thread, MultiprocessingLogging
-from .process.run import run, RunArg, QueueCommands, QueueDone
+from .utils import SubscribableDict, to_thread, ProcessPoolExecutorWithLogging
+from .process import run
+from .process.run import QueueRegistry, RunArg, QueueCommands
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .count import RunNoCounter
 
-_mp = mp.get_context("spawn")  # NOTE: monkey patched in tests
+_mp = mp.get_context("spawn")
 
 pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
 
 
+_T = TypeVar("_T")
+_P = ParamSpec("_P")
+
+
+async def run_(
+    executor_factory: Callable[[], Executor],
+    func: Callable[_P, Tuple[_T | None, BaseException | None]],
+    *func_args: _P.args,
+    **func_kwargs: _P.kwargs,
+) -> Run[_T, _P]:
+    return await Run.create(executor_factory, func, *func_args, **func_kwargs)
+
+
+class Run(Generic[_T, _P]):
+    @classmethod
+    async def create(
+        cls,
+        executor_factory: Callable[[], Executor],
+        func: Callable[_P, Tuple[_T | None, BaseException | None]],
+        *func_args: _P.args,
+        **func_kwargs: _P.kwargs,
+    ):
+        self = cls(executor_factory, func, *func_args, **func_kwargs)
+        assert await self._event.wait()
+        return self
+
+    def __init__(
+        self,
+        executor_factory: Callable[[], Executor],
+        func: Callable[_P, Tuple[_T | None, BaseException | None]],
+        *func_args: _P.args,
+        **func_kwargs: _P.kwargs,
+    ):
+        self._executor_factory = executor_factory
+        self._func_call = partial(func, *func_args, **func_kwargs)
+        self._event = asyncio.Event()
+        self._task = asyncio.create_task(self._run())
+
+    async def _run(self) -> Tuple[Optional[_T], Optional[BaseException]]:
+
+        with self._executor_factory() as executor:
+            loop = asyncio.get_running_loop()
+            f = loop.run_in_executor(executor, self._func_call)
+            if isinstance(executor, ProcessPoolExecutor):
+                self._process = list(executor._processes.values())[0]
+            self._event.set()
+            try:
+                return await f
+            except BrokenProcessPool:
+                return None, None
+
+    def interrupt(self) -> None:
+        if self._process and self._process.pid:
+            os.kill(self._process.pid, signal.SIGINT)
+
+    def terminate(self) -> None:
+        if self._process:
+            self._process.terminate()
+
+    def kill(self) -> None:
+        if self._process:
+            self._process.kill()
+
+    def __await__(self):
+        return self._task.__await__()
+
+
+@dataclass
+class Context:
+    statement: str
+    filename: str
+    runner: Callable[..., Coroutine[Any, Any, Run]]
+    func: Callable
+    registry: InitVar[SubscribableDict[Any, Any]]
+    q_registry: InitVar[QueueRegistry]
+    run_no_start_from: InitVar[int]
+    state: Optional[State] = None
+    future: Optional[Run] = None
+    result: Optional[Any] = None
+    exception: Optional[BaseException] = None
+    registrar: Registrar = field(init=False)
+    run_no: RunNo = field(init=False)
+    run_no_count: Callable[[], RunNo] = field(init=False)
+
+    def __post_init__(
+        self,
+        registry: SubscribableDict[Any, Any],
+        q_registry: QueueRegistry,
+        run_no_start_from: int,
+    ):
+        self.registrar = Registrar(registry, q_registry)
+        self.run_no = RunNo(run_no_start_from - 1)
+        self.run_no_count = RunNoCounter(run_no_start_from)
+        self.registrar.script_change(
+            script=self.statement, filename=self.filename
+        )
+
+    def initialize(self, state: State):
+        self.run_no = self.run_no_count()
+        self.registrar.state_initialized(self.run_no)
+        self.registrar.state_change(state)
+        self.state = state
+
+    def reset(
+        self,
+        statement: Optional[str] = None,
+        run_no_start_from: Optional[int] = None,
+    ):
+        if statement:
+            self.statement = statement
+            self.registrar.script_change(
+                script=statement, filename=self.filename
+            )
+        if run_no_start_from is not None:
+            self.run_no_count = RunNoCounter(run_no_start_from)
+
+    async def run(self, state: State) -> Run:
+        self.future = await self.runner(
+            self.func,
+            RunArg(
+                run_no=self.run_no,
+                statement=self.statement,
+                filename=self.filename,
+            ),
+        )
+        self.registrar.run_start(self.run_no)
+        self.registrar.state_change(state)
+        self.state = state
+        return self.future
+
+    def interrupt(self) -> None:
+        if self.future:
+            self.future.interrupt()
+
+    def terminate(self) -> None:
+        if self.future:
+            self.future.terminate()
+
+    def kill(self) -> None:
+        if self.future:
+            self.future.kill()
+
+    async def finish(self, state: State) -> None:
+        assert self.future
+        self.result, self.exception = await self.future
+        self.registrar.run_end(state=state)
+        self.registrar.state_change(state)
+        self.state = state
+
+    async def close(self, state: State):
+        self.registrar.state_change(state)
+        await to_thread(self.registrar.close)
+        self.state = state
+
+
 class Machine:
     """State machine
 
                  .-------------.
+                 |   Created   |---.
+                 '-------------'   |
+                       |           |
+                       V           |
+                 .-------------.   |
             .--->| Initialized |---.
     reset() |    '-------------'   |
             |      |   | run()     |
@@ -48,48 +212,39 @@ class Machine:
     ----------
     statement : str
         A Python code as a string.
+    run_no_start_from : int
+        The run number of the first run
 
     """
 
     def __init__(self, statement: str, run_no_start_from=1):
-        filename = SCRIPT_FILE_NAME
         self.registry = SubscribableDict[Any, Any]()
-        self._run_no = RunNo(run_no_start_from - 1)
-        self._run_no_count = RunNoCounter(run_no_start_from)
-        queue = _mp.Queue()
-        self._registrar = Registrar(self.registry, queue)
-
-        self._mp_logging = MultiprocessingLogging(context=_mp)
-
-        self.context = RunArg(
+        self._q_commands: QueueCommands = _mp.Queue()
+        q_registry: QueueRegistry = _mp.Queue()
+        executor_factory = partial(
+            ProcessPoolExecutorWithLogging,
+            max_workers=1,
+            mp_context=_mp,
+            initializer=run.set_queues,
+            initargs=(self._q_commands, q_registry),
+        )
+        runner = partial(run_, executor_factory)  # type: ignore
+        filename = SCRIPT_FILE_NAME
+        self._context = Context(
+            registry=self.registry,
+            q_registry=q_registry,
+            run_no_start_from=run_no_start_from,
             statement=statement,
             filename=filename,
-            queue=queue,
-            init=self._mp_logging.init,
+            runner=runner,
+            func=run.run,
         )
-
-        self._registrar.script_change(script=statement, filename=filename)
-
-        self._lock_finish = asyncio.Condition()
-        self._lock_close = asyncio.Condition()
-
-        self._state: State = Initialized(self.context)
-        self._state_changed()
+        self._state: State = Created(self._context)
+        self._state = self._state.initialize()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
         return f"<{self.__class__.__name__} {self.state_name!r}>"
-
-    def _state_changed(self) -> None:
-        self._registrar.state_change(self._state)
-        if self._state.name == "initialized":
-            self._run_no = self._run_no_count()
-            self.context["run_no"] = self._run_no
-            self._registrar.state_initialized(self._run_no)
-        elif self._state.name == "running":
-            self._registrar.run_start(self._run_no)
-        elif self._state.name == "finished":
-            self._registrar.run_end(state=self._state)
 
     @property
     def state_name(self) -> str:
@@ -99,17 +254,14 @@ class Machine:
         except BaseException:
             return "unknown"
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """Enter the running state"""
-        self._state = self._state.run()
-        self._state_changed()
+        self._state = await self._state.run()
 
     def send_pdb_command(
         self, command: str, prompt_no: int, trace_no: int
     ) -> None:
-        self._state.send_pdb_command(
-            command, PromptNo(prompt_no), TraceNo(trace_no)
-        )
+        self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
         self._state.interrupt()
@@ -117,13 +269,14 @@ class Machine:
     def terminate(self) -> None:
         self._state.terminate()
 
+    def kill(self) -> None:
+        self._state.kill()
+
     async def finish(self) -> None:
         """Enter the finished state"""
-        async with self._lock_finish:
-            self._state = await self._state.finish()
-            self._state_changed()
+        self._state = await self._state.finish()
 
-    def exception(self) -> Optional[Exception]:
+    def exception(self) -> Optional[BaseException]:
         ret = self._state.exception()
         return ret
 
@@ -136,35 +289,20 @@ class Machine:
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Enter the initialized state"""
-        if statement:
-            self.context["statement"] = statement
-            self._registrar.script_change(
-                script=statement, filename=SCRIPT_FILE_NAME
-            )
-        if run_no_start_from is not None:
-            self._run_no_count = RunNoCounter(run_no_start_from)
-            # self._registrar.reset_run_no_count(run_no_start_from)
-        self._state = self._state.reset()
-        self._state_changed()
+        self._state = self._state.reset(statement, run_no_start_from)
 
     async def close(self) -> None:
         """Enter the closed state"""
-        async with self._lock_close:
-            await to_thread(self._close)
+        self._state = await self._state.close()
+        await self._context.close(self._state)
+        await to_thread(self.registry.close)
 
-    def _close(self) -> None:
-        self._state = self._state.close()
-        self._state_changed()
-        self._registrar.close()
-        self.registry.close()
-        self._mp_logging.close()
-
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):
         del exc_type, exc_value, traceback
-        self._close()
+        await self.close()
 
 
 class StateObsoleteError(Exception):
@@ -196,6 +334,9 @@ class State(ObsoleteMixin):
 
     name = "state"
 
+    def __init__(self):
+        self._context: Context
+
     def __repr__(self):
         # e.g., "<Initialized 'initialized'>"
         items = [self.__class__.__name__, repr(self.name)]
@@ -203,7 +344,11 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
-    def run(self) -> State:
+    def initialize(self) -> State:
+        self.assert_not_obsolete()
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
+    async def run(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -211,18 +356,12 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self) -> State:
+    def reset(self, *_, **__) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def close(self) -> State:
+    async def close(self) -> State:
         self.assert_not_obsolete()
-        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
-
-    def send_pdb_command(
-        self, command: str, prompt_no: PromptNo, trace_no: TraceNo
-    ) -> None:
-        del command, prompt_no, trace_no
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def interrupt(self) -> None:
@@ -231,137 +370,119 @@ class State(ObsoleteMixin):
     def terminate(self) -> None:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def exception(self) -> Optional[Exception]:
+    def kill(self) -> None:
+        raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
+
+    def exception(self) -> Optional[BaseException]:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
     def result(self) -> Any:
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
 
-class Initialized(State):
-    """The state "initialized", ready to run
+class Created(State):
+    """The state "created" """
 
-    Parameters
-    ----------
-    context : dict
-        An instance of Context
+    name = "created"
 
-    """
-
-    name = "initialized"
-
-    def __init__(self, context: RunArg):
+    def __init__(self, context: Context):
         self._context = context
 
-    def run(self):
+    def initialize(self) -> Initialized:
         self.assert_not_obsolete()
-        running = Running(self._context)
-        self.obsolete()
-        return running
-
-    def reset(self):
-        self.assert_not_obsolete()
-        initialized = Initialized(context=self._context)
+        initialized = Initialized(self)
         self.obsolete()
         return initialized
 
-    def close(self):
+    async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = Closed()
+        closed = await Closed.create(self)
+        self.obsolete()
+        return closed
+
+
+class Initialized(State):
+    """The state "initialized", ready to run"""
+
+    name = "initialized"
+
+    def __init__(self, prev: State):
+        self._context = prev._context
+        self._context.initialize(self)
+
+    async def run(self) -> Running:
+        self.assert_not_obsolete()
+        running = await Running.create(self)
+        self.obsolete()
+        return running
+
+    def reset(self, *args, **kwargs) -> Initialized:
+        self.assert_not_obsolete()
+        self._context.reset(*args, **kwargs)
+        initialized = Initialized(self)
+        self.obsolete()
+        return initialized
+
+    async def close(self) -> Closed:
+        self.assert_not_obsolete()
+        closed = await Closed.create(self)
         self.obsolete()
         return closed
 
 
 class Running(State):
-    """The state "running", the script is being executed.
-
-    Parameters
-    ----------
-        An instance of Context
-    """
+    """The state "running", the script is being executed."""
 
     name = "running"
 
-    def __init__(self, context: RunArg):
-        self._context = context
-        self._q_commands: QueueCommands = _mp.Queue()
-        self._event = Event()
-        self._executor = ThreadPoolExecutor(max_workers=1)
-        self._fut_run = self._executor.submit(self._run)
-        assert self._event.wait(2.0)
+    @classmethod
+    async def create(cls, prev: State):
+        self = cls(prev)
+        await self._context.run(self)
+        return self
 
-    def _run(self):
-        q_done: QueueDone = _mp.Queue()
+    def __init__(self, prev: State):
+        self._context = prev._context
 
-        self._p = _mp.Process(
-            target=run,
-            args=(self._context, self._q_commands, q_done),
-            daemon=True,
-        )
-
-        self._p.start()
-        self._event.set()
-        self._p.join()
-
-        try:
-            return q_done.get(timeout=0.1)
-        except Empty:
-            return None, None  # ret, exc
-
-    async def finish(self):
+    async def finish(self) -> Finished:
         self.assert_not_obsolete()
-        ret, exc = await to_thread(self._fut_run.result)
-        self._executor.shutdown()
-        finished = Finished(self._context, result=ret, exception=exc)
+        finished = await Finished.create(self)
         self.obsolete()
         return finished
 
-    def send_pdb_command(
-        self, command: str, prompt_no: PromptNo, trace_no: TraceNo
-    ) -> None:
-        self._q_commands.put((command, prompt_no, trace_no))
-
     def interrupt(self) -> None:
-        if self._p.pid:
-            os.kill(self._p.pid, signal.SIGINT)
+        self._context.interrupt()
 
     def terminate(self) -> None:
-        self._p.terminate()
+        self._context.terminate()
+
+    def kill(self) -> None:
+        self._context.kill()
 
 
 class Finished(State):
-    """The state "finished", the script execution has finished
-
-    The thread which executed the script has been joined.
-
-    Parameters
-    ----------
-    context : dict
-        An instance of Context
-    result : any
-        The result of the script execution, always None
-    exception : exception or None
-        The exception of the script execution if any. Otherwise None
-
-    """
+    """The state "finished", the script execution has finished"""
 
     name = "finished"
 
-    def __init__(self, context: RunArg, result, exception):
-        self._result = result
-        self._exception = exception
+    @classmethod
+    async def create(cls, prev: State):
+        self = cls(prev)
+        await self._context.finish(self)
+        return self
 
-        self._context = context
+    def __init__(self, prev: State):
+        self._context = prev._context
 
-    def exception(self):
+    def exception(self) -> Optional[BaseException]:
         """Return the exception of the script execution
 
         Return None if no exception has been raised.
 
         """
-        return self._exception
+        return self._context.exception
 
-    def result(self):
+    def result(self) -> Any:
         """Return the result of the script execution
 
         None in the current implementation as the build-in function
@@ -372,26 +493,25 @@ class Finished(State):
 
         """
 
-        if self._exception:
-            raise self._exception
+        if exc := self._context.exception:
+            raise exc
 
-        return self._result
+        return self._context.result
 
-    async def finish(self):
-        # This method can be called when Nextline.finish() is
-        # asynchronously called multiple times.
+    async def finish(self) -> Finished:
         self.assert_not_obsolete()
         return self
 
-    def reset(self):
+    def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        initialized = Initialized(context=self._context)
+        self._context.reset(*args, **kwargs)
+        initialized = Initialized(self)
         self.obsolete()
         return initialized
 
-    def close(self):
+    async def close(self) -> Closed:
         self.assert_not_obsolete()
-        closed = Closed()
+        closed = await Closed.create(self)
         self.obsolete()
         return closed
 
@@ -401,6 +521,13 @@ class Closed(State):
 
     name = "closed"
 
-    def close(self):
+    @classmethod
+    async def create(cls, prev: State):
+        return cls(prev)
+
+    def __init__(self, prev: State):
+        self._context = prev._context
+
+    async def close(self) -> Closed:
         self.assert_not_obsolete()
         return self

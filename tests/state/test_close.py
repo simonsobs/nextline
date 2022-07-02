@@ -13,10 +13,10 @@ class TestClosed(BaseTestState):
     def state(self, closed: State) -> State:
         return closed
 
-    def test_close(self, state: State):
+    async def test_close(self, state: State):
         # The same object should be returned no matter
         # how many times called.
-        assert state is state.close()
-        assert state is state.close()
-        assert state is state.close()
+        assert state is await state.close()
+        assert state is await state.close()
+        assert state is await state.close()
         assert "obsolete" not in repr(state)

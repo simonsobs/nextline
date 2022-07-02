@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from queue import Queue
+from queue import Queue  # noqa F401
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
@@ -17,21 +17,28 @@ from . import script
 
 _T = TypeVar("_T")
 
-QueueDone: TypeAlias = "Queue[Tuple[Any, BaseException | None]]"
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
+QueueRegistry: TypeAlias = "Queue[Tuple[str, Any, bool]]"
 PdbCiMap: TypeAlias = MutableMapping[
     TraceNo, Callable[[PdbCommand, PromptNo], Any]
 ]
 
+_q_commands: QueueCommands | None = None
+_q_registry: QueueRegistry | None = None
 
-class RunArg(TypedDict, total=False):
+
+def set_queues(q_commands: QueueCommands, q_registry: QueueRegistry) -> None:
+    global _q_commands, _q_registry
+    _q_commands = q_commands
+    _q_registry = q_registry
+
+
+class RunArg(TypedDict):
     run_no: RunNo
     statement: str
     filename: str
-    queue: Queue[Tuple[str, Any, bool]]
-    init: Callable[[], Any]
 
 
 class Context(TypedDict):
@@ -40,39 +47,33 @@ class Context(TypedDict):
     modules_to_trace: Set[str]
 
 
-def run(
+def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
+    assert _q_registry
+    assert _q_commands
+    return run_(run_arg, _q_commands, _q_registry)
+
+
+def run_(
     run_arg: RunArg,
     q_commands: QueueCommands,
-    q_done: QueueDone,
-):
-    try:
-        _run(run_arg, q_commands, q_done)
-    except BaseException:
-        q_done.put((None, None))
-        raise
-
-
-def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
-
-    run_arg["init"]()
+    q_registry: QueueRegistry,
+) -> Tuple[Any, BaseException | None]:
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
     filename = run_arg.get("script_file_name", "<string>")
-    queue = run_arg["queue"]
 
     try:
         code = _compile(statement, filename)
     except BaseException as e:
-        q_done.put((None, e))
-        return
+        return None, e
 
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
 
     with Callback(
         run_no=run_no,
-        registrar=RegistrarProxy(queue),
+        registrar=RegistrarProxy(q_registry),
         modules_to_trace=modules_to_trace,
     ) as callback:
 
@@ -89,7 +90,7 @@ def _run(run_arg: RunArg, q_commands: QueueCommands, q_done: QueueDone):
         with relay_commands(q_commands, pdb_ci_map):
             result, exception = call_with_trace(func, trace)
 
-    q_done.put((result, exception))
+    return result, exception
 
 
 def _compile(code, filename):
@@ -101,6 +102,7 @@ def _compile(code, filename):
 @contextmanager
 def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
     def fn() -> None:
+        assert q_commands
         while m := q_commands.get():
             command, prompt_no, trace_no = m
             pdb_ci = pdb_ci_map[trace_no]
