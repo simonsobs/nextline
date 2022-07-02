@@ -79,6 +79,13 @@ async def test_one(executor_factory: Callable[[], Executor]) -> None:
     assert r._process.exitcode == 0
 
 
+async def test_default_executor() -> None:
+    r = await run_in_process(None, func)
+    assert "foo" == await r
+    assert r._process
+    assert r._process.exitcode == 0
+
+
 async def test_repr(executor_factory: Callable[[], Executor]) -> None:
     r = await run_in_process(executor_factory, func)
     repr(r)

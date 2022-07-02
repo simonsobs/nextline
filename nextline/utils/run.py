@@ -18,11 +18,13 @@ _P = ParamSpec("_P")
 
 
 async def run_in_process(
-    executor_factory: Callable[[], Executor],
+    executor_factory: Optional[Callable[[], Executor]],
     func: Callable[_P, _T],
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
 ) -> RunInProcess[_T, _P]:
+    if executor_factory is None:
+        executor_factory = partial(ProcessPoolExecutor, max_workers=1)
     return await RunInProcess.create(
         executor_factory, func, *func_args, **func_kwargs
     )
