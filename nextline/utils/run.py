@@ -16,7 +16,7 @@ _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 
-async def run_in_executor(
+async def run_in_process(
     executor_factory: Callable[[], Executor],
     func: Callable[_P, _T],
     *func_args: _P.args,

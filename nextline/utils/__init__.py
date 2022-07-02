@@ -18,7 +18,7 @@ __all__ = [
     "agen_with_wait",
     "merge_aiters",
     "profile_func",
-    "run_in_executor",
+    "run_in_process",
     "Run",
 ]
 
@@ -26,7 +26,7 @@ from .subscribablequeue import SubscribableQueue
 from .thread_task_id import ThreadTaskIdComposer
 from .thread_safe_event import ThreadSafeAsyncioEvent
 from .loop import ToLoop
-from .run import Run, run_in_executor
+from .run import Run, run_in_process
 from .multiprocessing_logging import (
     ProcessPoolExecutorWithLogging,
     MultiprocessingLogging,

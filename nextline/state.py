@@ -10,7 +10,7 @@ from .utils import (
     SubscribableDict,
     to_thread,
     ProcessPoolExecutorWithLogging,
-    run_in_executor,
+    run_in_process,
     Run,
 )
 from .process import run
@@ -165,7 +165,7 @@ class Machine:
             initializer=run.set_queues,
             initargs=(self._q_commands, q_registry),
         )
-        runner = partial(run_in_executor, executor_factory)  # type: ignore
+        runner = partial(run_in_process, executor_factory)  # type: ignore
         filename = SCRIPT_FILE_NAME
         self._context = Context(
             registry=self.registry,
