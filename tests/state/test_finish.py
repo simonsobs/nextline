@@ -34,7 +34,7 @@ class TestFinished(BaseTestState):
         assert state is await state.finish()
         assert "obsolete" not in repr(state)
 
-    async def test_reset(self, state: State, context: Mock):
+    async def test_reset(self, state: State, context: Mock):  # type: ignore
         reset = state.reset(sentinel.args)
         assert isinstance(reset, Initialized)
         await self.assert_obsolete(state)
@@ -45,10 +45,10 @@ class TestFinished(BaseTestState):
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
 
-    async def test_exception(self, state: State, mock_run_exception):
+    async def test_exception(self, state: State, mock_run_exception):  # type: ignore
         assert state.exception() is mock_run_exception
 
-    async def test_result(self, state: State, mock_run_exception):
+    async def test_result(self, state: State, mock_run_exception):  # type: ignore
         if mock_run_exception is None:
             assert state.result() is None
         else:

@@ -25,7 +25,7 @@ class TestInitialized(BaseTestState):
         assert isinstance(running, Running)
         await self.assert_obsolete(state)
 
-    async def test_reset(self, state: State, context: Mock):
+    async def test_reset(self, state: State, context: Mock):  # type: ignore
         reset = state.reset(sentinel.args)
         assert isinstance(reset, Initialized)
         assert reset is not state
