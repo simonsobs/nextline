@@ -2,13 +2,11 @@ from __future__ import annotations
 from operator import itemgetter
 from itertools import groupby
 
-import pytest
 
 from nextline.utils import merge_aiters
 from .aiterable import aiterable
 
 
-@pytest.mark.asyncio
 async def test_one() -> None:
     obj = merge_aiters(aiterable(range(5)), aiterable([True, False] * 3))
     results = [i async for i in obj]

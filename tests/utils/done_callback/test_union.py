@@ -47,7 +47,6 @@ def test_thread(done: Done):
     t.join()
 
 
-@pytest.mark.asyncio
 async def test_task(done: Done):
     obj = ThreadTaskDoneCallback(done=done)
     t = asyncio.create_task(atarget(obj))
@@ -65,7 +64,6 @@ def test_with_thread(done: Done):
     t.join()
 
 
-@pytest.mark.asyncio
 async def test_with_task(done: Done):
     async with ThreadTaskDoneCallback(done=done) as obj:
         t = asyncio.create_task(atarget(obj))
@@ -82,7 +80,6 @@ def test_done_none_thread():
     t.join()
 
 
-@pytest.mark.asyncio
 async def test_done_none_task():
     async with ThreadTaskDoneCallback() as obj:
         t = asyncio.create_task(atarget(obj))

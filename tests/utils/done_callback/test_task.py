@@ -31,7 +31,6 @@ def done():
     yield Done()
 
 
-@pytest.mark.asyncio
 async def test_aclose(done: Done):
     obj = TaskDoneCallback(done=done)
     t = asyncio.create_task(target(obj))
@@ -40,7 +39,6 @@ async def test_aclose(done: Done):
     assert {t} == done.args
 
 
-@pytest.mark.asyncio
 async def test_async_with(done: Done):
     async with TaskDoneCallback(done=done) as obj:
         t = asyncio.create_task(target(obj))
@@ -77,7 +75,6 @@ def test_thread(done: Done):
     t.join()
 
 
-@pytest.mark.asyncio
 async def test_register_arg(done: Done):
     async def target():
         delay = random.random() * 0.01
@@ -95,7 +92,6 @@ async def test_register_arg(done: Done):
 
 
 @pytest.mark.parametrize("n_tasks", [0, 1, 2, 5, 10])
-@pytest.mark.asyncio
 async def test_multiple(n_tasks: int, done: Done):
 
     async with TaskDoneCallback(done=done) as obj:
@@ -105,7 +101,6 @@ async def test_multiple(n_tasks: int, done: Done):
     assert tasks == done.args
 
 
-@pytest.mark.asyncio
 async def test_raise_aclose_from_task(done: Done):
     async def target(obj: TaskDoneCallback):
         obj.register()
@@ -120,7 +115,6 @@ async def test_raise_aclose_from_task(done: Done):
         await t
 
 
-@pytest.mark.asyncio
 async def test_raise_close_from_task(done: Done):
     async def target(obj: TaskDoneCallback):
         obj.register()
@@ -135,7 +129,6 @@ async def test_raise_close_from_task(done: Done):
         await t
 
 
-@pytest.mark.asyncio
 async def test_raise_in_done():
     done = Mock(side_effect=ValueError)
     obj = TaskDoneCallback(done=done)
@@ -147,7 +140,6 @@ async def test_raise_in_done():
         await obj.aclose()
 
 
-@pytest.mark.asyncio
 async def test_done_none():
     async with TaskDoneCallback() as obj:
         t = asyncio.create_task(target(obj))

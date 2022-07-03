@@ -12,7 +12,6 @@ time.sleep(0.01)
 """.lstrip()
 
 
-@pytest.mark.asyncio
 async def test_run(nextline: Nextline):
     assert nextline.state == "initialized"
 

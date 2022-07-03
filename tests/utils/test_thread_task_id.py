@@ -73,7 +73,6 @@ def test_threads(obj: IdComposer):
     t.join()
 
 
-@pytest.mark.asyncio
 async def test_async_coroutine(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
@@ -88,7 +87,6 @@ async def test_async_coroutine(obj: IdComposer):
     await async_assert_call(obj, expected, True)
 
 
-@pytest.mark.asyncio
 async def test_async_tasks(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
@@ -117,7 +115,6 @@ async def test_async_tasks(obj: IdComposer):
     await t
 
 
-@pytest.mark.asyncio
 async def test_async_tasks_gather(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
@@ -158,7 +155,6 @@ def test_async_asyncio_run(obj: IdComposer):
     asyncio.run(async_assert_call(obj, expected))
 
 
-@pytest.mark.asyncio
 async def test_async_asyncio_to_thread(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)

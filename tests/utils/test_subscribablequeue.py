@@ -38,7 +38,6 @@ def test_get(obj: SubscribableQueue[int]):
         assert item == obj.get()
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("n_items", (0, 1, 2, 5))
 @pytest.mark.parametrize("n_subscriptions", (0, 1, 2, 5))
 async def test_subscribe(obj: SubscribableQueue[int], n_items, n_subscriptions):
@@ -61,7 +60,6 @@ async def test_subscribe(obj: SubscribableQueue[int], n_items, n_subscriptions):
     assert obj.nsubscriptions == 0
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("n", (0, 1, 2, 5))
 async def test_nsubscriptions(obj: SubscribableQueue[int], n):
     async def receive():
@@ -75,7 +73,6 @@ async def test_nsubscriptions(obj: SubscribableQueue[int], n):
     assert obj.nsubscriptions == 0
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("n_pre_items", (0, 1, 2, 5))
 @pytest.mark.parametrize("n_items", (0, 1, 3))
 @pytest.mark.parametrize("last", [True, False])
@@ -127,7 +124,6 @@ def test_put_after_close(obj: SubscribableQueue[int | str], n_items: int):
             obj.get()
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("n_items", (0, 1, 3))
 async def test_subscribe_after_close(obj: SubscribableQueue[int], n_items: int):
     items = tuple(range(n_items))
@@ -143,7 +139,6 @@ async def test_subscribe_after_close(obj: SubscribableQueue[int], n_items: int):
     assert results == ()  # empty
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("at", (0, 2, 4))
 async def test_break(obj: SubscribableQueue[int], at: int):
     items = tuple(range(5))
@@ -170,7 +165,6 @@ async def test_break(obj: SubscribableQueue[int], at: int):
     assert results == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("n_subscriptions", [0, 1, 2, 5, 50])
 @pytest.mark.parametrize("n_pre_items", [0, 1, 2, 50])
 @pytest.mark.parametrize("n_post_items", [0, 1, 2, 100])

@@ -1,11 +1,9 @@
 import asyncio
 import threading
-import pytest
 
 from nextline.utils import ThreadSafeAsyncioEvent, to_thread
 
 
-@pytest.mark.asyncio
 async def test_asyncio():
     obj = ThreadSafeAsyncioEvent()
     received = asyncio.Event()
@@ -30,7 +28,6 @@ async def test_asyncio():
     await asyncio.gather(send(), receive())
 
 
-@pytest.mark.asyncio
 async def test_thread():
     obj = ThreadSafeAsyncioEvent()
     received = threading.Event()

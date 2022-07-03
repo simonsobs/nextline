@@ -26,7 +26,6 @@ class TestFinished(BaseTestState):
         super().test_state(state, context)
         assert [call(state)] == context.finish.call_args_list
 
-    @pytest.mark.asyncio
     async def test_finish(self, state: State):
         # The same object should be returned no matter
         # how many times called.
@@ -35,24 +34,20 @@ class TestFinished(BaseTestState):
         assert state is await state.finish()
         assert "obsolete" not in repr(state)
 
-    @pytest.mark.asyncio
     async def test_reset(self, state: State, context: Mock):
         reset = state.reset(sentinel.args)
         assert isinstance(reset, Initialized)
         await self.assert_obsolete(state)
         assert [call(sentinel.args)] == context.reset.call_args_list
 
-    @pytest.mark.asyncio
     async def test_close(self, state: State):
         closed = await state.close()
         assert isinstance(closed, Closed)
         await self.assert_obsolete(state)
 
-    @pytest.mark.asyncio
     async def test_exception(self, state: State, mock_run_exception):
         assert state.exception() is mock_run_exception
 
-    @pytest.mark.asyncio
     async def test_result(self, state: State, mock_run_exception):
         if mock_run_exception is None:
             assert state.result() is None

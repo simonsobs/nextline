@@ -14,7 +14,6 @@ def obj():
     y.close()
 
 
-@pytest.mark.asyncio
 async def test_end(obj: SubscribableDict[str, str]):
     key = "A"
 
@@ -29,13 +28,11 @@ async def test_end(obj: SubscribableDict[str, str]):
     assert result == ()
 
 
-@pytest.mark.asyncio
 async def test_end_without_subscription(obj: SubscribableDict[str, str]):
     key = "A"
     obj.end(key)
 
 
-@pytest.mark.asyncio
 async def test_close(obj: SubscribableDict[str, str]):
     key = "A"
     n_items = 5
@@ -55,7 +52,6 @@ async def test_close(obj: SubscribableDict[str, str]):
     assert result == items
 
 
-@pytest.mark.asyncio
 async def test_clear(obj: SubscribableDict[str, str]):
     key = "A"
     n_items = 5
@@ -76,7 +72,6 @@ async def test_clear(obj: SubscribableDict[str, str]):
     assert result == items
 
 
-@pytest.mark.asyncio
 async def test_del(obj: SubscribableDict[str, str]):
     key = "A"
     n_items = 5
@@ -98,7 +93,6 @@ async def test_del(obj: SubscribableDict[str, str]):
     assert result == items
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("last", [True, False])
 async def test_last(obj: SubscribableDict[str, str], last: bool):
     key = "A"
@@ -126,7 +120,6 @@ async def test_last(obj: SubscribableDict[str, str], last: bool):
     assert result == expected
 
 
-@pytest.mark.asyncio
 async def test_init():
     n_keys = 2
     keys = ascii_uppercase[:n_keys]
@@ -149,7 +142,6 @@ async def test_init():
 @pytest.mark.parametrize("n_keys", [0, 1, 3])
 @pytest.mark.parametrize("n_items", [0, 1, 2, 30])
 @pytest.mark.parametrize("n_subscribers", [0, 1, 2, 50])
-@pytest.mark.asyncio
 async def test_matrix(
     obj: SubscribableDict[str, str],
     n_keys: int,

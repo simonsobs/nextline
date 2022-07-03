@@ -16,7 +16,6 @@ def func(*_, **__):
     return "result"
 
 
-@pytest.mark.asyncio
 async def test_loop(to_loop):
     func_ = Mock(wraps=func)
     ret = to_loop(func_, 1, a="a")
@@ -24,7 +23,6 @@ async def test_loop(to_loop):
     assert call(1, a="a") == func_.call_args
 
 
-@pytest.mark.asyncio
 async def test_thread(to_loop):
     def test():
         func_ = Mock(wraps=func)
@@ -35,7 +33,6 @@ async def test_thread(to_loop):
     await to_thread(test)
 
 
-@pytest.mark.asyncio
 async def test_error_no_loop():
     def func():
         # in a thread without an event loop
@@ -45,7 +42,6 @@ async def test_error_no_loop():
     await to_thread(func)
 
 
-@pytest.mark.asyncio
 async def test_error_loop_closed():
     async def create():
         return ToLoop()

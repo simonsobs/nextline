@@ -20,7 +20,6 @@ class TestRunning(BaseTestState):
         super().test_state(state, context)
         assert [call(state)] == context.run.call_args_list
 
-    @pytest.mark.asyncio
     async def test_finish(self, state):
         finished = await state.finish()
         assert isinstance(finished, Finished)

@@ -8,7 +8,6 @@ from typing import List, Set
 from nextline.utils import agen_with_wait
 
 
-@pytest.mark.asyncio
 async def test_one():
     async def agen():
         for i in range(3):
@@ -34,7 +33,6 @@ async def test_one():
     assert all == set(done) | set(pending)
 
 
-@pytest.mark.asyncio
 async def test_raise():
     async def agen():
         yield 0
@@ -54,7 +52,6 @@ async def test_raise():
     assert ("foo", "bar") == exc.value.args
 
 
-@pytest.mark.asyncio
 async def test_without_send():
     async def agen():
         for i in range(3):

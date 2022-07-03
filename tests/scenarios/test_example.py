@@ -15,7 +15,6 @@ from nextline import Nextline
 from nextline.utils import agen_with_wait
 
 
-@pytest.mark.asyncio
 async def test_run(nextline: Nextline):
     assert nextline.state == "initialized"
 
