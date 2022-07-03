@@ -19,31 +19,27 @@ x = 2
 """.strip()
 
 
-@pytest.mark.asyncio
 async def test_one(machine: Machine) -> None:
     del machine
-    nextline = Nextline(SOURCE)
-    task = asyncio.create_task(nextline.run())
-    nextline.send_pdb_command("continue", 1, 1)
-    await task
-    nextline.exception()
-    nextline.reset()
-    nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
-    await nextline.run()
-    await nextline.close()
+    async with Nextline(SOURCE) as nextline:
+        task = asyncio.create_task(nextline.run())
+        nextline.send_pdb_command("continue", 1, 1)
+        await task
+        nextline.exception()
+        nextline.reset()
+        nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
+        await nextline.run()
 
 
-def test_repr(machine):
+async def test_repr(machine):
     del machine
-    nextline = Nextline(SOURCE)
-    assert repr(nextline)
+    async with Nextline(SOURCE) as nextline:
+        assert repr(nextline)
 
 
 @pytest.fixture
 async def machine(monkeypatch):
-    spec_set = Machine(Mock())
-    await spec_set.close()
-    instance = Mock(spec_set=spec_set)
+    instance = Mock(spec=Machine)
     class_ = Mock(return_value=instance)
     monkeypatch.setattr("nextline.main.Machine", class_)
     return instance
