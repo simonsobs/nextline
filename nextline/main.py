@@ -97,7 +97,7 @@ class Nextline:
     async def close(self) -> None:
         """End gracefully"""
         await self._machine.close()
-        await self._context.close(self._machine._state)
+        await self._context.shutdown()
         await to_thread(self._registry.close)
 
     async def __aenter__(self):

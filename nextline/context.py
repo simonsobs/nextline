@@ -114,8 +114,10 @@ class Context:
 
     async def close(self, state: State):
         self.registrar.state_change(state)
-        await to_thread(self.registrar.close)
         self.state = state
+
+    async def shutdown(self):
+        await to_thread(self.registrar.close)
 
 
 def build_context(

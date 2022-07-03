@@ -310,7 +310,9 @@ class Closed(State):
 
     @classmethod
     async def create(cls, prev: State):
-        return cls(prev)
+        self = cls(prev)
+        await self._context.close(self)
+        return self
 
     def __init__(self, prev: State):
         self._context = prev._context
