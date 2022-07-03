@@ -100,6 +100,13 @@ class Nextline:
         await self._context.close(self._machine._state)
         await to_thread(self._registry.close)
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        await self.close()
+
     @property
     def statement(self) -> str:
         """The script"""
