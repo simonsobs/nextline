@@ -20,21 +20,18 @@ x = 2
 """.strip()
 
 
-@pytest.mark.asyncio
-async def test_init():
-    async with Machine(Mock()) as obj:
+async def test_init(context: Context):
+    async with Machine(context) as obj:
         assert "initialized" == obj.state_name
 
 
-@pytest.mark.asyncio
-async def test_repr():
-    async with Machine(Mock()) as obj:
+async def test_repr(context: Context):
+    async with Machine(context) as obj:
         repr(obj)
 
 
-@pytest.mark.asyncio
-async def test_state_name_unknown(monkeypatch):
-    async with Machine(Mock()) as obj:
+async def test_state_name_unknown(monkeypatch, context: Context):
+    async with Machine(context) as obj:
         with monkeypatch.context() as m:
             m.setattr(obj, "_state", None)
             assert "unknown" == obj.state_name
@@ -42,11 +39,7 @@ async def test_state_name_unknown(monkeypatch):
             assert "unknown" == obj.state_name
 
 
-@pytest.mark.asyncio
-async def test_transitions():
-    context = Mock(spec=Context)
-    context.exception = None
-
+async def test_transitions(context: Context):
     async with Machine(context) as obj:
         await asyncio.sleep(0)
         assert "initialized" == obj.state_name
@@ -61,11 +54,7 @@ async def test_transitions():
     assert "closed" == obj.state_name
 
 
-@pytest.mark.asyncio
-async def test_reset_with_statement():
-    context = Mock(spec=Context)
-    context.exception = None
-
+async def test_reset_with_statement(context: Context):
     async with Machine(context) as obj:
         await asyncio.sleep(0)
         await obj.run()
@@ -73,3 +62,10 @@ async def test_reset_with_statement():
         obj.reset(statement=SOURCE_TWO)
         await obj.run()
         await obj.finish()
+
+
+@pytest.fixture
+def context() -> Mock:
+    y = Mock(spec=Context)
+    y.exception = None
+    return y
