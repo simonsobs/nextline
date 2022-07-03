@@ -16,13 +16,13 @@ def test_daemon():
 
 @pytest.fixture()
 def obj():
-    y = SubscribableQueue()
-    yield y
-    y.close()
+    with SubscribableQueue() as y:
+        yield y
 
 
 def test_close(obj):
     assert obj
+    # will be closed in the fixture
 
 
 def test_close_multiple_times(obj):
