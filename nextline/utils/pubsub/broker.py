@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import AsyncIterator, DefaultDict, Generic, Optional, TypeVar
 
-from .asubscribablequeue import PubSubItem
+from .item import PubSubItem
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")

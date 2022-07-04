@@ -3,5 +3,5 @@ __all__ = [
     "PubSub",
 ]
 
-from .asubscribablequeue import PubSubItem
+from .item import PubSubItem
 from .broker import PubSub
