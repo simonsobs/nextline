@@ -1,5 +1,5 @@
 __all__ = [
-    "ASubscribableQueue",
+    "PubSubItem",
     "PubSub",
     "SubscribableQueue",
     "SubscribableDict",
@@ -24,7 +24,7 @@ __all__ = [
     "RunInProcess",
 ]
 
-from .pubsub import PubSub, ASubscribableQueue
+from .pubsub import PubSub, PubSubItem
 from .subscribablequeue import SubscribableQueue
 from .subscribabledict import SubscribableDict
 from .thread_task_id import ThreadTaskIdComposer

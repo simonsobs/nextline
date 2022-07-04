@@ -28,7 +28,7 @@ class _M(enum.Enum):
 _T = TypeVar("_T")
 
 
-class ASubscribableQueue(Generic[_T]):
+class PubSubItem(Generic[_T]):
     """Distribute items to subscribers
 
     A new subscriber immediately receives the latest item and then wait for new

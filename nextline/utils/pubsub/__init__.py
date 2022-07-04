@@ -1,7 +1,7 @@
 __all__ = [
-    "ASubscribableQueue",
+    "PubSubItem",
     "PubSub",
 ]
 
-from .asubscribablequeue import ASubscribableQueue
+from .asubscribablequeue import PubSubItem
 from .broker import PubSub

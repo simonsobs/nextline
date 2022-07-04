@@ -4,14 +4,14 @@ from string import ascii_uppercase
 
 import pytest
 
-from nextline.utils import ASubscribableQueue, ThreadSafeAsyncioEvent
+from nextline.utils import PubSubItem, ThreadSafeAsyncioEvent
 
 from ..aiterable import aiterable
 
 
 @pytest.fixture()
 async def obj():
-    async with ASubscribableQueue() as y:
+    async with PubSubItem() as y:
         yield y
 
 
@@ -25,7 +25,7 @@ async def test_close_multiple_times(obj):
     await obj.close()
 
 
-def test_get(obj: ASubscribableQueue[int]):
+def test_get(obj: PubSubItem[int]):
     with pytest.raises(LookupError):
         obj.get()
     for item in range(5):
@@ -36,7 +36,7 @@ def test_get(obj: ASubscribableQueue[int]):
 @pytest.mark.parametrize("n_items", (0, 1, 2, 5))
 @pytest.mark.parametrize("n_subscriptions", (0, 1, 2, 5))
 async def test_subscribe(
-    obj: ASubscribableQueue[int], n_items, n_subscriptions
+    obj: PubSubItem[int], n_items, n_subscriptions
 ):
     items = tuple(range(n_items))
     expected = [items] * n_subscriptions
@@ -58,7 +58,7 @@ async def test_subscribe(
 
 
 @pytest.mark.parametrize("n", (0, 1, 2, 5))
-async def test_nsubscriptions(obj: ASubscribableQueue[int], n):
+async def test_nsubscriptions(obj: PubSubItem[int], n):
     async def receive():
         return tuple([i async for i in obj.subscribe()])
 
@@ -75,7 +75,7 @@ async def test_nsubscriptions(obj: ASubscribableQueue[int], n):
 @pytest.mark.parametrize("last", [True, False])
 @pytest.mark.parametrize("n_subscriptions", (0, 1, 3))
 async def test_last(
-    obj: ASubscribableQueue[int | str],
+    obj: PubSubItem[int | str],
     n_pre_items: int,
     n_items: int,
     last: bool,
@@ -108,7 +108,7 @@ async def test_last(
 
 @pytest.mark.parametrize("n_items", (0, 1, 3))
 async def test_put_after_close(
-    obj: ASubscribableQueue[int | str], n_items: int
+    obj: PubSubItem[int | str], n_items: int
 ):
     items = tuple(range(n_items))
     for i in items:
@@ -125,7 +125,7 @@ async def test_put_after_close(
 
 @pytest.mark.parametrize("n_items", (0, 1, 3))
 async def test_subscribe_after_close(
-    obj: ASubscribableQueue[int], n_items: int
+    obj: PubSubItem[int], n_items: int
 ):
     items = tuple(range(n_items))
     for i in items:
@@ -141,7 +141,7 @@ async def test_subscribe_after_close(
 
 
 @pytest.mark.parametrize("at", (0, 2, 4))
-async def test_break(obj: ASubscribableQueue[int], at: int):
+async def test_break(obj: PubSubItem[int], at: int):
     items = tuple(range(5))
     expected = items[: items.index(at)]
 
@@ -170,7 +170,7 @@ async def test_break(obj: ASubscribableQueue[int], at: int):
 @pytest.mark.parametrize("n_pre_items", [0, 1, 2, 50])
 @pytest.mark.parametrize("n_post_items", [0, 1, 2, 100])
 async def test_matrix(
-    obj: ASubscribableQueue[int],
+    obj: PubSubItem[int],
     n_subscriptions: int,
     n_pre_items: int,
     n_post_items: int,

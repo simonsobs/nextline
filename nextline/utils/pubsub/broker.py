@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import AsyncIterator, DefaultDict, Generic, Optional, TypeVar
 
-from .asubscribablequeue import ASubscribableQueue
+from .asubscribablequeue import PubSubItem
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
@@ -13,8 +13,8 @@ class PubSub(Generic[_KT, _VT]):
     """Asynchronous message broker of the publish-subscribe pattern"""
 
     def __init__(self, *args, **kwargs):
-        self._queue: DefaultDict[_KT, ASubscribableQueue[_VT]] = defaultdict(
-            ASubscribableQueue
+        self._queue: DefaultDict[_KT, PubSubItem[_VT]] = defaultdict(
+            PubSubItem
         )
 
     def subscribe(
