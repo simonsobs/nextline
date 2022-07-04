@@ -186,7 +186,7 @@ async def run(nextline: Nextline):
     await nextline.run()
     nextline.exception()
     nextline.result()
-    nextline.reset()
+    await nextline.reset()
     await nextline.run()
     nextline.exception()
     nextline.result()

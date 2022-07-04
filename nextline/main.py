@@ -106,13 +106,13 @@ class Nextline:
         """Return value of the last run. always None"""
         return self._machine.result()
 
-    def reset(
+    async def reset(
         self,
         statement: Optional[str] = None,
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""
-        self._machine.reset(
+        await self._machine.reset(
             statement=statement,
             run_no_start_from=run_no_start_from,
         )

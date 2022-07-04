@@ -35,7 +35,7 @@ class TestFinished(BaseTestState):
         assert "obsolete" not in repr(state)
 
     async def test_reset(self, state: State, context: Mock):  # type: ignore
-        reset = state.reset(sentinel.args)
+        reset = await state.reset(sentinel.args)
         assert isinstance(reset, Initialized)
         await self.assert_obsolete(state)
         assert [call(sentinel.args)] == context.reset.call_args_list

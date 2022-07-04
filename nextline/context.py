@@ -66,7 +66,7 @@ class Context:
         self.registrar.state_change(state)
         self.state = state
 
-    def reset(
+    async def reset(
         self,
         statement: Optional[str] = None,
         run_no_start_from: Optional[int] = None,

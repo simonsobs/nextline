@@ -79,9 +79,9 @@ class Machine:
     def result(self) -> Any:
         return self._state.result()
 
-    def reset(self, *args, **kwargs) -> None:
+    async def reset(self, *args, **kwargs) -> None:
         """Enter the initialized state"""
-        self._state = self._state.reset(*args, **kwargs)
+        self._state = await self._state.reset(*args, **kwargs)
 
     async def close(self) -> None:
         """Enter the closed state"""
@@ -147,7 +147,7 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self, *_, **__) -> State:
+    async def reset(self, *_, **__) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -207,9 +207,9 @@ class Initialized(State):
         self.obsolete()
         return next
 
-    def reset(self, *args, **kwargs) -> Initialized:
+    async def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        self._context.reset(*args, **kwargs)
+        await self._context.reset(*args, **kwargs)
         next = Initialized(self)
         self.obsolete()
         return next
@@ -293,9 +293,9 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(self, *args, **kwargs) -> Initialized:
+    async def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        self._context.reset(*args, **kwargs)
+        await self._context.reset(*args, **kwargs)
         next = Initialized(self)
         self.obsolete()
         return next

@@ -89,7 +89,7 @@ class BaseTestState(ABC):
             await state.finish()
 
         with pytest.raises(StateObsoleteError):
-            state.reset()
+            await state.reset()
 
         with pytest.raises(StateObsoleteError):
             await state.close()
@@ -106,9 +106,9 @@ class BaseTestState(ABC):
         with pytest.raises(StateMethodError):
             await state.finish()
 
-    def test_reset(self, state: State):
+    async def test_reset(self, state: State):
         with pytest.raises(StateMethodError):
-            state.reset()
+            await state.reset()
 
     def test_exception(self, state: State):
         with pytest.raises(StateMethodError):
