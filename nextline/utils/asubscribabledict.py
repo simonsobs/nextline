@@ -1,68 +1,48 @@
 from __future__ import annotations
-from typing import AsyncIterator, Generic, Optional, TypeVar
+
+from collections import defaultdict
+from typing import AsyncIterator, DefaultDict, Generic, Optional, TypeVar
 
 from .asubscribablequeue import ASubscribableQueue
-from ._userdict import UserDict
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
 
-class QueueDict(UserDict[_KT, ASubscribableQueue[_VT]], Generic[_KT, _VT]):
-    def __missing__(self, key: _KT) -> ASubscribableQueue[_VT]:
-        v = self[key] = ASubscribableQueue()
-        return v
-
-    # def __delitem__(self, key: _KT) -> None:
-    #     print("QueueDict.__delitem__")
-    #     self.data.pop(key).close()
-
-
-class ASubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
-    """Dict with async generator that yields values as they change"""
+class ASubscribableDict(Generic[_KT, _VT]):
+    """Asynchronous message broker of the publish-subscribe pattern"""
 
     def __init__(self, *args, **kwargs):
-        self._queue: QueueDict[_KT, _VT] = QueueDict()
-        super().__init__(*args, **kwargs)
+        self._queue: DefaultDict[_KT, ASubscribableQueue[_VT]] = defaultdict(
+            ASubscribableQueue
+        )
 
     def subscribe(
         self, key: _KT, last: Optional[bool] = True
     ) -> AsyncIterator[_VT]:
-        """Async generator that yields values for the key as they are set
+        """Async iterator that yields values for the key as they are published
 
         Waits for new values and yields them as they are set. If `last` is
-        true, yields immediately the current value for the key before starting
+        true, yields immediately the latest value for the key before starting
         to wait. If the key doesn't exist, waits for the first value for the
         key; KeyError won't be raised.
 
         """
         return self._queue[key].subscribe(last=last)
 
-    def __setitem__(self, key: _KT, value: _VT) -> None:
-        """Set the value for the key, yielding the value in the generators"""
-        super().__setitem__(key, value)
+    def publish(self, key: _KT, value: _VT) -> None:
+        """Yield the value in the generators"""
         self._queue[key].put(value)
 
-    def __delitem__(self, key: _KT) -> None:
-        """Remove the key, ending all subscriptions for the key
+    def latest(self, key: _KT) -> _VT:
+        """Latest value for the key"""
+        return self._queue[key].get()
+
+    async def end(self, key: _KT) -> None:
+        """End all subscriptions for the key
 
         The async generators returned by the method `subscribe()` for the key
         will return.
-
-        KeyError will be raised if the key doesn't exist
-        """
-        super().__delitem__(key)
-        self.end(key)
-
-    async def end(self, key: _KT):
-        """End all subscriptions for the key without removing the key
-
-        The async generators returned by the method `subscribe()` for the key
-        will return.
-
-        The item for the key is still accessible as d[key]
-
-        KeyError will not be raised
 
         """
         if q := self._queue.pop(key, None):
@@ -71,11 +51,8 @@ class ASubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
     async def close(self) -> None:
         """End all subscriptions for all keys
 
-        The all async generators returned by the method `subscribe()` for any
-        key will return.
-
-        No keys will be removed, i.e., d[key] still returns the item for the
-        key.
+        All async generators returned by the method `subscribe()` for any key
+        will return.
 
         """
         while self._queue:

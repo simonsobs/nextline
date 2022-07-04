@@ -43,9 +43,11 @@ async def test_close(obj: ASubscribableDict[str, str]):
     async def put():
         await asyncio.sleep(0.001)
         for item in items:
-            obj[key] = item
+            obj.publish(key, item)
+        assert obj.latest(key) == items[-1]
         await obj.close()  # ends the subscription
-        assert obj[key] == items[-1]  # the last item is still there
+        with pytest.raises(LookupError):
+            obj.latest(key)
 
     result, _ = await asyncio.gather(subscribe(), put())
     assert result == items
@@ -61,7 +63,7 @@ async def test_last(obj: ASubscribableDict[str, str], last: bool):
     expected = pre_items[-1:] + items if last else items
 
     for item in pre_items:
-        obj[key] = item
+        obj.publish(key, item)
 
     await asyncio.sleep(0.001)
 
@@ -71,7 +73,7 @@ async def test_last(obj: ASubscribableDict[str, str], last: bool):
     async def put():
         await asyncio.sleep(0.001)
         for item in items:
-            obj[key] = item
+            obj.publish(key, item)
         await obj.end(key)
 
     result, _ = await asyncio.gather(subscribe(), put())
@@ -96,7 +98,7 @@ async def test_matrix(
     async def put(key):
         time.sleep(0.01)
         for item in items[key]:
-            obj[key] = item
+            obj.publish(key, item)
         await obj.end(key)
 
     results = await asyncio.gather(
