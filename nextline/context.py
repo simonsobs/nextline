@@ -51,7 +51,7 @@ class Context:
         self.run_no_count = RunNoCounter(run_no_start_from)
 
     async def start(self):
-        self.registrar.script_change(
+        await self.registrar.script_change(
             script=self.statement, filename=self.filename
         )
 
@@ -62,8 +62,8 @@ class Context:
         self.run_no = self.run_no_count()
         self.result = None
         self.exception = None
-        self.registrar.state_initialized(self.run_no)
-        self.registrar.state_change(state)
+        await self.registrar.state_initialized(self.run_no)
+        await self.registrar.state_change(state)
         self.state = state
 
     async def reset(
@@ -73,7 +73,7 @@ class Context:
     ):
         if statement:
             self.statement = statement
-            self.registrar.script_change(
+            await self.registrar.script_change(
                 script=statement, filename=self.filename
             )
         if run_no_start_from is not None:
@@ -88,8 +88,8 @@ class Context:
                 filename=self.filename,
             ),
         )
-        self.registrar.run_start(self.run_no)
-        self.registrar.state_change(state)
+        await self.registrar.run_start(self.run_no)
+        await self.registrar.state_change(state)
         self.state = state
         return self.future
 
@@ -112,12 +112,12 @@ class Context:
         except TypeError:
             # The process was terminated.
             pass
-        self.registrar.run_end(state=state)
-        self.registrar.state_change(state)
+        await self.registrar.run_end(state=state)
+        await self.registrar.state_change(state)
         self.state = state
 
     async def close(self, state: State):
-        self.registrar.state_change(state)
+        await self.registrar.state_change(state)
         self.state = state
 
 
