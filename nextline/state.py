@@ -200,7 +200,7 @@ class Initialized(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        self._context.initialize(self)
+        await self._context.initialize(self)
         return self
 
     def __init__(self, prev: State):

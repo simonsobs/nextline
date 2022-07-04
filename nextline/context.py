@@ -58,7 +58,7 @@ class Context:
     async def shutdown(self):
         await self.registrar.close()
 
-    def initialize(self, state: State):
+    async def initialize(self, state: State):
         self.run_no = self.run_no_count()
         self.result = None
         self.exception = None
