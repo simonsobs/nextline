@@ -13,7 +13,7 @@ from typing_extensions import TypeAlias
 
 from .types import RunNo, RunInfo
 from .types import TraceInfo  # noqa F401
-from .utils import to_thread
+from .utils import to_thread, ASubscribableDict
 
 if TYPE_CHECKING:
     from .state import State
@@ -27,7 +27,7 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(self, registry: MutableMapping, queue: QueueRegistry):
+    def __init__(self, registry: ASubscribableDict, queue: QueueRegistry):
         self._registry = registry
         self._queue = queue
         self._task = asyncio.create_task(self._relay())
@@ -40,31 +40,28 @@ class Registrar:
         while (m := await to_thread(self._queue.get)) is not None:
             key, value, close = m
             if close:
-                try:
-                    del self._registry[key]
-                except KeyError:
-                    pass
+                await self._registry.end(key)
                 continue
-            self._registry[key] = value
+            self._registry.publish(key, value)
 
     def script_change(self, script: str, filename: str) -> None:
-        self._registry["statement"] = script
-        self._registry["script_file_name"] = filename
+        self._registry.publish("statement", script)
+        self._registry.publish("script_file_name", filename)
 
     def state_change(self, state: State) -> None:
-        self._registry["state_name"] = state.name
+        self._registry.publish("state_name", state.name)
 
     def state_initialized(self, run_no: int) -> None:
-        self._registry["run_no"] = run_no
+        self._registry.publish("run_no", run_no)
 
     def run_start(self, run_no: RunNo) -> None:
         self._run_info = RunInfo(
             run_no=run_no,
             state="running",
-            script=self._registry["statement"],
+            script=self._registry.latest("statement"),
             started_at=datetime.datetime.now(),
         )
-        self._registry["run_info"] = self._run_info
+        self._registry.publish("run_info", self._run_info)
 
     def run_end(self, state: State) -> None:
         exc = state.exception()
@@ -84,4 +81,4 @@ class Registrar:
             ended_at=datetime.datetime.now(),
         )
         # TODO: check if run_no matches
-        self._registry["run_info"] = self._run_info
+        self._registry.publish("run_info", self._run_info)

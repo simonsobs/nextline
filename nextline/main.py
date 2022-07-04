@@ -7,7 +7,7 @@ from logging import getLogger
 from typing import Any, AsyncIterator, Optional, Tuple
 
 from .process.run import QueueCommands
-from .utils import SubscribableDict, merge_aiters, to_thread
+from .utils import ASubscribableDict, merge_aiters
 from .context import build_context
 from .state import Machine
 from .types import PromptNo, TraceNo, StdoutInfo
@@ -40,7 +40,7 @@ class Nextline:
 
         mp_context = mp.get_context("spawn")
 
-        self._registry = SubscribableDict[Any, Any]()
+        self._registry = ASubscribableDict[Any, Any]()
         self._q_commands: QueueCommands = mp_context.Queue()
 
         self._context = build_context(
@@ -98,7 +98,7 @@ class Nextline:
         """End gracefully"""
         await self._machine.close()
         await self._context.shutdown()
-        await to_thread(self._registry.close)
+        await self._registry.close()
 
     async def __aenter__(self):
         return self
@@ -136,7 +136,7 @@ class Nextline:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == self._registry.get(
+        if not file_name or file_name == self._registry.latest(
             "script_file_name"
         ):
             return self.get("statement").split("\n")
@@ -189,7 +189,7 @@ class Nextline:
             yield info
 
     def get(self, key) -> Any:
-        return self._registry.get(key)
+        return self._registry.latest(key)
 
     def subscribe(
         self, key, last: Optional[bool] = True
