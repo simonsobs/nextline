@@ -4,7 +4,7 @@ from string import ascii_uppercase
 
 import pytest
 
-from nextline.utils import PubSubItem, ThreadSafeAsyncioEvent
+from nextline.utils import PubSubItem
 
 from ..aiterable import aiterable
 
@@ -35,9 +35,7 @@ def test_get(obj: PubSubItem[int]):
 
 @pytest.mark.parametrize("n_items", (0, 1, 2, 5))
 @pytest.mark.parametrize("n_subscriptions", (0, 1, 2, 5))
-async def test_subscribe(
-    obj: PubSubItem[int], n_items, n_subscriptions
-):
+async def test_subscribe(obj: PubSubItem[int], n_items, n_subscriptions):
     items = tuple(range(n_items))
     expected = [items] * n_subscriptions
 
@@ -107,9 +105,7 @@ async def test_last(
 
 
 @pytest.mark.parametrize("n_items", (0, 1, 3))
-async def test_put_after_close(
-    obj: PubSubItem[int | str], n_items: int
-):
+async def test_put_after_close(obj: PubSubItem[int | str], n_items: int):
     items = tuple(range(n_items))
     for i in items:
         obj.publish(i)
@@ -124,9 +120,7 @@ async def test_put_after_close(
 
 
 @pytest.mark.parametrize("n_items", (0, 1, 3))
-async def test_subscribe_after_close(
-    obj: PubSubItem[int], n_items: int
-):
+async def test_subscribe_after_close(obj: PubSubItem[int], n_items: int):
     items = tuple(range(n_items))
     for i in items:
         obj.publish(i)
@@ -190,7 +184,7 @@ async def test_matrix(
     items = pre_items + post_items
     assert len(items) == n_items
 
-    event = ThreadSafeAsyncioEvent()
+    event = asyncio.Event()
 
     async def receive():
         await event.wait()
