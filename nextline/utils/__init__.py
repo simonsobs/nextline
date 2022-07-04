@@ -24,8 +24,7 @@ __all__ = [
     "RunInProcess",
 ]
 
-from .asubscribablequeue import ASubscribableQueue
-from .pubsub import PubSub
+from .pubsub import PubSub, ASubscribableQueue
 from .subscribablequeue import SubscribableQueue
 from .subscribabledict import SubscribableDict
 from .thread_task_id import ThreadTaskIdComposer

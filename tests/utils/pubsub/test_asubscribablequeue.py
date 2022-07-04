@@ -6,7 +6,7 @@ import pytest
 
 from nextline.utils import ASubscribableQueue, ThreadSafeAsyncioEvent
 
-from .aiterable import aiterable
+from ..aiterable import aiterable
 
 
 @pytest.fixture()
