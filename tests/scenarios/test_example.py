@@ -267,7 +267,8 @@ def extract_comment(line: str) -> Optional[str]:
 
 @pytest.fixture
 async def nextline(statement):
-    return Nextline(statement)
+    async with Nextline(statement) as y:
+        yield y
 
 
 @pytest.fixture

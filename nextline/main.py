@@ -38,6 +38,11 @@ class Nextline:
         logger.debug(f"statement starts with {statement[:25]!r}")
         logger.debug(f"The next run number will be {run_no_start_from}")
 
+        self._statement = statement
+        self._run_no_start_from = run_no_start_from
+        self._closed = False
+
+    async def start(self) -> None:
         mp_context = mp.get_context("spawn")
 
         self._registry = PubSub[Any, Any]()
@@ -47,14 +52,31 @@ class Nextline:
             self._registry,
             self._q_commands,
             mp_context,
-            statement,
-            run_no_start_from,
+            self._statement,
+            self._run_no_start_from,
         )
         self._machine = Machine(self._context)
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
         return f"<{self.__class__.__name__} {self.state!r}>"
+
+    async def close(self) -> None:
+        """End gracefully"""
+        if self._closed:
+            return
+        self._closed = True
+        await self._machine.close()
+        await self._context.shutdown()
+        await self._registry.close()
+
+    async def __aenter__(self):
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        await self.close()
 
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
@@ -93,19 +115,6 @@ class Nextline:
             statement=statement,
             run_no_start_from=run_no_start_from,
         )
-
-    async def close(self) -> None:
-        """End gracefully"""
-        await self._machine.close()
-        await self._context.shutdown()
-        await self._registry.close()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        del exc_type, exc_value, traceback
-        await self.close()
 
     @property
     def statement(self) -> str:
