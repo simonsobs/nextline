@@ -1,6 +1,8 @@
 __all__ = [
     "ASubscribableQueue",
+    "ASubscribableDict",
     "SubscribableQueue",
+    "SubscribableDict",
     "ThreadTaskIdComposer",
     "ThreadSafeAsyncioEvent",
     "ToLoop",
@@ -9,7 +11,6 @@ __all__ = [
     "peek_stdout",
     "peek_stderr",
     "peek_textio",
-    "SubscribableDict",
     "ExcThread",
     "ThreadTaskDoneCallback",
     "ThreadDoneCallback",
@@ -24,7 +25,9 @@ __all__ = [
 ]
 
 from .asubscribablequeue import ASubscribableQueue
+from .asubscribabledict import ASubscribableDict
 from .subscribablequeue import SubscribableQueue
+from .subscribabledict import SubscribableDict
 from .thread_task_id import ThreadTaskIdComposer
 from .thread_safe_event import ThreadSafeAsyncioEvent
 from .loop import ToLoop
@@ -34,7 +37,6 @@ from .multiprocessing_logging import (
     MultiprocessingLogging,
 )
 from .peek import peek_stdout, peek_stderr, peek_textio
-from .subscribabledict import SubscribableDict
 from .thread_exception import ExcThread
 from .done_callback import (
     ThreadTaskDoneCallback,
