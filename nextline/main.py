@@ -48,7 +48,7 @@ class Nextline:
         self._registry = PubSub[Any, Any]()
         self._q_commands: QueueCommands = mp_context.Queue()
 
-        self._context = build_context(
+        self._context = await build_context(
             self._registry,
             self._q_commands,
             mp_context,

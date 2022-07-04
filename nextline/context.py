@@ -49,9 +49,14 @@ class Context:
         self.registrar = Registrar(registry, q_registry)
         self.run_no = RunNo(run_no_start_from - 1)
         self.run_no_count = RunNoCounter(run_no_start_from)
+
+    async def start(self):
         self.registrar.script_change(
             script=self.statement, filename=self.filename
         )
+
+    async def shutdown(self):
+        await self.registrar.close()
 
     def initialize(self, state: State):
         self.run_no = self.run_no_count()
@@ -115,11 +120,8 @@ class Context:
         self.registrar.state_change(state)
         self.state = state
 
-    async def shutdown(self):
-        await self.registrar.close()
 
-
-def build_context(
+async def build_context(
     registry: PubSub[Any, Any],
     q_commands: QueueCommands,
     mp_context: mp.context.BaseContext,
@@ -136,7 +138,7 @@ def build_context(
     )
     runner = partial(run_in_process, executor_factory)  # type: ignore
     filename = SCRIPT_FILE_NAME
-    return Context(
+    context = Context(
         registry=registry,
         q_registry=q_registry,
         run_no_start_from=run_no_start_from,
@@ -145,3 +147,5 @@ def build_context(
         runner=runner,
         func=run.run,
     )
+    await context.start()
+    return context
