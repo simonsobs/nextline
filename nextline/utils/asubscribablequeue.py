@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import enum
 import asyncio
-import threading
 from janus import Queue as Janus
 
 from typing import (
@@ -52,7 +51,7 @@ class ASubscribableQueue(Generic[_T]):
         self._last_item: _T | Literal[_M.START] = _M.START
 
         self._closed: bool = False
-        self._lock_close = threading.Condition()
+        self._lock_close = asyncio.Condition()
 
         self._task = asyncio.create_task(self._listen())
 
@@ -111,7 +110,7 @@ class ASubscribableQueue(Generic[_T]):
 
     async def close(self) -> None:
         """End gracefully"""
-        with self._lock_close:
+        async with self._lock_close:
             if self._closed:
                 return
             self._closed = True
