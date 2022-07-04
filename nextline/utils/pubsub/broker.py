@@ -32,11 +32,11 @@ class PubSub(Generic[_KT, _VT]):
 
     def publish(self, key: _KT, value: _VT) -> None:
         """Yield the value in the generators"""
-        self._queue[key].put(value)
+        self._queue[key].publish(value)
 
     def latest(self, key: _KT) -> _VT:
         """Latest value for the key"""
-        return self._queue[key].get()
+        return self._queue[key].latest()
 
     async def end(self, key: _KT) -> None:
         """End all subscriptions for the key

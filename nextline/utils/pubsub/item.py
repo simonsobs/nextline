@@ -58,7 +58,7 @@ class PubSubItem(Generic[_T]):
         """The number of the subscribers"""
         return len(self._qs_out)
 
-    def put(self, item: _T) -> None:
+    def publish(self, item: _T) -> None:
         """Send data to subscribers
 
         This method can be called in any thread.
@@ -68,8 +68,8 @@ class PubSubItem(Generic[_T]):
         self._last_item = item
         self._q_in.sync_q.put(item)
 
-    def get(self) -> _T:
-        """Most recent data that have been put"""
+    def latest(self) -> _T:
+        """Most recent data that have been published"""
         if self._last_item is _M.START:
             raise LookupError
         return self._last_item
