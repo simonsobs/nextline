@@ -16,8 +16,6 @@ from typing import (
     TypeVar,
 )
 
-from .func import to_thread
-
 
 class _M(enum.Enum):
     # TODO: Using Enum as sentinel for now as suggested in
@@ -43,7 +41,7 @@ class ASubscribableQueue(Generic[_T]):
 
     def __init__(self):
 
-        self._q_in: Queue[_T | Literal[_M.END]] = Queue()
+        self._q_in: Janus[_T | Literal[_M.END]] = Janus()
 
         self._qs_out: List[
             Queue[Tuple[int, _T | Literal[_M.END]]]
@@ -73,7 +71,7 @@ class ASubscribableQueue(Generic[_T]):
         if self._closed:
             raise RuntimeError(f"{self} is closed.")
         self._last_item = item
-        self._q_in.put(item)
+        self._q_in.sync_q.put(item)
 
     def get(self) -> _T:
         """Most recent data that have been put"""
@@ -122,9 +120,10 @@ class ASubscribableQueue(Generic[_T]):
             if self._closed:
                 return
             self._closed = True
-            self._q_in.put(_M.END)
+            await self._q_in.async_q.put(_M.END)
             await self._task
-            self._q_in.join()
+            self._q_in.close()
+            await self._q_in.wait_closed()
 
     async def __aenter__(self):
         return self
@@ -141,8 +140,8 @@ class ASubscribableQueue(Generic[_T]):
         idx, item = self._last_enumerated
         while item is not _M.END:
             idx += 1
-            item = await to_thread(self._q_in.get)
-            self._q_in.task_done()
+            item = await self._q_in.async_q.get()
+            self._q_in.async_q.task_done()
             self._last_enumerated = (idx, item)
             for q in list(self._qs_out):  # list in case it changes in a thread
                 q.put(self._last_enumerated)
