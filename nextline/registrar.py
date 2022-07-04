@@ -42,17 +42,17 @@ class Registrar:
             if close:
                 await self._registry.end(key)
                 continue
-            self._registry.publish(key, value)
+            await self._registry.publish(key, value)
 
     async def script_change(self, script: str, filename: str) -> None:
-        self._registry.publish("statement", script)
-        self._registry.publish("script_file_name", filename)
+        await self._registry.publish("statement", script)
+        await self._registry.publish("script_file_name", filename)
 
     async def state_change(self, state: State) -> None:
-        self._registry.publish("state_name", state.name)
+        await self._registry.publish("state_name", state.name)
 
     async def state_initialized(self, run_no: int) -> None:
-        self._registry.publish("run_no", run_no)
+        await self._registry.publish("run_no", run_no)
 
     async def run_start(self, run_no: RunNo) -> None:
         self._run_info = RunInfo(
@@ -61,7 +61,7 @@ class Registrar:
             script=self._registry.latest("statement"),
             started_at=datetime.datetime.now(),
         )
-        self._registry.publish("run_info", self._run_info)
+        await self._registry.publish("run_info", self._run_info)
 
     async def run_end(self, state: State) -> None:
         exc = state.exception()
@@ -81,4 +81,4 @@ class Registrar:
             ended_at=datetime.datetime.now(),
         )
         # TODO: check if run_no matches
-        self._registry.publish("run_info", self._run_info)
+        await self._registry.publish("run_info", self._run_info)

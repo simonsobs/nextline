@@ -30,7 +30,7 @@ class PubSub(Generic[_KT, _VT]):
         """
         return self._queue[key].subscribe(last=last)
 
-    def publish(self, key: _KT, value: _VT) -> None:
+    async def publish(self, key: _KT, value: _VT) -> None:
         """Yield the value in the generators"""
         self._queue[key].publish(value)
 
