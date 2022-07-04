@@ -181,7 +181,7 @@ class Created(State):
 
     async def initialize(self) -> Initialized:
         self.assert_not_obsolete()
-        next = Initialized(self)
+        next = await Initialized.create(self)
         self.obsolete()
         return next
 
@@ -197,9 +197,14 @@ class Initialized(State):
 
     name = "initialized"
 
+    @classmethod
+    async def create(cls, prev: State):
+        self = cls(prev)
+        self._context.initialize(self)
+        return self
+
     def __init__(self, prev: State):
         self._context = prev._context
-        self._context.initialize(self)
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
@@ -210,7 +215,7 @@ class Initialized(State):
     async def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
         await self._context.reset(*args, **kwargs)
-        next = Initialized(self)
+        next = await Initialized.create(self)
         self.obsolete()
         return next
 
@@ -296,7 +301,7 @@ class Finished(State):
     async def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
         await self._context.reset(*args, **kwargs)
-        next = Initialized(self)
+        next = await Initialized.create(self)
         self.obsolete()
         return next
 
