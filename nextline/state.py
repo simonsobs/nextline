@@ -38,7 +38,6 @@ class Machine:
     def __init__(self, context: Context):
         self._context = context
         self._state: State = Created(self._context)
-        self._state = self._state.initialize()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -51,6 +50,10 @@ class Machine:
             return self._state.name
         except BaseException:
             return "unknown"
+
+    async def initialize(self) -> None:
+        """Enter the initialized state"""
+        self._state = await self._state.initialize()
 
     async def run(self) -> None:
         """Enter the running state"""
@@ -76,15 +79,16 @@ class Machine:
     def result(self) -> Any:
         return self._state.result()
 
-    def reset(self, *args, **kwargs) -> None:
+    async def reset(self, *args, **kwargs) -> None:
         """Enter the initialized state"""
-        self._state = self._state.reset(*args, **kwargs)
+        self._state = await self._state.reset(*args, **kwargs)
 
     async def close(self) -> None:
         """Enter the closed state"""
         self._state = await self._state.close()
 
     async def __aenter__(self):
+        await self.initialize()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
@@ -131,7 +135,7 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
-    def initialize(self) -> State:
+    async def initialize(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -143,7 +147,7 @@ class State(ObsoleteMixin):
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
-    def reset(self, *_, **__) -> State:
+    async def reset(self, *_, **__) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -175,9 +179,9 @@ class Created(State):
     def __init__(self, context: Context):
         self._context = context
 
-    def initialize(self) -> Initialized:
+    async def initialize(self) -> Initialized:
         self.assert_not_obsolete()
-        next = Initialized(self)
+        next = await Initialized.create(self)
         self.obsolete()
         return next
 
@@ -193,9 +197,14 @@ class Initialized(State):
 
     name = "initialized"
 
+    @classmethod
+    async def create(cls, prev: State):
+        self = cls(prev)
+        await self._context.initialize(self)
+        return self
+
     def __init__(self, prev: State):
         self._context = prev._context
-        self._context.initialize(self)
 
     async def run(self) -> Running:
         self.assert_not_obsolete()
@@ -203,10 +212,10 @@ class Initialized(State):
         self.obsolete()
         return next
 
-    def reset(self, *args, **kwargs) -> Initialized:
+    async def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        self._context.reset(*args, **kwargs)
-        next = Initialized(self)
+        await self._context.reset(*args, **kwargs)
+        next = await Initialized.create(self)
         self.obsolete()
         return next
 
@@ -289,10 +298,10 @@ class Finished(State):
         self.assert_not_obsolete()
         return self
 
-    def reset(self, *args, **kwargs) -> Initialized:
+    async def reset(self, *args, **kwargs) -> Initialized:
         self.assert_not_obsolete()
-        self._context.reset(*args, **kwargs)
-        next = Initialized(self)
+        await self._context.reset(*args, **kwargs)
+        next = await Initialized.create(self)
         self.obsolete()
         return next
 

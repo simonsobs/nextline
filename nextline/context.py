@@ -49,26 +49,31 @@ class Context:
         self.registrar = Registrar(registry, q_registry)
         self.run_no = RunNo(run_no_start_from - 1)
         self.run_no_count = RunNoCounter(run_no_start_from)
-        self.registrar.script_change(
+
+    async def start(self):
+        await self.registrar.script_change(
             script=self.statement, filename=self.filename
         )
 
-    def initialize(self, state: State):
+    async def shutdown(self):
+        await self.registrar.close()
+
+    async def initialize(self, state: State):
         self.run_no = self.run_no_count()
         self.result = None
         self.exception = None
-        self.registrar.state_initialized(self.run_no)
-        self.registrar.state_change(state)
+        await self.registrar.state_initialized(self.run_no)
+        await self.registrar.state_change(state)
         self.state = state
 
-    def reset(
+    async def reset(
         self,
         statement: Optional[str] = None,
         run_no_start_from: Optional[int] = None,
     ):
         if statement:
             self.statement = statement
-            self.registrar.script_change(
+            await self.registrar.script_change(
                 script=statement, filename=self.filename
             )
         if run_no_start_from is not None:
@@ -83,8 +88,8 @@ class Context:
                 filename=self.filename,
             ),
         )
-        self.registrar.run_start(self.run_no)
-        self.registrar.state_change(state)
+        await self.registrar.run_start(self.run_no)
+        await self.registrar.state_change(state)
         self.state = state
         return self.future
 
@@ -107,19 +112,16 @@ class Context:
         except TypeError:
             # The process was terminated.
             pass
-        self.registrar.run_end(state=state)
-        self.registrar.state_change(state)
+        await self.registrar.run_end(state=state)
+        await self.registrar.state_change(state)
         self.state = state
 
     async def close(self, state: State):
-        self.registrar.state_change(state)
+        await self.registrar.state_change(state)
         self.state = state
 
-    async def shutdown(self):
-        await self.registrar.close()
 
-
-def build_context(
+async def build_context(
     registry: PubSub[Any, Any],
     q_commands: QueueCommands,
     mp_context: mp.context.BaseContext,
@@ -136,7 +138,7 @@ def build_context(
     )
     runner = partial(run_in_process, executor_factory)  # type: ignore
     filename = SCRIPT_FILE_NAME
-    return Context(
+    context = Context(
         registry=registry,
         q_registry=q_registry,
         run_no_start_from=run_no_start_from,
@@ -145,3 +147,5 @@ def build_context(
         runner=runner,
         func=run.run,
     )
+    await context.start()
+    return context

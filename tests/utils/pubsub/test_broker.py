@@ -43,7 +43,7 @@ async def test_close(obj: PubSub[str, str]):
     async def put():
         await asyncio.sleep(0.001)
         for item in items:
-            obj.publish(key, item)
+            await obj.publish(key, item)
         assert obj.latest(key) == items[-1]
         await obj.close()  # ends the subscription
         with pytest.raises(LookupError):
@@ -63,7 +63,7 @@ async def test_last(obj: PubSub[str, str], last: bool):
     expected = pre_items[-1:] + items if last else items
 
     for item in pre_items:
-        obj.publish(key, item)
+        await obj.publish(key, item)
 
     await asyncio.sleep(0.001)
 
@@ -73,7 +73,7 @@ async def test_last(obj: PubSub[str, str], last: bool):
     async def put():
         await asyncio.sleep(0.001)
         for item in items:
-            obj.publish(key, item)
+            await obj.publish(key, item)
         await obj.end(key)
 
     result, _ = await asyncio.gather(subscribe(), put())
@@ -98,7 +98,7 @@ async def test_matrix(
     async def put(key):
         time.sleep(0.01)
         for item in items[key]:
-            obj.publish(key, item)
+            await obj.publish(key, item)
         await obj.end(key)
 
     results = await asyncio.gather(

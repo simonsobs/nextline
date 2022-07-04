@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import enum
-from asyncio import Queue, Condition, create_task
-from janus import Queue as Janus
+from asyncio import Queue, Condition
 
 from typing import (
     AsyncIterator,
@@ -39,34 +38,28 @@ class PubSubItem(Generic[_T]):
 
     def __init__(self):
 
-        self._q_in: Janus[_T | Literal[_M.END]] = Janus()
-
         self._qs_out: List[Queue[Tuple[int, _T | Literal[_M.END]]]] = []
         self._last_enumerated: Tuple[
             int, _T | Literal[_M.START] | Literal[_M.END]
         ] = (-1, _M.START)
 
         self._last_item: _T | Literal[_M.START] = _M.START
+        self._idx = -1
 
         self._closed: bool = False
         self._lock_close = Condition()
-
-        self._task = create_task(self._listen())
 
     @property
     def nsubscriptions(self) -> int:
         """The number of the subscribers"""
         return len(self._qs_out)
 
-    def publish(self, item: _T) -> None:
-        """Send data to subscribers
-
-        This method can be called in any thread.
-        """
+    async def publish(self, item: _T) -> None:
+        """Send data to subscribers"""
         if self._closed:
             raise RuntimeError(f"{self} is closed.")
         self._last_item = item
-        self._q_in.sync_q.put(item)
+        await self._publish(item)
 
     def latest(self) -> _T:
         """Most recent data that have been published"""
@@ -112,10 +105,7 @@ class PubSubItem(Generic[_T]):
             if self._closed:
                 return
             self._closed = True
-            await self._q_in.async_q.put(_M.END)
-            await self._task
-            self._q_in.close()
-            await self._q_in.wait_closed()
+            await self._publish(_M.END)
 
     async def __aenter__(self):
         return self
@@ -124,13 +114,8 @@ class PubSubItem(Generic[_T]):
         del exc_type, exc_value, traceback
         await self.close()
 
-    async def _listen(self) -> None:
-        """Distribution of data to subscribers"""
-        idx, item = self._last_enumerated
-        while item is not _M.END:
-            idx += 1
-            item = await self._q_in.async_q.get()
-            self._q_in.async_q.task_done()
-            self._last_enumerated = (idx, item)
-            for q in list(self._qs_out):  # list in case it changes
-                await q.put(self._last_enumerated)
+    async def _publish(self, item: _T | Literal[_M.END]) -> None:
+        self._idx += 1
+        self._last_enumerated = (self._idx, item)
+        for q in list(self._qs_out):  # list in case it changes
+            await q.put(self._last_enumerated)

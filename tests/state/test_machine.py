@@ -49,7 +49,7 @@ async def test_transitions(context: Context):
         assert "finished" == obj.state_name
         obj.result()
         obj.exception()
-        obj.reset()
+        await obj.reset()
         assert "initialized" == obj.state_name
     assert "closed" == obj.state_name
 
@@ -59,7 +59,7 @@ async def test_reset_with_statement(context: Context):
         await asyncio.sleep(0)
         await obj.run()
         await obj.finish()
-        obj.reset(statement=SOURCE_TWO)
+        await obj.reset(statement=SOURCE_TWO)
         await obj.run()
         await obj.finish()
 

@@ -42,28 +42,28 @@ class Registrar:
             if close:
                 await self._registry.end(key)
                 continue
-            self._registry.publish(key, value)
+            await self._registry.publish(key, value)
 
-    def script_change(self, script: str, filename: str) -> None:
-        self._registry.publish("statement", script)
-        self._registry.publish("script_file_name", filename)
+    async def script_change(self, script: str, filename: str) -> None:
+        await self._registry.publish("statement", script)
+        await self._registry.publish("script_file_name", filename)
 
-    def state_change(self, state: State) -> None:
-        self._registry.publish("state_name", state.name)
+    async def state_change(self, state: State) -> None:
+        await self._registry.publish("state_name", state.name)
 
-    def state_initialized(self, run_no: int) -> None:
-        self._registry.publish("run_no", run_no)
+    async def state_initialized(self, run_no: int) -> None:
+        await self._registry.publish("run_no", run_no)
 
-    def run_start(self, run_no: RunNo) -> None:
+    async def run_start(self, run_no: RunNo) -> None:
         self._run_info = RunInfo(
             run_no=run_no,
             state="running",
             script=self._registry.latest("statement"),
             started_at=datetime.datetime.now(),
         )
-        self._registry.publish("run_info", self._run_info)
+        await self._registry.publish("run_info", self._run_info)
 
-    def run_end(self, state: State) -> None:
+    async def run_end(self, state: State) -> None:
         exc = state.exception()
         ret = state.result() if not exc else None
         if exc:
@@ -81,4 +81,4 @@ class Registrar:
             ended_at=datetime.datetime.now(),
         )
         # TODO: check if run_no matches
-        self._registry.publish("run_info", self._run_info)
+        await self._registry.publish("run_info", self._run_info)

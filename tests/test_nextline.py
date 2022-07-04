@@ -26,8 +26,8 @@ async def test_one(machine: Machine) -> None:
         nextline.send_pdb_command("continue", 1, 1)
         await task
         nextline.exception()
-        nextline.reset()
-        nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
+        await nextline.reset()
+        await nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
         await nextline.run()
 
 
