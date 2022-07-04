@@ -58,11 +58,8 @@ class PubSubItem(Generic[_T]):
         """The number of the subscribers"""
         return len(self._qs_out)
 
-    def publish(self, item: _T) -> None:
-        """Send data to subscribers
-
-        This method can be called in any thread.
-        """
+    async def publish(self, item: _T) -> None:
+        """Send data to subscribers"""
         if self._closed:
             raise RuntimeError(f"{self} is closed.")
         self._last_item = item

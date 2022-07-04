@@ -25,11 +25,11 @@ async def test_close_multiple_times(obj):
     await obj.close()
 
 
-def test_get(obj: PubSubItem[int]):
+async def test_get(obj: PubSubItem[int]):
     with pytest.raises(LookupError):
         obj.latest()
     for item in range(5):
-        obj.publish(item)
+        await obj.publish(item)
         assert item == obj.latest()
 
 
@@ -44,7 +44,7 @@ async def test_subscribe(obj: PubSubItem[int], n_items, n_subscriptions):
 
     async def send():
         async for i in aiterable(items):
-            obj.publish(i)
+            await obj.publish(i)
         await obj.close()
 
     *results, _ = await asyncio.gather(
@@ -89,11 +89,11 @@ async def test_last(
 
     async def send():
         async for i in aiterable(items):
-            obj.publish(i)
+            await obj.publish(i)
         await obj.close()
 
     for i in pre_items:
-        obj.publish(i)
+        await obj.publish(i)
 
     await asyncio.sleep(0.001)
 
@@ -108,10 +108,10 @@ async def test_last(
 async def test_put_after_close(obj: PubSubItem[int | str], n_items: int):
     items = tuple(range(n_items))
     for i in items:
-        obj.publish(i)
+        await obj.publish(i)
     await obj.close()
     with pytest.raises(RuntimeError):
-        obj.publish("A")
+        await obj.publish("A")
     if items:
         assert obj.latest() == items[-1]  # the last item is not replaced
     else:
@@ -123,7 +123,7 @@ async def test_put_after_close(obj: PubSubItem[int | str], n_items: int):
 async def test_subscribe_after_close(obj: PubSubItem[int], n_items: int):
     items = tuple(range(n_items))
     for i in items:
-        obj.publish(i)
+        await obj.publish(i)
     await obj.close()
     await asyncio.sleep(0.001)
 
@@ -153,7 +153,7 @@ async def test_break(obj: PubSubItem[int], at: int):
 
     async def send():
         async for i in aiterable(items):
-            obj.publish(i)
+            await obj.publish(i)
         await obj.close()
 
     results, _ = await asyncio.gather(receive(), send())
@@ -192,10 +192,10 @@ async def test_matrix(
 
     async def send():
         for i in pre_items:
-            obj.publish(i)
+            await obj.publish(i)
         event.set()
         for i in post_items:
-            obj.publish(i)
+            await obj.publish(i)
         await obj.close()
 
     *results, _ = await asyncio.gather(
