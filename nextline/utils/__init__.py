@@ -1,4 +1,5 @@
 __all__ = [
+    "ASubscribableQueue",
     "SubscribableQueue",
     "ThreadTaskIdComposer",
     "ThreadSafeAsyncioEvent",
@@ -22,6 +23,7 @@ __all__ = [
     "RunInProcess",
 ]
 
+from .asubscribablequeue import ASubscribableQueue
 from .subscribablequeue import SubscribableQueue
 from .thread_task_id import ThreadTaskIdComposer
 from .thread_safe_event import ThreadSafeAsyncioEvent
