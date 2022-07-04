@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-import asyncio
+from asyncio import Queue, Condition, create_task
 from janus import Queue as Janus
 
 from typing import (
@@ -41,9 +41,7 @@ class ASubscribableQueue(Generic[_T]):
 
         self._q_in: Janus[_T | Literal[_M.END]] = Janus()
 
-        self._qs_out: List[
-            asyncio.Queue[Tuple[int, _T | Literal[_M.END]]]
-        ] = []
+        self._qs_out: List[Queue[Tuple[int, _T | Literal[_M.END]]]] = []
         self._last_enumerated: Tuple[
             int, _T | Literal[_M.START] | Literal[_M.END]
         ] = (-1, _M.START)
@@ -51,9 +49,9 @@ class ASubscribableQueue(Generic[_T]):
         self._last_item: _T | Literal[_M.START] = _M.START
 
         self._closed: bool = False
-        self._lock_close = asyncio.Condition()
+        self._lock_close = Condition()
 
-        self._task = asyncio.create_task(self._listen())
+        self._task = create_task(self._listen())
 
     @property
     def nsubscriptions(self) -> int:
@@ -85,7 +83,7 @@ class ASubscribableQueue(Generic[_T]):
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
         """
-        q: asyncio.Queue[Tuple[int, _T | Literal[_M.END]]] = asyncio.Queue()
+        q: Queue[Tuple[int, _T | Literal[_M.END]]] = Queue()
 
         self._qs_out.append(q)
 
