@@ -1,6 +1,6 @@
 __all__ = [
     "ASubscribableQueue",
-    "ASubscribableDict",
+    "PubSub",
     "SubscribableQueue",
     "SubscribableDict",
     "ThreadTaskIdComposer",
@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 from .asubscribablequeue import ASubscribableQueue
-from .asubscribabledict import ASubscribableDict
+from .asubscribabledict import PubSub
 from .subscribablequeue import SubscribableQueue
 from .subscribabledict import SubscribableDict
 from .thread_task_id import ThreadTaskIdComposer

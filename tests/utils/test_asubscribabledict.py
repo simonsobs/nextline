@@ -4,16 +4,16 @@ import time
 
 import pytest
 
-from nextline.utils import ASubscribableDict
+from nextline.utils import PubSub
 
 
 @pytest.fixture
 async def obj():
-    async with ASubscribableDict() as y:
+    async with PubSub() as y:
         yield y
 
 
-async def test_end(obj: ASubscribableDict[str, str]):
+async def test_end(obj: PubSub[str, str]):
     key = "A"
 
     async def subscribe():
@@ -27,12 +27,12 @@ async def test_end(obj: ASubscribableDict[str, str]):
     assert result == ()
 
 
-async def test_end_without_subscription(obj: ASubscribableDict[str, str]):
+async def test_end_without_subscription(obj: PubSub[str, str]):
     key = "A"
     await obj.end(key)
 
 
-async def test_close(obj: ASubscribableDict[str, str]):
+async def test_close(obj: PubSub[str, str]):
     key = "A"
     n_items = 5
     items = tuple(ascii_lowercase[:n_items])
@@ -54,7 +54,7 @@ async def test_close(obj: ASubscribableDict[str, str]):
 
 
 @pytest.mark.parametrize("last", [True, False])
-async def test_last(obj: ASubscribableDict[str, str], last: bool):
+async def test_last(obj: PubSub[str, str], last: bool):
     key = "A"
     n_pre_items = 3
     n_items = 5
@@ -84,7 +84,7 @@ async def test_last(obj: ASubscribableDict[str, str], last: bool):
 @pytest.mark.parametrize("n_items", [0, 1, 2, 30])
 @pytest.mark.parametrize("n_subscribers", [0, 1, 2, 50])
 async def test_matrix(
-    obj: ASubscribableDict[str, str],
+    obj: PubSub[str, str],
     n_keys: int,
     n_items: int,
     n_subscribers: int,

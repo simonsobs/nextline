@@ -13,7 +13,7 @@ from typing_extensions import TypeAlias
 
 from .types import RunNo, RunInfo
 from .types import TraceInfo  # noqa F401
-from .utils import to_thread, ASubscribableDict
+from .utils import to_thread, PubSub
 
 if TYPE_CHECKING:
     from .state import State
@@ -27,7 +27,7 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(self, registry: ASubscribableDict, queue: QueueRegistry):
+    def __init__(self, registry: PubSub, queue: QueueRegistry):
         self._registry = registry
         self._queue = queue
         self._task = asyncio.create_task(self._relay())

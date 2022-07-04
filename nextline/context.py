@@ -6,7 +6,7 @@ import multiprocessing as mp
 from typing import TYPE_CHECKING, Callable, Coroutine, Optional, Any
 
 from .utils import (
-    ASubscribableDict,
+    PubSub,
     ProcessPoolExecutorWithLogging,
     run_in_process,
     RunInProcess,
@@ -29,7 +29,7 @@ class Context:
     filename: str
     runner: Callable[..., Coroutine[Any, Any, RunInProcess]]
     func: Callable
-    registry: InitVar[ASubscribableDict[Any, Any]]
+    registry: InitVar[PubSub[Any, Any]]
     q_registry: InitVar[QueueRegistry]
     run_no_start_from: InitVar[int]
     state: Optional[State] = None
@@ -42,7 +42,7 @@ class Context:
 
     def __post_init__(
         self,
-        registry: ASubscribableDict[Any, Any],
+        registry: PubSub[Any, Any],
         q_registry: QueueRegistry,
         run_no_start_from: int,
     ):
@@ -120,7 +120,7 @@ class Context:
 
 
 def build_context(
-    registry: ASubscribableDict[Any, Any],
+    registry: PubSub[Any, Any],
     q_commands: QueueCommands,
     mp_context: mp.context.BaseContext,
     statement: str,

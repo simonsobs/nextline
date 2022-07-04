@@ -9,7 +9,7 @@ _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
 
-class ASubscribableDict(Generic[_KT, _VT]):
+class PubSub(Generic[_KT, _VT]):
     """Asynchronous message broker of the publish-subscribe pattern"""
 
     def __init__(self, *args, **kwargs):
