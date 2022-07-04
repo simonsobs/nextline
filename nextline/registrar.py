@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from asyncio import Task  # noqa F401
+import asyncio
 from threading import Thread  # noqa F401
 import dataclasses
 import datetime
@@ -13,7 +13,7 @@ from typing_extensions import TypeAlias
 
 from .types import RunNo, RunInfo
 from .types import TraceInfo  # noqa F401
-from .utils import ExcThread
+from .utils import to_thread
 
 if TYPE_CHECKING:
     from .state import State
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 SCRIPT_FILE_NAME = "<string>"
 
-RunNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
-TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, int]"
+RunNoMap: TypeAlias = "MutableMapping[asyncio.Task | Thread, int]"
+TraceNoMap: TypeAlias = "MutableMapping[asyncio.Task | Thread, int]"
 TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
@@ -30,15 +30,14 @@ class Registrar:
     def __init__(self, registry: MutableMapping, queue: QueueRegistry):
         self._registry = registry
         self._queue = queue
-        self._thread = ExcThread(target=self._relay, daemon=True)
-        self._thread.start()
+        self._task = asyncio.create_task(self._relay())
 
-    def close(self):
+    async def close(self):
         self._queue.put(None)
-        self._thread.join()
+        await self._task
 
-    def _relay(self) -> None:
-        while (m := self._queue.get()) is not None:
+    async def _relay(self) -> None:
+        while (m := await to_thread(self._queue.get)) is not None:
             key, value, close = m
             if close:
                 try:

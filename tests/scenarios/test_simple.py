@@ -40,7 +40,7 @@ async def control(nextline: Nextline):
 
 
 @pytest.fixture
-def nextline(statement):
+async def nextline(statement):
     return Nextline(statement)
 
 

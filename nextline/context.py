@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Callable, Coroutine, Optional, Any
 
 from .utils import (
     SubscribableDict,
-    to_thread,
     ProcessPoolExecutorWithLogging,
     run_in_process,
     RunInProcess,
@@ -117,7 +116,7 @@ class Context:
         self.state = state
 
     async def shutdown(self):
-        await to_thread(self.registrar.close)
+        await self.registrar.close()
 
 
 def build_context(
