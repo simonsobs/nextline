@@ -38,7 +38,6 @@ class Machine:
     def __init__(self, context: Context):
         self._context = context
         self._state: State = Created(self._context)
-        self._state = self._state.initialize()
 
     def __repr__(self):
         # e.g., "<Machine 'running'>"
@@ -51,6 +50,10 @@ class Machine:
             return self._state.name
         except BaseException:
             return "unknown"
+
+    async def initialize(self) -> None:
+        """Enter the initialized state"""
+        self._state = await self._state.initialize()
 
     async def run(self) -> None:
         """Enter the running state"""
@@ -85,6 +88,7 @@ class Machine:
         self._state = await self._state.close()
 
     async def __aenter__(self):
+        await self.initialize()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
@@ -131,7 +135,7 @@ class State(ObsoleteMixin):
             items.append("obsolete")
         return f'<{" ".join(items)}>'
 
-    def initialize(self) -> State:
+    async def initialize(self) -> State:
         self.assert_not_obsolete()
         raise StateMethodError(f"Irrelevant operation on the state: {self!r}")
 
@@ -175,7 +179,7 @@ class Created(State):
     def __init__(self, context: Context):
         self._context = context
 
-    def initialize(self) -> Initialized:
+    async def initialize(self) -> Initialized:
         self.assert_not_obsolete()
         next = Initialized(self)
         self.obsolete()

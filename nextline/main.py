@@ -56,6 +56,7 @@ class Nextline:
             self._run_no_start_from,
         )
         self._machine = Machine(self._context)
+        await self._machine.initialize()
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"

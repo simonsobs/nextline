@@ -16,7 +16,7 @@ class TestCreated(BaseTestState):
         return created
 
     async def test_initialize(self, state: State):
-        initialized = state.initialize()
+        initialized = await state.initialize()
         assert isinstance(initialized, Initialized)
         await self.assert_obsolete(state)
 

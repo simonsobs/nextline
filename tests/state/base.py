@@ -51,7 +51,7 @@ class BaseTestState(ABC):
 
     @pytest.fixture
     async def initialized(self, created: Created) -> Initialized:
-        return created.initialize()
+        return await created.initialize()
 
     @pytest.fixture
     async def running(self, initialized: Initialized) -> Running:
@@ -94,9 +94,9 @@ class BaseTestState(ABC):
         with pytest.raises(StateObsoleteError):
             await state.close()
 
-    def test_initialize(self, state: State):
+    async def test_initialize(self, state: State):
         with pytest.raises(StateMethodError):
-            state.initialize()
+            await state.initialize()
 
     async def test_run(self, state: State):
         with pytest.raises(StateMethodError):
