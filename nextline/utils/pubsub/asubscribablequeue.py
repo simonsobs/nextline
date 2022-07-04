@@ -132,5 +132,5 @@ class ASubscribableQueue(Generic[_T]):
             item = await self._q_in.async_q.get()
             self._q_in.async_q.task_done()
             self._last_enumerated = (idx, item)
-            for q in list(self._qs_out):  # list in case it changes in a thread
+            for q in list(self._qs_out):  # list in case it changes
                 await q.put(self._last_enumerated)
