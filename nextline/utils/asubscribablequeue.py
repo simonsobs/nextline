@@ -3,8 +3,7 @@ from __future__ import annotations
 import enum
 import asyncio
 import threading
-from queue import Queue
-from janus import Queue as Janus, SyncQueue
+from janus import Queue as Janus
 
 from typing import (
     AsyncIterator,
@@ -44,8 +43,7 @@ class ASubscribableQueue(Generic[_T]):
         self._q_in: Janus[_T | Literal[_M.END]] = Janus()
 
         self._qs_out: List[
-            Queue[Tuple[int, _T | Literal[_M.END]]]
-            | SyncQueue[Tuple[int, _T | Literal[_M.END]]]
+            asyncio.Queue[Tuple[int, _T | Literal[_M.END]]]
         ] = []
         self._last_enumerated: Tuple[
             int, _T | Literal[_M.START] | Literal[_M.END]
@@ -88,9 +86,9 @@ class ASubscribableQueue(Generic[_T]):
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
         """
-        q: Janus[Tuple[int, _T | Literal[_M.END]]] = Janus()
+        q: asyncio.Queue[Tuple[int, _T | Literal[_M.END]]] = asyncio.Queue()
 
-        self._qs_out.append(q.sync_q)
+        self._qs_out.append(q)
 
         last_idx, last_item = self._last_enumerated
 
@@ -102,17 +100,14 @@ class ASubscribableQueue(Generic[_T]):
                 yield last_item
 
             while True:
-                idx, item = await q.async_q.get()
+                idx, item = await q.get()
                 if item is _M.END:
                     break
                 if last_idx < idx:
                     yield item
 
         finally:
-            self._qs_out.remove(q.sync_q)
-
-            q.close()
-            await q.wait_closed()
+            self._qs_out.remove(q)
 
     async def close(self) -> None:
         """End gracefully"""
@@ -133,10 +128,7 @@ class ASubscribableQueue(Generic[_T]):
         await self.close()
 
     async def _listen(self) -> None:
-        """Distribution of data to subscribers
-
-        This method runs in a thread.
-        """
+        """Distribution of data to subscribers"""
         idx, item = self._last_enumerated
         while item is not _M.END:
             idx += 1
@@ -144,4 +136,4 @@ class ASubscribableQueue(Generic[_T]):
             self._q_in.async_q.task_done()
             self._last_enumerated = (idx, item)
             for q in list(self._qs_out):  # list in case it changes in a thread
-                q.put(self._last_enumerated)
+                await q.put(self._last_enumerated)
