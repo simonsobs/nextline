@@ -1,20 +1,21 @@
 from __future__ import annotations
 from typing import AsyncIterator, Generic, Optional, TypeVar
 
-from .subscribablequeue import SubscribableQueue
+from .asubscribablequeue import ASubscribableQueue
 from ._userdict import UserDict
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
 
-class QueueDict(UserDict[_KT, SubscribableQueue[_VT]], Generic[_KT, _VT]):
-    def __missing__(self, key: _KT) -> SubscribableQueue[_VT]:
-        v = self[key] = SubscribableQueue()
+class QueueDict(UserDict[_KT, ASubscribableQueue[_VT]], Generic[_KT, _VT]):
+    def __missing__(self, key: _KT) -> ASubscribableQueue[_VT]:
+        v = self[key] = ASubscribableQueue()
         return v
 
-    def __delitem__(self, key: _KT) -> None:
-        self.data.pop(key).close()
+    # def __delitem__(self, key: _KT) -> None:
+    #     print("QueueDict.__delitem__")
+    #     self.data.pop(key).close()
 
 
 class ASubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
@@ -53,7 +54,7 @@ class ASubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
         super().__delitem__(key)
         self.end(key)
 
-    def end(self, key: _KT):
+    async def end(self, key: _KT):
         """End all subscriptions for the key without removing the key
 
         The async generators returned by the method `subscribe()` for the key
@@ -64,12 +65,10 @@ class ASubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
         KeyError will not be raised
 
         """
-        try:
-            del self._queue[key]
-        except KeyError:
-            pass
+        if q := self._queue.pop(key, None):
+            await q.close()
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """End all subscriptions for all keys
 
         The all async generators returned by the method `subscribe()` for any
@@ -79,4 +78,13 @@ class ASubscribableDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
         key.
 
         """
-        self._queue.clear()
+        while self._queue:
+            _, q = self._queue.popitem()
+            await q.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        await self.close()
