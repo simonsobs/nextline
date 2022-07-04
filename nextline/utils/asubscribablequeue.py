@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import asyncio
 import threading
 from queue import Queue
 from janus import Queue as Janus, SyncQueue
@@ -14,6 +15,8 @@ from typing import (
     Tuple,
     TypeVar,
 )
+
+from .func import to_thread
 
 
 class _M(enum.Enum):
@@ -55,8 +58,7 @@ class ASubscribableQueue(Generic[_T]):
         self._closed: bool = False
         self._lock_close = threading.Condition()
 
-        self._thread = threading.Thread(target=self._listen, daemon=True)
-        self._thread.start()
+        self._task = asyncio.create_task(self._listen())
 
     @property
     def nsubscriptions(self) -> int:
@@ -121,7 +123,7 @@ class ASubscribableQueue(Generic[_T]):
                 return
             self._closed = True
             self._q_in.put(_M.END)
-            self._thread.join()
+            await self._task
             self._q_in.join()
 
     async def __aenter__(self):
@@ -131,7 +133,7 @@ class ASubscribableQueue(Generic[_T]):
         del exc_type, exc_value, traceback
         await self.close()
 
-    def _listen(self) -> None:
+    async def _listen(self) -> None:
         """Distribution of data to subscribers
 
         This method runs in a thread.
@@ -139,7 +141,7 @@ class ASubscribableQueue(Generic[_T]):
         idx, item = self._last_enumerated
         while item is not _M.END:
             idx += 1
-            item = self._q_in.get()
+            item = await to_thread(self._q_in.get)
             self._q_in.task_done()
             self._last_enumerated = (idx, item)
             for q in list(self._qs_out):  # list in case it changes in a thread

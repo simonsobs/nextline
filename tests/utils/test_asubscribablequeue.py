@@ -9,11 +9,6 @@ from nextline.utils import ASubscribableQueue, ThreadSafeAsyncioEvent
 from .aiterable import aiterable
 
 
-def test_daemon():
-    _ = ASubscribableQueue()
-    # The program shouldn't be blocked even when close() is not called.
-
-
 @pytest.fixture()
 async def obj():
     async with ASubscribableQueue() as y:
