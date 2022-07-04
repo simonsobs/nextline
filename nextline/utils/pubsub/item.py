@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import enum
 from asyncio import Queue, Condition, create_task
-from janus import Queue as Janus
 
 from typing import (
     AsyncIterator,
@@ -39,7 +38,7 @@ class PubSubItem(Generic[_T]):
 
     def __init__(self):
 
-        self._q_in: Janus[_T | Literal[_M.END]] = Janus()
+        self._q_in: Queue[_T | Literal[_M.END]] = Queue()
 
         self._qs_out: List[Queue[Tuple[int, _T | Literal[_M.END]]]] = []
         self._last_enumerated: Tuple[
@@ -63,7 +62,7 @@ class PubSubItem(Generic[_T]):
         if self._closed:
             raise RuntimeError(f"{self} is closed.")
         self._last_item = item
-        self._q_in.sync_q.put(item)
+        await self._q_in.put(item)
 
     def latest(self) -> _T:
         """Most recent data that have been published"""
@@ -109,10 +108,9 @@ class PubSubItem(Generic[_T]):
             if self._closed:
                 return
             self._closed = True
-            await self._q_in.async_q.put(_M.END)
+            await self._q_in.put(_M.END)
             await self._task
-            self._q_in.close()
-            await self._q_in.wait_closed()
+            await self._q_in.join()
 
     async def __aenter__(self):
         return self
@@ -126,8 +124,8 @@ class PubSubItem(Generic[_T]):
         idx, item = self._last_enumerated
         while item is not _M.END:
             idx += 1
-            item = await self._q_in.async_q.get()
-            self._q_in.async_q.task_done()
+            item = await self._q_in.get()
+            self._q_in.task_done()
             self._last_enumerated = (idx, item)
             for q in list(self._qs_out):  # list in case it changes
                 await q.put(self._last_enumerated)
