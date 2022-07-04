@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 from .asubscribablequeue import ASubscribableQueue
-from .asubscribabledict import PubSub
+from .pubsub import PubSub
 from .subscribablequeue import SubscribableQueue
 from .subscribabledict import SubscribableDict
 from .thread_task_id import ThreadTaskIdComposer
