@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
+from functools import partial
 from operator import attrgetter
 from itertools import groupby
 from collections import Counter
 from pathlib import Path
-from typing import Optional, Sequence, Set
+import datetime
+from collections import deque
+
+from typing import Iterable, Optional, Sequence, Set, TypeVar
 
 import pytest
 
@@ -13,6 +18,14 @@ from typing import Dict, Any
 
 from nextline import Nextline
 from nextline.utils import agen_with_wait
+from nextline.types import RunNo, RunInfo
+
+_T = TypeVar("_T")
+
+
+def replace_with_bool(obj: _T, fields: Iterable[str]) -> _T:
+    changes = {f: not not getattr(obj, f) for f in fields}
+    return dataclasses.replace(obj, **changes)
 
 
 async def test_run(nextline: Nextline):
@@ -59,37 +72,49 @@ async def assert_subscribe_run_no(nextline: Nextline):
 
 
 async def assert_subscribe_run_info(nextline: Nextline):
-    results = [s async for s in nextline.subscribe_run_info()]
-    info0, info1, info2, info3 = results
-    run_no = 1
-    assert info0.run_no == info1.run_no == run_no
-    assert info0.state == "running"
-    assert info1.state == "finished"
-    assert info0.script
-    assert info0.script == info1.script
-    assert info0.result is None
-    assert info1.result == "null"
-    assert info0.exception is None
-    assert info1.exception is None
-    assert info0.started_at
-    assert info0.started_at == info1.started_at
-    assert not info0.ended_at
-    assert info1.ended_at
 
-    run_no = 2
-    assert info2.run_no == info3.run_no == run_no
-    assert info2.state == "running"
-    assert info3.state == "finished"
-    assert info2.script
-    assert info2.script == info3.script
-    assert info2.result is None
-    assert info3.result == "null"
-    assert info2.exception is None
-    assert info3.exception is None
-    assert info2.started_at
-    assert info2.started_at == info3.started_at
-    assert not info2.ended_at
-    assert info3.ended_at
+    replace: partial[RunInfo] = partial(
+        replace_with_bool, fields=("script", "started_at", "ended_at")
+    )
+
+    expected_list = deque(
+        [
+            info := RunInfo(
+                run_no=RunNo(1),
+                state="running",
+                script="foo",
+                result=None,
+                exception=None,
+                started_at=datetime.datetime.now(),
+            ),
+            dataclasses.replace(
+                info,
+                state="finished",
+                result="null",
+                ended_at=datetime.datetime.now(),
+            ),
+            info := RunInfo(
+                run_no=RunNo(2),
+                state="running",
+                script="foo",
+                result=None,
+                exception=None,
+                started_at=datetime.datetime.now(),
+            ),
+            dataclasses.replace(
+                info,
+                state="finished",
+                result="null",
+                ended_at=datetime.datetime.now(),
+            ),
+        ]
+    )
+
+    async for info in nextline.subscribe_run_info():
+        expected = expected_list.popleft()
+        expected = replace(expected)
+        assert expected == replace(info)
+    assert not expected_list
 
 
 async def assert_subscribe_trace_info(nextline: Nextline):
