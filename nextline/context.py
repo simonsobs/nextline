@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, InitVar, field
 from functools import partial
+import json
 import multiprocessing as mp
+import traceback
 from typing import TYPE_CHECKING, Callable, Coroutine, Optional, Any
 
 from .utils import (
@@ -112,7 +114,21 @@ class Context:
         except TypeError:
             # The process was terminated.
             pass
-        await self.registrar.run_end(state=state)
+
+        if self.exception:
+            ret = None
+            fmt_exc = "".join(
+                traceback.format_exception(
+                    type(self.exception),
+                    self.exception,
+                    self.exception.__traceback__,
+                )
+            )
+        else:
+            ret = json.dumps(self.result)
+            fmt_exc = None
+
+        await self.registrar.run_end(result=ret, exception=fmt_exc)
         await self.registrar.state_change(state)
         self.state = state
 

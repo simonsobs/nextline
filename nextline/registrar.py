@@ -4,10 +4,8 @@ import asyncio
 from threading import Thread  # noqa F401
 import dataclasses
 import datetime
-import traceback
-import json
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from typing import MutableMapping  # noqa F401
 from typing_extensions import TypeAlias
 
@@ -63,21 +61,14 @@ class Registrar:
         )
         await self._registry.publish("run_info", self._run_info)
 
-    async def run_end(self, state: State) -> None:
-        exc = state.exception()
-        ret = state.result() if not exc else None
-        if exc:
-            fmt_exc = "".join(
-                traceback.format_exception(type(exc), exc, exc.__traceback__)
-            )
-        else:
-            ret = json.dumps(ret)
-            fmt_exc = None
+    async def run_end(
+        self, result: Optional[str], exception: Optional[str]
+    ) -> None:
         self._run_info = dataclasses.replace(
             self._run_info,
             state="finished",
-            result=ret,
-            exception=fmt_exc,
+            result=result,
+            exception=exception,
             ended_at=datetime.datetime.now(),
         )
         # TODO: check if run_no matches
