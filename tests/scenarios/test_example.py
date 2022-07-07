@@ -28,11 +28,11 @@ def replace_with_bool(obj: _T, fields: Iterable[str]) -> _T:
     return dataclasses.replace(obj, **changes)
 
 
-async def test_run(nextline: Nextline):
+async def test_run(nextline: Nextline, statement: str):
     assert nextline.state == "initialized"
 
     await asyncio.gather(
-        assert_subscriptions(nextline),
+        assert_subscriptions(nextline, statement),
         control_execution(nextline),
         run(nextline),
     )
@@ -40,11 +40,11 @@ async def test_run(nextline: Nextline):
     assert nextline.state == "closed"
 
 
-async def assert_subscriptions(nextline: Nextline):
+async def assert_subscriptions(nextline: Nextline, statement: str):
     await asyncio.gather(
         assert_subscribe_state(nextline),
         assert_subscribe_run_no(nextline),
-        assert_subscribe_run_info(nextline),
+        assert_subscribe_run_info(nextline, statement),
         assert_subscribe_trace_info(nextline),
         assert_subscribe_prompt_info(nextline),
         # assert_subscribe_stdout(nextline),
@@ -71,10 +71,10 @@ async def assert_subscribe_run_no(nextline: Nextline):
     assert actual == expected
 
 
-async def assert_subscribe_run_info(nextline: Nextline):
+async def assert_subscribe_run_info(nextline: Nextline, statement: str):
 
     replace: partial[RunInfo] = partial(
-        replace_with_bool, fields=("script", "started_at", "ended_at")
+        replace_with_bool, fields=("started_at", "ended_at")
     )
 
     expected_list = deque(
@@ -82,7 +82,7 @@ async def assert_subscribe_run_info(nextline: Nextline):
             info := RunInfo(
                 run_no=RunNo(1),
                 state="running",
-                script="foo",
+                script=statement,
                 result=None,
                 exception=None,
                 started_at=datetime.datetime.now(),
@@ -96,7 +96,7 @@ async def assert_subscribe_run_info(nextline: Nextline):
             info := RunInfo(
                 run_no=RunNo(2),
                 state="running",
-                script="foo",
+                script=statement,
                 result=None,
                 exception=None,
                 started_at=datetime.datetime.now(),
