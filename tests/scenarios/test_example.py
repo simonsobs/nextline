@@ -10,7 +10,7 @@ from pathlib import Path
 import datetime
 from collections import deque
 
-from typing import Iterable, Optional, Sequence, Set, TypeVar
+from typing import Optional, Sequence, Set
 
 import pytest
 
@@ -20,12 +20,7 @@ from nextline import Nextline
 from nextline.utils import agen_with_wait
 from nextline.types import RunNo, RunInfo
 
-_T = TypeVar("_T")
-
-
-def replace_with_bool(obj: _T, fields: Iterable[str]) -> _T:
-    changes = {f: not not getattr(obj, f) for f in fields}
-    return dataclasses.replace(obj, **changes)
+from .funcs import replace_with_bool
 
 
 async def test_run(nextline: Nextline, statement: str):
