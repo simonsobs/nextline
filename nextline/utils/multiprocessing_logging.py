@@ -32,7 +32,7 @@ class ProcessPoolExecutorWithLogging(ProcessPoolExecutor):
     def __init__(
         self, max_workers=None, mp_context=None, initializer=None, initargs=()
     ):
-        self._mp_logging = MultiprocessingLogging()
+        self._mp_logging = MultiprocessingLogging(context=mp_context)
         initializer = partial(_initializer, self._mp_logging.init, initializer)
         super().__init__(max_workers, mp_context, initializer, initargs)
 
