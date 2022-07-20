@@ -5,8 +5,7 @@ from logging import getLogger
 
 from typing import Any, AsyncIterator, Optional, Tuple
 
-from .process import run
-from .utils import PubSub, merge_aiters
+from .utils import merge_aiters
 from .context import Context
 from .state import Machine
 from .types import PromptNo, TraceNo, StdoutInfo
@@ -37,14 +36,11 @@ class Nextline:
         logger.debug(f"statement starts with {statement[:25]!r}")
         logger.debug(f"The next run number will be {run_no_start_from}")
 
-        self._registry = PubSub[Any, Any]()
-
         self._context = Context(
-            registry=self._registry,
             run_no_start_from=run_no_start_from,
             statement=statement,
-            func=run.run,
         )
+        self._registry = self._context.registry
         self._q_commands = self._context.q_commands
 
         self._closed = False

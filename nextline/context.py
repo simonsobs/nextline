@@ -27,15 +27,15 @@ SCRIPT_FILE_NAME = "<string>"
 
 @dataclass
 class Context:
-    registry: InitVar[PubSub[Any, Any]]
     run_no_start_from: InitVar[int]
     statement: str
-    func: Callable
     filename: str = SCRIPT_FILE_NAME
+    func: Callable = run.run
     state: Optional[State] = None
     future: Optional[RunInProcess] = None
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
+    registry: PubSub[Any, Any] = field(init=False)
     q_commands: QueueCommands = field(init=False)
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
@@ -47,9 +47,10 @@ class Context:
 
     def __post_init__(
         self,
-        registry: PubSub[Any, Any],
+        # registry: PubSub[Any, Any],
         run_no_start_from: int,
     ):
+        self.registry = PubSub[Any, Any]()
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
@@ -61,7 +62,7 @@ class Context:
             initargs=(self.q_commands, q_registry),
         )
         self.runner = partial(run_in_process, executor_factory)  # type: ignore
-        self.registrar = Registrar(registry, q_registry)
+        self.registrar = Registrar(self.registry, q_registry)
         self.run_no = RunNo(run_no_start_from - 1)
         self.run_no_count = RunNoCounter(run_no_start_from)
 
