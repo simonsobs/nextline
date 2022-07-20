@@ -61,11 +61,7 @@ class Context:
         Coroutine[Any, Any, RunInProcess],
     ] = field(init=False)
 
-    def __post_init__(
-        self,
-        # registry: PubSub[Any, Any],
-        run_no_start_from: int,
-    ):
+    def __post_init__(self, run_no_start_from: int):
         self.registry = PubSub[Any, Any]()
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
