@@ -4,12 +4,14 @@ from dataclasses import dataclass, InitVar, field
 from functools import partial
 import json
 import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor
 import traceback
 from typing import TYPE_CHECKING, Callable, Coroutine, Optional, Any
+from typing_extensions import ParamSpec
 
 from .utils import (
     PubSub,
-    ProcessPoolExecutorWithLogging,
+    MultiprocessingLoggingA,
     run_in_process,
     RunInProcess,
 )
@@ -23,6 +25,19 @@ if TYPE_CHECKING:
     from .state import State
 
 SCRIPT_FILE_NAME = "<string>"
+
+_P = ParamSpec("_P")
+
+
+def _initializer(
+    init_logging: Callable[[], Any],
+    initializer: Callable[_P, Any],
+    *initargs: _P.args,
+    **initkwargs: _P.kwargs,
+) -> None:
+    init_logging()
+    if initializer is not None:
+        initializer(*initargs, **initkwargs)
 
 
 @dataclass
@@ -40,6 +55,7 @@ class Context:
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
+    mp_logging: MultiprocessingLoggingA = field(init=False)
     runner: Callable[
         ...,
         Coroutine[Any, Any, RunInProcess],
@@ -54,11 +70,16 @@ class Context:
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
+        self.mp_logging = MultiprocessingLoggingA(context=mp_context)
         executor_factory = partial(
-            ProcessPoolExecutorWithLogging,
+            ProcessPoolExecutor,
             max_workers=1,
             mp_context=mp_context,
-            initializer=run.set_queues,
+            initializer=partial(
+                _initializer,
+                self.mp_logging.init,
+                run.set_queues,
+            ),
             initargs=(self.q_commands, q_registry),
         )
         self.runner = partial(run_in_process, executor_factory)  # type: ignore
@@ -73,6 +94,7 @@ class Context:
 
     async def shutdown(self):
         await self.registrar.close()
+        await self.mp_logging.close()
 
     async def initialize(self, state: State):
         self.run_no = self.run_no_count()
