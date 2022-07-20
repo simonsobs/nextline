@@ -28,12 +28,12 @@ SCRIPT_FILE_NAME = "<string>"
 @dataclass
 class Context:
     statement: str
-    filename: str
     runner: Callable[..., Coroutine[Any, Any, RunInProcess]]
     func: Callable
     registry: InitVar[PubSub[Any, Any]]
     q_registry: InitVar[QueueRegistry]
     run_no_start_from: InitVar[int]
+    filename: str = SCRIPT_FILE_NAME
     state: Optional[State] = None
     future: Optional[RunInProcess] = None
     result: Optional[Any] = None
@@ -153,13 +153,11 @@ async def build_context(
         initargs=(q_commands, q_registry),
     )
     runner = partial(run_in_process, executor_factory)  # type: ignore
-    filename = SCRIPT_FILE_NAME
     context = Context(
         registry=registry,
         q_registry=q_registry,
         run_no_start_from=run_no_start_from,
         statement=statement,
-        filename=filename,
         runner=runner,
         func=run.run,
     )
