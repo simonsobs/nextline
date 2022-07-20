@@ -12,10 +12,11 @@ _VT = TypeVar("_VT")
 class PubSub(Generic[_KT, _VT]):
     """Asynchronous message broker of the publish-subscribe pattern"""
 
-    def __init__(self, *args, **kwargs):
-        self._queue: DefaultDict[_KT, PubSubItem[_VT]] = defaultdict(
-            PubSubItem
-        )
+    def __init__(self):
+        self._queue: DefaultDict[
+            _KT,
+            PubSubItem[_VT],
+        ] = defaultdict(PubSubItem)
 
     def subscribe(
         self, key: _KT, last: Optional[bool] = True
