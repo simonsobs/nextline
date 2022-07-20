@@ -6,9 +6,9 @@ from logging import getLogger
 
 from typing import Any, AsyncIterator, Optional, Tuple
 
-from .process.run import QueueCommands
+from .process import run
 from .utils import PubSub, merge_aiters
-from .context import build_context
+from .context import Context
 from .state import Machine
 from .types import PromptNo, TraceNo, StdoutInfo
 
@@ -46,15 +46,17 @@ class Nextline:
         mp_context = mp.get_context("spawn")
 
         self._registry = PubSub[Any, Any]()
-        self._q_commands: QueueCommands = mp_context.Queue()
+        self._q_commands: run.QueueCommands = mp_context.Queue()
 
-        self._context = await build_context(
-            self._registry,
-            self._q_commands,
-            mp_context,
-            self._statement,
-            self._run_no_start_from,
+        self._context = Context(
+            mp_context=mp_context,
+            registry=self._registry,
+            q_commands=self._q_commands,
+            run_no_start_from=self._run_no_start_from,
+            statement=self._statement,
+            func=run.run,
         )
+        await self._context.start()
         self._machine = Machine(self._context)
         await self._machine.initialize()
 

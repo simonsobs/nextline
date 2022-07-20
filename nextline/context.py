@@ -27,12 +27,12 @@ SCRIPT_FILE_NAME = "<string>"
 
 @dataclass
 class Context:
-    statement: str
-    runner: Callable[..., Coroutine[Any, Any, RunInProcess]]
-    func: Callable
+    mp_context: InitVar[mp.context.BaseContext]
     registry: InitVar[PubSub[Any, Any]]
-    q_registry: InitVar[QueueRegistry]
+    q_commands: InitVar[QueueCommands]
     run_no_start_from: InitVar[int]
+    statement: str
+    func: Callable
     filename: str = SCRIPT_FILE_NAME
     state: Optional[State] = None
     future: Optional[RunInProcess] = None
@@ -41,13 +41,26 @@ class Context:
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
+    runner: Callable[..., Coroutine[Any, Any, RunInProcess]] = field(
+        init=False
+    )
 
     def __post_init__(
         self,
+        mp_context: mp.context.BaseContext,
         registry: PubSub[Any, Any],
-        q_registry: QueueRegistry,
+        q_commands: QueueCommands,
         run_no_start_from: int,
     ):
+        q_registry: QueueRegistry = mp_context.Queue()
+        executor_factory = partial(
+            ProcessPoolExecutorWithLogging,
+            max_workers=1,
+            mp_context=mp_context,
+            initializer=run.set_queues,
+            initargs=(q_commands, q_registry),
+        )
+        self.runner = partial(run_in_process, executor_factory)  # type: ignore
         self.registrar = Registrar(registry, q_registry)
         self.run_no = RunNo(run_no_start_from - 1)
         self.run_no_count = RunNoCounter(run_no_start_from)
@@ -135,31 +148,3 @@ class Context:
     async def close(self, state: State):
         await self.registrar.state_change(state)
         self.state = state
-
-
-async def build_context(
-    registry: PubSub[Any, Any],
-    q_commands: QueueCommands,
-    mp_context: mp.context.BaseContext,
-    statement: str,
-    run_no_start_from=1,
-):
-    q_registry: QueueRegistry = mp_context.Queue()
-    executor_factory = partial(
-        ProcessPoolExecutorWithLogging,
-        max_workers=1,
-        mp_context=mp_context,
-        initializer=run.set_queues,
-        initargs=(q_commands, q_registry),
-    )
-    runner = partial(run_in_process, executor_factory)  # type: ignore
-    context = Context(
-        registry=registry,
-        q_registry=q_registry,
-        run_no_start_from=run_no_start_from,
-        statement=statement,
-        runner=runner,
-        func=run.run,
-    )
-    await context.start()
-    return context
