@@ -11,7 +11,7 @@ from typing_extensions import ParamSpec
 
 from .utils import (
     PubSub,
-    MultiprocessingLoggingA,
+    MultiprocessingLogging,
     run_in_process,
     RunInProcess,
 )
@@ -55,7 +55,7 @@ class Context:
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
-    mp_logging: MultiprocessingLoggingA = field(init=False)
+    mp_logging: MultiprocessingLogging = field(init=False)
     runner: Callable[
         ...,
         Coroutine[Any, Any, RunInProcess],
@@ -70,7 +70,7 @@ class Context:
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
-        self.mp_logging = MultiprocessingLoggingA(context=mp_context)
+        self.mp_logging = MultiprocessingLogging(context=mp_context)
         executor_factory = partial(
             ProcessPoolExecutor,
             max_workers=1,

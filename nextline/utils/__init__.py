@@ -4,10 +4,7 @@ __all__ = [
     "ThreadTaskIdComposer",
     "ThreadSafeAsyncioEvent",
     "ToLoop",
-    "ProcessPoolExecutorWithLogging",
     "MultiprocessingLogging",
-    "ProcessPoolExecutorWithLoggingA",
-    "MultiprocessingLoggingA",
     "peek_stdout",
     "peek_stderr",
     "peek_textio",
@@ -29,14 +26,7 @@ from .thread_task_id import ThreadTaskIdComposer
 from .thread_safe_event import ThreadSafeAsyncioEvent
 from .loop import ToLoop
 from .run import RunInProcess, run_in_process
-from .multiprocessing_logging import (
-    ProcessPoolExecutorWithLogging,
-    MultiprocessingLogging,
-)
-from .multiprocessing_logging_async import (
-    ProcessPoolExecutorWithLoggingA,
-    MultiprocessingLoggingA,
-)
+from .multiprocessing_logging import MultiprocessingLogging
 from .peek import peek_stdout, peek_stderr, peek_textio
 from .thread_exception import ExcThread
 from .done_callback import (
