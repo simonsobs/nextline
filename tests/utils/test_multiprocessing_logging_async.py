@@ -9,9 +9,9 @@ from nextline.utils import (
 )
 
 
-def test_executor(caplog: LogCaptureFixture):
+async def test_executor(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
-        with ProcessPoolExecutorWithLoggingA(1) as executor:
+        async with ProcessPoolExecutorWithLoggingA(1) as executor:
             fut = executor.submit(fn)
             assert "foo" == fut.result()
 
@@ -26,9 +26,9 @@ def mock_initializer():
     logger.info("baz")
 
 
-def test_executor_initializer(caplog: LogCaptureFixture):
+async def test_executor_initializer(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
-        with ProcessPoolExecutorWithLoggingA(
+        async with ProcessPoolExecutorWithLoggingA(
             1, initializer=mock_initializer
         ) as executor:
             fut = executor.submit(fn)
@@ -48,9 +48,9 @@ def mock_initializer_with_args(arg1, arg2):
     logger.info(f"{arg1} {arg2}")
 
 
-def test_executor_initializer_with_args(caplog: LogCaptureFixture):
+async def test_executor_initializer_with_args(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
-        with ProcessPoolExecutorWithLoggingA(
+        async with ProcessPoolExecutorWithLoggingA(
             1, initializer=mock_initializer_with_args, initargs=("qux", "quux")
         ) as executor:
             fut = executor.submit(fn)
@@ -65,9 +65,9 @@ def test_executor_initializer_with_args(caplog: LogCaptureFixture):
     assert caplog.records[1].name == __name__
 
 
-def test_multiprocessing_logging(caplog: LogCaptureFixture):
+async def test_multiprocessing_logging(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
-        with MultiprocessingLoggingA() as mp_logging:
+        async with MultiprocessingLoggingA() as mp_logging:
             with ProcessPoolExecutor(
                 1, initializer=mp_logging.init
             ) as executor:

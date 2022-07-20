@@ -7,10 +7,11 @@ https://github.com/alphatwirl/mantichora/blob/v0.12.0/mantichora/hubmp.py
 
 from __future__ import annotations
 
+import asyncio
 from functools import partial
 from queue import Queue  # noqa F401
 
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 import multiprocessing as mp
 from multiprocessing.context import BaseContext
@@ -18,6 +19,8 @@ from multiprocessing.context import BaseContext
 from logging import LogRecord, getLogger, DEBUG
 from logging.handlers import QueueHandler
 from typing import Callable, Optional
+
+from .func import to_thread
 
 __all__ = ["ProcessPoolExecutorWithLoggingA", "MultiprocessingLoggingA"]
 
@@ -36,17 +39,23 @@ class ProcessPoolExecutorWithLoggingA(ProcessPoolExecutor):
         initializer = partial(_initializer, self._mp_logging.init, initializer)
         super().__init__(max_workers, mp_context, initializer, initargs)
 
-    def shutdown(self, wait=True):
-        self._mp_logging.close()
-        super().shutdown(wait)
+    async def ashutdown(self, wait=True):
+        await to_thread(super().shutdown, wait)
+        await self._mp_logging.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        del exc_type, exc_value, traceback
+        await self.ashutdown()
 
 
 class MultiprocessingLoggingA:
     def __init__(self, context: Optional[BaseContext] = None) -> None:
         context = context or mp.get_context()
-        self._executor = ThreadPoolExecutor(max_workers=1)
         self._q: Queue[LogRecord | None] = context.Queue()
-        self._fut = self._executor.submit(_listen, self._q)
+        self._task = asyncio.create_task(_listen(self._q))
         self._init = _ConfigureLogger(self._q)
 
     @property
@@ -54,17 +63,16 @@ class MultiprocessingLoggingA:
         """A (picklable) setup function to be called in other processes"""
         return self._init
 
-    def close(self) -> None:
+    async def close(self) -> None:
         self._q.put(None)
-        self._fut.result()
-        self._executor.shutdown()
+        await self._task
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         del exc_type, exc_value, traceback
-        self.close()
+        await self.close()
 
 
 class _ConfigureLogger:
@@ -78,8 +86,8 @@ class _ConfigureLogger:
         logger.addHandler(handler)
 
 
-def _listen(queue: Queue[LogRecord | None]) -> None:
-    while (record := queue.get()) is not None:
+async def _listen(queue: Queue[LogRecord | None]) -> None:
+    while (record := await to_thread(queue.get)) is not None:
         logger = getLogger(record.name)
         if logger.getEffectiveLevel() <= record.levelno:
             logger.handle(record)
