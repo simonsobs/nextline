@@ -31,7 +31,7 @@ class Registrar:
         self._task = asyncio.create_task(self._relay())
 
     async def close(self):
-        self._queue.put(None)
+        await to_thread(self._queue.put, None)
         await self._task
 
     async def _relay(self) -> None:

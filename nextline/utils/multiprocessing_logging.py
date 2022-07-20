@@ -35,7 +35,7 @@ class MultiprocessingLogging:
         return self._init
 
     async def close(self) -> None:
-        self._q.put(None)
+        await to_thread(self._q.put, None)
         await self._task
 
     async def __aenter__(self):
