@@ -38,11 +38,6 @@ class Nextline:
         logger.debug(f"statement starts with {statement[:25]!r}")
         logger.debug(f"The next run number will be {run_no_start_from}")
 
-        self._statement = statement
-        self._run_no_start_from = run_no_start_from
-        self._closed = False
-
-    async def start(self) -> None:
         mp_context = mp.get_context("spawn")
 
         self._registry = PubSub[Any, Any]()
@@ -52,10 +47,14 @@ class Nextline:
             mp_context=mp_context,
             registry=self._registry,
             q_commands=self._q_commands,
-            run_no_start_from=self._run_no_start_from,
-            statement=self._statement,
+            run_no_start_from=run_no_start_from,
+            statement=statement,
             func=run.run,
         )
+
+        self._closed = False
+
+    async def start(self) -> None:
         await self._context.start()
         self._machine = Machine(self._context)
         await self._machine.initialize()
