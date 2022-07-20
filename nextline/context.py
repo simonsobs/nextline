@@ -27,9 +27,7 @@ SCRIPT_FILE_NAME = "<string>"
 
 @dataclass
 class Context:
-    mp_context: InitVar[mp.context.BaseContext]
     registry: InitVar[PubSub[Any, Any]]
-    q_commands: InitVar[QueueCommands]
     run_no_start_from: InitVar[int]
     statement: str
     func: Callable
@@ -38,6 +36,7 @@ class Context:
     future: Optional[RunInProcess] = None
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
+    q_commands: QueueCommands = field(init=False)
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
@@ -48,18 +47,18 @@ class Context:
 
     def __post_init__(
         self,
-        mp_context: mp.context.BaseContext,
         registry: PubSub[Any, Any],
-        q_commands: QueueCommands,
         run_no_start_from: int,
     ):
+        mp_context = mp.get_context("spawn")
+        self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
         executor_factory = partial(
             ProcessPoolExecutorWithLogging,
             max_workers=1,
             mp_context=mp_context,
             initializer=run.set_queues,
-            initargs=(q_commands, q_registry),
+            initargs=(self.q_commands, q_registry),
         )
         self.runner = partial(run_in_process, executor_factory)  # type: ignore
         self.registrar = Registrar(registry, q_registry)

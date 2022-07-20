@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import multiprocessing as mp
 import linecache
 from logging import getLogger
 
@@ -38,19 +37,15 @@ class Nextline:
         logger.debug(f"statement starts with {statement[:25]!r}")
         logger.debug(f"The next run number will be {run_no_start_from}")
 
-        mp_context = mp.get_context("spawn")
-
         self._registry = PubSub[Any, Any]()
-        self._q_commands: run.QueueCommands = mp_context.Queue()
 
         self._context = Context(
-            mp_context=mp_context,
             registry=self._registry,
-            q_commands=self._q_commands,
             run_no_start_from=run_no_start_from,
             statement=statement,
             func=run.run,
         )
+        self._q_commands = self._context.q_commands
 
         self._closed = False
 
