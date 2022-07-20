@@ -41,9 +41,10 @@ class Context:
     registrar: Registrar = field(init=False)
     run_no: RunNo = field(init=False)
     run_no_count: Callable[[], RunNo] = field(init=False)
-    runner: Callable[..., Coroutine[Any, Any, RunInProcess]] = field(
-        init=False
-    )
+    runner: Callable[
+        ...,
+        Coroutine[Any, Any, RunInProcess],
+    ] = field(init=False)
 
     def __post_init__(
         self,
