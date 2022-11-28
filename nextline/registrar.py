@@ -28,6 +28,8 @@ class Registrar:
     def __init__(self, registry: PubSub, queue: QueueRegistry):
         self._registry = registry
         self._queue = queue
+
+    async def open(self):
         self._task = asyncio.create_task(self._relay())
 
     async def close(self):
