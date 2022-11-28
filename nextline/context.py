@@ -84,6 +84,8 @@ class Context:
         self.run_no_count = RunNoCounter(run_no_start_from)
 
     async def start(self):
+        await self.mp_logging.open()
+        await self.registrar.open()
         await self.registrar.script_change(
             script=self.statement, filename=self.filename
         )
