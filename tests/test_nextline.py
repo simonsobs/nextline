@@ -39,7 +39,9 @@ async def test_repr(machine):
 
 @pytest.fixture
 async def machine(monkeypatch):
+    from nextline import main
+
     instance = Mock(spec=Machine)
     class_ = Mock(return_value=instance)
-    monkeypatch.setattr("nextline.main.Machine", class_)
+    monkeypatch.setattr(main, "Machine", class_)
     return instance
