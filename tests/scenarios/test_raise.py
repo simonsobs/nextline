@@ -50,10 +50,14 @@ async def assert_subscribe_run_info(nextline: Nextline, statement: str):
         [
             info := RunInfo(
                 run_no=RunNo(1),
-                state="running",
+                state="initialized",
                 script=statement,
                 result=None,
                 exception=None,
+            ),
+            info := dataclasses.replace(
+                info,
+                state="running",
                 started_at=datetime.datetime.now(),
             ),
             dataclasses.replace(

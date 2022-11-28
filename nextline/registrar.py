@@ -52,11 +52,18 @@ class Registrar:
     async def state_initialized(self, run_no: int) -> None:
         await self._registry.publish("run_no", run_no)
 
-    async def run_start(self, run_no: RunNo) -> None:
+    async def run_initialized(self, run_no: RunNo) -> None:
         self._run_info = RunInfo(
             run_no=run_no,
-            state="running",
+            state="initialized",
             script=self._registry.latest("statement"),
+        )
+        await self._registry.publish("run_info", self._run_info)
+
+    async def run_start(self) -> None:
+        self._run_info = dataclasses.replace(
+            self._run_info,
+            state="running",
             started_at=datetime.datetime.now(),
         )
         await self._registry.publish("run_info", self._run_info)

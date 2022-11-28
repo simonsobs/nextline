@@ -97,6 +97,7 @@ class Context:
         self.result = None
         self.exception = None
         await self.registrar.state_initialized(self.run_no)
+        await self.registrar.run_initialized(self.run_no)
         await self.registrar.state_change(state)
         self.state = state
 
@@ -122,7 +123,7 @@ class Context:
                 filename=self.filename,
             ),
         )
-        await self.registrar.run_start(self.run_no)
+        await self.registrar.run_start()
         await self.registrar.state_change(state)
         self.state = state
         return self.future
