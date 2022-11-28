@@ -43,9 +43,13 @@ class Nextline:
         self._registry = self._context.registry
         self._q_commands = self._context.q_commands
 
+        self._started = False
         self._closed = False
 
     async def start(self) -> None:
+        if self._started:
+            return
+        self._started = True
         await self._context.start()
         self._machine = Machine(self._context)
         await self._machine.initialize()
