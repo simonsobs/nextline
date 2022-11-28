@@ -1,9 +1,21 @@
 from __future__ import annotations
 
+import asyncio
+
 from concurrent.futures import ProcessPoolExecutor
 import logging
+
+import pytest
 from pytest import LogCaptureFixture
+
 from nextline.utils import MultiprocessingLogging
+
+
+def test_init_sync():
+    '''Assert the init without the running loop.'''
+    with pytest.raises(RuntimeError):
+        asyncio.get_running_loop()
+    assert MultiprocessingLogging()
 
 
 async def test_multiprocessing_logging(caplog: LogCaptureFixture):

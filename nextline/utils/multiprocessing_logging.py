@@ -26,19 +26,23 @@ class MultiprocessingLogging:
     def __init__(self, context: Optional[BaseContext] = None) -> None:
         context = context or mp.get_context()
         self._q: Queue[LogRecord | None] = context.Queue()
-        self._task = asyncio.create_task(_listen(self._q))
         self._init = _ConfigureLogger(self._q)
+        # self._task = asyncio.create_task(_listen(self._q))
 
     @property
     def init(self) -> Callable[[], None]:
         """A (picklable) setup function to be called in other processes"""
         return self._init
 
+    async def open(self):
+        self._task = asyncio.create_task(_listen(self._q))
+
     async def close(self) -> None:
         await to_thread(self._q.put, None)
         await self._task
 
     async def __aenter__(self):
+        await self.open()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:
