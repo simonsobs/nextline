@@ -19,9 +19,19 @@ x = 2
 """.strip()
 
 
+def test_init_sync(machine):
+    '''Assert the init without the running loop.'''
+    del machine
+    with pytest.raises(RuntimeError):
+        asyncio.get_running_loop()
+    nextline = Nextline(SOURCE)
+    assert nextline
+
+
 async def test_one(machine: Machine) -> None:
     del machine
     async with Nextline(SOURCE) as nextline:
+        await nextline.start()
         task = asyncio.create_task(nextline.run())
         nextline.send_pdb_command("continue", 1, 1)
         await task
