@@ -42,3 +42,6 @@ tag_sign = false
 
 [tool.hatch.build.targets.sdist]
 include = ["/nextline"]
+
+[tool.black]
+line_length = 79
