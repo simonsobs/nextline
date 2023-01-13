@@ -1,13 +1,12 @@
-import pytest
+from typing import Set
 from unittest.mock import Mock
 
-from typing import Set
+import pytest
 
 from nextline.process.trace import TraceSelectFirstModule
 
-from .funcs import TraceSummary
-
 from . import module_a
+from .funcs import TraceSummary
 
 
 def test_one(

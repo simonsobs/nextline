@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from itertools import groupby
-from operator import itemgetter
 import random
 import string
 import time
+from itertools import groupby
+from operator import itemgetter
 from threading import Thread
 from typing import Iterator, Optional, TextIO
-
+from unittest.mock import Mock
 
 from nextline.process.io import peek_stdout_by_task_and_thread
-
-
-from unittest.mock import Mock
 
 
 def print_lines(lines: Iterator[str], file: Optional[TextIO] = None):

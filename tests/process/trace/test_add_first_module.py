@@ -1,15 +1,13 @@
 from functools import partial
-
-import pytest
+from typing import Set
 from unittest.mock import Mock
 
-from typing import Set
+import pytest
 
 from nextline.process.trace import TraceAddFirstModule
 
-from .funcs import TraceSummary
-
 from . import module_a
+from .funcs import TraceSummary
 
 
 def test_one(

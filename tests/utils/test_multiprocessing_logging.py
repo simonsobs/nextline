@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-
-from concurrent.futures import ProcessPoolExecutor
 import logging
+from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 from pytest import LogCaptureFixture

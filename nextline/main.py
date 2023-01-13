@@ -2,15 +2,12 @@ from __future__ import annotations
 
 import linecache
 from logging import getLogger
-
 from typing import Any, AsyncIterator, Optional, Tuple
 
-from .utils import merge_aiters
 from .context import Context
 from .state import Machine
-from .types import PromptNo, TraceNo, StdoutInfo
-
-from .types import RunInfo, TraceInfo, PromptInfo
+from .types import PromptInfo, PromptNo, RunInfo, StdoutInfo, TraceInfo, TraceNo
+from .utils import merge_aiters
 
 
 class Nextline:

@@ -2,20 +2,20 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any, Tuple
+from unittest.mock import Mock
 
 import pytest
-from unittest.mock import Mock
 
 from nextline.context import Context
 from nextline.state import (
-    State,
+    Closed,
     Created,
+    Finished,
     Initialized,
     Running,
-    Finished,
-    Closed,
-    StateObsoleteError,
+    State,
     StateMethodError,
+    StateObsoleteError,
 )
 
 

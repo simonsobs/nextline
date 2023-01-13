@@ -1,11 +1,9 @@
-import time
-import random
-
-from threading import Thread
 import asyncio
+import random
+import time
+from threading import Thread
 
 import pytest
-
 
 from nextline.utils import ThreadTaskDoneCallback, current_task_or_thread
 

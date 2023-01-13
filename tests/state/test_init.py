@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import pytest
 from unittest.mock import Mock, call, sentinel
 
-from nextline.state import State, Initialized, Running, Closed
+import pytest
+
+from nextline.state import Closed, Initialized, Running, State
 
 from .base import BaseTestState
 

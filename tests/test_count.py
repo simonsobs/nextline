@@ -1,11 +1,11 @@
-from nextline.types import RunNo, TraceNo, ThreadNo, TaskNo, PromptNo
 from nextline.count import (
-    RunNoCounter,
-    TraceNoCounter,
-    ThreadNoCounter,
-    TaskNoCounter,
     PromptNoCounter,
+    RunNoCounter,
+    TaskNoCounter,
+    ThreadNoCounter,
+    TraceNoCounter,
 )
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 
 def test_run_no_counter():

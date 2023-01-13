@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import asyncio
-from threading import Thread  # noqa F401
 import dataclasses
 import datetime
-
-from typing import TYPE_CHECKING, Optional
+from threading import Thread  # noqa F401
 from typing import MutableMapping  # noqa F401
+from typing import TYPE_CHECKING, Optional
+
 from typing_extensions import TypeAlias
 
-from .types import RunNo, RunInfo
 from .types import TraceInfo  # noqa F401
-from .utils import to_thread, PubSub
+from .types import RunInfo, RunNo
+from .utils import PubSub, to_thread
 
 if TYPE_CHECKING:
-    from .state import State
     from .process.run import QueueRegistry
+    from .state import State
 
 SCRIPT_FILE_NAME = "<string>"
 

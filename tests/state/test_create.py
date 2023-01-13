@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from nextline.state import State, Created, Initialized, Closed
+from nextline.state import Closed, Created, Initialized, State
 
 from .base import BaseTestState
 

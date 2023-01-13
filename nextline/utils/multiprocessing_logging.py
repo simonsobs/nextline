@@ -8,13 +8,11 @@ https://github.com/alphatwirl/mantichora/blob/v0.12.0/mantichora/hubmp.py
 from __future__ import annotations
 
 import asyncio
-from queue import Queue  # noqa F401
-
 import multiprocessing as mp
-from multiprocessing.context import BaseContext
-
-from logging import LogRecord, getLogger, DEBUG
+from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler
+from multiprocessing.context import BaseContext
+from queue import Queue  # noqa F401
 from typing import Callable, Optional
 
 from .func import to_thread

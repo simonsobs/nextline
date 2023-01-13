@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import sys
 import os
 import signal
-
-from pdb import Pdb
-
+import sys
 from multiprocessing import Process, Queue
+from pdb import Pdb
 from time import sleep
 
 import pytest

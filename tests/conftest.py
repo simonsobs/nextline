@@ -1,11 +1,13 @@
 from __future__ import annotations
-import sys
+
 import atexit
-from concurrent.futures.process import _python_exit
+import sys
 import threading
+from concurrent.futures.process import _python_exit
 from typing import Any, Callable, List
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 
 @pytest.fixture(autouse=True)

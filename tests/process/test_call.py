@@ -1,9 +1,9 @@
 import sys
-from threading import Thread
 import traceback
+from threading import Thread
+from unittest.mock import Mock
 
 import pytest
-from unittest.mock import Mock
 
 from nextline.process.call import call_with_trace
 

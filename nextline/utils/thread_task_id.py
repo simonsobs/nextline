@@ -1,13 +1,13 @@
 from __future__ import annotations
-from threading import Thread, current_thread
+
 from asyncio import Task, current_task
 from collections import defaultdict
+from threading import Thread, current_thread
+from typing import Callable, DefaultDict, Dict, Tuple
 from weakref import WeakKeyDictionary
 
-from typing import Callable, Tuple, Dict, DefaultDict
-
-from ..types import ThreadNo, TaskNo, ThreadTaskId
-from ..count import ThreadNoCounter, TaskNoCounter
+from ..count import TaskNoCounter, ThreadNoCounter
+from ..types import TaskNo, ThreadNo, ThreadTaskId
 
 
 class ThreadTaskIdComposer:

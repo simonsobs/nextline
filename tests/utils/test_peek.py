@@ -1,10 +1,11 @@
 from __future__ import annotations
-import sys
 
-import pytest
+import sys
 from unittest.mock import Mock, call
 
-from nextline.utils import peek_stdout, peek_stderr
+import pytest
+
+from nextline.utils import peek_stderr, peek_stdout
 
 
 def test_stdout(capsys):

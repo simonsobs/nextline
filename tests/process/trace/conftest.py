@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import pytest
+from typing import TYPE_CHECKING, Any, Callable, Set
 from unittest.mock import Mock
 
-from typing import TYPE_CHECKING, Callable, Any, Set
+import pytest
 
 from nextline.process.call import call_with_trace
 

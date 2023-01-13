@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import time
 from threading import Thread, current_thread
-
-from typing import Optional, Callable, Set, Any
+from typing import Any, Callable, Optional, Set
 
 from ..thread_exception import ExcThread
 

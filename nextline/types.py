@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 import dataclasses
 import datetime
-from typing import Optional, NewType
-
+from typing import NewType, Optional
 
 RunNo = NewType("RunNo", int)
 TraceNo = NewType("TraceNo", int)

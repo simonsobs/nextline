@@ -1,24 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from operator import itemgetter, attrgetter
 from itertools import groupby
 from keyword import iskeyword
-
-from unittest.mock import Mock
-
+from operator import attrgetter, itemgetter
+from types import FrameType
 from typing import (
+    Any,
     Iterable,
     Iterator,
+    List,
     Mapping,
     Optional,
-    Any,
-    List,
-    Tuple,
     Set,
+    Tuple,
     TypedDict,
 )
-from types import FrameType
+from unittest.mock import Mock
 
 
 @dataclass

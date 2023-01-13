@@ -2,7 +2,6 @@ import pytest
 
 from nextline.process import script
 
-
 SOURCE = """
 x = 0
 """.strip()

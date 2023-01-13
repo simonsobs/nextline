@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from types import FrameType
-from queue import Queue
-from typing import Callable, Tuple, Any
 from logging import getLogger
+from queue import Queue
+from types import FrameType
+from typing import Any, Callable, Tuple
 
+from ...types import PromptNo, TraceNo
 from ..callback import Callback
-from ...types import TraceNo, PromptNo
 
 
 def pdb_command_interface(

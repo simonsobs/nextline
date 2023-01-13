@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from io import TextIOWrapper
 from queue import Queue
 

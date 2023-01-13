@@ -1,15 +1,14 @@
 from __future__ import annotations
 
+from asyncio import Task  # noqa F401
 from collections import defaultdict
 from contextlib import contextmanager
-from asyncio import Task  # noqa F401
 from threading import Thread  # noqa F401
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
+
 from typing_extensions import TypeAlias
 
-
 from ..utils import current_task_or_thread, peek_stdout
-
 
 _T = TypeVar("_T")
 _Key: TypeAlias = "Task | Thread"

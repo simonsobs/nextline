@@ -1,12 +1,12 @@
 from __future__ import annotations
-from threading import Thread
-from asyncio import Task
 
-from typing import Callable, Optional, Any
+from asyncio import Task
+from threading import Thread
+from typing import Any, Callable, Optional
 
 from ..func import current_task_or_thread, to_thread
-from .thread import ThreadDoneCallback
 from .task import TaskDoneCallback
+from .thread import ThreadDoneCallback
 
 
 class ThreadTaskDoneCallback:

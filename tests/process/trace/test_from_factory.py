@@ -2,9 +2,8 @@ import pytest
 
 from nextline.process.trace import TraceFromFactory
 
-from .funcs import TraceSummary
-
 from . import module_a
+from .funcs import TraceSummary
 
 
 def test_one(

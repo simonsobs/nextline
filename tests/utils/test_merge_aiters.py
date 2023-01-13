@@ -1,9 +1,10 @@
 from __future__ import annotations
-from operator import itemgetter
-from itertools import groupby
 
+from itertools import groupby
+from operator import itemgetter
 
 from nextline.utils import merge_aiters
+
 from .aiterable import aiterable
 
 

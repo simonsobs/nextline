@@ -1,11 +1,10 @@
 import asyncio
-from threading import Thread
 from itertools import permutations
-
-import pytest
+from threading import Thread
+from typing import Any, List, MutableSequence, Sequence, Set, Tuple
 from unittest.mock import Mock
 
-from typing import List, MutableSequence, Sequence, Tuple, Set, Any
+import pytest
 
 from nextline.process.call import call_with_trace
 from nextline.process.trace import TraceDispatchThreadOrTask

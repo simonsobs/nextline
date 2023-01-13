@@ -1,33 +1,22 @@
 from __future__ import annotations
 
 import asyncio
-from asyncio import Task
 import sys
+from asyncio import Task
 from threading import Thread
-
-import pytest
+from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, MutableMapping, Set
 from unittest.mock import Mock
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Mapping,
-    MutableMapping,
-    Set,
-)
+import pytest
 
 from nextline.process.trace import TraceDispatchThreadOrTask
-from nextline.utils import current_task_or_thread
-from nextline.utils import ExcThread
+from nextline.utils import ExcThread, current_task_or_thread
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
 
-from .funcs import TraceSummary, summarize_trace_calls
-
 from . import module_a, module_b
+from .funcs import TraceSummary, summarize_trace_calls
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 11), reason="to be fixed")

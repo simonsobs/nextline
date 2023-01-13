@@ -4,11 +4,11 @@
 
 import asyncio
 from unittest.mock import Mock
+
 import pytest
 
 from nextline.context import Context
 from nextline.state import Machine
-
 
 SOURCE = """
 import time

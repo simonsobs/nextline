@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-from functools import partial
-from collections import deque
 import datetime
+from collections import deque
+from functools import partial
 
 import pytest
 
 from nextline import Nextline
-from nextline.types import RunNo, RunInfo
+from nextline.types import RunInfo, RunNo
 
 from .funcs import replace_with_bool
 

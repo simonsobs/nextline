@@ -1,19 +1,26 @@
 from __future__ import annotations
 
-from queue import Queue  # noqa F401
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
+from queue import Queue  # noqa F401
+from typing import (  # noqa F401
+    Any,
+    Callable,
+    MutableMapping,
+    Set,
+    Tuple,
+    TypedDict,
+    TypeVar,
+)
 
-from typing import Callable, Set, TypeVar, TypedDict, MutableMapping
-from typing import Any, Tuple  # noqa F401
 from typing_extensions import TypeAlias
 
-from ..types import RunNo, TraceNo, PromptNo
-from .trace import Trace
+from ..types import PromptNo, RunNo, TraceNo
+from . import script
 from .call import call_with_trace
 from .callback import Callback, RegistrarProxy
-from . import script
+from .trace import Trace
 
 _T = TypeVar("_T")
 

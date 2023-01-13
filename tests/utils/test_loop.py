@@ -1,7 +1,7 @@
 import asyncio
+from unittest.mock import Mock, call
 
 import pytest
-from unittest.mock import Mock, call
 
 from nextline.utils import ToLoop, to_thread
 

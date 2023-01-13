@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import threading
 import asyncio
 import functools
-
+import threading
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -15,8 +14,8 @@ from typing import (
 )
 
 if TYPE_CHECKING:
+    from asyncio import Future, Task
     from threading import Thread
-    from asyncio import Task, Future
 
 
 def current_task_or_thread() -> Task | Thread:

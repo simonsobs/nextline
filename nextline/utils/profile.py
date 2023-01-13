@@ -3,8 +3,7 @@ from __future__ import annotations
 import cProfile
 import pstats
 from io import StringIO
-
-from typing import Callable, TypeVar, Tuple
+from typing import Callable, Tuple, TypeVar
 
 _T = TypeVar("_T")
 

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import time
 from asyncio import Task, current_task
-
-from typing import Any, Optional, Callable, Set, List
+from typing import Any, Callable, List, Optional, Set
 
 from ..func import to_thread
 

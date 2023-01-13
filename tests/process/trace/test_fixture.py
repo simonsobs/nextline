@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import pytest
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
-from typing import TYPE_CHECKING
+import pytest
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc

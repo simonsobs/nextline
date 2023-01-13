@@ -1,24 +1,28 @@
 from __future__ import annotations
 
-import os
-from asyncio import Task
-import threading
-from threading import Thread
-from weakref import WeakKeyDictionary
-import datetime
 import dataclasses
-
-from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Set
-from typing import Dict, MutableMapping  # noqa F401
-from typing_extensions import TypeAlias
+import datetime
+import os
+import threading
+from asyncio import Task
+from threading import Thread
 from types import FrameType
-
-from ..types import RunNo, TraceNo, PromptNo, TraceInfo, PromptInfo, StdoutInfo
-from ..utils import (
-    ThreadTaskDoneCallback,
-    ThreadTaskIdComposer,
-    current_task_or_thread,
+from typing import (  # noqa F401
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
 )
+from weakref import WeakKeyDictionary
+
+from typing_extensions import TypeAlias
+
+from ..types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
+from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer, current_task_or_thread
 from .io import peek_stdout_by_task_and_thread
 
 if TYPE_CHECKING:

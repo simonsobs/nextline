@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from concurrent.futures import Executor, ProcessPoolExecutor
-from concurrent.futures.process import BrokenProcessPool
-from multiprocessing import Process
-
+import asyncio
 import os
 import signal
-import asyncio
-
+from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from functools import partial
+from multiprocessing import Process
 from typing import Callable, Generic, Optional, TypeVar
-from typing_extensions import ParamSpec
 
+from typing_extensions import ParamSpec
 
 _T = TypeVar("_T")
 _P = ParamSpec("_P")

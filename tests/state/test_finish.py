@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import pytest
+from typing import Any
 from unittest.mock import Mock, call, sentinel
 
-from typing import Any
+import pytest
 
-from nextline.state import State, Initialized, Finished, Closed
+from nextline.state import Closed, Finished, Initialized, State
 
 from .base import BaseTestState
 

@@ -1,12 +1,11 @@
-import time
 import random
+import time
 from threading import current_thread
-
-from nextline.utils import ThreadDoneCallback
-from nextline.utils import ExcThread
+from unittest.mock import Mock
 
 import pytest
-from unittest.mock import Mock
+
+from nextline.utils import ExcThread, ThreadDoneCallback
 
 
 def target(obj: ThreadDoneCallback):

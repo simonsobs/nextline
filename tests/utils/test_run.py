@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import time
 import signal
-from functools import partial
+import time
 from concurrent.futures import Executor, ProcessPoolExecutor
+from functools import partial
 from multiprocessing import Event
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, NoReturn, Optional

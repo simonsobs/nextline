@@ -1,9 +1,8 @@
 import asyncio
-from random import random, randint
+from random import randint, random
+from typing import List, Set
 
 import pytest
-
-from typing import List, Set
 
 from nextline.utils import agen_with_wait
 

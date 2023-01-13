@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from pdb import Pdb
-
 from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from .proxy import PdbInterface

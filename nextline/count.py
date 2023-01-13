@@ -3,7 +3,7 @@ from __future__ import annotations
 from itertools import count
 from typing import Callable, Type, TypeVar
 
-from nextline.types import RunNo, TraceNo, ThreadNo, TaskNo, PromptNo
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 _T = TypeVar("_T", bound=int)
 

@@ -1,28 +1,21 @@
 from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import partial
-
 from queue import Queue
+from types import FrameType
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
 
-from ...types import PromptNo, TraceNo
 from ...count import PromptNoCounter, TraceNoCounter
+from ...types import PromptNo, TraceNo
 from .ci import pdb_command_interface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
-
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Optional,
-    Any,
-    Tuple,
-)
-from types import FrameType
-
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
+
     from ..run import Context
 
 

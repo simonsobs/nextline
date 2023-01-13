@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import queue
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from nextline.process.run import run, RunArg, set_queues
+from nextline.process.run import RunArg, run, set_queues
 from nextline.types import RunNo
 
 

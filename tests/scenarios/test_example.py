@@ -2,23 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-from functools import partial
-from operator import attrgetter
-from itertools import groupby
-from collections import Counter
-from pathlib import Path
 import datetime
-from collections import deque
-
-from typing import Optional, Sequence, Set
+from collections import Counter, deque
+from functools import partial
+from itertools import groupby
+from operator import attrgetter
+from pathlib import Path
+from typing import Any, Dict, Optional, Sequence, Set
 
 import pytest
 
-from typing import Dict, Any
-
 from nextline import Nextline
+from nextline.types import RunInfo, RunNo
 from nextline.utils import agen_with_wait
-from nextline.types import RunNo, RunInfo
 
 from .funcs import replace_with_bool
 

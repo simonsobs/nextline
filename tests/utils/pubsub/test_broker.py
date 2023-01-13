@@ -1,6 +1,6 @@
 import asyncio
-from string import ascii_lowercase, ascii_uppercase
 import time
+from string import ascii_lowercase, ascii_uppercase
 
 import pytest
 

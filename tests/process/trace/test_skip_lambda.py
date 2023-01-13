@@ -1,11 +1,11 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from nextline.process.trace import TraceSkipLambda
 
-from .funcs import TraceSummary
-
 from . import module_a
+from .funcs import TraceSummary
 
 
 def test_one(target: TraceSummary, probe: TraceSummary, ref: TraceSummary):

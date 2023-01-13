@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import sys
 import threading
-
 from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar
-
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc

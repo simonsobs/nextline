@@ -1,21 +1,20 @@
 from __future__ import annotations
 
+import fnmatch
 from asyncio import Task
+from collections.abc import MutableSet, Set
 from functools import lru_cache
 from threading import Thread
-from weakref import WeakKeyDictionary
-import fnmatch
-
-from collections.abc import Set, MutableSet
-
-from typing import TYPE_CHECKING, Optional, Callable
 from types import FrameType
+from typing import TYPE_CHECKING, Callable, Optional
+from weakref import WeakKeyDictionary
 
-from .pdb.proxy import PdbInterfaceTraceFuncFactory
 from ..utils import current_task_or_thread
+from .pdb.proxy import PdbInterfaceTraceFuncFactory
 
 if TYPE_CHECKING:
     from sys import _TraceFunc as TraceFunc
+
     from .run import Context
 
 

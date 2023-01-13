@@ -23,7 +23,7 @@ classifiers = [
 dependencies = ["janus>=0.6", "tblib>=1.7"]
 
 [project.optional-dependencies]
-dev = ["black", "flake8", "mypy", "tox", "twine"]
+dev = ["black", "isort", "flake8", "mypy", "tox", "twine"]
 tests = [
     "pytest-asyncio>=0.18",
     "pytest-cov>=3.0",
@@ -46,3 +46,6 @@ include = ["/nextline"]
 [tool.black]
 skip-string-normalization = true
 target_version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"

@@ -1,12 +1,12 @@
-import time
-import random
 import asyncio
+import random
 import threading
-
-from nextline.utils import TaskDoneCallback
+import time
+from unittest.mock import Mock
 
 import pytest
-from unittest.mock import Mock
+
+from nextline.utils import TaskDoneCallback
 
 
 async def target(obj: TaskDoneCallback):
