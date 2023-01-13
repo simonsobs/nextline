@@ -7,7 +7,7 @@ name = "nextline"
 dynamic = ["version"]
 description = "A Python library for controlling Python scripts execution"
 readme = "README.md"
-license = ""
+license = "MIT"
 authors = [
     { name = "Simons Observatory", email = "so_software@simonsobservatory.org" },
 ]
@@ -19,19 +19,10 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
 ]
-dependencies = [
-    "janus>=0.6",
-    "tblib>=1.7",
-]
+dependencies = ["janus>=0.6", "tblib>=1.7"]
 
 [project.optional-dependencies]
-dev = [
-    "black",
-    "flake8",
-    "mypy",
-    "tox",
-    "twine",
-]
+dev = ["black", "flake8", "mypy", "tox", "twine"]
 tests = [
     "pytest-asyncio>=0.18",
     "pytest-cov>=3.0",
@@ -49,6 +40,4 @@ path = "nextline/__about__.py"
 tag_sign = false
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/nextline",
-]
+include = ["/nextline"]
