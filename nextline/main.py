@@ -80,9 +80,7 @@ class Nextline:
         await self._machine.run()
         await self._machine.finish()
 
-    def send_pdb_command(
-        self, command: str, prompt_no: int, trace_no: int
-    ) -> None:
+    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
@@ -142,9 +140,7 @@ class Nextline:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name=None):
-        if not file_name or file_name == self._registry.latest(
-            "script_file_name"
-        ):
+        if not file_name or file_name == self._registry.latest("script_file_name"):
             return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
@@ -167,9 +163,7 @@ class Nextline:
     def subscribe_prompt_info(self) -> AsyncIterator[PromptInfo]:
         return self.subscribe("prompt_info")
 
-    def subscribe_prompt_info_for(
-        self, trace_no: int
-    ) -> AsyncIterator[PromptInfo]:
+    def subscribe_prompt_info_for(self, trace_no: int) -> AsyncIterator[PromptInfo]:
         return self.subscribe(f"prompt_info_{trace_no}")
 
         # Alternative implementation under development
@@ -197,9 +191,7 @@ class Nextline:
     def get(self, key) -> Any:
         return self._registry.latest(key)
 
-    def subscribe(
-        self, key, last: Optional[bool] = True
-    ) -> AsyncIterator[Any]:
+    def subscribe(self, key, last: Optional[bool] = True) -> AsyncIterator[Any]:
         return self._registry.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:

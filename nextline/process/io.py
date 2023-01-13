@@ -38,9 +38,7 @@ def CurrentTaskOrThreadIfInCollection(
     return fn
 
 
-def ReadLinesByKey(
-    callback: Callable[[_T, str], Any]
-) -> Callable[[_T, str], Any]:
+def ReadLinesByKey(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], Any]:
     buffer: DefaultDict[_T, str] = defaultdict(str)
 
     def read_lines_by_key(key: _T, s: str) -> None:

@@ -87,9 +87,7 @@ async def merge_aiters(
     *aiters: AsyncIterator[T],
 ) -> AsyncIterator[Tuple[int, T]]:
     aiter_map = {a: i for i, a in enumerate(aiters)}
-    task_map = {
-        asyncio.ensure_future(a.__anext__()): a for a in aiter_map.keys()
-    }
+    task_map = {asyncio.ensure_future(a.__anext__()): a for a in aiter_map.keys()}
     tasks = set(task_map.keys())
     while tasks:
         done, pending = await asyncio.wait(

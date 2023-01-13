@@ -70,9 +70,7 @@ class Registrar:
         )
         await self._registry.publish("run_info", self._run_info)
 
-    async def run_end(
-        self, result: Optional[str], exception: Optional[str]
-    ) -> None:
+    async def run_end(self, result: Optional[str], exception: Optional[str]) -> None:
         self._run_info = dataclasses.replace(
             self._run_info,
             state="finished",

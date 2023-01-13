@@ -54,13 +54,9 @@ class Callback:
         self._to_canonic = ToCanonic()
         self._entering_thread: Optional[Thread] = None
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
-        self._current_trace_call_map: Dict[
-            TraceNo, Tuple[FrameType, str, Any]
-        ] = {}
+        self._current_trace_call_map: Dict[TraceNo, Tuple[FrameType, str, Any]] = {}
 
-    def task_or_thread_start(
-        self, trace_no: TraceNo, pdbi: PdbInterface
-    ) -> None:
+    def task_or_thread_start(self, trace_no: TraceNo, pdbi: PdbInterface) -> None:
         self.trace_start(trace_no, pdbi)
 
         task_or_thread = current_task_or_thread()
@@ -179,9 +175,7 @@ class Callback:
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
         self._last_prompt_frame_map[trace_no] = frame
 
-    def prompt_end(
-        self, trace_no: TraceNo, prompt_no: PromptNo, command: str
-    ) -> None:
+    def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
         prompt_info = self._prompt_info_map.pop((trace_no, prompt_no))
         prompt_info = dataclasses.replace(
             prompt_info,

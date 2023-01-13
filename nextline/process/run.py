@@ -21,9 +21,7 @@ _T = TypeVar("_T")
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
 QueueRegistry: TypeAlias = "Queue[Tuple[str, Any, bool]]"
-PdbCiMap: TypeAlias = MutableMapping[
-    TraceNo, Callable[[PdbCommand, PromptNo], Any]
-]
+PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand, PromptNo], Any]]
 
 _q_commands: QueueCommands | None = None
 _q_registry: QueueRegistry | None = None

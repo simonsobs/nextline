@@ -110,9 +110,7 @@ class Context:
     ):
         if statement:
             self.statement = statement
-            await self.registrar.script_change(
-                script=statement, filename=self.filename
-            )
+            await self.registrar.script_change(script=statement, filename=self.filename)
         if run_no_start_from is not None:
             self.run_no_count = RunNoCounter(run_no_start_from)
 

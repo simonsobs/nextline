@@ -42,9 +42,7 @@ def pdb_command_interface(
         # print(prompt_no)
         logger = getLogger(__name__)
         logger.debug(f"send_command: {command}")
-        callback.prompt_end(
-            trace_no=trace_no, prompt_no=prompt_no, command=command
-        )
+        callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
         queue_stdin.put(command)
 
     return wait_prompt, send_command

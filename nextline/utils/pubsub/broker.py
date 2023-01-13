@@ -18,9 +18,7 @@ class PubSub(Generic[_KT, _VT]):
             PubSubItem[_VT],
         ] = defaultdict(PubSubItem)
 
-    def subscribe(
-        self, key: _KT, last: Optional[bool] = True
-    ) -> AsyncIterator[_VT]:
+    def subscribe(self, key: _KT, last: Optional[bool] = True) -> AsyncIterator[_VT]:
         """Async iterator that yields values for the key as they are published
 
         Waits for new values and yields them as they are set. If `last` is

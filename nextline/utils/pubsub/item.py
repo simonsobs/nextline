@@ -39,9 +39,10 @@ class PubSubItem(Generic[_T]):
     def __init__(self):
 
         self._qs_out: List[Queue[Tuple[int, _T | Literal[_M.END]]]] = []
-        self._last_enumerated: Tuple[
-            int, _T | Literal[_M.START] | Literal[_M.END]
-        ] = (-1, _M.START)
+        self._last_enumerated: Tuple[int, _T | Literal[_M.START] | Literal[_M.END]] = (
+            -1,
+            _M.START,
+        )
 
         self._last_item: _T | Literal[_M.START] = _M.START
         self._idx = -1

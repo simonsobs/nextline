@@ -62,9 +62,7 @@ class ThreadDoneCallback:
 
         """
         if current_thread() in self._active:
-            raise RuntimeError(
-                "The close() cannot be called from a registered thread"
-            )
+            raise RuntimeError("The close() cannot be called from a registered thread")
         self._closed = True
         self._t.join()
 
