@@ -13,7 +13,7 @@ import pytest
 from nextline.utils import run_in_process
 
 if TYPE_CHECKING:
-    from multiprocessing import _EventType
+    from multiprocessing.synchronize import Event as _EventType
 
 
 _event: Optional[_EventType] = None
