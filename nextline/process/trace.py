@@ -13,8 +13,7 @@ from ..utils import current_task_or_thread
 from .pdb.proxy import PdbInterfaceTraceFuncFactory
 
 if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc
-
+    from ..types import TraceFunc
     from .run import Context
 
 

@@ -8,7 +8,7 @@ import pytest
 from nextline.process.call import call_with_trace
 
 if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc
+    from nextline.types import TraceFunc
 
 from .funcs import TraceSummary, summarize_trace_calls
 

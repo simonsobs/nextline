@@ -14,8 +14,7 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc
-
+    from ...types import TraceFunc
     from ..run import Context
 
 
