@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from types import FrameType
-from queue import Queue
-from typing import Callable, Tuple, Any
 
+from queue import Queue
+from types import FrameType
+from typing import Any, Callable, Tuple
+
+from ...types import PromptNo, TraceNo
 from ..callback import Callback
-from ...types import TraceNo, PromptNo
 
 
 def pdb_command_interface(
@@ -38,9 +39,7 @@ def pdb_command_interface(
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
         """send a command to pdb"""
-        callback.prompt_end(
-            trace_no=trace_no, prompt_no=prompt_no, command=command
-        )
+        callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
         queue_stdin.put(command)
 
     return wait_prompt, send_command
