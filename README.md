@@ -1,5 +1,6 @@
 [![PyPI version](https://badge.fury.io/py/nextline.svg)](https://badge.fury.io/py/nextline)
-[![Test Status](https://github.com/simonsobs/nextline/workflows/Test/badge.svg)](https://github.com/simonsobs/nextline/actions?query=workflow%3ATest)
+[![Test Status](https://github.com/simonsobs/nextline/actions/workflows/unit-test.yml/badge.svg)](https://github.com/simonsobs/nextline/actions/workflows/unit-test.yml/badge.svg)
+[![Test Status](https://github.com/simonsobs/nextline/actions/workflows/type-check.yml/badge.svg)](https://github.com/simonsobs/nextline/actions/workflows/type-check.yml/badge.svg)
 [![codecov](https://codecov.io/gh/simonsobs/nextline/branch/main/graph/badge.svg)](https://codecov.io/gh/simonsobs/nextline)
 
 # Nextline
