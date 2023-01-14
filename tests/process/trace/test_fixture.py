@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 if TYPE_CHECKING:
-    from sys import _TraceFunc as TraceFunc
+    from sys import TraceFunction as TraceFunc
 
 
 def test_wrap_target_trace_func(
