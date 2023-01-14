@@ -1,2 +1,0 @@
-include versioneer.py
-include nextline/_version.py
