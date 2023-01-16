@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -16,7 +16,7 @@ x = 2
 """.strip()
 
 
-def test_init_sync(machine: Mock):
+def test_init_sync(machine: AsyncMock):
     '''Assert the init without the running loop.'''
     del machine
     with pytest.raises(RuntimeError):
@@ -25,7 +25,7 @@ def test_init_sync(machine: Mock):
     assert nextline
 
 
-async def test_one(machine: Mock) -> None:
+async def test_one(machine: AsyncMock) -> None:
     del machine
     async with Nextline(SOURCE) as nextline:
         task = asyncio.create_task(nextline.run())
@@ -37,17 +37,28 @@ async def test_one(machine: Mock) -> None:
         await nextline.run()
 
 
-async def test_repr(machine: Mock):
+async def test_repr(machine: AsyncMock):
     del machine
     async with Nextline(SOURCE) as nextline:
         assert repr(nextline)
 
 
+@pytest.mark.skip(reason='it blocks')
+async def test_timeout(machine: Mock):
+    async def close():
+        await asyncio.sleep(5)
+
+    machine.close.side_effect = close
+    with pytest.raises(asyncio.TimeoutError):
+        async with Nextline(SOURCE, timeout_on_exit=0.01):
+            pass
+
+
 @pytest.fixture
-async def machine(monkeypatch: pytest.MonkeyPatch) -> Mock:
+async def machine(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     from nextline import main
 
-    instance = Mock(spec=Machine)
+    instance = AsyncMock(spec=Machine)
     class_ = Mock(return_value=instance)
     monkeypatch.setattr(main, "Machine", class_)
     return instance
