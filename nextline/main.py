@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 
 import linecache
 from logging import getLogger
@@ -27,7 +28,12 @@ class Nextline:
 
     """
 
-    def __init__(self, statement: str, run_no_start_from: int = 1):
+    def __init__(
+        self,
+        statement: str,
+        run_no_start_from: int = 1,
+        timeout_on_exit: float = 3,
+    ):
 
         logger = getLogger(__name__)
         logger.debug(f"statement starts with {statement[:25]!r}")
@@ -37,6 +43,7 @@ class Nextline:
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
+        self._timeout_on_exit = timeout_on_exit
         self._registry = self._context.registry
         self._q_commands = self._context.q_commands
 
@@ -70,7 +77,7 @@ class Nextline:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         del exc_type, exc_value, traceback
-        await self.close()
+        await asyncio.wait_for(self.close(), timeout=self._timeout_on_exit)
 
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
