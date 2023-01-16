@@ -17,14 +17,16 @@ class Nextline:
     Nextline supports concurrency with threading and asyncio. It uses multiple
     instances of Pdb, one for each thread and async task.
 
-    Note
-    ----
-    The running asyncio event loop must exists when Nextline is instantiated.
 
     Parameters
     ----------
     statement : str
         A Python code as a string
+    run_no_start_from : int, optional
+        The first run number. The default is 1.
+    timeout_on_exit : float, optional
+        The timeout in seconds to wait for the nextline to exit from the "with"
+        block. The default is 3.
 
     """
 
