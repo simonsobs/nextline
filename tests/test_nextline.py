@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 from unittest.mock import Mock
 
@@ -18,7 +16,7 @@ x = 2
 """.strip()
 
 
-def test_init_sync(machine):
+def test_init_sync(machine: Mock):
     '''Assert the init without the running loop.'''
     del machine
     with pytest.raises(RuntimeError):
@@ -27,10 +25,9 @@ def test_init_sync(machine):
     assert nextline
 
 
-async def test_one(machine: Machine) -> None:
+async def test_one(machine: Mock) -> None:
     del machine
     async with Nextline(SOURCE) as nextline:
-        await nextline.start()
         task = asyncio.create_task(nextline.run())
         nextline.send_pdb_command("continue", 1, 1)
         await task
@@ -40,14 +37,14 @@ async def test_one(machine: Machine) -> None:
         await nextline.run()
 
 
-async def test_repr(machine):
+async def test_repr(machine: Mock):
     del machine
     async with Nextline(SOURCE) as nextline:
         assert repr(nextline)
 
 
 @pytest.fixture
-async def machine(monkeypatch):
+async def machine(monkeypatch: pytest.MonkeyPatch) -> Mock:
     from nextline import main
 
     instance = Mock(spec=Machine)
