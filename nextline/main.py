@@ -51,6 +51,8 @@ class Nextline:
 
         self._started = False
         self._closed = False
+        
+        # TODO: instantiate Machine here without the running asyncio loop
 
     async def start(self) -> None:
         if self._started:
@@ -123,13 +125,16 @@ class Nextline:
         return self.get("statement")
 
     @property
-    def state(self) -> str:
+    def state(self) -> Optional[str]:
         """The current condition of the script execution.
 
         The possible values are "initialized", "running", "finished",
         "closed"
         """
-        return self._machine.state_name
+        try:
+            return self._machine.state_name
+        except AttributeError:
+            return None
 
     def subscribe_state(self) -> AsyncIterator[str]:
         return self.subscribe("state_name")
