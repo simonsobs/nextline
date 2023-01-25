@@ -298,7 +298,7 @@ async def nextline(statement):
 @pytest.fixture
 def statement(script_dir, monkey_patch_syspath):
     del monkey_patch_syspath
-    return Path(script_dir).joinpath("script.py").read_text()
+    return (Path(script_dir) / 'script.py').read_text()
 
 
 @pytest.fixture
