@@ -22,7 +22,6 @@ MODULES_TO_SKIP = {
     "queue",
     "importlib",
     "asyncio.*",
-    "janus",
     "codec",
     "concurrent.futures.*",
     "selectors",
