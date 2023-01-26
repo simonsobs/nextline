@@ -7,7 +7,7 @@ import pytest
 from nextline.utils import agen_with_wait
 
 
-async def test_one():
+async def test_one() -> None:
     async def agen():
         for i in range(3):
             yield i
@@ -25,7 +25,7 @@ async def test_one():
         tasks = {asyncio.create_task(afunc()) for _ in range(randint(0, 5))}
         all |= tasks
         done_, pending = await obj.asend(tasks)
-        done.extend(done_)
+        done.extend(done_)  # type: ignore
 
     await asyncio.gather(*pending)
     assert len(all) == len(done) + len(pending)

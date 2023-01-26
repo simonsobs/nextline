@@ -126,7 +126,7 @@ class State(ObsoleteMixin):
 
     name = "state"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._context: Context
 
     def __repr__(self):

@@ -12,7 +12,7 @@ _VT = TypeVar("_VT")
 class PubSub(Generic[_KT, _VT]):
     """Asynchronous message broker of the publish-subscribe pattern"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._queue: DefaultDict[
             _KT,
             PubSubItem[_VT],
