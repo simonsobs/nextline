@@ -19,13 +19,40 @@ _T = TypeVar("_T")
 
 
 class PubSubItem(Generic[_T]):
-    """Distribute items to subscribers
+    '''Distribute items to subscribers
 
     A new subscriber immediately receives the latest item and then wait for new
     items.
 
     The order of the items is preserved.
-    """
+
+    >>> import asyncio
+
+    >>> items = ['a', 'b', 'c', 'd', 'e']
+
+    >>> async def receive(obj):
+    ...     return [i async for i in obj.subscribe()]
+
+    >>> async def send(obj):
+    ...     for i in items:
+    ...         await obj.publish(i)
+    ...     await obj.close()
+
+    >>> async def main():
+    ...     obj = PubSubItem()
+    ...     received1, received2, _ = await asyncio.gather(
+    ...         receive(obj),
+    ...         receive(obj),
+    ...         send(obj),
+    ...     )
+    ...     print(received1)
+    ...     print(received2)
+
+    >>> asyncio.run(main())
+    ['a', 'b', 'c', 'd', 'e']
+    ['a', 'b', 'c', 'd', 'e']
+
+    '''
 
     def __init__(self) -> None:
 
@@ -59,10 +86,7 @@ class PubSubItem(Generic[_T]):
             raise LookupError
         return self._last_item
 
-    async def subscribe(
-        self,
-        last: Optional[bool] = True,
-    ) -> AsyncIterator[_T]:
+    async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_T]:
         """Yield data as they are put
 
         If `last` is true, yield immediately the most recent data before

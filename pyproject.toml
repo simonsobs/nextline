@@ -30,6 +30,7 @@ tests = [
     "pytest-timeout>=2.1",
     "pytest>=7.0",
     "snapshottest>=0.6",
+    "hypothesis>=6.65",
 ]
 
 [project.urls]
@@ -46,6 +47,10 @@ include = ["/nextline"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 timeout = 60
+addopts = "--doctest-modules"
+# doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE",]
+doctest_optionflags = ["ELLIPSIS"]
+norecursedirs = "build"
 
 [tool.black]
 skip-string-normalization = true
