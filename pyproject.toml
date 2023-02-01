@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
-dependencies = ["tblib>=1.7"]
+dependencies = ["tblib>=1.7", "typing-extensions>=4.4"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "flake8", "mypy", "tox", "twine"]
