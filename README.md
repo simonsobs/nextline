@@ -1,4 +1,5 @@
-[![PyPI version](https://badge.fury.io/py/nextline.svg)](https://badge.fury.io/py/nextline)
+[![PyPI - Version](https://img.shields.io/pypi/v/nextline.svg)](https://pypi.org/project/nextline)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nextline.svg)](https://pypi.org/project/nextline)
 [![Test Status](https://github.com/simonsobs/nextline/actions/workflows/unit-test.yml/badge.svg)](https://github.com/simonsobs/nextline/actions/workflows/unit-test.yml)
 [![Test Status](https://github.com/simonsobs/nextline/actions/workflows/type-check.yml/badge.svg)](https://github.com/simonsobs/nextline/actions/workflows/type-check.yml)
 [![codecov](https://codecov.io/gh/simonsobs/nextline/branch/main/graph/badge.svg)](https://codecov.io/gh/simonsobs/nextline)
