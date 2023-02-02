@@ -42,7 +42,6 @@ class Context:
     statement: str
     filename: str = SCRIPT_FILE_NAME
     func: Callable = run.run
-    state: Optional[State] = None
     future: Optional[RunInProcess] = None
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
@@ -88,7 +87,6 @@ class Context:
         
     async def state_change(self, state: State):
         await self.registrar.state_change(state.name)
-        self.state = state
 
     async def shutdown(self):
         await self.registrar.close()
