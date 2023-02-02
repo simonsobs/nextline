@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from nextline import Nextline
-from nextline.state import Machine
 
 SOURCE = """
 import time
@@ -58,7 +57,9 @@ async def test_timeout(machine: Mock):
 async def machine(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     from nextline import main
 
-    instance = AsyncMock(spec=Machine)
+    # instance = AsyncMock(spec=Model)
+    instance = AsyncMock()
+    instance.exception = Mock()
     class_ = Mock(return_value=instance)
-    monkeypatch.setattr(main, "Machine", class_)
+    monkeypatch.setattr(main, "Model", class_)
     return instance

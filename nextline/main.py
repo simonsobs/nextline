@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, AsyncIterator, Optional, Tuple
 
 from .context import Context
-from .state import Machine
+from .model import Model
 from .types import PromptInfo, PromptNo, RunInfo, StdoutInfo, TraceInfo, TraceNo
 from .utils import merge_aiters
 
@@ -59,8 +59,9 @@ class Nextline:
             return
         self._started = True
         await self._context.start()
-        self._machine = Machine(self._context)
-        await self._machine.initialize()
+        # self._machine = Machine(self._context)
+        self._machine = Model(self._context)
+        await self._machine.initialize()  # type: ignore
 
     def __repr__(self):
         # e.g., "<Nextline 'running'>"
@@ -71,7 +72,7 @@ class Nextline:
         if self._closed:
             return
         self._closed = True
-        await self._machine.close()
+        await self._machine.close()  # type: ignore
         await self._context.shutdown()
         await self._registry.close()
 
@@ -85,8 +86,8 @@ class Nextline:
 
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
-        await self._machine.run()
-        await self._machine.finish()
+        await self._machine.run()  # type: ignore
+        await self._machine.finish()  # type: ignore
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
@@ -114,7 +115,7 @@ class Nextline:
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""
-        await self._machine.reset(
+        await self._machine.reset(  # type: ignore
             statement=statement,
             run_no_start_from=run_no_start_from,
         )
@@ -132,7 +133,7 @@ class Nextline:
         "closed"
         """
         try:
-            return self._machine.state_name
+            return self._machine.state  # type: ignore
         except AttributeError:
             return None
 
