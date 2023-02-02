@@ -19,7 +19,7 @@ class TestClosed(BaseTestState):
 
     def test_state(self, state: State, context: Mock):
         super().test_state(state, context)
-        assert [call(state)] == context.close.call_args_list
+        assert [call()] == context.close.call_args_list
 
     async def test_close(self, state: State):
         # The same object should be returned no matter

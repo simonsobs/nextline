@@ -201,7 +201,7 @@ class Initialized(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        await self._context.initialize(self)
+        await self._context.initialize()
         await self._context.state_change(self.name)
         return self
 
@@ -236,7 +236,7 @@ class Running(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        await self._context.run(self)
+        await self._context.run()
         await self._context.state_change(self.name)
         return self
 
@@ -267,7 +267,7 @@ class Finished(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        await self._context.finish(self)
+        await self._context.finish()
         await self._context.state_change(self.name)
         return self
 
@@ -324,7 +324,7 @@ class Closed(State):
     @classmethod
     async def create(cls, prev: State):
         self = cls(prev)
-        await self._context.close(self)
+        await self._context.close()
         await self._context.state_change(self.name)
         return self
 

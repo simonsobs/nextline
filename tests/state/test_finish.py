@@ -24,7 +24,7 @@ class TestFinished(BaseTestState):
 
     def test_state(self, state: State, context: Mock):
         super().test_state(state, context)
-        assert [call(state)] == context.finish.call_args_list
+        assert [call()] == context.finish.call_args_list
 
     async def test_finish(self, state: State):
         # The same object should be returned no matter

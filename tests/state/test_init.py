@@ -20,7 +20,7 @@ class TestInitialized(BaseTestState):
     def test_state(self, state: State, context: Mock):
         super().test_state(state, context)
         assert [
-            call.initialize(state),
+            call.initialize(),
             call.state_change('initialized'),
         ] == context.mock_calls
 

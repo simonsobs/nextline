@@ -19,7 +19,7 @@ class TestRunning(BaseTestState):
 
     def test_state(self, state: State, context: Mock):
         super().test_state(state, context)
-        assert [call(state)] == context.run.call_args_list
+        assert [call()] == context.run.call_args_list
 
     async def test_finish(self, state):
         finished = await state.finish()
