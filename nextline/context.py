@@ -85,6 +85,9 @@ class Context:
         await self.registrar.script_change(
             script=self.statement, filename=self.filename
         )
+        
+    async def state_change(self, state_name: str):
+        await self.registrar.state_change(state_name)
 
     async def shutdown(self):
         await self.registrar.close()
@@ -96,7 +99,7 @@ class Context:
         self.exception = None
         await self.registrar.state_initialized(self.run_no)
         await self.registrar.run_initialized(self.run_no)
-        await self.registrar.state_change(state.name)
+        await self.state_change(state.name)
         self.state = state
 
     async def reset(
@@ -120,7 +123,7 @@ class Context:
             ),
         )
         await self.registrar.run_start()
-        await self.registrar.state_change(state.name)
+        await self.state_change(state.name)
         self.state = state
         return self.future
 
@@ -158,9 +161,9 @@ class Context:
             fmt_exc = None
 
         await self.registrar.run_end(result=ret, exception=fmt_exc)
-        await self.registrar.state_change(state.name)
+        await self.state_change(state.name)
         self.state = state
 
     async def close(self, state: State):
-        await self.registrar.state_change(state.name)
+        await self.state_change(state.name)
         self.state = state
