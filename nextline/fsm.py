@@ -32,29 +32,30 @@ def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> 
                  '-------------'               '-------------'
 
     >>> class Model:
-    ...     def on_enter_initialized(self):
+    ...     def on_enter_initialized(self, event):
     ...         print('enter the initialized state')
     ...
-    ...     def on_exit_initialized(self):
+    ...     def on_exit_initialized(self, event):
     ...        print('exit the initialized state')
     ...
-    ...     def on_reset(self):
+    ...     def on_reset(self, event):
     ...        print('resetting to the initialized state')
+    ...        print(f'passed arguments: {event.args} {event.kwargs}')
     ...
-    ...     def on_enter_running(self):
+    ...     def on_enter_running(self, event):
     ...        print('enter the running state')
     ...        self.finish()
     ...
-    ...     def on_exit_running(self):
+    ...     def on_exit_running(self, event):
     ...        print('exit the running state')
     ...
-    ...     def on_enter_finished(self):
+    ...     def on_enter_finished(self, event):
     ...        print('enter the finished state')
     ...
-    ...     def on_exit_finished(self):
+    ...     def on_exit_finished(self, event):
     ...        print('exit the finished state')
     ...
-    ...     def on_enter_closed(self):
+    ...     def on_enter_closed(self, event):
     ...        print('enter the closed state')
 
 
@@ -69,8 +70,9 @@ def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> 
     >>> model.state
     'initialized'
 
-    >>> _ = model.reset()
+    >>> _ = model.reset(10, foo='bar')
     resetting to the initialized state
+    passed arguments: (10,) {'foo': 'bar'}
     exit the initialized state
     enter the initialized state
 
@@ -121,6 +123,7 @@ def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> 
         ],
         'initial': 'created',
         'queued': True,
+        'send_event': True,
         # 'ignore_invalid_triggers': True,
     }
 
