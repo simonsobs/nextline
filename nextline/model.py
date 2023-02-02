@@ -60,7 +60,7 @@ class Model:
         await self._context.reset(*event.args, **event.kwargs)
 
     async def __aenter__(self):
-        await self.start()
+        await self.initialize()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):

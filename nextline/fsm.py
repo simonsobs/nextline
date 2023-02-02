@@ -13,7 +13,8 @@ def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> 
                  .-------------.
                  |   Created   |---.
                  '-------------'   |
-                       | start()   |
+          initialize() |           |
+                       |           |
                        V           |
                  .-------------.   |
             .--->| Initialized |---.
@@ -64,7 +65,7 @@ def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> 
     >>> model.state
     'created'
 
-    >>> _ = model.start()
+    >>> _ = model.initialize()
     enter the initialized state
 
     >>> model.state
@@ -110,7 +111,7 @@ def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> 
             'closed',
         ],
         'transitions': [
-            ['start', 'created', 'initialized'],
+            ['initialize', 'created', 'initialized'],
             ['run', 'initialized', 'running'],
             ['finish', 'running', 'finished'],
             ['close', ['created', 'initialized', 'finished'], 'closed'],

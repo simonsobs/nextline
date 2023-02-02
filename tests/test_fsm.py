@@ -23,11 +23,11 @@ def test_model_self_literal():
 
 async def test_transitions() -> None:
 
-    # created -- start() --> initialized
+    # created -- initialize() --> initialized
     machine = build_state_machine(model=Machine.self_literal)
     machine.on_reset = AsyncMock()  # type: ignore
     assert machine.is_created()
-    await machine.start()
+    await machine.initialize()
     assert machine.is_initialized()
 
     # initialized -- reset() --> initialized
@@ -65,10 +65,10 @@ async def test_transitions() -> None:
     await machine.close()
     assert machine.is_closed()
 
-    # created -- start() -> initialized -- close() --> closed
+    # created -- initialize() -> initialized -- close() --> closed
     machine = build_state_machine(model=Machine.self_literal)
     assert machine.is_created()
-    await machine.start()
+    await machine.initialize()
     assert machine.is_initialized()
     await machine.close()
     assert machine.is_closed()
@@ -79,7 +79,7 @@ async def test_invalid_triggers() -> None:
 
     machine = build_state_machine(model=Machine.self_literal)
     assert machine.is_created()
-    await machine.start()
+    await machine.initialize()
     assert machine.is_initialized()
     await machine.run()
     assert machine.is_running()
