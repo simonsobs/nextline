@@ -17,7 +17,6 @@ from .registrar import Registrar
 from .types import RunNo
 from .utils import MultiprocessingLogging, PubSub, RunInProcess, run_in_process
 
-
 SCRIPT_FILE_NAME = "<string>"
 
 _P = ParamSpec("_P")

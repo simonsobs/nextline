@@ -51,7 +51,7 @@ class Nextline:
 
         self._started = False
         self._closed = False
-        
+
         # TODO: instantiate Machine here without the running asyncio loop
 
     async def start(self) -> None:
