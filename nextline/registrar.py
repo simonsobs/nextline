@@ -48,8 +48,8 @@ class Registrar:
         await self._registry.publish("statement", script)
         await self._registry.publish("script_file_name", filename)
 
-    async def state_change(self, state: State) -> None:
-        await self._registry.publish("state_name", state.name)
+    async def state_change(self, state_name: str) -> None:
+        await self._registry.publish("state_name", state_name)
 
     async def state_initialized(self, run_no: int) -> None:
         await self._registry.publish("run_no", run_no)
