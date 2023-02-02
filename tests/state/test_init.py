@@ -19,7 +19,10 @@ class TestInitialized(BaseTestState):
 
     def test_state(self, state: State, context: Mock):
         super().test_state(state, context)
-        assert [call.initialize(state)] == context.mock_calls
+        assert [
+            call.initialize(state),
+            call.state_change('initialized'),
+        ] == context.mock_calls
 
     async def test_run(self, state: State):
         running = await state.run()
