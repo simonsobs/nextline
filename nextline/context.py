@@ -6,8 +6,9 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import InitVar, dataclass, field
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional
 
+from tblib import pickling_support
 from typing_extensions import ParamSpec
 
 from .count import RunNoCounter
@@ -17,8 +18,7 @@ from .registrar import Registrar
 from .types import RunNo
 from .utils import MultiprocessingLogging, PubSub, RunInProcess, run_in_process
 
-if TYPE_CHECKING:
-    from .state import State
+pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -42,7 +42,6 @@ class Context:
     statement: str
     filename: str = SCRIPT_FILE_NAME
     func: Callable = run.run
-    state: Optional[State] = None
     future: Optional[RunInProcess] = None
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
@@ -86,18 +85,19 @@ class Context:
             script=self.statement, filename=self.filename
         )
 
+    async def state_change(self, state_name: str):
+        await self.registrar.state_change(state_name)
+
     async def shutdown(self):
         await self.registrar.close()
         await self.mp_logging.close()
 
-    async def initialize(self, state: State):
+    async def initialize(self):
         self.run_no = self.run_no_count()
         self.result = None
         self.exception = None
         await self.registrar.state_initialized(self.run_no)
         await self.registrar.run_initialized(self.run_no)
-        await self.registrar.state_change(state)
-        self.state = state
 
     async def reset(
         self,
@@ -110,7 +110,7 @@ class Context:
         if run_no_start_from is not None:
             self.run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self, state: State) -> RunInProcess:
+    async def run(self) -> RunInProcess:
         self.future = await self.runner(
             self.func,
             RunArg(
@@ -120,8 +120,6 @@ class Context:
             ),
         )
         await self.registrar.run_start()
-        await self.registrar.state_change(state)
-        self.state = state
         return self.future
 
     def interrupt(self) -> None:
@@ -136,7 +134,7 @@ class Context:
         if self.future:
             self.future.kill()
 
-    async def finish(self, state: State) -> None:
+    async def finish(self) -> None:
         assert self.future
         try:
             self.result, self.exception = await self.future
@@ -158,9 +156,6 @@ class Context:
             fmt_exc = None
 
         await self.registrar.run_end(result=ret, exception=fmt_exc)
-        await self.registrar.state_change(state)
-        self.state = state
 
-    async def close(self, state: State):
-        await self.registrar.state_change(state)
-        self.state = state
+    async def close(self):
+        pass
