@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, AsyncIterator, Optional, Tuple
 
 from .context import Context
-from .model import Machine
+from .state import Machine
 from .types import PromptInfo, PromptNo, RunInfo, StdoutInfo, TraceInfo, TraceNo
 from .utils import merge_aiters
 

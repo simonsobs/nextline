@@ -3,7 +3,7 @@ from unittest.mock import Mock, call
 import pytest
 
 from nextline.context import Context
-from nextline.model import Machine
+from nextline.state import Machine
 
 
 def test_repr(context: Context) -> None:
