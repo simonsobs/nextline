@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from nextline.process.run import RunArg, run, set_queues
+from nextline.process.run import RunArg, main, set_queues
 from nextline.types import RunNo
 
 
@@ -16,7 +16,7 @@ def test_one(
     task_send_commands,
 ):
     del call_set_queues, task_send_commands
-    result, exception = run(run_arg)
+    result, exception = main(run_arg)
     assert result is None
     if expected_exception:
         assert exception

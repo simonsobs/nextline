@@ -52,7 +52,7 @@ class Context(TypedDict):
     modules_to_trace: Set[str]
 
 
-def run(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
+def main(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
     assert _q_registry
     assert _q_commands
     return run_(run_arg, _q_commands, _q_registry)

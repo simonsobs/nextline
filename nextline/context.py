@@ -47,7 +47,7 @@ class ContextData:
 
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
-        self.func = run.run
+        self.func = run.main
         self.registry = PubSub[Any, Any]()
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
