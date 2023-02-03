@@ -2,8 +2,8 @@ from typing import Any, Optional
 
 from transitions import EventData
 
-from .context import Context
-from .fsm import build_state_machine
+from ..context import Context
+from .factory import build_state_machine
 
 
 class Machine:

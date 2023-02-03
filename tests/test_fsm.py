@@ -6,7 +6,7 @@ from rich import print
 from transitions import Machine, MachineError
 from transitions.extensions.markup import MarkupMachine
 
-from nextline.fsm import build_state_machine
+from nextline.fsm.factory import build_state_machine
 
 
 def test_model_default():
