@@ -118,15 +118,12 @@ async def test_results(context: Mock) -> None:
     context.reset_mock()
 
     exc = MockException()
-    context.exception = exc
+    context.exception.return_value = exc
     assert exc == obj.exception()
 
-    with pytest.raises(MockException):
-        obj.result()
-
-    context.exception = None
+    context.exception.return_value = None
     result = object()
-    context.result = result
+    context.result.return_value = result
     assert result == obj.result()
 
 
@@ -149,5 +146,4 @@ async def test_results_raised(context: Mock) -> None:
 @pytest.fixture
 def context() -> Mock:
     y = Mock(spec=Context)
-    y.exception = None
     return y

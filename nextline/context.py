@@ -157,11 +157,12 @@ class Context:
 
         await self.registrar.run_end(result=ret, exception=fmt_exc)
 
-    @property
     def result(self) -> Any:
+        if exc := self.data.exception:
+            # TODO: add a test for the exception
+            raise exc
         return self.data.result
 
-    @property
     def exception(self) -> Optional[BaseException]:
         return self.data.exception
 
