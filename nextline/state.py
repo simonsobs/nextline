@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from tblib import pickling_support  # type: ignore
 
 if TYPE_CHECKING:
     from .context import Context
-
-pickling_support.install()
 
 
 class Machine:

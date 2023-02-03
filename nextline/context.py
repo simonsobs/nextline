@@ -8,6 +8,7 @@ from dataclasses import InitVar, dataclass, field
 from functools import partial
 from typing import Any, Callable, Coroutine, Optional
 
+from tblib import pickling_support
 from typing_extensions import ParamSpec
 
 from .count import RunNoCounter
@@ -16,6 +17,8 @@ from .process.run import QueueCommands, QueueRegistry, RunArg
 from .registrar import Registrar
 from .types import RunNo
 from .utils import MultiprocessingLogging, PubSub, RunInProcess, run_in_process
+
+pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
 
