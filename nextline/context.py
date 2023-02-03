@@ -4,9 +4,9 @@ import json
 import multiprocessing as mp
 import traceback
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Optional
 
 from tblib import pickling_support
 from typing_extensions import ParamSpec
@@ -45,21 +45,7 @@ class ContextData:
     exception: Optional[BaseException] = None
 
 
-@dataclass
 class Context:
-    func: Callable = field(init=False)
-    future: Optional[RunInProcess] = None
-    registry: PubSub[Any, Any] = field(init=False)
-    q_commands: QueueCommands = field(init=False)
-    registrar: Registrar = field(init=False)
-    run_no_count: Callable[[], RunNo] = field(init=False)
-    mp_logging: MultiprocessingLogging = field(init=False)
-    runner: Callable[
-        ...,
-        Coroutine[Any, Any, RunInProcess],
-    ] = field(init=False)
-    data: ContextData = field(init=False)
-
     def __init__(self, run_no_start_from: int, statement: str):
         self.func = run.run
         self.registry = PubSub[Any, Any]()
@@ -81,6 +67,7 @@ class Context:
         self.runner = partial(run_in_process, executor_factory)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
         self.run_no_count = RunNoCounter(run_no_start_from)
+        self.future: Optional[RunInProcess] = None
         self.data = ContextData(
             statement=statement,
             filename=SCRIPT_FILE_NAME,
