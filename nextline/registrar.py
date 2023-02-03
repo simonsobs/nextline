@@ -15,7 +15,6 @@ from .utils import PubSub, to_thread
 
 if TYPE_CHECKING:
     from .process.run import QueueRegistry
-    from .state import State
 
 SCRIPT_FILE_NAME = "<string>"
 
