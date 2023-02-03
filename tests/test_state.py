@@ -7,24 +7,24 @@ from nextline.state import Machine
 
 
 def test_repr(context: Context) -> None:
-    model = Machine(context=context)
-    assert repr(model)
+    obj = Machine(context=context)
+    assert repr(obj)
 
 
 async def test_callbacks_transitions(context: Mock) -> None:
-    model = Machine(context=context)
+    obj = Machine(context=context)
 
-    async with model:
+    async with obj:
 
         # initialized -- reset() --> initialized
 
-        assert model.is_initialized()  # type: ignore
+        assert obj.is_initialized()  # type: ignore
         expected_calls = [call.initialize(), call.state_change('initialized')]
         assert expected_calls == context.method_calls
         context.reset_mock()
 
-        await model.reset(10, foo='bar')  # type: ignore
-        assert model.is_initialized()  # type: ignore
+        await obj.reset(10, foo='bar')  # type: ignore
+        assert obj.is_initialized()  # type: ignore
         expected_calls = [
             call.reset(10, foo='bar'),
             call.initialize(),
@@ -35,20 +35,20 @@ async def test_callbacks_transitions(context: Mock) -> None:
 
         # initialized -- run() --> running -- finish() --> finished -- reset() --> initialized
 
-        await model.run()  # type: ignore
-        assert model.is_running()  # type: ignore
+        await obj.run()  # type: ignore
+        assert obj.is_running()  # type: ignore
         expected_calls = [call.run(), call.state_change('running')]
         assert expected_calls == context.method_calls
         context.reset_mock()
 
-        await model.finish()  # type: ignore
-        assert model.is_finished()  # type: ignore
+        await obj.finish()  # type: ignore
+        assert obj.is_finished()  # type: ignore
         expected_calls = [call.finish(), call.state_change('finished')]
         assert expected_calls == context.method_calls
         context.reset_mock()
 
-        await model.reset(10, foo='bar')  # type: ignore
-        assert model.is_initialized()  # type: ignore
+        await obj.reset(10, foo='bar')  # type: ignore
+        assert obj.is_initialized()  # type: ignore
         expected_calls = [
             call.reset(10, foo='bar'),
             call.initialize(),
@@ -57,52 +57,52 @@ async def test_callbacks_transitions(context: Mock) -> None:
         assert expected_calls == context.method_calls
         context.reset_mock()
 
-    assert model.is_closed()  # type: ignore
+    assert obj.is_closed()  # type: ignore
     expected_calls = [call.close(), call.state_change('closed')]
     assert expected_calls == context.method_calls
 
 
 async def test_signals(context: Mock) -> None:
-    model = Machine(context=context)
+    obj = Machine(context=context)
 
-    await model.to_running()  # type: ignore
-    assert model.is_running()  # type: ignore
+    await obj.to_running()  # type: ignore
+    assert obj.is_running()  # type: ignore
 
     context.reset_mock()
 
-    model.interrupt()
+    obj.interrupt()
     expected_calls = [call.interrupt()]
     assert expected_calls == context.method_calls
     context.reset_mock()
 
-    model.terminate()
+    obj.terminate()
     expected_calls = [call.terminate()]
     assert expected_calls == context.method_calls
     context.reset_mock()
 
-    model.kill()
+    obj.kill()
     expected_calls = [call.kill()]
     assert expected_calls == context.method_calls
     context.reset_mock()
 
 
 async def test_signals_raised(context: Mock) -> None:
-    model = Machine(context=context)
+    obj = Machine(context=context)
 
-    for state in model._machine.states:
+    for state in obj._machine.states:
         if state == 'running':
             continue
-        model._machine.set_state(state)
-        assert model.state == state  # type: ignore
+        obj._machine.set_state(state)
+        assert obj.state == state  # type: ignore
 
         with pytest.raises(AssertionError):
-            model.interrupt()
+            obj.interrupt()
 
         with pytest.raises(AssertionError):
-            model.terminate()
+            obj.terminate()
 
         with pytest.raises(AssertionError):
-            model.kill()
+            obj.kill()
 
 
 class MockException(BaseException):
@@ -110,40 +110,40 @@ class MockException(BaseException):
 
 
 async def test_results(context: Mock) -> None:
-    model = Machine(context=context)
+    obj = Machine(context=context)
 
-    await model.to_finished()  # type: ignore
-    assert model.is_finished()  # type: ignore
+    await obj.to_finished()  # type: ignore
+    assert obj.is_finished()  # type: ignore
 
     context.reset_mock()
 
     exc = MockException()
     context.exception = exc
-    assert exc == model.exception()
+    assert exc == obj.exception()
 
     with pytest.raises(MockException):
-        model.result()
+        obj.result()
 
     context.exception = None
     result = object()
     context.result = result
-    assert result == model.result()
+    assert result == obj.result()
 
 
 async def test_results_raised(context: Mock) -> None:
-    model = Machine(context=context)
+    obj = Machine(context=context)
 
-    for state in model._machine.states:
+    for state in obj._machine.states:
         if state == 'finished':
             continue
-        model._machine.set_state(state)
-        assert model.state == state  # type: ignore
+        obj._machine.set_state(state)
+        assert obj.state == state  # type: ignore
 
         with pytest.raises(AssertionError):
-            model.exception()
+            obj.exception()
 
         with pytest.raises(AssertionError):
-            model.result()
+            obj.result()
 
 
 @pytest.fixture
