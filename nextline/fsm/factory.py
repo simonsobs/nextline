@@ -1,4 +1,4 @@
-'''A function that build the finite state machine of the nextline states.
+'''A function that builds a finite state machine of the nextline states.
 
 The package "transitions" is used: https://github.com/pytransitions/transitions
 
