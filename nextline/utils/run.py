@@ -21,6 +21,28 @@ async def run_in_process(
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
 ) -> RunInProcess[_T, _P]:
+    '''Call a function with arguments in a separate process and return an awaitable.
+
+    Example:
+
+    >>> async def simple_example():
+    ...
+    ...     # Run pow(2, 3), which returns 8, in a separate process.
+    ...     starting = run_in_process(None, pow, 2, 3)
+    ...
+    ...     # Wait for the process to start.
+    ...     running = await starting
+    ...
+    ...     # Wait for the process to finish.
+    ...     result = await running
+    ...
+    ...     return result
+
+    >>> asyncio.run(simple_example())
+    8
+
+    '''
+
     if executor_factory is None:
         executor_factory = partial(ProcessPoolExecutor, max_workers=1)
     return await RunInProcess.create(executor_factory, func, *func_args, **func_kwargs)
