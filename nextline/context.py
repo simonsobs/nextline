@@ -4,9 +4,9 @@ import json
 import multiprocessing as mp
 import traceback
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Optional
 
 from tblib import pickling_support
 from typing_extensions import ParamSpec
@@ -37,26 +37,17 @@ def _initializer(
 
 
 @dataclass
-class Context:
-    run_no_start_from: InitVar[int]
+class ContextData:
     statement: str
-    filename: str = SCRIPT_FILE_NAME
-    func: Callable = run.run
-    future: Optional[RunInProcess] = None
+    filename: str
+    run_no: RunNo
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
-    registry: PubSub[Any, Any] = field(init=False)
-    q_commands: QueueCommands = field(init=False)
-    registrar: Registrar = field(init=False)
-    run_no: RunNo = field(init=False)
-    run_no_count: Callable[[], RunNo] = field(init=False)
-    mp_logging: MultiprocessingLogging = field(init=False)
-    runner: Callable[
-        ...,
-        Coroutine[Any, Any, RunInProcess],
-    ] = field(init=False)
 
-    def __post_init__(self, run_no_start_from: int):
+
+class Context:
+    def __init__(self, run_no_start_from: int, statement: str):
+        self.func = run.run
         self.registry = PubSub[Any, Any]()
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
@@ -75,14 +66,19 @@ class Context:
         )
         self.runner = partial(run_in_process, executor_factory)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
-        self.run_no = RunNo(run_no_start_from - 1)
         self.run_no_count = RunNoCounter(run_no_start_from)
+        self.future: Optional[RunInProcess] = None
+        self.data = ContextData(
+            statement=statement,
+            filename=SCRIPT_FILE_NAME,
+            run_no=RunNo(run_no_start_from - 1),
+        )
 
     async def start(self):
         await self.mp_logging.open()
         await self.registrar.open()
         await self.registrar.script_change(
-            script=self.statement, filename=self.filename
+            script=self.data.statement, filename=self.data.filename
         )
 
     async def state_change(self, state_name: str):
@@ -93,11 +89,11 @@ class Context:
         await self.mp_logging.close()
 
     async def initialize(self):
-        self.run_no = self.run_no_count()
-        self.result = None
-        self.exception = None
-        await self.registrar.state_initialized(self.run_no)
-        await self.registrar.run_initialized(self.run_no)
+        self.data.run_no = self.run_no_count()
+        self.data.result = None
+        self.data.exception = None
+        await self.registrar.state_initialized(self.data.run_no)
+        await self.registrar.run_initialized(self.data.run_no)
 
     async def reset(
         self,
@@ -105,8 +101,10 @@ class Context:
         run_no_start_from: Optional[int] = None,
     ):
         if statement:
-            self.statement = statement
-            await self.registrar.script_change(script=statement, filename=self.filename)
+            self.data.statement = statement
+            await self.registrar.script_change(
+                script=statement, filename=self.data.filename
+            )
         if run_no_start_from is not None:
             self.run_no_count = RunNoCounter(run_no_start_from)
 
@@ -114,9 +112,9 @@ class Context:
         self.future = await self.runner(
             self.func,
             RunArg(
-                run_no=self.run_no,
-                statement=self.statement,
-                filename=self.filename,
+                run_no=self.data.run_no,
+                statement=self.data.statement,
+                filename=self.data.filename,
             ),
         )
         await self.registrar.run_start()
@@ -137,27 +135,36 @@ class Context:
     async def finish(self) -> None:
         assert self.future
         try:
-            self.result, self.exception = await self.future
+            self.data.result, self.data.exception = await self.future
         except TypeError:
             # The process was terminated.
             pass
         finally:
             self.future = None
 
-        if self.exception:
+        if self.data.exception:
             ret = None
             fmt_exc = "".join(
                 traceback.format_exception(
-                    type(self.exception),
-                    self.exception,
-                    self.exception.__traceback__,
+                    type(self.data.exception),
+                    self.data.exception,
+                    self.data.exception.__traceback__,
                 )
             )
         else:
-            ret = json.dumps(self.result)
+            ret = json.dumps(self.data.result)
             fmt_exc = None
 
         await self.registrar.run_end(result=ret, exception=fmt_exc)
+
+    def result(self) -> Any:
+        if exc := self.data.exception:
+            # TODO: add a test for the exception
+            raise exc
+        return self.data.result
+
+    def exception(self) -> Optional[BaseException]:
+        return self.data.exception
 
     async def close(self):
         pass

@@ -47,13 +47,11 @@ class Machine:
 
     def exception(self) -> Optional[BaseException]:
         assert self.is_finished()  # type: ignore
-        return self._context.exception
+        return self._context.exception()
 
     def result(self) -> Any:
         assert self.is_finished()  # type: ignore
-        if exc := self._context.exception:
-            raise exc
-        return self._context.result
+        return self._context.result()
 
     async def on_enter_closed(self, _: EventData) -> None:
         await self._context.close()
