@@ -3,16 +3,16 @@ from unittest.mock import Mock, call
 import pytest
 
 from nextline.context import Context
-from nextline.model import Model
+from nextline.model import Machine
 
 
 def test_repr(context: Context) -> None:
-    model = Model(context=context)
+    model = Machine(context=context)
     assert repr(model)
 
 
 async def test_callbacks_transitions(context: Mock) -> None:
-    model = Model(context=context)
+    model = Machine(context=context)
 
     async with model:
 
@@ -63,7 +63,7 @@ async def test_callbacks_transitions(context: Mock) -> None:
 
 
 async def test_signals(context: Mock) -> None:
-    model = Model(context=context)
+    model = Machine(context=context)
 
     await model.to_running()  # type: ignore
     assert model.is_running()  # type: ignore
@@ -87,7 +87,7 @@ async def test_signals(context: Mock) -> None:
 
 
 async def test_signals_raised(context: Mock) -> None:
-    model = Model(context=context)
+    model = Machine(context=context)
 
     for state in model._machine.states:
         if state == 'running':
@@ -110,7 +110,7 @@ class MockException(BaseException):
 
 
 async def test_results(context: Mock) -> None:
-    model = Model(context=context)
+    model = Machine(context=context)
 
     await model.to_finished()  # type: ignore
     assert model.is_finished()  # type: ignore
@@ -131,7 +131,7 @@ async def test_results(context: Mock) -> None:
 
 
 async def test_results_raised(context: Mock) -> None:
-    model = Model(context=context)
+    model = Machine(context=context)
 
     for state in model._machine.states:
         if state == 'finished':

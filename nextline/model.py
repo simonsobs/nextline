@@ -6,7 +6,7 @@ from .context import Context
 from .fsm import build_state_machine
 
 
-class Model:
+class Machine:
     def __init__(self, context: Context):
         self._context = context
 

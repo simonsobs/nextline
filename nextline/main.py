@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, AsyncIterator, Optional, Tuple
 
 from .context import Context
-from .model import Model
+from .model import Machine
 from .types import PromptInfo, PromptNo, RunInfo, StdoutInfo, TraceInfo, TraceNo
 from .utils import merge_aiters
 
@@ -60,7 +60,7 @@ class Nextline:
         self._started = True
         await self._context.start()
         # self._machine = Machine(self._context)
-        self._machine = Model(self._context)
+        self._machine = Machine(self._context)
         await self._machine.initialize()  # type: ignore
 
     def __repr__(self):
