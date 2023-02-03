@@ -141,6 +141,8 @@ class Context:
         except TypeError:
             # The process was terminated.
             pass
+        finally:
+            self.future = None
 
         if self.exception:
             ret = None
