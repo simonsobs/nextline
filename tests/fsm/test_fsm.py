@@ -2,7 +2,6 @@ from copy import deepcopy
 from unittest.mock import AsyncMock
 
 import pytest
-from rich import print
 from transitions import Machine, MachineError
 from transitions.extensions.markup import MarkupMachine
 
@@ -12,7 +11,6 @@ from nextline.fsm.factory import build_state_machine
 def test_model_default():
     machine = build_state_machine()
     assert not machine.models
-    print(machine.models)
 
 
 def test_model_self_literal():
