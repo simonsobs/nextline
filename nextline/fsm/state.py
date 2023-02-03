@@ -7,6 +7,8 @@ from .factory import build_state_machine
 
 
 class Machine:
+    '''The finite state machine of the nextline states.'''
+
     def __init__(self, context: Context):
         self._context = context
 
@@ -16,7 +18,7 @@ class Machine:
         assert self.state  # type: ignore
 
     def __repr__(self):
-        # e.g., "<Model 'running'>"
+        # e.g., "<Machine 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
     async def after_state_change(self, _: EventData) -> None:
