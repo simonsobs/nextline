@@ -30,6 +30,12 @@ class Machine:
     async def on_enter_running(self, _: EventData) -> None:
         await self._context.run()
 
+    async def on_exit_running(self, _: EventData) -> None:
+        await self._context.finish()
+        # NOTE: Call context.finish() here rather than in on_enter_finished()
+        # because the state should be "running" until context.finish() returns.
+        # The on_enter_finished() callback is called after the state is changed.
+
     def interrupt(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.interrupt()
@@ -41,9 +47,6 @@ class Machine:
     def kill(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.kill()
-
-    async def on_enter_finished(self, _: EventData) -> None:
-        await self._context.finish()
 
     def exception(self) -> Optional[BaseException]:
         assert self.is_finished()  # type: ignore
