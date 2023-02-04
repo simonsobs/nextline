@@ -20,7 +20,7 @@ def test_init_sync():
 async def test_multiprocessing_logging(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
         async with MultiprocessingLogging() as mp_logging:
-            with ProcessPoolExecutor(initializer=mp_logging.init) as executor:
+            with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
                 fut = executor.submit(fn)
                 assert "foo" == fut.result()
 

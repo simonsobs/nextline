@@ -9,7 +9,7 @@ Example:
 >>> async def main():
 ...     from concurrent.futures import ProcessPoolExecutor
 ...     async with MultiprocessingLogging() as mp_logging:
-...         with ProcessPoolExecutor(initializer=mp_logging.init) as executor:
+...         with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
 ...             future = executor.submit(example_func)
 ...             future.result()
 
@@ -46,7 +46,7 @@ class MultiprocessingLogging:
         self._init = _ConfigureLogger(self._q)
 
     @property
-    def init(self) -> Callable[[], None]:
+    def initializer(self) -> Callable[[], None]:
         '''A (picklable) setup function to be called in other processes'''
         return self._init
 

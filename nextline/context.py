@@ -59,7 +59,7 @@ class Context:
             mp_context=mp_context,
             initializer=partial(
                 _initializer,
-                self.mp_logging.init,
+                self.mp_logging.initializer,
                 run.set_queues,
             ),
             initargs=(self.q_commands, q_registry),
