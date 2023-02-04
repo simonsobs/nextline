@@ -59,7 +59,6 @@ class Nextline:
             return
         self._started = True
         await self._context.start()
-        # self._machine = Machine(self._context)
         self._machine = Machine(self._context)
         await self._machine.initialize()  # type: ignore
 
