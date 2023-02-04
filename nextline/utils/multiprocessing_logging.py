@@ -1,13 +1,26 @@
-"""Handle logging in a multiprocessing environment.
+'''Collect logging from other processes in the main process.
 
+The original implementation was based on code in logging cookbook:
 https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
-https://github.com/alphatwirl/mantichora/blob/v0.12.0/mantichora/hubmp.py
 
-"""
+
+Example:
+
+>>> async def main():
+...     from concurrent.futures import ProcessPoolExecutor
+...     async with MultiprocessingLogging() as mp_logging:
+...         with ProcessPoolExecutor(initializer=mp_logging.init) as executor:
+...             future = executor.submit(example_func)
+...             future.result()
+
+>>> asyncio.run(main())
+
+'''
 
 from __future__ import annotations
 
 import asyncio
+import logging
 import multiprocessing as mp
 from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler
@@ -18,6 +31,12 @@ from typing import Callable, Optional
 from .func import to_thread
 
 __all__ = ["MultiprocessingLogging"]
+
+
+def example_func():
+    '''Used in doctest, defined here to be picklable.'''
+    logger = logging.getLogger(__name__)
+    logger.warning('foo')
 
 
 class MultiprocessingLogging:
