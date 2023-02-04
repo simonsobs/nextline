@@ -1,22 +1,3 @@
-'''Collect logging from other processes in the main process.
-
-The original implementation was based on code in logging cookbook:
-https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
-
-
-Example:
-
->>> async def main():
-...     from concurrent.futures import ProcessPoolExecutor
-...     async with MultiprocessingLogging() as mp_logging:
-...         with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
-...             future = executor.submit(example_func)
-...             future.result()
-
->>> asyncio.run(main())
-
-'''
-
 from __future__ import annotations
 
 import asyncio
@@ -40,6 +21,25 @@ def example_func():
 
 
 class MultiprocessingLogging:
+    '''Collect logging from other processes in the main process.
+
+    Example:
+
+    >>> async def main():
+    ...     from concurrent.futures import ProcessPoolExecutor
+    ...     async with MultiprocessingLogging() as mp_logging:
+    ...         with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
+    ...             future = executor.submit(example_func)
+    ...             future.result()
+
+    >>> asyncio.run(main())
+
+    Reference:
+    "Logging to a single file from multiple processes" (Logging Cookbook)
+    https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
+
+    '''
+
     def __init__(self, context: Optional[BaseContext] = None) -> None:
         context = context or mp.get_context()
         self._q: Queue[LogRecord | None] = context.Queue()
@@ -67,6 +67,11 @@ class MultiprocessingLogging:
 
 
 class _Initializer:
+    '''A (picklable) setup function to be called in other processes.
+
+    NOTE: A closure is not picklable, so we use a class with __call__ instead.
+    '''
+
     def __init__(self, queue: Queue[LogRecord]):
         self._queue = queue
 
@@ -78,6 +83,7 @@ class _Initializer:
 
 
 async def _listen(queue: Queue[LogRecord | None]) -> None:
+    '''Receive loggings from other processes and handle them in the main process.'''
     while (record := await to_thread(queue.get)) is not None:
         logger = getLogger(record.name)
         if logger.getEffectiveLevel() <= record.levelno:
