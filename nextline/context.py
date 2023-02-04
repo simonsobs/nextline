@@ -63,7 +63,7 @@ class Resource:
             ),
             initargs=(self.q_commands, q_registry),
         )
-        self.runner = partial(run_in_process, executor_factory)  # type: ignore
+        self.runner = partial(run_in_process, executor_factory, run.main)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
 
     async def open(self):
@@ -78,7 +78,6 @@ class Resource:
 
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
-        self.func = run.main
         self._resource = Resource()
         self.registry = self._resource.registry
         self.q_commands = self._resource.q_commands
@@ -126,7 +125,6 @@ class Context:
 
     async def run(self) -> RunInProcess:
         self.future = await self.runner(
-            self.func,
             RunArg(
                 run_no=self.data.run_no,
                 statement=self.data.statement,
