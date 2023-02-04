@@ -45,9 +45,8 @@ class RunData:
     exception: Optional[BaseException] = None
 
 
-class Context:
-    def __init__(self, run_no_start_from: int, statement: str):
-        self.func = run.main
+class Resource:
+    def __init__(self) -> None:
         self.registry = PubSub[Any, Any]()
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
@@ -66,6 +65,25 @@ class Context:
         )
         self.runner = partial(run_in_process, executor_factory)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
+
+    async def open(self):
+        await self.mp_logging.open()
+        await self.registrar.open()
+
+    async def close(self):
+        await self.registrar.close()
+        await self.mp_logging.close()
+        await self.registry.close()
+
+
+class Context:
+    def __init__(self, run_no_start_from: int, statement: str):
+        self.func = run.main
+        self._resource = Resource()
+        self.registry = self._resource.registry
+        self.q_commands = self._resource.q_commands
+        self.runner = self._resource.runner
+        self.registrar = self._resource.registrar
         self.run_no_count = RunNoCounter(run_no_start_from)
         self.future: Optional[RunInProcess] = None
         self.data = RunData(
@@ -75,8 +93,7 @@ class Context:
         )
 
     async def start(self):
-        await self.mp_logging.open()
-        await self.registrar.open()
+        await self._resource.open()
         await self.registrar.script_change(
             script=self.data.statement, filename=self.data.filename
         )
@@ -85,9 +102,7 @@ class Context:
         await self.registrar.state_change(state_name)
 
     async def shutdown(self):
-        await self.registrar.close()
-        await self.mp_logging.close()
-        await self.registry.close()
+        await self._resource.close()
 
     async def initialize(self):
         self.data.run_no = self.run_no_count()
