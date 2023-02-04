@@ -37,7 +37,7 @@ def _initializer(
 
 
 @dataclass
-class ContextData:
+class RunData:
     statement: str
     filename: str
     run_no: RunNo
@@ -68,7 +68,7 @@ class Context:
         self.registrar = Registrar(self.registry, q_registry)
         self.run_no_count = RunNoCounter(run_no_start_from)
         self.future: Optional[RunInProcess] = None
-        self.data = ContextData(
+        self.data = RunData(
             statement=statement,
             filename=SCRIPT_FILE_NAME,
             run_no=RunNo(run_no_start_from - 1),
