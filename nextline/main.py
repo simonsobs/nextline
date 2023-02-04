@@ -74,7 +74,6 @@ class Nextline:
         self._closed = True
         await self._machine.close()  # type: ignore
         await self._context.shutdown()
-        await self._registry.close()
 
     async def __aenter__(self):
         await self.start()

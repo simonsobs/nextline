@@ -87,6 +87,7 @@ class Context:
     async def shutdown(self):
         await self.registrar.close()
         await self.mp_logging.close()
+        await self.registry.close()
 
     async def initialize(self):
         self.data.run_no = self.run_no_count()
