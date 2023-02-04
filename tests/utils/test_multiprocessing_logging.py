@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 import asyncio
 import logging
@@ -20,9 +20,7 @@ def test_init_sync():
 async def test_multiprocessing_logging(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
         async with MultiprocessingLogging() as mp_logging:
-            with ProcessPoolExecutor(
-                1, initializer=mp_logging.init
-            ) as executor:
+            with ProcessPoolExecutor(initializer=mp_logging.init) as executor:
                 fut = executor.submit(fn)
                 assert "foo" == fut.result()
 
@@ -34,5 +32,5 @@ async def test_multiprocessing_logging(caplog: LogCaptureFixture):
 
 def fn():
     logger = logging.getLogger(__name__)
-    logger.debug("bar")
-    return "foo"
+    logger.debug('bar')
+    return 'foo'

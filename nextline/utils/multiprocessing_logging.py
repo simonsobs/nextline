@@ -25,12 +25,12 @@ import multiprocessing as mp
 from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler
 from multiprocessing.context import BaseContext
-from queue import Queue  # noqa F401
+from queue import Queue
 from typing import Callable, Optional
 
 from .func import to_thread
 
-__all__ = ["MultiprocessingLogging"]
+__all__ = ['MultiprocessingLogging']
 
 
 def example_func():
@@ -44,11 +44,10 @@ class MultiprocessingLogging:
         context = context or mp.get_context()
         self._q: Queue[LogRecord | None] = context.Queue()
         self._init = _ConfigureLogger(self._q)
-        # self._task = asyncio.create_task(_listen(self._q))
 
     @property
     def init(self) -> Callable[[], None]:
-        """A (picklable) setup function to be called in other processes"""
+        '''A (picklable) setup function to be called in other processes'''
         return self._init
 
     async def open(self):
