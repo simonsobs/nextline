@@ -15,6 +15,11 @@ def test_init_sync():
     assert MultiprocessingLogging()
 
 
+async def test_close_without_open():
+    mp_logging = MultiprocessingLogging()
+    await mp_logging.close()
+
+
 async def test_multiprocessing_logging(caplog: LogCaptureFixture):
     with caplog.at_level(logging.DEBUG):
         async with MultiprocessingLogging() as mp_logging:

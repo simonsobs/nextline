@@ -44,6 +44,7 @@ class MultiprocessingLogging:
         context = context or mp.get_context()
         self._q: Queue[LogRecord | None] = context.Queue()
         self._initializer = _Initializer(self._q)
+        self._task: asyncio.Task | None = None
 
     @property
     def initializer(self) -> Callable[[], None]:
@@ -54,8 +55,10 @@ class MultiprocessingLogging:
         self._task = asyncio.create_task(_listen(self._q))
 
     async def close(self) -> None:
-        await to_thread(self._q.put, None)
-        await self._task
+        if self._task:
+            await to_thread(self._q.put, None)
+            await self._task
+            self._task = None
 
     async def __aenter__(self):
         await self.open()
