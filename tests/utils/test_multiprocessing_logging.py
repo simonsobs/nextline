@@ -30,7 +30,7 @@ async def test_multiprocessing_logging(
 
     with caplog.at_level(logging.DEBUG):
 
-        async with MultiprocessingLogging(context=mp_context) as mp_logging:
+        async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
 
             with ProcessPoolExecutor(
                 mp_context=mp_context, initializer=mp_logging.initializer

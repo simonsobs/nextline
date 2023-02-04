@@ -40,9 +40,9 @@ class MultiprocessingLogging:
 
     '''
 
-    def __init__(self, context: Optional[BaseContext] = None) -> None:
-        context = context or mp.get_context()
-        self._q: Queue[LogRecord | None] = context.Queue()
+    def __init__(self, mp_context: Optional[BaseContext] = None) -> None:
+        mp_context = mp_context or mp.get_context()
+        self._q: Queue[LogRecord | None] = mp_context.Queue()
         self._initializer = _Initializer(self._q)
         self._task: asyncio.Task | None = None
 

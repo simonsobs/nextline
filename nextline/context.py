@@ -52,7 +52,7 @@ class Context:
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
-        self.mp_logging = MultiprocessingLogging(context=mp_context)
+        self.mp_logging = MultiprocessingLogging(mp_context=mp_context)
         executor_factory = partial(
             ProcessPoolExecutor,
             max_workers=1,
