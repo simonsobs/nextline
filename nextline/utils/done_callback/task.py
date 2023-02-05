@@ -4,7 +4,7 @@ import time
 from asyncio import Task, current_task
 from typing import Any, Callable, List, Optional, Set
 
-from ..func import to_thread
+from nextline.utils.func import to_thread
 
 
 class TaskDoneCallback:

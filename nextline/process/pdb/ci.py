@@ -5,8 +5,8 @@ from queue import Queue
 from types import FrameType
 from typing import Any, Callable, Tuple
 
-from ...types import PromptNo, TraceNo
-from ..callback import Callback
+from nextline.process.callback import Callback
+from nextline.types import PromptNo, TraceNo
 
 
 def pdb_command_interface(

@@ -8,7 +8,7 @@ from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
 from typing_extensions import TypeAlias
 
-from ..utils import current_task_or_thread, peek_stdout
+from nextline.utils import current_task_or_thread, peek_stdout
 
 _T = TypeVar("_T")
 _Key: TypeAlias = "Task | Thread"

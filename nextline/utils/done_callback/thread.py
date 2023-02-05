@@ -4,7 +4,7 @@ import time
 from threading import Thread, current_thread
 from typing import Any, Callable, Optional, Set
 
-from ..thread_exception import ExcThread
+from nextline.utils.thread_exception import ExcThread
 
 
 class ThreadDoneCallback:

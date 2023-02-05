@@ -9,11 +9,13 @@ from types import FrameType
 from typing import TYPE_CHECKING, Callable, Optional
 from weakref import WeakKeyDictionary
 
-from ..utils import current_task_or_thread
+from nextline.utils import current_task_or_thread
+
 from .pdb.proxy import PdbInterfaceTraceFuncFactory
 
 if TYPE_CHECKING:
-    from ..types import TraceFunc
+    from nextline.types import TraceFunc
+
     from .run import Context
 
 

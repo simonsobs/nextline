@@ -7,15 +7,16 @@ from queue import Queue
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
 
-from ...count import PromptNoCounter, TraceNoCounter
-from ...types import PromptNo, TraceNo
+from nextline.count import PromptNoCounter, TraceNoCounter
+from nextline.types import PromptNo, TraceNo
+
 from .ci import pdb_command_interface
 from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 if TYPE_CHECKING:
-    from ...types import TraceFunc
-    from ..run import Context
+    from nextline.process.run import Context
+    from nextline.types import TraceFunc
 
 
 def PdbInterfaceTraceFuncFactory(context: Context) -> Callable[[], TraceFunc]:

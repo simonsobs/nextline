@@ -4,7 +4,8 @@ from asyncio import Task
 from threading import Thread
 from typing import Any, Callable, Optional
 
-from ..func import current_task_or_thread, to_thread
+from nextline.utils.func import current_task_or_thread, to_thread
+
 from .task import TaskDoneCallback
 from .thread import ThreadDoneCallback
 

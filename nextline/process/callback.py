@@ -21,8 +21,13 @@ from weakref import WeakKeyDictionary
 
 from typing_extensions import TypeAlias
 
-from ..types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
-from ..utils import ThreadTaskDoneCallback, ThreadTaskIdComposer, current_task_or_thread
+from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
+from nextline.utils import (
+    ThreadTaskDoneCallback,
+    ThreadTaskIdComposer,
+    current_task_or_thread,
+)
+
 from .io import peek_stdout_by_task_and_thread
 
 if TYPE_CHECKING:

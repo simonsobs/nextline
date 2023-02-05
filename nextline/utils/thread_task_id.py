@@ -6,8 +6,8 @@ from threading import Thread, current_thread
 from typing import Callable, DefaultDict, MutableMapping, Tuple
 from weakref import WeakKeyDictionary
 
-from ..count import TaskNoCounter, ThreadNoCounter
-from ..types import TaskNo, ThreadNo, ThreadTaskId
+from nextline.count import TaskNoCounter, ThreadNoCounter
+from nextline.types import TaskNo, ThreadNo, ThreadTaskId
 
 
 class ThreadTaskIdComposer:

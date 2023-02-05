@@ -16,7 +16,8 @@ from typing import (  # noqa F401
 
 from typing_extensions import TypeAlias
 
-from ..types import PromptNo, RunNo, TraceNo
+from nextline.types import PromptNo, RunNo, TraceNo
+
 from . import script
 from .call import call_with_trace
 from .callback import Callback, RegistrarProxy

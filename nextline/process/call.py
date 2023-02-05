@@ -5,7 +5,7 @@ import threading
 from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar
 
 if TYPE_CHECKING:
-    from ..types import TraceFunc
+    from nextline.types import TraceFunc
 
 T = TypeVar("T")
 

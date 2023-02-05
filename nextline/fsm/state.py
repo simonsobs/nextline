@@ -2,7 +2,8 @@ from typing import Any, Optional
 
 from transitions import EventData
 
-from ..context import Context
+from nextline.context import Context
+
 from .factory import build_state_machine
 
 
