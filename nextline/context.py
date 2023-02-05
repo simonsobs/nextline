@@ -76,11 +76,11 @@ class Context:
         self._resource = Resource()
         self.registry = self._resource.registry
         self.q_commands = self._resource.q_commands
-        self.runner = self._resource.runner
-        self.registrar = self._resource.registrar
-        self.run_no_count = RunNoCounter(run_no_start_from)
-        self.future: Optional[RunInProcess] = None
-        self.data = RunData(
+        self._runner = self._resource.runner
+        self._registrar = self._resource.registrar
+        self._run_no_count = RunNoCounter(run_no_start_from)
+        self._future: Optional[RunInProcess] = None
+        self._data = RunData(
             statement=statement,
             filename=SCRIPT_FILE_NAME,
             run_no=RunNo(run_no_start_from - 1),
@@ -88,22 +88,22 @@ class Context:
 
     async def start(self):
         await self._resource.open()
-        await self.registrar.script_change(
-            script=self.data.statement, filename=self.data.filename
+        await self._registrar.script_change(
+            script=self._data.statement, filename=self._data.filename
         )
 
     async def state_change(self, state_name: str):
-        await self.registrar.state_change(state_name)
+        await self._registrar.state_change(state_name)
 
     async def shutdown(self):
         await self._resource.close()
 
     async def initialize(self):
-        self.data.run_no = self.run_no_count()
-        self.data.result = None
-        self.data.exception = None
-        await self.registrar.state_initialized(self.data.run_no)
-        await self.registrar.run_initialized(self.data.run_no)
+        self._data.run_no = self._run_no_count()
+        self._data.result = None
+        self._data.exception = None
+        await self._registrar.state_initialized(self._data.run_no)
+        await self._registrar.run_initialized(self._data.run_no)
 
     async def reset(
         self,
@@ -111,69 +111,69 @@ class Context:
         run_no_start_from: Optional[int] = None,
     ):
         if statement:
-            self.data.statement = statement
-            await self.registrar.script_change(
-                script=statement, filename=self.data.filename
+            self._data.statement = statement
+            await self._registrar.script_change(
+                script=statement, filename=self._data.filename
             )
         if run_no_start_from is not None:
-            self.run_no_count = RunNoCounter(run_no_start_from)
+            self._run_no_count = RunNoCounter(run_no_start_from)
 
     async def run(self) -> RunInProcess:
-        self.future = await self.runner(
+        self._future = await self._runner(
             RunArg(
-                run_no=self.data.run_no,
-                statement=self.data.statement,
-                filename=self.data.filename,
+                run_no=self._data.run_no,
+                statement=self._data.statement,
+                filename=self._data.filename,
             ),
         )
-        await self.registrar.run_start()
-        return self.future
+        await self._registrar.run_start()
+        return self._future
 
     def interrupt(self) -> None:
-        if self.future:
-            self.future.interrupt()
+        if self._future:
+            self._future.interrupt()
 
     def terminate(self) -> None:
-        if self.future:
-            self.future.terminate()
+        if self._future:
+            self._future.terminate()
 
     def kill(self) -> None:
-        if self.future:
-            self.future.kill()
+        if self._future:
+            self._future.kill()
 
     async def finish(self) -> None:
-        assert self.future
+        assert self._future
         try:
-            self.data.result, self.data.exception = await self.future
+            self._data.result, self._data.exception = await self._future
         except TypeError:
             # The process was terminated.
             pass
         finally:
-            self.future = None
+            self._future = None
 
-        if self.data.exception:
+        if self._data.exception:
             ret = None
             fmt_exc = "".join(
                 traceback.format_exception(
-                    type(self.data.exception),
-                    self.data.exception,
-                    self.data.exception.__traceback__,
+                    type(self._data.exception),
+                    self._data.exception,
+                    self._data.exception.__traceback__,
                 )
             )
         else:
-            ret = json.dumps(self.data.result)
+            ret = json.dumps(self._data.result)
             fmt_exc = None
 
-        await self.registrar.run_end(result=ret, exception=fmt_exc)
+        await self._registrar.run_end(result=ret, exception=fmt_exc)
 
     def result(self) -> Any:
-        if exc := self.data.exception:
+        if exc := self._data.exception:
             # TODO: add a test for the exception
             raise exc
-        return self.data.result
+        return self._data.result
 
     def exception(self) -> Optional[BaseException]:
-        return self.data.exception
+        return self._data.exception
 
     async def close(self):
         pass
