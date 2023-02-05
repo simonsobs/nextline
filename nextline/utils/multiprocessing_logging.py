@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import multiprocessing as mp
+from functools import partial
 from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler
 from multiprocessing.context import BaseContext
@@ -43,7 +44,7 @@ class MultiprocessingLogging:
     def __init__(self, mp_context: Optional[BaseContext] = None) -> None:
         mp_context = mp_context or mp.get_context()
         self._q: Queue[LogRecord | None] = mp_context.Queue()
-        self._initializer = _Initializer(self._q)
+        self._initializer = partial(_initializer, self._q)
         self._task: asyncio.Task | None = None
 
     @property
@@ -69,20 +70,12 @@ class MultiprocessingLogging:
         await self.close()
 
 
-class _Initializer:
-    '''A (picklable) setup function to be called in other processes.
-
-    NOTE: A closure is not picklable, so we use a class with __call__ instead.
-    '''
-
-    def __init__(self, queue: Queue[LogRecord]):
-        self._queue = queue
-
-    def __call__(self) -> None:
-        handler = QueueHandler(self._queue)
-        logger = getLogger()
-        logger.setLevel(DEBUG)
-        logger.addHandler(handler)
+def _initializer(queue: Queue[LogRecord]) -> None:
+    '''An initializer of ProcessPoolExecutor.'''
+    handler = QueueHandler(queue)
+    logger = getLogger()
+    logger.setLevel(DEBUG)
+    logger.addHandler(handler)
 
 
 async def _listen(queue: Queue[LogRecord | None]) -> None:
