@@ -43,10 +43,10 @@ class Resource:
         mp_context = mp.get_context("spawn")
         self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
-        self.mp_logging = MultiprocessingLogging(mp_context=mp_context)
+        self._mp_logging = MultiprocessingLogging(mp_context=mp_context)
         initializer = partial(
             _call_all,
-            self.mp_logging.initializer,
+            self._mp_logging.initializer,
             partial(process.set_queues, self.q_commands, q_registry),
         )
         executor_factory = partial(
@@ -55,19 +55,19 @@ class Resource:
             mp_context=mp_context,
             initializer=initializer,
         )
-        self.runner = partial(run_in_process, executor_factory, process.main)  # type: ignore
+        self._runner = partial(run_in_process, executor_factory, process.main)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
 
     async def run(self, run_arg: RunArg) -> RunInProcess:
-        return await self.runner(run_arg)
+        return await self._runner(run_arg)
 
     async def open(self):
-        await self.mp_logging.open()
+        await self._mp_logging.open()
         await self.registrar.open()
 
     async def close(self):
         await self.registrar.close()
-        await self.mp_logging.close()
+        await self._mp_logging.close()
         await self.registry.close()
 
 
