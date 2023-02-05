@@ -53,7 +53,14 @@ class MultiprocessingLogging:
         return self._initializer
 
     async def open(self):
-        self._task = asyncio.create_task(_listen(self._q))
+        self._task = asyncio.create_task(self._listen())
+
+    async def _listen(self) -> None:
+        '''Receive loggings from other processes and handle them in the main process.'''
+        while (record := await to_thread(self._q.get)) is not None:
+            logger = getLogger(record.name)
+            if logger.getEffectiveLevel() <= record.levelno:
+                logger.handle(record)
 
     async def close(self) -> None:
         if self._task:
@@ -76,11 +83,3 @@ def _initializer(queue: Queue[LogRecord]) -> None:
     logger = getLogger()
     logger.setLevel(DEBUG)
     logger.addHandler(handler)
-
-
-async def _listen(queue: Queue[LogRecord | None]) -> None:
-    '''Receive loggings from other processes and handle them in the main process.'''
-    while (record := await to_thread(queue.get)) is not None:
-        logger = getLogger(record.name)
-        if logger.getEffectiveLevel() <= record.levelno:
-            logger.handle(record)
