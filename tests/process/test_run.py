@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from nextline.process.run import RunArg, main, set_queues
+from nextline.process import RunArg, main, set_queues
 from nextline.types import RunNo
 
 

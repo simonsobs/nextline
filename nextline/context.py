@@ -10,9 +10,9 @@ from typing import Any, Optional
 
 from tblib import pickling_support
 
+from . import process
 from .count import RunNoCounter
-from .process import run
-from .process.run import QueueCommands, QueueRegistry, RunArg
+from .process import QueueCommands, QueueRegistry, RunArg
 from .registrar import Registrar
 from .types import RunNo
 from .utils import MultiprocessingLogging, PubSub, RunInProcess, run_in_process
@@ -50,7 +50,7 @@ class Resource:
         initializer = partial(
             _call_all,
             self.mp_logging.initializer,
-            partial(run.set_queues, self.q_commands, q_registry),
+            partial(process.set_queues, self.q_commands, q_registry),
         )
         executor_factory = partial(
             ProcessPoolExecutor,
@@ -58,7 +58,7 @@ class Resource:
             mp_context=mp_context,
             initializer=initializer,
         )
-        self.runner = partial(run_in_process, executor_factory, run.main)  # type: ignore
+        self.runner = partial(run_in_process, executor_factory, process.main)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
 
     async def open(self):

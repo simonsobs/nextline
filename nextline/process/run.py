@@ -14,24 +14,6 @@ from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg
 _T = TypeVar("_T")
 
 
-_q_commands: QueueCommands | None = None
-_q_registry: QueueRegistry | None = None
-
-
-def set_queues(q_commands: QueueCommands, q_registry: QueueRegistry) -> None:
-    '''Initializer of ProcessPoolExecutor that receives the queues.'''
-    global _q_commands, _q_registry
-    _q_commands = q_commands
-    _q_registry = q_registry
-
-
-def main(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
-    '''The entry point in the process in which the script is executed.'''
-    assert _q_registry
-    assert _q_commands
-    return run_(run_arg, _q_commands, _q_registry)
-
-
 class Context(TypedDict):
     callback: Callback
     pdb_ci_map: PdbCiMap
