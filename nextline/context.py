@@ -58,6 +58,9 @@ class Resource:
         self.runner = partial(run_in_process, executor_factory, process.main)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
 
+    async def run(self, run_arg: RunArg) -> RunInProcess:
+        return await self.runner(run_arg)
+
     async def open(self):
         await self.mp_logging.open()
         await self.registrar.open()
@@ -73,7 +76,6 @@ class Context:
         self._resource = Resource()
         self.registry = self._resource.registry
         self.q_commands = self._resource.q_commands
-        self._runner = self._resource.runner
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._future: Optional[RunInProcess] = None
@@ -117,7 +119,7 @@ class Context:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
     async def run(self) -> RunInProcess:
-        self._future = await self._runner(self._run_arg)
+        self._future = await self._resource.run(self._run_arg)
         await self._registrar.run_start()
         return self._future
 
