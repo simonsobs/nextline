@@ -49,7 +49,7 @@ class MultiprocessingLogging:
 
     @property
     def initializer(self) -> Callable[[], None]:
-        '''A (picklable) setup function to be called in other processes'''
+        '''A callable with no args to be given to ProcessPoolExecutor as initializer.'''
         return self._initializer
 
     async def open(self):
