@@ -18,7 +18,7 @@ __all__ = ['MultiprocessingLogging']
 def example_func():
     '''Used in doctest, defined here to be picklable.'''
     logger = logging.getLogger(__name__)
-    logger.warning('foo')
+    logger.warning('warning from another process')
 
 
 class MultiprocessingLogging:
@@ -26,17 +26,53 @@ class MultiprocessingLogging:
 
     Example:
 
+    A function to be executed in another process is example_func(), which is defined
+    outside of the docstring because it must be picklable.
+
+    Define the main asynchronous function, in which MultiprocessingLogging is used.
+
     >>> async def main():
     ...     from concurrent.futures import ProcessPoolExecutor
+    ...
+    ...     # Start MultiprocessingLogging.
     ...     async with MultiprocessingLogging() as mp_logging:
+    ...
+    ...         # The initializer is given to ProcessPoolExecutor.
     ...         with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
+    ...
+    ...             # In another process, execute example_func(), which logs a warning.
     ...             future = executor.submit(example_func)
+    ...
+    ...             # Wait until the function returns.
     ...             future.result()
+
+    When the main() is executed, the warning in example_func() is received in the
+    main process.
+
+    To confirm that it works in this example, we add a queue handler to the
+    current logger.
+
+    >>> queue = Queue()
+    >>> handler = QueueHandler(queue)
+    >>> logger = logging.getLogger(__name__)
+    >>> logger.addHandler(handler)
+
+    Run the main function.
 
     >>> asyncio.run(main())
 
-    Reference:
-    "Logging to a single file from multiple processes" (Logging Cookbook)
+    Check the loggings in the queue.
+
+    >>> log_record = queue.get()
+    >>> log_record.getMessage()
+    'warning from another process'
+
+    Remove the queue handler added for the example.
+
+    >>> logger.removeHandler(handler)
+
+
+    Reference: "Logging to a single file from multiple processes" (Logging Cookbook)
     https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
 
     '''
