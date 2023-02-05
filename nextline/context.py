@@ -6,10 +6,9 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from tblib import pickling_support
-from typing_extensions import ParamSpec
 
 from .count import RunNoCounter
 from .process import run
@@ -22,18 +21,14 @@ pickling_support.install()
 
 SCRIPT_FILE_NAME = "<string>"
 
-_P = ParamSpec("_P")
 
+def _call_all(*funcs) -> None:
+    '''Execute callables and ignore return values.
 
-def _initializer(
-    init_logging: Callable[[], Any],
-    initializer: Callable[_P, Any],
-    *initargs: _P.args,
-    **initkwargs: _P.kwargs,
-) -> None:
-    init_logging()
-    if initializer is not None:
-        initializer(*initargs, **initkwargs)
+    Used to call multiple initializers in ProcessPoolExecutor.
+    '''
+    for func in funcs:
+        func()
 
 
 @dataclass
@@ -52,16 +47,16 @@ class Resource:
         self.q_commands: QueueCommands = mp_context.Queue()
         q_registry: QueueRegistry = mp_context.Queue()
         self.mp_logging = MultiprocessingLogging(mp_context=mp_context)
+        initializer = partial(
+            _call_all,
+            self.mp_logging.initializer,
+            partial(run.set_queues, self.q_commands, q_registry),
+        )
         executor_factory = partial(
             ProcessPoolExecutor,
             max_workers=1,
             mp_context=mp_context,
-            initializer=partial(
-                _initializer,
-                self.mp_logging.initializer,
-                run.set_queues,
-            ),
-            initargs=(self.q_commands, q_registry),
+            initializer=initializer,
         )
         self.runner = partial(run_in_process, executor_factory, run.main)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
