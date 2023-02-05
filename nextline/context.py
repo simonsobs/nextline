@@ -33,9 +33,6 @@ def _call_all(*funcs) -> None:
 
 @dataclass
 class RunData:
-    statement: str
-    filename: str
-    run_no: RunNo
     result: Optional[Any] = None
     exception: Optional[BaseException] = None
 
@@ -80,16 +77,17 @@ class Context:
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._future: Optional[RunInProcess] = None
-        self._data = RunData(
+        self._run_arg = RunArg(
+            run_no=RunNo(run_no_start_from - 1),
             statement=statement,
             filename=SCRIPT_FILE_NAME,
-            run_no=RunNo(run_no_start_from - 1),
         )
+        self._run_data = RunData()
 
     async def start(self):
         await self._resource.open()
         await self._registrar.script_change(
-            script=self._data.statement, filename=self._data.filename
+            script=self._run_arg['statement'], filename=self._run_arg['filename']
         )
 
     async def state_change(self, state_name: str):
@@ -98,12 +96,12 @@ class Context:
     async def shutdown(self):
         await self._resource.close()
 
-    async def initialize(self):
-        self._data.run_no = self._run_no_count()
-        self._data.result = None
-        self._data.exception = None
-        await self._registrar.state_initialized(self._data.run_no)
-        await self._registrar.run_initialized(self._data.run_no)
+    async def initialize(self) -> None:
+        self._run_arg['run_no'] = self._run_no_count()
+        self._run_data.result = None
+        self._run_data.exception = None
+        await self._registrar.state_initialized(self._run_arg['run_no'])
+        await self._registrar.run_initialized(self._run_arg['run_no'])
 
     async def reset(
         self,
@@ -111,21 +109,15 @@ class Context:
         run_no_start_from: Optional[int] = None,
     ):
         if statement:
-            self._data.statement = statement
+            self._run_arg['statement'] = statement
             await self._registrar.script_change(
-                script=statement, filename=self._data.filename
+                script=statement, filename=self._run_arg['filename']
             )
         if run_no_start_from is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
     async def run(self) -> RunInProcess:
-        self._future = await self._runner(
-            RunArg(
-                run_no=self._data.run_no,
-                statement=self._data.statement,
-                filename=self._data.filename,
-            ),
-        )
+        self._future = await self._runner(self._run_arg)
         await self._registrar.run_start()
         return self._future
 
@@ -144,36 +136,36 @@ class Context:
     async def finish(self) -> None:
         assert self._future
         try:
-            self._data.result, self._data.exception = await self._future
+            self._run_data.result, self._run_data.exception = await self._future
         except TypeError:
             # The process was terminated.
             pass
         finally:
             self._future = None
 
-        if self._data.exception:
+        if self._run_data.exception:
             ret = None
             fmt_exc = "".join(
                 traceback.format_exception(
-                    type(self._data.exception),
-                    self._data.exception,
-                    self._data.exception.__traceback__,
+                    type(self._run_data.exception),
+                    self._run_data.exception,
+                    self._run_data.exception.__traceback__,
                 )
             )
         else:
-            ret = json.dumps(self._data.result)
+            ret = json.dumps(self._run_data.result)
             fmt_exc = None
 
         await self._registrar.run_end(result=ret, exception=fmt_exc)
 
     def result(self) -> Any:
-        if exc := self._data.exception:
+        if exc := self._run_data.exception:
             # TODO: add a test for the exception
             raise exc
-        return self._data.result
+        return self._run_data.result
 
     def exception(self) -> Optional[BaseException]:
-        return self._data.exception
+        return self._run_data.exception
 
     async def close(self):
         pass
