@@ -33,28 +33,28 @@ def _call_all(*funcs) -> None:
 
 @dataclass
 class RunData:
-    result: Any | None
-    exception: BaseException | None
+    ret: Any | None
+    exc: BaseException | None
     _fmt_ret: str | None = field(init=False, repr=False, default=None)
     _fmt_exc: str | None = field(init=False, repr=False, default=None)
 
     @property
     def fmt_ret(self) -> str:
         if self._fmt_ret is None:
-            self._fmt_ret = json.dumps(self.result)
+            self._fmt_ret = json.dumps(self.ret)
         return self._fmt_ret
 
     @property
     def fmt_exc(self) -> str:
         if self._fmt_exc is None:
-            if self.exception is None:
+            if self.exc is None:
                 self._fmt_exc = ''
             else:
                 self._fmt_exc = ''.join(
                     traceback.format_exception(
-                        type(self.exception),
-                        self.exception,
-                        self.exception.__traceback__,
+                        type(self.exc),
+                        self.exc,
+                        self.exc.__traceback__,
                     )
                 )
         return self._fmt_exc
@@ -175,14 +175,14 @@ class Context:
 
     def result(self) -> Any:
         assert self._run_data
-        if exc := self._run_data.exception:
+        if exc := self._run_data.exc:
             # TODO: add a test for the exception
             raise exc
-        return self._run_data.result
+        return self._run_data.ret
 
     def exception(self) -> Optional[BaseException]:
         assert self._run_data
-        return self._run_data.exception
+        return self._run_data.exc
 
     async def close(self):
         pass
