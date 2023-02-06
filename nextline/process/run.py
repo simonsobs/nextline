@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, Callable, Set, Tuple, TypedDict, TypeVar
 
 from . import script
-from .call import call_with_trace
+from .call import sys_trace
 from .callback import Callback, RegistrarProxy
 from .trace import Trace
 from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg
@@ -54,8 +54,25 @@ def run_(
 
         func = script.compose(code)
 
+        result: Any = None
+        exception: BaseException | None = None
+
         with relay_commands(q_commands, pdb_ci_map):
-            result, exception = call_with_trace(func, trace)
+            # result, exception = call_with_trace(func, trace)
+            with sys_trace(trace_func=trace):
+                try:
+                    result = func()
+                except BaseException as e:
+                    exception = e
+
+        # How to print the exception in the same way as the interpreter.
+        # import traceback
+        # traceback.print_exception(type(exc), exc, exc.__traceback__)
+
+        if exception and exception.__traceback__:
+            # remove this frame from the traceback.
+            # Note: exc.__traceback__ is sys._getframe()
+            exception.__traceback__ = exception.__traceback__.tb_next
 
     return result, exception
 

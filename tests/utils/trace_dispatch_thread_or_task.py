@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.call import call_with_trace
+from nextline.process.call import sys_trace
 from nextline.process.trace import TraceDispatchThreadOrTask
 
 
@@ -119,7 +119,8 @@ params = [
 @pytest.mark.parametrize("func, expected", params)
 def test_one(factory: Mock, created: MutableSequence[Mock], func, expected):
     obj = TraceDispatchThreadOrTask(factory=factory)
-    call_with_trace(func, obj)
+    with sys_trace(trace_func=obj):
+        func()
     print()
     # print(traced(created))
     actual = traced(created)
