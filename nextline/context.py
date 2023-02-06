@@ -33,8 +33,8 @@ def _call_all(*funcs) -> None:
 
 @dataclass
 class RunData:
-    result: Optional[Any] = None
-    exception: Optional[BaseException] = None
+    result: Any | None
+    exception: BaseException | None
 
 
 class Resource:
@@ -84,7 +84,7 @@ class Context:
             statement=statement,
             filename=SCRIPT_FILE_NAME,
         )
-        self._run_data = RunData()
+        self._run_data: RunData | None = None
 
     async def start(self):
         await self._resource.open()
@@ -100,8 +100,7 @@ class Context:
 
     async def initialize(self) -> None:
         self._run_arg['run_no'] = self._run_no_count()
-        self._run_data.result = None
-        self._run_data.exception = None
+        self._run_data = None
         await self._registrar.state_initialized(self._run_arg['run_no'])
         await self._registrar.run_initialized(self._run_arg['run_no'])
 
@@ -138,12 +137,14 @@ class Context:
     async def finish(self) -> None:
         assert self._future
         try:
-            self._run_data.result, self._run_data.exception = await self._future
+            result, exc = await self._future
         except TypeError:
             # The process was terminated.
             pass
         finally:
             self._future = None
+
+        self._run_data = RunData(result, exc)
 
         if self._run_data.exception:
             ret = None
@@ -161,12 +162,14 @@ class Context:
         await self._registrar.run_end(result=ret, exception=fmt_exc)
 
     def result(self) -> Any:
+        assert self._run_data
         if exc := self._run_data.exception:
             # TODO: add a test for the exception
             raise exc
         return self._run_data.result
 
     def exception(self) -> Optional[BaseException]:
+        assert self._run_data
         return self._run_data.exception
 
     async def close(self):
