@@ -4,7 +4,7 @@ import json
 import multiprocessing as mp
 import traceback
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Optional
 
@@ -35,6 +35,29 @@ def _call_all(*funcs) -> None:
 class RunData:
     result: Any | None
     exception: BaseException | None
+    _fmt_ret: str | None = field(init=False, repr=False, default=None)
+    _fmt_exc: str | None = field(init=False, repr=False, default=None)
+
+    @property
+    def fmt_ret(self) -> str:
+        if self._fmt_ret is None:
+            self._fmt_ret = json.dumps(self.result)
+        return self._fmt_ret
+
+    @property
+    def fmt_exc(self) -> str:
+        if self._fmt_exc is None:
+            if self.exception is None:
+                self._fmt_exc = ''
+            else:
+                self._fmt_exc = ''.join(
+                    traceback.format_exception(
+                        type(self.exception),
+                        self.exception,
+                        self.exception.__traceback__,
+                    )
+                )
+        return self._fmt_exc
 
 
 class Resource:
@@ -146,20 +169,9 @@ class Context:
 
         self._run_data = RunData(result, exc)
 
-        if self._run_data.exception:
-            ret = None
-            fmt_exc = "".join(
-                traceback.format_exception(
-                    type(self._run_data.exception),
-                    self._run_data.exception,
-                    self._run_data.exception.__traceback__,
-                )
-            )
-        else:
-            ret = json.dumps(self._run_data.result)
-            fmt_exc = None
-
-        await self._registrar.run_end(result=ret, exception=fmt_exc)
+        await self._registrar.run_end(
+            result=self._run_data.fmt_ret, exception=self._run_data.fmt_exc
+        )
 
     def result(self) -> Any:
         assert self._run_data
