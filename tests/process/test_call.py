@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.call import call_with_trace
+from nextline.process.call import sys_trace
 
 
 @pytest.fixture()
@@ -22,11 +22,10 @@ def test_simple(trace: Mock):
         return x
 
     trace_org = sys.gettrace()
-    ret, exc = call_with_trace(func, trace=trace)
-    assert trace_org == sys.gettrace()
+    with sys_trace(trace):
+        ret = func()
+    assert trace_org is sys.gettrace()
     assert 123 == ret
-    assert exc is None
-    # print(trace.call_args_list)
     assert 4 == trace.call_count  # "call", "line", "line", "return"
 
 
@@ -40,16 +39,28 @@ def test_raise(trace: Mock):
 
     trace_org = sys.gettrace()
 
-    ret, exc = call_with_trace(func, trace=trace)
+    with sys_trace(trace):
+        try:
+            func()
+        except BaseException as e:
+            exc = e
+
+    # How to print the exception in the same way as the interpreter.
+    # import traceback
+    # traceback.print_exception(type(exc), exc, exc.__traceback__)
+
+    if exc.__traceback__:
+        # remove this frame from the traceback.
+        # Note: exc.__traceback__ is sys._getframe()
+        exc.__traceback__ = exc.__traceback__.tb_next
 
     assert trace_org == sys.gettrace()
 
-    assert ret is None
     assert isinstance(exc, MockError)
 
     assert 4 == trace.call_count  # "call", "line", "exception", "return"
 
-    # assert the frame of call_with_trace() is removed
+    # assert this frame is removed
     formatted = traceback.format_exception(type(exc), exc, exc.__traceback__)
     assert len(formatted) == 3
 
@@ -66,7 +77,8 @@ def test_threading(trace: Mock, thread: bool):
 
     trace_org = sys.gettrace()
 
-    call_with_trace(func, trace=trace, thread=thread)
+    with sys_trace(trace):
+        func()
 
     assert trace_org == sys.gettrace()
 
