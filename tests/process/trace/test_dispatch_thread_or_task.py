@@ -13,7 +13,7 @@ from nextline.process.trace import TraceDispatchThreadOrTask
 from nextline.utils import ExcThread, current_task_or_thread
 
 if TYPE_CHECKING:
-    from nextline.types import TraceFunc
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 from . import module_a, module_b
 from .funcs import TraceSummary, summarize_trace_calls

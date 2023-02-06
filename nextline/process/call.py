@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from nextline.process.trace import TraceSkipModule
 
 if TYPE_CHECKING:
-    from nextline.types import TraceFunc
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
 @contextmanager

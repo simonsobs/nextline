@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 if TYPE_CHECKING:
-    from nextline.types import TraceFunc
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
 def test_wrap_target_trace_func(

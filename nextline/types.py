@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-from typing import TYPE_CHECKING, NewType, Optional
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+from typing import NewType, Optional
 
 RunNo = NewType("RunNo", int)
 TraceNo = NewType("TraceNo", int)

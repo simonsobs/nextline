@@ -14,7 +14,7 @@ from nextline.utils import current_task_or_thread
 from .pdb.proxy import PdbInterfaceTraceFuncFactory
 
 if TYPE_CHECKING:
-    from nextline.types import TraceFunc
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
     from .run import Context
 

@@ -8,7 +8,7 @@ import pytest
 from nextline.process.call import sys_trace
 
 if TYPE_CHECKING:
-    from nextline.types import TraceFunc
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 from .funcs import TraceSummary, summarize_trace_calls
 
