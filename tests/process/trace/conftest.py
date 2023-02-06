@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.call import call_with_trace
+from nextline.process.call import sys_trace
 
 if TYPE_CHECKING:
     from nextline.types import TraceFunc
@@ -59,7 +59,8 @@ def run_target(
     wrap_target_trace_func: Mock,
     thread: bool,
 ) -> None:
-    call_with_trace(func=func, trace=wrap_target_trace_func, thread=thread)
+    with sys_trace(trace_func=wrap_target_trace_func, thread=thread):
+        func()
     return
 
 
@@ -69,7 +70,8 @@ def run_ref(
     ref_trace_func: Mock,
     thread: bool,
 ) -> None:
-    call_with_trace(func=func, trace=ref_trace_func, thread=thread)
+    with sys_trace(trace_func=ref_trace_func, thread=thread):
+        func()
     return
 
 
