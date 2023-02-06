@@ -32,7 +32,7 @@ def _call_all(*funcs) -> None:
 
 
 @dataclass
-class RunData:
+class RunResult:
     ret: Any | None
     exc: BaseException | None
     _fmt_ret: str | None = field(init=False, repr=False, default=None)
@@ -113,7 +113,7 @@ class Context:
             statement=statement,
             filename=SCRIPT_FILE_NAME,
         )
-        self._run_data: RunData | None = None
+        self._run_result: RunResult | None = None
 
     async def start(self):
         await self._resource.open()
@@ -129,7 +129,7 @@ class Context:
 
     async def initialize(self) -> None:
         self._run_arg['run_no'] = self._run_no_count()
-        self._run_data = None
+        self._run_result = None
         await self._registrar.state_initialized(self._run_arg['run_no'])
         await self._registrar.run_initialized(self._run_arg['run_no'])
 
@@ -173,19 +173,19 @@ class Context:
         finally:
             self._future = None
 
-        self._run_data = RunData(result, exc)
+        self._run_result = RunResult(result, exc)
 
         await self._registrar.run_end(
-            result=self._run_data.fmt_ret, exception=self._run_data.fmt_exc
+            result=self._run_result.fmt_ret, exception=self._run_result.fmt_exc
         )
 
     def result(self) -> Any:
-        assert self._run_data
-        return self._run_data.result()
+        assert self._run_result
+        return self._run_result.result()
 
     def exception(self) -> Optional[BaseException]:
-        assert self._run_data
-        return self._run_data.exc
+        assert self._run_result
+        return self._run_result.exc
 
     async def close(self):
         pass
