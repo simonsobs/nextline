@@ -59,6 +59,12 @@ class RunData:
                 )
         return self._fmt_exc
 
+    def result(self) -> Any:
+        if self.exc is not None:
+            # TODO: add a test for the exception
+            raise self.exc
+        return self.ret
+
 
 class Resource:
     def __init__(self) -> None:
@@ -175,10 +181,7 @@ class Context:
 
     def result(self) -> Any:
         assert self._run_data
-        if exc := self._run_data.exc:
-            # TODO: add a test for the exception
-            raise exc
-        return self._run_data.ret
+        return self._run_data.result()
 
     def exception(self) -> Optional[BaseException]:
         assert self._run_data
