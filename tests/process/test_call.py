@@ -1,6 +1,7 @@
 import sys
 import traceback
 from threading import Thread
+from typing import NoReturn
 from unittest.mock import Mock
 
 import pytest
@@ -9,14 +10,14 @@ from nextline.process.call import call_with_trace
 
 
 @pytest.fixture()
-def trace():
+def trace() -> Mock:
     f = Mock()
     f.return_value = f
-    yield f
+    return f
 
 
-def test_simple(trace):
-    def func():
+def test_simple(trace: Mock):
+    def func() -> int:
         x = 123
         return x
 
@@ -33,8 +34,8 @@ class MockError(Exception):
     pass
 
 
-def test_raise(trace):
-    def func():
+def test_raise(trace: Mock):
+    def func() -> NoReturn:
         raise MockError()
 
     trace_org = sys.gettrace()
@@ -54,11 +55,11 @@ def test_raise(trace):
 
 
 @pytest.mark.parametrize("thread", [True, False])
-def test_threading(trace, thread):
-    def f1():
+def test_threading(trace: Mock, thread: bool):
+    def f1() -> None:
         return
 
-    def func():
+    def func() -> None:
         t1 = Thread(target=f1)
         t1.start()
         t1.join()
@@ -70,17 +71,14 @@ def test_threading(trace, thread):
     assert trace_org == sys.gettrace()
 
     traced = {
-        (
-            c.args[0].f_globals.get("__name__"),
-            c.args[0].f_code.co_name,
-        )
+        (c.args[0].f_globals.get("__name__"), c.args[0].f_code.co_name)
         for c in trace.call_args_list
     }
     # set: {(<module name>, <func name>)}
 
-    expected_subset = {(func.__module__, func.__name__)}
+    assert (func.__module__, func.__name__) in traced
 
     if thread:
-        expected_subset.update({(f1.__module__, f1.__name__)})
-
-    assert expected_subset <= traced
+        (f1.__module__, f1.__name__) in traced
+    else:
+        (f1.__module__, f1.__name__) not in traced
