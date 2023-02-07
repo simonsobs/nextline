@@ -55,7 +55,7 @@ timeout = 60
 addopts = "--doctest-modules"
 # doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE",]
 doctest_optionflags = ["ELLIPSIS"]
-norecursedirs = ["build", "tests/scenarios"]
+norecursedirs = ["build", "tests/main/scenarios"]
 
 [tool.black]
 skip-string-normalization = true
