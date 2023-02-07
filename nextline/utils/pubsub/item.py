@@ -19,38 +19,71 @@ _T = TypeVar("_T")
 
 
 class PubSubItem(Generic[_T]):
-    '''Distribute items to subscribers
+    '''Distribute items to asynchronous subscribers.
 
-    A new subscriber immediately receives the latest item and then wait for new
-    items.
+    Example:
 
-    The order of the items is preserved.
+    Define items to distribute:
 
-    >>> import asyncio
+    >>> items = ['2', '1', 'a', 'b', 'c']
 
-    >>> items = ['a', 'b', 'c', 'd', 'e']
+    To demonstrate the "last" option of the method `subscribe()`, we distribute
+    the first two items ("2" and "1") before starting subscribers. Subscribers
+    with the "last" option "True" will immediately receive the most recent
+    distributed item ("1") and then wait for new items. Subscribers with the
+    "last" option "False" will wait for new items only.
 
-    >>> async def receive(obj):
-    ...     return [i async for i in obj.subscribe()]
+    Define two subscribers, one with the "last" option "True" and the other with
+    the "last" option "False":
 
-    >>> async def send(obj):
-    ...     for i in items:
+    >>> async def subscriber_with_last(obj):
+    ...     return [i async for i in obj.subscribe(last=True)]
+
+    >>> async def subscriber_without_last(obj):
+    ...     return [i async for i in obj.subscribe(last=False)]
+
+    Define two distributors, one that distributes the first two items and the
+    other that distributes the rest of the items:
+
+    >>> async def distributor_first_two(obj):
+    ...     for i in items[:2]:
+    ...         await obj.publish(i)
+
+    >>> async def distributor_rest(obj):
+    ...     for i in items[2:]:
     ...         await obj.publish(i)
     ...     await obj.close()
 
+    The second distributor calls the method `close()` to end the subscriptions.
+    The method `subscribe()` will return when the method `close()` is called.
+
+    The class can be instantiated without a running asyncio event loop:
+
+    >>> obj = PubSubItem()
+
+    Define the asynchronous main function:
+
     >>> async def main():
-    ...     obj = PubSubItem()
+    ...     # Run the first distributor.
+    ...     await distributor_first_two(obj)
+    ...
+    ...     # Run the two subscribers and the second distributor.
     ...     received1, received2, _ = await asyncio.gather(
-    ...         receive(obj),
-    ...         receive(obj),
-    ...         send(obj),
+    ...         subscriber_with_last(obj),
+    ...         subscriber_without_last(obj),
+    ...         distributor_rest(obj),
     ...     )
+    ...
+    ...     # Print the received items.
     ...     print(received1)
     ...     print(received2)
 
+    Run the main function:
+
+    >>> import asyncio
     >>> asyncio.run(main())
-    ['a', 'b', 'c', 'd', 'e']
-    ['a', 'b', 'c', 'd', 'e']
+    ['1', 'a', 'b', 'c']
+    ['a', 'b', 'c']
 
     '''
 
