@@ -15,8 +15,9 @@ from .custom import CustomizedPdb
 from .stream import StreamIn, StreamOut
 
 if TYPE_CHECKING:
-    from nextline.process.run import Context
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+
+    from nextline.process.run import Context
 
 
 def PdbInterfaceTraceFuncFactory(context: Context) -> Callable[[], TraceFunc]:
