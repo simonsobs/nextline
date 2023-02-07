@@ -6,6 +6,7 @@ import signal
 from concurrent.futures import Executor, ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from functools import partial
+from logging import getLogger
 from multiprocessing import Process
 from typing import Callable, Generic, Optional, TypeVar
 
@@ -75,26 +76,41 @@ class RunInProcess(Generic[_T, _P]):
         self._process: Optional[Process] = None
         self._future: Optional[asyncio.Future] = None
         self._exc: Optional[BaseException] = None
+        self._logger = getLogger(__name__)
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {self._process!r} {self._future}>"
 
     async def _run(self) -> Optional[_T]:
+        '''Called in __init__(), awaited in __await__().'''
 
-        with self._executor_factory() as executor:
-            loop = asyncio.get_running_loop()
-            self._future = loop.run_in_executor(executor, self._func_call)
-            if isinstance(executor, ProcessPoolExecutor):
-                self._process = list(executor._processes.values())[0]
-            self._event.set()
-            try:
-                return await self._future
-            except BrokenProcessPool:
-                # NOTE: Not possible to use "as" for unknown reason.
-                return None
-            except BaseException as e:
-                self._exc = e
-                return None
+        try:
+            with self._executor_factory() as executor:
+                loop = asyncio.get_running_loop()
+                self._future = loop.run_in_executor(executor, self._func_call)
+                if isinstance(executor, ProcessPoolExecutor):
+                    self._process = list(executor._processes.values())[0]
+                    self._logger.info(f'A process ({self._process.pid}) created.')
+                    # TODO: Get the process created time here.
+                self._event.set()
+                try:
+                    return await self._future
+                except BrokenProcessPool:
+                    # NOTE: Not possible to use "as" for unknown reason.
+                    return None
+                except BaseException as e:
+                    self._exc = e
+                    return None
+        finally:
+            if self._process:
+                pid = self._process.pid
+                exitcode = self._process.exitcode
+                exit_fmt = f'{exitcode}'
+                if exitcode:
+                    if name := _exitcode_to_name.get(exitcode):
+                        exit_fmt = f'{exitcode} ({name})'
+                self._logger.info(f'The process ({pid}) exited: {exit_fmt}.')
+                # TODO: Get the process exited time here.
 
     def interrupt(self) -> None:
         if self._process and self._process.pid:
@@ -121,3 +137,12 @@ class RunInProcess(Generic[_T, _P]):
         if self._exc:
             raise self._exc
         return ret
+
+
+# Originally copied from
+# https://github.com/python/cpython/blob/3.8/Lib/multiprocessing/process.py#L425-L429
+_exitcode_to_name = {
+    -signum: f'-{name}'
+    for name, signum in signal.__dict__.items()
+    if name[:3] == 'SIG' and '_' not in name
+}
