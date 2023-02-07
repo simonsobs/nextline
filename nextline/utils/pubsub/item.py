@@ -99,7 +99,7 @@ class PubSubItem(Generic[_T]):
         self._idx = -1
 
         self._closed: bool = False
-        self._lock_close = Condition()
+        self._lock_close: Condition | None = None
 
     @property
     def nsubscriptions(self) -> int:
@@ -150,6 +150,7 @@ class PubSubItem(Generic[_T]):
 
     async def close(self) -> None:
         """End gracefully"""
+        self._lock_close = self._lock_close or Condition()
         async with self._lock_close:
             if self._closed:
                 return
