@@ -1,110 +1,122 @@
 import asyncio
 import time
-from string import ascii_lowercase, ascii_uppercase
+from typing import Sequence
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from nextline.utils import PubSub
 
 
-@pytest.fixture
-async def obj():
-    async with PubSub() as y:
-        yield y
+async def test_end():
+    key = 'foo'
+    async with PubSub[str, str]() as obj:
 
+        async def subscribe():
+            return tuple([y async for y in obj.subscribe(key)])
 
-async def test_end(obj: PubSub[str, str]):
-    key = "A"
+        async def put():
+            await asyncio.sleep(0.001)
+            await obj.end(key)
 
-    async def subscribe():
-        return tuple([y async for y in obj.subscribe(key)])
-
-    async def put():
-        await asyncio.sleep(0.001)
-        await obj.end(key)
-
-    result, _ = await asyncio.gather(subscribe(), put())
+        result, _ = await asyncio.gather(subscribe(), put())
     assert result == ()
 
 
-async def test_end_without_subscription(obj: PubSub[str, str]):
-    key = "A"
-    await obj.end(key)
+async def test_end_without_subscription():
+    key = 'foo'
+    async with PubSub[str, str]() as obj:
+        await obj.end(key)
 
 
-async def test_close(obj: PubSub[str, str]):
-    key = "A"
-    n_items = 5
-    items = tuple(ascii_lowercase[:n_items])
+@given(items=st.lists(st.text()))
+async def test_close(items: Sequence[str]):
+    items = tuple(items)
+    key = 'foo'
 
-    async def subscribe():
-        return tuple([y async for y in obj.subscribe(key)])
+    async with PubSub[str, str]() as obj:
 
-    async def put():
-        await asyncio.sleep(0.001)
-        for item in items:
-            await obj.publish(key, item)
-        assert obj.latest(key) == items[-1]
-        await obj.close()  # ends the subscription
-        with pytest.raises(LookupError):
-            obj.latest(key)
+        async def subscribe():
+            return tuple([y async for y in obj.subscribe(key)])
 
-    result, _ = await asyncio.gather(subscribe(), put())
+        async def put():
+            await asyncio.sleep(0.001)
+            for item in items:
+                await obj.publish(key, item)
+            if items:
+                assert obj.latest(key) == items[-1]
+            await obj.close()  # ends the subscription
+            with pytest.raises(LookupError):
+                obj.latest(key)
+
+        result, _ = await asyncio.gather(subscribe(), put())
     assert result == items
 
 
-@pytest.mark.parametrize("last", [True, False])
-async def test_last(obj: PubSub[str, str], last: bool):
-    key = "A"
-    n_pre_items = 3
-    n_items = 5
-    pre_items = tuple(reversed(ascii_lowercase[-n_pre_items:]))
-    items = tuple(ascii_lowercase[:n_items])
+@given(
+    pre_items=st.lists(st.text()),
+    items=st.lists(st.text()),
+    last=st.booleans(),
+)
+async def test_last(
+    pre_items: Sequence[str],
+    items: Sequence[str],
+    last: bool,
+):
+    key = 'foo'
+    pre_items = tuple(pre_items)
+    items = tuple(items)
     expected = pre_items[-1:] + items if last else items
 
-    for item in pre_items:
-        await obj.publish(key, item)
-
-    await asyncio.sleep(0.001)
-
-    async def subscribe():
-        return tuple([y async for y in obj.subscribe(key, last=last)])
-
-    async def put():
-        await asyncio.sleep(0.001)
-        for item in items:
+    async with PubSub[str, str]() as obj:
+        for item in pre_items:
             await obj.publish(key, item)
-        await obj.end(key)
 
-    result, _ = await asyncio.gather(subscribe(), put())
+        await asyncio.sleep(0.001)
+
+        async def subscribe():
+            return tuple([y async for y in obj.subscribe(key, last=last)])
+
+        async def put():
+            await asyncio.sleep(0.001)
+            for item in items:
+                await obj.publish(key, item)
+            await obj.end(key)
+
+        result, _ = await asyncio.gather(subscribe(), put())
     assert result == expected
 
 
-@pytest.mark.parametrize("n_keys", [0, 1, 3])
-@pytest.mark.parametrize("n_items", [0, 1, 2, 30])
-@pytest.mark.parametrize("n_subscribers", [0, 1, 2, 50])
+@given(
+    keys=st.lists(st.text(), max_size=3, unique=True),
+    n_items=st.integers(0, 30),
+    n_subscribers=st.integers(0, 20),
+)
 async def test_matrix(
-    obj: PubSub[str, str],
-    n_keys: int,
+    keys: Sequence[str],
     n_items: int,
     n_subscribers: int,
 ):
-    keys = ascii_uppercase[:n_keys]
+    keys = tuple(keys)
+    n_keys = len(keys)
     items = {k: tuple(f"{k}-{i+1}" for i in range(n_items)) for k in keys}
 
-    async def subscribe(key):
-        return tuple([y async for y in obj.subscribe(key)])
+    async with PubSub[str, str]() as obj:
 
-    async def put(key):
-        time.sleep(0.01)
-        for item in items[key]:
-            await obj.publish(key, item)
-        await obj.end(key)
+        async def subscribe(key):
+            return tuple([y async for y in obj.subscribe(key)])
 
-    results = await asyncio.gather(
-        *(subscribe(k) for k in keys for _ in range(n_subscribers)),
-        *(put(k) for k in keys),
-    )
-    actual = results[: n_subscribers * n_keys]
-    expected = [items[k] for k in keys for _ in range(n_subscribers)]
+        async def put(key):
+            time.sleep(0.01)
+            for item in items[key]:
+                await obj.publish(key, item)
+            await obj.end(key)
+
+        results = await asyncio.gather(
+            *(subscribe(k) for k in keys for _ in range(n_subscribers)),
+            *(put(k) for k in keys),
+        )
+        actual = results[: n_subscribers * n_keys]
+        expected = [items[k] for k in keys for _ in range(n_subscribers)]
     assert actual == expected
