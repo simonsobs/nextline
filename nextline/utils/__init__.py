@@ -18,7 +18,8 @@ __all__ = [
     "merge_aiters",
     "profile_func",
     "run_in_process",
-    "RunInProcess",
+    "ExecutorFactory",
+    "RunInProcess"
 ]
 
 from .done_callback import TaskDoneCallback, ThreadDoneCallback, ThreadTaskDoneCallback
@@ -28,7 +29,7 @@ from .multiprocessing_logging import MultiprocessingLogging
 from .peek import peek_stderr, peek_stdout, peek_textio
 from .profile import profile_func
 from .pubsub import PubSub, PubSubItem
-from .run import RunInProcess, run_in_process
+from .run import ExecutorFactory, RunInProcess, run_in_process
 from .thread_exception import ExcThread
 from .thread_safe_event import ThreadSafeAsyncioEvent
 from .thread_task_id import ThreadTaskIdComposer

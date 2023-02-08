@@ -10,14 +10,17 @@ from logging import getLogger
 from multiprocessing import Process
 from typing import Callable, Generic, Optional, TypeVar
 
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeAlias
 
 _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 
+ExecutorFactory: TypeAlias = 'Callable[[], Executor]'
+
+
 async def run_in_process(
-    executor_factory: Optional[Callable[[], Executor]],
+    executor_factory: Optional[ExecutorFactory],
     func: Callable[_P, _T],
     *func_args: _P.args,
     **func_kwargs: _P.kwargs,
@@ -53,7 +56,7 @@ class RunInProcess(Generic[_T, _P]):
     @classmethod
     async def create(
         cls,
-        executor_factory: Callable[[], Executor],
+        executor_factory: ExecutorFactory,
         func: Callable[_P, _T],
         *func_args: _P.args,
         **func_kwargs: _P.kwargs,
@@ -64,7 +67,7 @@ class RunInProcess(Generic[_T, _P]):
 
     def __init__(
         self,
-        executor_factory: Callable[[], Executor],
+        executor_factory: ExecutorFactory,
         func: Callable[_P, _T],
         *func_args: _P.args,
         **func_kwargs: _P.kwargs,

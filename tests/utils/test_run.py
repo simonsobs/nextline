@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Callable, NoReturn, Optional
 
 import pytest
 
-from nextline.utils import run_in_process
+from nextline.utils import ExecutorFactory, run_in_process
 
 if TYPE_CHECKING:
     from multiprocessing.synchronize import Event as _EventType
@@ -72,7 +72,7 @@ def func_slow_handle() -> str:
     return "bar"
 
 
-async def test_one(executor_factory: Callable[[], Executor]) -> None:
+async def test_one(executor_factory: ExecutorFactory) -> None:
     r = await run_in_process(executor_factory, func)
     assert "foo" == await r
     assert r._process
@@ -86,13 +86,13 @@ async def test_default_executor() -> None:
     assert r._process.exitcode == 0
 
 
-async def test_repr(executor_factory: Callable[[], Executor]) -> None:
+async def test_repr(executor_factory: ExecutorFactory) -> None:
     r = await run_in_process(executor_factory, func)
     repr(r)
     await r
 
 
-async def test_error(executor_factory: Callable[[], Executor]) -> None:
+async def test_error(executor_factory: ExecutorFactory) -> None:
     r = await run_in_process(executor_factory, func_raise)
     with pytest.raises(MockError):
         await r
@@ -101,7 +101,7 @@ async def test_error(executor_factory: Callable[[], Executor]) -> None:
 
 
 async def test_interrupt(
-    executor_factory: Callable[[], Executor], event: _EventType
+    executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
     r = await run_in_process(executor_factory, func_slow)
     event.wait()
@@ -113,7 +113,7 @@ async def test_interrupt(
 
 
 async def test_interrupt_catch(
-    executor_factory: Callable[[], Executor], event: _EventType
+    executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
     r = await run_in_process(executor_factory, func_slow_catch)
     event.wait()
@@ -124,7 +124,7 @@ async def test_interrupt_catch(
 
 
 async def test_terminate(
-    executor_factory: Callable[[], Executor], event: _EventType
+    executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
     r = await run_in_process(executor_factory, func_slow)
     event.wait()
@@ -135,7 +135,7 @@ async def test_terminate(
 
 
 async def test_terminate_handle(
-    executor_factory: Callable[[], Executor], event: _EventType
+    executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
     r = await run_in_process(executor_factory, func_slow_handle)
     event.wait()
@@ -146,7 +146,7 @@ async def test_terminate_handle(
 
 
 async def test_kill(
-    executor_factory: Callable[[], Executor], event: _EventType
+    executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
     r = await run_in_process(executor_factory, func_slow)
     event.wait()
@@ -157,7 +157,7 @@ async def test_kill(
 
 
 @pytest.fixture
-def executor_factory(event: _EventType) -> Callable[[], Executor]:
+def executor_factory(event: _EventType) -> ExecutorFactory:
     return partial(
         ProcessPoolExecutor,
         max_workers=1,
