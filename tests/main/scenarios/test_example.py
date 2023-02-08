@@ -80,13 +80,13 @@ async def assert_subscribe_run_info(nextline: Nextline, statement: str):
             info := dataclasses.replace(
                 info,
                 state="running",
-                started_at=datetime.datetime.now(),
+                started_at=datetime.datetime.utcnow(),
             ),
             dataclasses.replace(
                 info,
                 state="finished",
                 result="null",
-                ended_at=datetime.datetime.now(),
+                ended_at=datetime.datetime.utcnow(),
             ),
             info := RunInfo(
                 run_no=RunNo(2),
@@ -98,13 +98,13 @@ async def assert_subscribe_run_info(nextline: Nextline, statement: str):
             info := dataclasses.replace(
                 info,
                 state="running",
-                started_at=datetime.datetime.now(),
+                started_at=datetime.datetime.utcnow(),
             ),
             dataclasses.replace(
                 info,
                 state="finished",
                 result="null",
-                ended_at=datetime.datetime.now(),
+                ended_at=datetime.datetime.utcnow(),
             ),
         ]
     )

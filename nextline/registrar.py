@@ -65,7 +65,7 @@ class Registrar:
         self._run_info = dataclasses.replace(
             self._run_info,
             state="running",
-            started_at=datetime.datetime.now(),
+            started_at=datetime.datetime.utcnow(),
         )
         await self._registry.publish("run_info", self._run_info)
 
@@ -75,7 +75,7 @@ class Registrar:
             state="finished",
             result=result,
             exception=exception,
-            ended_at=datetime.datetime.now(),
+            ended_at=datetime.datetime.utcnow(),
         )
         # TODO: check if run_no matches
         await self._registry.publish("run_info", self._run_info)

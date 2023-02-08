@@ -104,7 +104,7 @@ class Callback:
             thread_no=thread_task_id.thread_no,
             task_no=thread_task_id.task_no,
             state="running",
-            started_at=datetime.datetime.now(),
+            started_at=datetime.datetime.utcnow(),
         )
         self._trace_info_map[trace_no] = trace_info
         self._registrar.put_trace_info(trace_info)
@@ -123,7 +123,7 @@ class Callback:
         trace_info = dataclasses.replace(
             trace_info,
             state="finished",
-            ended_at=datetime.datetime.now(),
+            ended_at=datetime.datetime.utcnow(),
         )
 
         self._registrar.put_trace_info(trace_info)
@@ -177,7 +177,7 @@ class Callback:
             file_name=file_name,
             line_no=line_no,
             stdout=out,
-            started_at=datetime.datetime.now(),
+            started_at=datetime.datetime.utcnow(),
         )
         self._prompt_info_map[(trace_no, prompt_no)] = prompt_info
         self._registrar.put_prompt_info(prompt_info)
@@ -190,7 +190,7 @@ class Callback:
             prompt_info,
             open=False,
             command=command,
-            ended_at=datetime.datetime.now(),
+            ended_at=datetime.datetime.utcnow(),
         )
         self._registrar.put_prompt_info(prompt_info)
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
@@ -201,7 +201,7 @@ class Callback:
             run_no=self._run_no,
             trace_no=trace_no,
             text=line,
-            written_at=datetime.datetime.now(),
+            written_at=datetime.datetime.utcnow(),
         )
         self._registrar.put_stdout_info(stdout_info)
 
