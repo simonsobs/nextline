@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import signal
 import time
-from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from multiprocessing import Event
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, NoReturn, Optional
+from typing import TYPE_CHECKING, NoReturn, Optional
 
 import pytest
 
