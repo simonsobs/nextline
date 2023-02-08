@@ -133,6 +133,7 @@ async def test_subscribe_after_close(items: Sequence[str]):
 
     results = await receive()
     assert results == ()  # empty
+    assert obj.nsubscriptions == 0
 
 
 @given(st.data())

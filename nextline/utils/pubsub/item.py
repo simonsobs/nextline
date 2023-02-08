@@ -129,12 +129,12 @@ class PubSubItem(Generic[_T]):
 
         self._qs_out.append(q)
 
-        last_idx, last_item = self._last_enumerated
-
-        if last_item is _M.END:
-            return
-
         try:
+            last_idx, last_item = self._last_enumerated
+
+            if last_item is _M.END:
+                return
+
             if last and last_item is not _M.START:
                 yield last_item
 
