@@ -164,12 +164,12 @@ async def test_break(data: st.DataObject):
             await obj.close()
 
         results, _ = await asyncio.gather(receive(), send())
-        assert results == expected
+    assert results == expected
 
 
 @given(st.data())
-async def test_matrix(data: st.DataObject):
-    '''test if the issue is resolved
+async def test_no_missing_or_duplicate(data: st.DataObject):
+    '''Assert that the issue is resolved
     https://github.com/simonsobs/nextline/issues/2
 
     '''
@@ -177,10 +177,10 @@ async def test_matrix(data: st.DataObject):
     n_subscriptions = data.draw(st.integers(0, 20))
     items = tuple(data.draw(st.lists(st.text(), unique=True)))
 
-    b = data.draw(st.integers(0, len(items)))
+    split = data.draw(st.integers(0, len(items)))
 
-    pre_items = items[:b]
-    post_items = items[b:]
+    pre_items = items[:split]
+    post_items = items[split:]
 
     event = asyncio.Event()
 
@@ -191,11 +191,10 @@ async def test_matrix(data: st.DataObject):
             return tuple([i async for i in obj.subscribe()])
 
         async def send():
-            for i in pre_items:
+            async for i in aiterable(pre_items):
                 await obj.publish(i)
             event.set()
-            await asyncio.sleep(0.001)
-            for i in post_items:
+            async for i in aiterable(post_items):
                 await obj.publish(i)
             await obj.close()
 
@@ -204,9 +203,10 @@ async def test_matrix(data: st.DataObject):
             send(),
         )
 
-    # print(results)
     for actual in results:
         if not actual:  # can be empty
             continue
         expected = items[items.index(actual[0]) :]  # no missing or duplicate
         assert actual == expected
+        # print(actual)
+        # print(actual[0] in pre_items)
