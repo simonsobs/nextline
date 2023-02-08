@@ -15,31 +15,42 @@ x = 2
 """.strip()
 
 
-def test_init_sync(machine: AsyncMock):
+def test_init_sync():
     '''Assert the init without the running loop.'''
-    del machine
     with pytest.raises(RuntimeError):
         asyncio.get_running_loop()
     nextline = Nextline(SOURCE)
     assert nextline
 
 
-async def test_one(machine: AsyncMock) -> None:
-    del machine
+async def test_repr():
+    nextline = Nextline(SOURCE)
+    assert repr(nextline)
+    async with nextline:
+        assert repr(nextline)
+    assert repr(nextline)
+
+
+async def test_one() -> None:
     async with Nextline(SOURCE) as nextline:
         task = asyncio.create_task(nextline.run())
-        nextline.send_pdb_command("continue", 1, 1)
+        print(task)
+        async for prompt_info in nextline.subscribe_prompt_info():
+            if not prompt_info.open:
+                continue
+            nextline.send_pdb_command("continue", 1, 1)
+            break
         await task
         nextline.exception()
         await nextline.reset()
         await nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
-        await nextline.run()
-
-
-async def test_repr(machine: AsyncMock):
-    del machine
-    async with Nextline(SOURCE) as nextline:
-        assert repr(nextline)
+        task = asyncio.create_task(nextline.run())
+        async for prompt_info in nextline.subscribe_prompt_info():
+            if not prompt_info.open:
+                continue
+            nextline.send_pdb_command("continue", 1, 1)
+            break
+        await task
 
 
 @pytest.mark.skip(reason='it blocks')
