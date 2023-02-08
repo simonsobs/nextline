@@ -165,6 +165,7 @@ class Context:
 
     async def finish(self) -> None:
         assert self._future
+        result, exc = None, None
         try:
             result, exc = await self._future
         except TypeError:
