@@ -6,6 +6,7 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from functools import partial
+from logging import getLogger
 from typing import Any, Optional
 
 from tblib import pickling_support
@@ -165,14 +166,28 @@ class Context:
 
     async def finish(self) -> None:
         assert self._future
-        result, exc = None, None
+
+        ret = None
         try:
-            result, exc = await self._future
-        except TypeError:
-            # The process was terminated.
-            pass
+            ret = await self._future
+        except BaseException:
+            logger = getLogger(__name__)
+            logger.exception('')
         finally:
             self._future = None
+
+        result, exc = None, None
+        if ret:
+            try:
+                result, exc = ret
+            except TypeError:
+                logger = getLogger(__name__)
+                logger.exception('')
+        else:
+            # The process was terminated.
+            logger = getLogger(__name__)
+            logger.debug(f'ret = {ret!r}')
+            pass
 
         self._run_result = RunResult(result, exc)
 
