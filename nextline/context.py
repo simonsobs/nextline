@@ -16,7 +16,7 @@ from .count import RunNoCounter
 from .process import QueueCommands, QueueRegistry, RunArg
 from .registrar import Registrar
 from .types import RunNo
-from .utils import MultiprocessingLogging, PubSub, RunInProcess, run_in_process
+from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
 
 pickling_support.install()
 
@@ -87,7 +87,7 @@ class Resource:
         )
         self.registrar = Registrar(self.registry, q_registry)
 
-    async def run(self, run_arg: RunArg) -> RunInProcess:
+    async def run(self, run_arg: RunArg) -> Running:
         func = partial(process.main, run_arg)
         return await run_in_process(func, self.executor_factory)
 
@@ -108,7 +108,7 @@ class Context:
         self.q_commands = self._resource.q_commands
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._future: Optional[RunInProcess] = None
+        self._future: Optional[Running] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -147,7 +147,7 @@ class Context:
         if run_no_start_from is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self) -> RunInProcess:
+    async def run(self) -> Running:
         self._future = await self._resource.run(self._run_arg)
         await self._registrar.run_start()
         return self._future

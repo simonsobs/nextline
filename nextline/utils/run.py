@@ -21,7 +21,7 @@ ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
 
 async def run_in_process(
     func: Callable[[], _T], executor_factory: Optional[ExecutorFactory] = None
-) -> RunInProcess[_T]:
+) -> Running[_T]:
     '''Call a function in a separate process and return an awaitable.
 
     Use functools.partial to pass arguments to the function.
@@ -97,11 +97,11 @@ async def run_in_process(
     task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
     await event.wait()
     assert process
-    ret = RunInProcess[_T](process=process, task=task)
+    ret = Running[_T](process=process, task=task)
     return ret
 
 
-class RunInProcess(Generic[_T]):
+class Running(Generic[_T]):
     def __init__(
         self,
         process: Process,
