@@ -122,12 +122,11 @@ class RunInProcess(Generic[_T]):
             self._process.kill()
 
     def __await__(self):
-        # NOTE: this method can be as simple as the following one line if it
-        # only awaits for the task:
-        #
-        # return self._task.__await__()
-        #
         # "yield from" is used to execute extra code.
+        # Otherwise, the method would be as simple as:
+        #
+        #   return self._task.__await__()
+        #
         # https://stackoverflow.com/a/48261042/7309855
 
         ret, exc = yield from self._task.__await__()
