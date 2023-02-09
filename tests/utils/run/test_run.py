@@ -12,21 +12,21 @@ def func_str() -> str:
 
 
 async def test_success(executor_factory: ExecutorFactory) -> None:
-    r = await run_in_process(executor_factory, func_str)
+    r = await run_in_process(func_str, executor_factory)
     assert 'foo' == await r
     assert r._process
     assert r._process.exitcode == 0
 
 
 async def test_default_executor() -> None:
-    r = await run_in_process(None, func_str)
+    r = await run_in_process(func_str)
     assert 'foo' == await r
     assert r._process
     assert r._process.exitcode == 0
 
 
 async def test_repr(executor_factory: ExecutorFactory) -> None:
-    r = await run_in_process(executor_factory, func_str)
+    r = await run_in_process(func_str, executor_factory)
     repr(r)
     await r
 
@@ -41,7 +41,7 @@ def func_raise() -> NoReturn:
 
 
 async def test_error(executor_factory: ExecutorFactory) -> None:
-    r = await run_in_process(executor_factory, func_raise)
+    r = await run_in_process(func_raise, executor_factory)
     with pytest.raises(MockError):
         await r
     assert r._process

@@ -36,7 +36,7 @@ def func_sleep() -> NoReturn:
 
 
 async def test_interrupt(executor_factory: ExecutorFactory, event: _EventType) -> None:
-    r = await run_in_process(executor_factory, func_sleep)
+    r = await run_in_process(func_sleep, executor_factory)
     event.wait()
     r.interrupt()
     with pytest.raises(KeyboardInterrupt):
@@ -46,7 +46,7 @@ async def test_interrupt(executor_factory: ExecutorFactory, event: _EventType) -
 
 
 async def test_terminate(executor_factory: ExecutorFactory, event: _EventType) -> None:
-    r = await run_in_process(executor_factory, func_sleep)
+    r = await run_in_process(func_sleep, executor_factory)
     event.wait()
     r.terminate()
     assert None is await r
@@ -55,7 +55,7 @@ async def test_terminate(executor_factory: ExecutorFactory, event: _EventType) -
 
 
 async def test_kill(executor_factory: ExecutorFactory, event: _EventType) -> None:
-    r = await run_in_process(executor_factory, func_sleep)
+    r = await run_in_process(func_sleep, executor_factory)
     event.wait()
     r.kill()
     assert None is await r
@@ -79,7 +79,7 @@ def func_catch_interrupt() -> str:
 async def test_interrupt_catch(
     executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
-    r = await run_in_process(executor_factory, func_catch_interrupt)
+    r = await run_in_process(func_catch_interrupt, executor_factory)
     event.wait()
     r.interrupt()
     assert "foo" == await r
@@ -112,7 +112,7 @@ def func_handle_terminate() -> str:
 async def test_terminate_handle(
     executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
-    r = await run_in_process(executor_factory, func_handle_terminate)
+    r = await run_in_process(func_handle_terminate, executor_factory)
     event.wait()
     r.terminate()
     assert "foo" == await r

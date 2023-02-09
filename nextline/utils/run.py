@@ -19,7 +19,7 @@ ExecutorFactory: TypeAlias = 'Callable[[], Executor]'
 
 
 async def run_in_process(
-    executor_factory: Optional[ExecutorFactory], func: Callable[[], _T]
+    func: Callable[[], _T], executor_factory: Optional[ExecutorFactory] = None
 ) -> RunInProcess[_T]:
     '''Call a function in a separate process and return an awaitable.
 
@@ -30,7 +30,7 @@ async def run_in_process(
     >>> async def simple_example():
     ...
     ...     # Run pow(2, 3), which returns 8, in a separate process.
-    ...     starting = run_in_process(None, partial(pow, 2, 3))
+    ...     starting = run_in_process(partial(pow, 2, 3))
     ...
     ...     # Wait for the process to start.
     ...     running = await starting

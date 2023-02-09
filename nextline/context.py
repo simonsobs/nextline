@@ -89,7 +89,7 @@ class Resource:
 
     async def run(self, run_arg: RunArg) -> RunInProcess:
         func = partial(process.main, run_arg)
-        return await run_in_process(self.executor_factory, func)
+        return await run_in_process(func, self.executor_factory)
 
     async def open(self):
         await self._mp_logging.open()
