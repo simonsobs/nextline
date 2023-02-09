@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
-from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from functools import partial
@@ -16,7 +16,7 @@ from typing_extensions import TypeAlias
 _T = TypeVar("_T")
 
 
-ExecutorFactory: TypeAlias = 'Callable[[], Executor]'
+ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
 
 
 async def run_in_process(
@@ -61,14 +61,14 @@ async def run_in_process(
             with executor_factory() as executor:
                 loop = asyncio.get_running_loop()
                 future = loop.run_in_executor(executor, func)
-                if isinstance(executor, ProcessPoolExecutor):
-                    process = list(executor._processes.values())[0]
-                if process:
-                    now = datetime.now(timezone.utc)
-                    now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-                    msg = f'Process ({process.pid}) created at {now_fmt}.'
-                    logger = getLogger(__name__)
-                    logger.info(msg)
+                process = list(executor._processes.values())[0]
+
+                now = datetime.now(timezone.utc)
+                now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
+                msg = f'Process ({process.pid}) created at {now_fmt}.'
+                logger = getLogger(__name__)
+                logger.info(msg)
+
                 event.set()
                 ret = None
                 exc = None
@@ -96,7 +96,7 @@ async def run_in_process(
 
     task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
     await event.wait()
-    # assert process   # None for ThreadPoolExecutor
+    assert process
     ret = RunInProcess[_T](process=process, task=task)
     return ret
 
@@ -104,7 +104,7 @@ async def run_in_process(
 class RunInProcess(Generic[_T]):
     def __init__(
         self,
-        process: Optional[Process],
+        process: Process,
         task: asyncio.Task[Tuple[Optional[_T], Optional[BaseException]]],
     ):
         self._process = process
@@ -114,16 +114,14 @@ class RunInProcess(Generic[_T]):
         return f"<{self.__class__.__name__} {self._process!r} {self._task}>"
 
     def interrupt(self) -> None:
-        if self._process and self._process.pid:
+        if self._process.pid:
             os.kill(self._process.pid, signal.SIGINT)
 
     def terminate(self) -> None:
-        if self._process:
-            self._process.terminate()
+        self._process.terminate()
 
     def kill(self) -> None:
-        if self._process:
-            self._process.kill()
+        self._process.kill()
 
     def __await__(self) -> Generator[None, None, Optional[_T]]:
         # "yield from" is used to execute extra code.

@@ -1,4 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from typing import NoReturn
 
@@ -23,18 +23,6 @@ async def test_default_executor() -> None:
     assert 'foo' == await r
     assert r._process
     assert r._process.exitcode == 0
-
-
-async def test_thread_executor() -> None:
-    r = await run_in_process(func_str, ThreadPoolExecutor)
-    assert r._process is None
-
-    # Signals are ignored
-    r.interrupt()
-    r.terminate()
-    r.kill()
-
-    assert 'foo' == await r
 
 
 async def test_repr(executor_factory: ExecutorFactory) -> None:
