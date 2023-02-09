@@ -60,7 +60,7 @@ class RunInProcess(Generic[_T]):
 
     def __init__(self, executor_factory: ExecutorFactory, func: Callable[[], _T]):
         self._executor_factory = executor_factory
-        self._func_call = func
+        self._func = func
         self._event = asyncio.Event()
         self._task = asyncio.create_task(self._run())
         self._process: Optional[Process] = None
@@ -77,7 +77,7 @@ class RunInProcess(Generic[_T]):
         try:
             with self._executor_factory() as executor:
                 loop = asyncio.get_running_loop()
-                self._future = loop.run_in_executor(executor, self._func_call)
+                self._future = loop.run_in_executor(executor, self._func)
                 if isinstance(executor, ProcessPoolExecutor):
                     self._process = list(executor._processes.values())[0]
                     now = datetime.now(timezone.utc)
