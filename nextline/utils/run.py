@@ -5,6 +5,7 @@ import os
 import signal
 from concurrent.futures import Executor, ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
+from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
 from multiprocessing import Process
@@ -79,8 +80,10 @@ class RunInProcess(Generic[_T]):
                 self._future = loop.run_in_executor(executor, self._func_call)
                 if isinstance(executor, ProcessPoolExecutor):
                     self._process = list(executor._processes.values())[0]
-                    self._logger.info(f'A process ({self._process.pid}) created.')
-                    # TODO: Get the process created time here.
+                    now = datetime.now(timezone.utc)
+                    now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
+                    msg = f'Process ({self._process.pid}) created at {now_fmt}.'
+                    self._logger.info(msg)
                 self._event.set()
                 try:
                     return await self._future
@@ -93,13 +96,14 @@ class RunInProcess(Generic[_T]):
         finally:
             if self._process:
                 pid = self._process.pid
+                now = datetime.now(timezone.utc)
+                now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
                 exitcode = self._process.exitcode
                 exit_fmt = f'{exitcode}'
-                if exitcode:
-                    if name := _exitcode_to_name.get(exitcode):
-                        exit_fmt = f'{exitcode} ({name})'
-                self._logger.info(f'The process ({pid}) exited: {exit_fmt}.')
-                # TODO: Get the process exited time here.
+                if exitcode and (name := _exitcode_to_name.get(exitcode)):
+                    exit_fmt = f'{exitcode} ({name})'
+                msg = f'Process ({pid}) exited at {now_fmt}. Exitcode: {exit_fmt}.'
+                self._logger.info(msg)
 
     def interrupt(self) -> None:
         if self._process and self._process.pid:
