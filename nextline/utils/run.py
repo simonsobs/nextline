@@ -10,29 +10,27 @@ from logging import getLogger
 from multiprocessing import Process
 from typing import Callable, Generic, Optional, TypeVar
 
-from typing_extensions import ParamSpec, TypeAlias
+from typing_extensions import TypeAlias
 
 _T = TypeVar("_T")
-_P = ParamSpec("_P")
 
 
 ExecutorFactory: TypeAlias = 'Callable[[], Executor]'
 
 
 async def run_in_process(
-    executor_factory: Optional[ExecutorFactory],
-    func: Callable[_P, _T],
-    *func_args: _P.args,
-    **func_kwargs: _P.kwargs,
-) -> RunInProcess[_T, _P]:
-    '''Call a function with arguments in a separate process and return an awaitable.
+    executor_factory: Optional[ExecutorFactory], func: Callable[[], _T]
+) -> RunInProcess[_T]:
+    '''Call a function in a separate process and return an awaitable.
+
+    Use functools.partial to pass arguments to the function.
 
     Example:
 
     >>> async def simple_example():
     ...
     ...     # Run pow(2, 3), which returns 8, in a separate process.
-    ...     starting = run_in_process(None, pow, 2, 3)
+    ...     starting = run_in_process(None, partial(pow, 2, 3))
     ...
     ...     # Wait for the process to start.
     ...     running = await starting
@@ -49,31 +47,19 @@ async def run_in_process(
 
     if executor_factory is None:
         executor_factory = partial(ProcessPoolExecutor, max_workers=1)
-    return await RunInProcess.create(executor_factory, func, *func_args, **func_kwargs)
+    return await RunInProcess.create(executor_factory, func)
 
 
-class RunInProcess(Generic[_T, _P]):
+class RunInProcess(Generic[_T]):
     @classmethod
-    async def create(
-        cls,
-        executor_factory: ExecutorFactory,
-        func: Callable[_P, _T],
-        *func_args: _P.args,
-        **func_kwargs: _P.kwargs,
-    ):
-        self = cls(executor_factory, func, *func_args, **func_kwargs)
+    async def create(cls, executor_factory: ExecutorFactory, func: Callable[[], _T]):
+        self = cls(executor_factory, func)
         assert await self._event.wait()
         return self
 
-    def __init__(
-        self,
-        executor_factory: ExecutorFactory,
-        func: Callable[_P, _T],
-        *func_args: _P.args,
-        **func_kwargs: _P.kwargs,
-    ):
+    def __init__(self, executor_factory: ExecutorFactory, func: Callable[[], _T]):
         self._executor_factory = executor_factory
-        self._func_call = partial(func, *func_args, **func_kwargs)
+        self._func_call = func
         self._event = asyncio.Event()
         self._task = asyncio.create_task(self._run())
         self._process: Optional[Process] = None
