@@ -79,17 +79,16 @@ class Resource:
             self._mp_logging.initializer,
             partial(process.set_queues, self.q_commands, q_registry),
         )
-        executor_factory = partial(
+        self.executor_factory = partial(
             ProcessPoolExecutor,
             max_workers=1,
             mp_context=mp_context,
             initializer=initializer,
         )
-        self._runner = partial(run_in_process, executor_factory, process.main)  # type: ignore
         self.registrar = Registrar(self.registry, q_registry)
 
     async def run(self, run_arg: RunArg) -> RunInProcess:
-        return await self._runner(run_arg)
+        return await run_in_process(self.executor_factory, process.main, run_arg)
 
     async def open(self):
         await self._mp_logging.open()
