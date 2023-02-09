@@ -5,6 +5,7 @@ import os
 import signal
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
@@ -39,7 +40,7 @@ async def run_in_process(
     ...     # Wait for the process to finish.
     ...     result = await running
     ...
-    ...     return result
+    ...     return result.returned
 
     >>> asyncio.run(simple_example())
     8
@@ -101,6 +102,12 @@ async def run_in_process(
     return ret
 
 
+@dataclass
+class Result(Generic[_T]):
+    returned: Optional[_T]
+    raised: Optional[BaseException]
+
+
 class Running(Generic[_T]):
     def __init__(
         self,
@@ -126,18 +133,10 @@ class Running(Generic[_T]):
     def kill(self) -> None:
         self._process.kill()
 
-    def __await__(self) -> Generator[None, None, Optional[_T]]:
-        # "yield from" is used to execute extra code.
-        # Otherwise, the method would be as simple as:
-        #
-        #   return self._task.__await__()
-        #
-        # https://stackoverflow.com/a/48261042/7309855
-
+    def __await__(self) -> Generator[None, None, Result[_T]]:
+        # "yield from" in "__await__": https://stackoverflow.com/a/48261042/7309855
         ret, exc = yield from self._task.__await__()
-        if exc:
-            raise exc
-        return ret
+        return Result(returned=ret, raised=exc)
 
 
 # Originally copied from

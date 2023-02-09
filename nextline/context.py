@@ -179,7 +179,7 @@ class Context:
         result, exc = None, None
         if ret:
             try:
-                result, exc = ret
+                result, exc = ret.returned  # type: ignore
             except TypeError:
                 logger = getLogger(__name__)
                 logger.exception('')
