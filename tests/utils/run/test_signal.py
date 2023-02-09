@@ -49,7 +49,7 @@ async def test_terminate(executor_factory: ExecutorFactory, event: _EventType) -
     r = await run_in_process(func_sleep, executor_factory)
     event.wait()
     r.terminate()
-    assert None is await r
+    assert None is await r  # type: ignore
     assert r._process
     assert r._process.exitcode == -signal.SIGTERM
 
@@ -58,7 +58,7 @@ async def test_kill(executor_factory: ExecutorFactory, event: _EventType) -> Non
     r = await run_in_process(func_sleep, executor_factory)
     event.wait()
     r.kill()
-    assert None is await r
+    assert None is await r  # type: ignore
     assert r._process
     assert r._process.exitcode == -signal.SIGKILL
 

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
 from multiprocessing import Process
-from typing import Callable, Generic, Optional, Tuple, TypeVar
+from typing import Callable, Generator, Generic, Optional, Tuple, TypeVar
 
 from typing_extensions import TypeAlias
 
@@ -102,7 +102,11 @@ async def run_in_process(
 
 
 class RunInProcess(Generic[_T]):
-    def __init__(self, process: Optional[Process], task: asyncio.Task):
+    def __init__(
+        self,
+        process: Optional[Process],
+        task: asyncio.Task[Tuple[Optional[_T], Optional[BaseException]]],
+    ):
         self._process = process
         self._task = task
 
@@ -121,7 +125,7 @@ class RunInProcess(Generic[_T]):
         if self._process:
             self._process.kill()
 
-    def __await__(self):
+    def __await__(self) -> Generator[None, None, Optional[_T]]:
         # "yield from" is used to execute extra code.
         # Otherwise, the method would be as simple as:
         #
