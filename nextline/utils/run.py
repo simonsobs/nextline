@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
 from multiprocessing import Process
-from typing import Callable, Generic, Optional, TypeVar
+from typing import Callable, Generic, Optional, Tuple, TypeVar
 
 from typing_extensions import TypeAlias
 
@@ -48,62 +48,66 @@ async def run_in_process(
 
     if executor_factory is None:
         executor_factory = partial(ProcessPoolExecutor, max_workers=1)
-    return await RunInProcess.create(executor_factory, func)
 
+    process: Optional[Process] = None
+    event = asyncio.Event()
 
-class RunInProcess(Generic[_T]):
-    @classmethod
-    async def create(cls, executor_factory: ExecutorFactory, func: Callable[[], _T]):
-        self = cls(executor_factory, func)
-        assert await self._event.wait()
-        return self
-
-    def __init__(self, executor_factory: ExecutorFactory, func: Callable[[], _T]):
-        self._executor_factory = executor_factory
-        self._func = func
-        self._event = asyncio.Event()
-        self._task = asyncio.create_task(self._run())
-        self._process: Optional[Process] = None
-        self._future: Optional[asyncio.Future] = None
-        self._exc: Optional[BaseException] = None
-        self._logger = getLogger(__name__)
-
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self._process!r} {self._future}>"
-
-    async def _run(self) -> Optional[_T]:
-        '''Called in __init__(), awaited in __await__().'''
+    async def _run(
+        executor_factory: ExecutorFactory, func: Callable[[], _T]
+    ) -> Tuple[Optional[_T], Optional[BaseException]]:
+        nonlocal process
 
         try:
-            with self._executor_factory() as executor:
+            with executor_factory() as executor:
                 loop = asyncio.get_running_loop()
-                self._future = loop.run_in_executor(executor, self._func)
+                future = loop.run_in_executor(executor, func)
                 if isinstance(executor, ProcessPoolExecutor):
-                    self._process = list(executor._processes.values())[0]
+                    process = list(executor._processes.values())[0]
+                if process:
                     now = datetime.now(timezone.utc)
                     now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-                    msg = f'Process ({self._process.pid}) created at {now_fmt}.'
-                    self._logger.info(msg)
-                self._event.set()
+                    msg = f'Process ({process.pid}) created at {now_fmt}.'
+                    logger = getLogger(__name__)
+                    logger.info(msg)
+                event.set()
+                ret = None
+                exc = None
                 try:
-                    return await self._future
+                    ret = await future
                 except BrokenProcessPool:
                     # NOTE: Not possible to use "as" for unknown reason.
-                    return None
+                    pass
                 except BaseException as e:
-                    self._exc = e
-                    return None
+                    exc = e
+                return ret, exc
+
         finally:
-            if self._process:
-                pid = self._process.pid
+            if process:
+                pid = process.pid
                 now = datetime.now(timezone.utc)
                 now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-                exitcode = self._process.exitcode
+                exitcode = process.exitcode
                 exit_fmt = f'{exitcode}'
                 if exitcode and (name := _exitcode_to_name.get(exitcode)):
                     exit_fmt = f'{exitcode} ({name})'
                 msg = f'Process ({pid}) exited at {now_fmt}. Exitcode: {exit_fmt}.'
-                self._logger.info(msg)
+                logger = getLogger(__name__)
+                logger.info(msg)
+
+    task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
+    await event.wait()
+    # assert process   # None for ThreadPoolExecutor
+    ret = RunInProcess[_T](process=process, task=task)
+    return ret
+
+
+class RunInProcess(Generic[_T]):
+    def __init__(self, process: Optional[Process], task: asyncio.Task):
+        self._process = process
+        self._task = task
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {self._process!r} {self._task}>"
 
     def interrupt(self) -> None:
         if self._process and self._process.pid:
@@ -126,9 +130,9 @@ class RunInProcess(Generic[_T]):
         # "yield from" is used to execute extra code.
         # https://stackoverflow.com/a/48261042/7309855
 
-        ret = yield from self._task.__await__()
-        if self._exc:
-            raise self._exc
+        ret, exc = yield from self._task.__await__()
+        if exc:
+            raise exc
         return ret
 
 
