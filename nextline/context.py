@@ -88,7 +88,8 @@ class Resource:
         self.registrar = Registrar(self.registry, q_registry)
 
     async def run(self, run_arg: RunArg) -> RunInProcess:
-        return await run_in_process(self.executor_factory, process.main, run_arg)
+        func = partial(process.main, run_arg)
+        return await run_in_process(self.executor_factory, func)
 
     async def open(self):
         await self._mp_logging.open()
