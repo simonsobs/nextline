@@ -114,8 +114,11 @@ class Running(Generic[_T]):
         return f"<{self.__class__.__name__} {self._process!r} {self._task}>"
 
     def interrupt(self) -> None:
+        self.send_signal(signal.SIGINT)
+
+    def send_signal(self, sig: int) -> None:
         if self._process.pid:
-            os.kill(self._process.pid, signal.SIGINT)
+            os.kill(self._process.pid, sig)
 
     def terminate(self) -> None:
         self._process.terminate()
