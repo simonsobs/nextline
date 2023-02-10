@@ -5,6 +5,8 @@ from contextlib import contextmanager
 from logging import getLogger
 from typing import Any, Callable, Set, TypedDict, TypeVar
 
+from nextline.types import RunNo
+
 from . import script
 from .call import sys_trace
 from .callback import Callback, RegistrarProxy
@@ -35,6 +37,16 @@ def run_(
         return RunResult(ret=None, exc=e)
 
     func = script.compose(code)
+
+    return run_with_trace(run_no, func, q_commands, q_registry)
+
+
+def run_with_trace(
+    run_no: RunNo,
+    func: Callable[[], Any],
+    q_commands: QueueCommands,
+    q_registry: QueueRegistry,
+) -> RunResult:
 
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
