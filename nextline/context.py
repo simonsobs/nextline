@@ -70,26 +70,27 @@ class RunResult:
 class Resource:
     def __init__(self) -> None:
         self.registry = PubSub[Any, Any]()
-        mp_context = mp.get_context("spawn")
-        self.q_commands: QueueCommands = mp_context.Queue()
-        q_registry: QueueRegistry = mp_context.Queue()
-        self._mp_logging = MultiprocessingLogging(mp_context=mp_context)
-        initializer = partial(
-            _call_all,
-            self._mp_logging.initializer,
-            partial(process.set_queues, self.q_commands, q_registry),
-        )
-        self.executor_factory = partial(
-            ProcessPoolExecutor,
-            max_workers=1,
-            mp_context=mp_context,
-            initializer=initializer,
-        )
-        self.registrar = Registrar(self.registry, q_registry)
+        self.q_commands: QueueCommands | None = None
+        self._mp_context = mp.get_context('spawn')
+        self._q_registry: QueueRegistry = self._mp_context.Queue()
+        self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
+        self.registrar = Registrar(self.registry, self._q_registry)
 
     async def run(self, run_arg: RunArg) -> Running:
         func = partial(process.main, run_arg)
-        return await run_in_process(func, self.executor_factory)
+        self.q_commands = self._mp_context.Queue()
+        initializer = partial(
+            _call_all,
+            self._mp_logging.initializer,
+            partial(process.set_queues, self.q_commands, self._q_registry),
+        )
+        executor_factory = partial(
+            ProcessPoolExecutor,
+            max_workers=1,
+            mp_context=self._mp_context,
+            initializer=initializer,
+        )
+        return await run_in_process(func, executor_factory)
 
     async def open(self):
         await self._mp_logging.open()
@@ -150,6 +151,7 @@ class Context:
     async def run(self) -> Running:
         self._running = await self._resource.run(self._run_arg)
         self._q_commands = self._resource.q_commands
+        assert self._q_commands
         await self._registrar.run_start()
         return self._running
 
