@@ -3,6 +3,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
+from types import CodeType
 from typing import Any, Callable, Set, TypedDict, TypeVar
 
 from nextline.types import RunNo
@@ -28,8 +29,8 @@ def run_(
 
     run_no = run_arg['run_no']
 
-    statement = run_arg.get('statement')
-    filename = run_arg.get('script_file_name', '<string>')
+    statement = run_arg['statement']
+    filename = run_arg['filename']
 
     try:
         code = _compile(statement, filename)
@@ -94,14 +95,15 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
             yield trace
 
 
-def _compile(code, filename):
+def _compile(code: CodeType | str, filename: str) -> CodeType:
     if isinstance(code, str):
-        code = compile(code, filename, 'exec')
+        return compile(code, filename, 'exec')
     return code
 
 
 @contextmanager
 def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
+    '''Pass the Pdb commands from the main process to the Pdb instances.'''
     logger = getLogger(__name__)
 
     def fn() -> None:
@@ -122,6 +124,7 @@ def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
 
 
 def try_again_on_error(func: Callable[[], _T]) -> _T:
+    '''Keep trying until the function succeeds without an exception.'''
     while True:
         try:
             return func()
