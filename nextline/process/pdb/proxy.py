@@ -17,10 +17,10 @@ from .stream import StreamIn, StreamOut
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.run import Context
+    from nextline.process.run import TraceContext
 
 
-def PdbInterfaceTraceFuncFactory(context: Context) -> Callable[[], TraceFunc]:
+def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFunc]:
 
     trace_no_counter = TraceNoCounter(1)
     prompt_no_counter = PromptNoCounter(1)
@@ -44,7 +44,7 @@ class PdbInterface:
     def __init__(
         self,
         trace_no: TraceNo,
-        context: Context,
+        context: TraceContext,
         prompt_no_counter: Callable[[], PromptNo],
     ):
         self._trace_no = trace_no

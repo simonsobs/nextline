@@ -14,7 +14,7 @@ from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg, RunResult
 _T = TypeVar("_T")
 
 
-class Context(TypedDict):
+class TraceContext(TypedDict):
     callback: Callback
     pdb_ci_map: PdbCiMap
     modules_to_trace: Set[str]
@@ -42,7 +42,7 @@ def run_(
         modules_to_trace=modules_to_trace,
     ) as callback:
 
-        context = Context(
+        context = TraceContext(
             callback=callback,
             pdb_ci_map=pdb_ci_map,
             modules_to_trace=modules_to_trace,

@@ -16,7 +16,7 @@ from .pdb.proxy import PdbInterfaceTraceFuncFactory
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from .run import Context
+    from .run import TraceContext
 
 
 MODULES_TO_SKIP = {
@@ -47,7 +47,7 @@ MODULES_TO_SKIP = {
 }
 
 
-def Trace(context: Context) -> TraceFunc:
+def Trace(context: TraceContext) -> TraceFunc:
     """Create the main trace function"""
 
     modules_to_trace = context["modules_to_trace"]
