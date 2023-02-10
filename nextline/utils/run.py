@@ -20,70 +20,9 @@ _T = TypeVar("_T")
 ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
 
 
-async def run_in_process(
-    func: Callable[[], _T], executor_factory: Optional[ExecutorFactory] = None
-) -> Running[_T]:
-    '''Call a function in a separate process and return an awaitable.
-
-    Use functools.partial to pass arguments to the function.
-
-    Example:
-
-    >>> async def simple_example():
-    ...
-    ...     # Run pow(2, 3), which returns 8, in a separate process.
-    ...     starting = run_in_process(partial(pow, 2, 3))
-    ...
-    ...     # Wait for the process to start.
-    ...     running = await starting
-    ...
-    ...     # Wait for the process to finish.
-    ...     result = await running
-    ...
-    ...     return result.returned
-
-    >>> asyncio.run(simple_example())
-    8
-
-    '''
-
-    if executor_factory is None:
-        executor_factory = partial(ProcessPoolExecutor, max_workers=1)
-
-    process: Optional[Process] = None
-    event = asyncio.Event()
-
-    async def _run(
-        executor_factory: ExecutorFactory, func: Callable[[], _T]
-    ) -> Tuple[Optional[_T], Optional[BaseException]]:
-        nonlocal process
-
-        with executor_factory() as executor:
-            loop = asyncio.get_running_loop()
-            future = loop.run_in_executor(executor, func)
-            process = list(executor._processes.values())[0]
-
-            event.set()
-            ret = None
-            exc = None
-            try:
-                ret = await future
-            except BrokenProcessPool:
-                # NOTE: Not possible to use "as" for unknown reason.
-                pass
-            except BaseException as e:
-                exc = e
-            return ret, exc
-
-    task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
-    await event.wait()
-    assert process
-    ret = Running[_T](process=process, task=task)
-    return ret
-
-
 @dataclass
 class Result(Generic[_T]):
+    '''An object returned by Running after the process has exited.'''
     returned: Optional[_T]
     raised: Optional[BaseException]
     process: Process
@@ -92,6 +31,7 @@ class Result(Generic[_T]):
 
 
 class Running(Generic[_T]):
+    '''An awaitable return value of `run_in_process()`.'''
     def __init__(
         self,
         process: Process,
@@ -155,6 +95,68 @@ class Running(Generic[_T]):
             process_created_at=self.process_created_at,
             process_exited_at=process_exited_at,
         )
+
+
+async def run_in_process(
+    func: Callable[[], _T], executor_factory: Optional[ExecutorFactory] = None
+) -> Running[_T]:
+    '''Call a function in a separate process and return an awaitable.
+
+    Use functools.partial to pass arguments to the function.
+
+    Example:
+
+    >>> async def simple_example():
+    ...
+    ...     # Run pow(2, 3), which returns 8, in a separate process.
+    ...     starting = run_in_process(partial(pow, 2, 3))
+    ...
+    ...     # Wait for the process to start.
+    ...     running = await starting
+    ...
+    ...     # Wait for the process to finish.
+    ...     result = await running
+    ...
+    ...     return result.returned
+
+    >>> asyncio.run(simple_example())
+    8
+
+    '''
+
+    if executor_factory is None:
+        executor_factory = partial(ProcessPoolExecutor, max_workers=1)
+
+    process: Optional[Process] = None
+    event = asyncio.Event()
+
+    async def _run(
+        executor_factory: ExecutorFactory, func: Callable[[], _T]
+    ) -> Tuple[Optional[_T], Optional[BaseException]]:
+        nonlocal process
+
+        with executor_factory() as executor:
+            loop = asyncio.get_running_loop()
+            future = loop.run_in_executor(executor, func)
+            process = list(executor._processes.values())[0]
+
+            event.set()
+            ret = None
+            exc = None
+            try:
+                ret = await future
+            except BrokenProcessPool:
+                # NOTE: Not possible to use "as" for unknown reason.
+                pass
+            except BaseException as e:
+                exc = e
+            return ret, exc
+
+    task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
+    await event.wait()
+    assert process
+    ret = Running[_T](process=process, task=task)
+    return ret
 
 
 # Originally copied from
