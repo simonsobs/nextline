@@ -85,9 +85,12 @@ def _compile(code, filename):
 
 @contextmanager
 def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
+    logger = getLogger(__name__)
+
     def fn() -> None:
         assert q_commands
         while m := q_commands.get():
+            logger.debug(f'q_commands.get() -> {m!r}')
             command, prompt_no, trace_no = m
             pdb_ci = pdb_ci_map[trace_no]
             pdb_ci(command, prompt_no)
