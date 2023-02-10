@@ -36,31 +36,33 @@ def func_sleep() -> NoReturn:
 
 
 async def test_interrupt(executor_factory: ExecutorFactory, event: _EventType) -> None:
-    r = await run_in_process(func_sleep, executor_factory)
+    running = await run_in_process(func_sleep, executor_factory)
     event.wait()
-    r.interrupt()
-    with pytest.raises(KeyboardInterrupt):
-        await r
-    assert r._process
-    assert r._process.exitcode == 0
+    running.interrupt()
+    result = await running
+    assert running.process
+    assert running.process.exitcode == 0
+    assert isinstance(result.raised, KeyboardInterrupt)
 
 
 async def test_terminate(executor_factory: ExecutorFactory, event: _EventType) -> None:
-    r = await run_in_process(func_sleep, executor_factory)
+    running = await run_in_process(func_sleep, executor_factory)
     event.wait()
-    r.terminate()
-    assert None is await r  # type: ignore
-    assert r._process
-    assert r._process.exitcode == -signal.SIGTERM
+    running.terminate()
+    result = await running
+    assert running.process
+    assert running.process.exitcode == -signal.SIGTERM
+    assert result
 
 
 async def test_kill(executor_factory: ExecutorFactory, event: _EventType) -> None:
-    r = await run_in_process(func_sleep, executor_factory)
+    running = await run_in_process(func_sleep, executor_factory)
     event.wait()
-    r.kill()
-    assert None is await r  # type: ignore
-    assert r._process
-    assert r._process.exitcode == -signal.SIGKILL
+    running.kill()
+    result = await running
+    assert running.process
+    assert running.process.exitcode == -signal.SIGKILL
+    assert result
 
 
 #
@@ -79,12 +81,13 @@ def func_catch_interrupt() -> str:
 async def test_interrupt_catch(
     executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
-    r = await run_in_process(func_catch_interrupt, executor_factory)
+    running = await run_in_process(func_catch_interrupt, executor_factory)
     event.wait()
-    r.interrupt()
-    assert "foo" == await r
-    assert r._process
-    assert r._process.exitcode == 0
+    running.interrupt()
+    result = await running
+    assert running.process
+    assert running.process.exitcode == 0
+    assert 'foo' == result.returned
 
 
 #
@@ -112,12 +115,13 @@ def func_handle_terminate() -> str:
 async def test_terminate_handle(
     executor_factory: ExecutorFactory, event: _EventType
 ) -> None:
-    r = await run_in_process(func_handle_terminate, executor_factory)
+    running = await run_in_process(func_handle_terminate, executor_factory)
     event.wait()
-    r.terminate()
-    assert "foo" == await r
-    assert r._process
-    assert r._process.exitcode == 0
+    running.terminate()
+    result = await running
+    assert running.process
+    assert running.process.exitcode == 0
+    assert 'foo' == result.returned
 
 
 @pytest.fixture

@@ -15,7 +15,7 @@ from . import process
 from .count import RunNoCounter
 from .process import QueueCommands, QueueRegistry, RunArg
 from .registrar import Registrar
-from .types import RunNo
+from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
 
 pickling_support.install()
@@ -70,26 +70,27 @@ class RunResult:
 class Resource:
     def __init__(self) -> None:
         self.registry = PubSub[Any, Any]()
-        mp_context = mp.get_context("spawn")
-        self.q_commands: QueueCommands = mp_context.Queue()
-        q_registry: QueueRegistry = mp_context.Queue()
-        self._mp_logging = MultiprocessingLogging(mp_context=mp_context)
-        initializer = partial(
-            _call_all,
-            self._mp_logging.initializer,
-            partial(process.set_queues, self.q_commands, q_registry),
-        )
-        self.executor_factory = partial(
-            ProcessPoolExecutor,
-            max_workers=1,
-            mp_context=mp_context,
-            initializer=initializer,
-        )
-        self.registrar = Registrar(self.registry, q_registry)
+        self.q_commands: QueueCommands | None = None
+        self._mp_context = mp.get_context('spawn')
+        self._q_registry: QueueRegistry = self._mp_context.Queue()
+        self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
+        self.registrar = Registrar(self.registry, self._q_registry)
 
     async def run(self, run_arg: RunArg) -> Running:
         func = partial(process.main, run_arg)
-        return await run_in_process(func, self.executor_factory)
+        self.q_commands = self._mp_context.Queue()
+        initializer = partial(
+            _call_all,
+            self._mp_logging.initializer,
+            partial(process.set_queues, self.q_commands, self._q_registry),
+        )
+        executor_factory = partial(
+            ProcessPoolExecutor,
+            max_workers=1,
+            mp_context=self._mp_context,
+            initializer=initializer,
+        )
+        return await run_in_process(func, executor_factory)
 
     async def open(self):
         await self._mp_logging.open()
@@ -105,16 +106,16 @@ class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._resource = Resource()
         self.registry = self._resource.registry
-        self.q_commands = self._resource.q_commands
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._future: Optional[Running] = None
+        self._running: Optional[Running] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
             filename=SCRIPT_FILE_NAME,
         )
         self._run_result: RunResult | None = None
+        self._q_commands: QueueCommands | None = None
 
     async def start(self):
         await self._resource.open()
@@ -148,38 +149,40 @@ class Context:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
     async def run(self) -> Running:
-        self._future = await self._resource.run(self._run_arg)
+        self._running = await self._resource.run(self._run_arg)
+        self._q_commands = self._resource.q_commands
+        assert self._q_commands
         await self._registrar.run_start()
-        return self._future
+        return self._running
+
+    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+        logger = getLogger(__name__)
+        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
+        if self._q_commands:
+            self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
-        if self._future:
-            self._future.interrupt()
+        if self._running:
+            self._running.interrupt()
 
     def terminate(self) -> None:
-        if self._future:
-            self._future.terminate()
+        if self._running:
+            self._running.terminate()
 
     def kill(self) -> None:
-        if self._future:
-            self._future.kill()
+        if self._running:
+            self._running.kill()
 
     async def finish(self) -> None:
-        assert self._future
-
-        ret = None
-        try:
-            ret = await self._future
-        except BaseException:
-            logger = getLogger(__name__)
-            logger.exception('')
-        finally:
-            self._future = None
+        assert self._running
+        ret = await self._running
+        self._q_commands = None
+        self._running = None
 
         result, exc = None, None
-        if ret:
+        if ret.returned:
             try:
-                result, exc = ret
+                result, exc = ret.returned
             except TypeError:
                 logger = getLogger(__name__)
                 logger.exception('')

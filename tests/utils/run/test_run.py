@@ -12,23 +12,26 @@ def func_str() -> str:
 
 
 async def test_success(executor_factory: ExecutorFactory) -> None:
-    r = await run_in_process(func_str, executor_factory)
-    assert 'foo' == await r
-    assert r._process
-    assert r._process.exitcode == 0
+    running = await run_in_process(func_str, executor_factory)
+    assert running.process
+    assert running.process_created_at
+    result = await running
+    assert running.process.exitcode == 0
+    assert 'foo' == result.returned
 
 
 async def test_default_executor() -> None:
-    r = await run_in_process(func_str)
-    assert 'foo' == await r
-    assert r._process
-    assert r._process.exitcode == 0
+    running = await run_in_process(func_str)
+    result = await running
+    assert running.process
+    assert running.process.exitcode == 0
+    assert 'foo' == result.returned
 
 
 async def test_repr(executor_factory: ExecutorFactory) -> None:
-    r = await run_in_process(func_str, executor_factory)
-    repr(r)
-    await r
+    running = await run_in_process(func_str, executor_factory)
+    repr(running)
+    await running
 
 
 #
@@ -41,11 +44,11 @@ def func_raise() -> NoReturn:
 
 
 async def test_error(executor_factory: ExecutorFactory) -> None:
-    r = await run_in_process(func_raise, executor_factory)
-    with pytest.raises(MockError):
-        await r
-    assert r._process
-    assert r._process.exitcode == 0
+    running = await run_in_process(func_raise, executor_factory)
+    result = await running
+    assert running.process
+    assert running.process.exitcode == 0
+    assert isinstance(result.raised, MockError)
 
 
 @pytest.fixture
