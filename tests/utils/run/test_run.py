@@ -14,7 +14,7 @@ def func_str() -> str:
 async def test_success(executor_factory: ExecutorFactory) -> None:
     running = await run_in_process(func_str, executor_factory)
     assert running.process
-    assert running.created_at
+    assert running.process_created_at
     result = await running
     assert running.process.exitcode == 0
     assert 'foo' == result.returned

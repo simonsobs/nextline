@@ -96,20 +96,20 @@ class Running(Generic[_T]):
     ):
         self.process = process
         self._task = task
-        self.created_at = datetime.now(timezone.utc)
-        self._created_at_fmt = self._format_time(self.created_at)
+        self.process_created_at = datetime.now(timezone.utc)
+        self._process_created_at_fmt = self._format_time(self.process_created_at)
         self._log_created()
 
     def __repr__(self):
         ret = (
             f'<{self.__class__.__name__}'
             f' pid={self.process.pid!r}'
-            f' created_at="{self._created_at_fmt}">'
+            f' created_at="{self._process_created_at_fmt}">'
         )
         return ret
 
     def _log_created(self) -> None:
-        msg = f'Process ({self.process.pid}) created at {self._created_at_fmt}.'
+        msg = f'Process ({self.process.pid}) created at {self._process_created_at_fmt}.'
         logger = getLogger()
         logger.info(msg)
 
