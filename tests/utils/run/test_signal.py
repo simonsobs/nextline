@@ -40,8 +40,8 @@ async def test_interrupt(executor_factory: ExecutorFactory, event: _EventType) -
     event.wait()
     running.interrupt()
     result = await running
-    assert running._process
-    assert running._process.exitcode == 0
+    assert running.process
+    assert running.process.exitcode == 0
     assert isinstance(result.raised, KeyboardInterrupt)
 
 
@@ -50,8 +50,8 @@ async def test_terminate(executor_factory: ExecutorFactory, event: _EventType) -
     event.wait()
     running.terminate()
     result = await running
-    assert running._process
-    assert running._process.exitcode == -signal.SIGTERM
+    assert running.process
+    assert running.process.exitcode == -signal.SIGTERM
     assert result
 
 
@@ -60,8 +60,8 @@ async def test_kill(executor_factory: ExecutorFactory, event: _EventType) -> Non
     event.wait()
     running.kill()
     result = await running
-    assert running._process
-    assert running._process.exitcode == -signal.SIGKILL
+    assert running.process
+    assert running.process.exitcode == -signal.SIGKILL
     assert result
 
 
@@ -85,8 +85,8 @@ async def test_interrupt_catch(
     event.wait()
     running.interrupt()
     result = await running
-    assert running._process
-    assert running._process.exitcode == 0
+    assert running.process
+    assert running.process.exitcode == 0
     assert 'foo' == result.returned
 
 
@@ -119,8 +119,8 @@ async def test_terminate_handle(
     event.wait()
     running.terminate()
     result = await running
-    assert running._process
-    assert running._process.exitcode == 0
+    assert running.process
+    assert running.process.exitcode == 0
     assert 'foo' == result.returned
 
 

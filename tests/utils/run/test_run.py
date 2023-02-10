@@ -13,17 +13,18 @@ def func_str() -> str:
 
 async def test_success(executor_factory: ExecutorFactory) -> None:
     running = await run_in_process(func_str, executor_factory)
+    assert running.process
+    assert running.created_at
     result = await running
-    assert running._process
-    assert running._process.exitcode == 0
+    assert running.process.exitcode == 0
     assert 'foo' == result.returned
 
 
 async def test_default_executor() -> None:
     running = await run_in_process(func_str)
     result = await running
-    assert running._process
-    assert running._process.exitcode == 0
+    assert running.process
+    assert running.process.exitcode == 0
     assert 'foo' == result.returned
 
 
@@ -45,8 +46,8 @@ def func_raise() -> NoReturn:
 async def test_error(executor_factory: ExecutorFactory) -> None:
     running = await run_in_process(func_raise, executor_factory)
     result = await running
-    assert running._process
-    assert running._process.exitcode == 0
+    assert running.process
+    assert running.process.exitcode == 0
     assert isinstance(result.raised, MockError)
 
 

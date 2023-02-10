@@ -94,7 +94,7 @@ class Running(Generic[_T]):
         process: Process,
         task: asyncio.Task[Tuple[Optional[_T], Optional[BaseException]]],
     ):
-        self._process = process
+        self.process = process
         self._task = task
 
         self.created_at = datetime.now(timezone.utc)
@@ -102,36 +102,36 @@ class Running(Generic[_T]):
 
     def _log_created(self) -> None:
         time_fmt = self.created_at.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-        msg = f'Process ({self._process.pid}) created at {time_fmt}.'
+        msg = f'Process ({self.process.pid}) created at {time_fmt}.'
         logger = getLogger(__name__)
         logger.info(msg)
 
     def _log_exited(self, now: datetime) -> None:
         time_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-        exitcode = self._process.exitcode
+        exitcode = self.process.exitcode
         exit_fmt = f'{exitcode}'
         if exitcode and (name := _exitcode_to_name.get(exitcode)):
             exit_fmt = f'{exitcode} ({name})'
-        pid = self._process.pid
+        pid = self.process.pid
         msg = f'Process ({pid}) exited at {time_fmt}. Exitcode: {exit_fmt}.'
         logger = getLogger(__name__)
         logger.info(msg)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self._process!r} {self._task}>"
+        return f"<{self.__class__.__name__} {self.process!r} {self._task}>"
 
     def interrupt(self) -> None:
         self.send_signal(signal.SIGINT)
 
     def send_signal(self, sig: int) -> None:
-        if self._process.pid:
-            os.kill(self._process.pid, sig)
+        if self.process.pid:
+            os.kill(self.process.pid, sig)
 
     def terminate(self) -> None:
-        self._process.terminate()
+        self.process.terminate()
 
     def kill(self) -> None:
-        self._process.kill()
+        self.process.kill()
 
     def __await__(self) -> Generator[None, None, Result[_T]]:
         # "yield from" in "__await__": https://stackoverflow.com/a/48261042/7309855
