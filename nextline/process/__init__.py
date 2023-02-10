@@ -9,7 +9,6 @@ __all__ = [
     'main',
 ]
 
-from typing import Any, Tuple
 
 from .run import run_
 from .types import QueueCommands, QueueRegistry, RunArg, RunResult
@@ -25,7 +24,7 @@ def set_queues(q_commands: QueueCommands, q_registry: QueueRegistry) -> None:
     _q_registry = q_registry
 
 
-def main(run_arg: RunArg) -> Tuple[Any, BaseException | None]:
+def main(run_arg: RunArg) -> RunResult:
     '''The function to be submitted to ProcessPoolExecutor.'''
     assert _q_registry
     assert _q_commands

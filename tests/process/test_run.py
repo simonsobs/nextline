@@ -16,14 +16,14 @@ def test_one(
     task_send_commands,
 ):
     del call_set_queues, task_send_commands
-    result, exception = main(run_arg)
-    assert result is None
+    result = main(run_arg)
+    assert result.ret is None
     if expected_exception:
-        assert exception
+        assert result.exc
         with pytest.raises(expected_exception):
-            raise exception
+            raise result.exc
     else:
-        exception is None
+        result.exc is None
 
 
 @pytest.fixture
