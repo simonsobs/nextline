@@ -105,7 +105,6 @@ class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._resource = Resource()
         self.registry = self._resource.registry
-        self._q_commands = self._resource.q_commands
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running] = None
@@ -115,6 +114,7 @@ class Context:
             filename=SCRIPT_FILE_NAME,
         )
         self._run_result: RunResult | None = None
+        self._q_commands: QueueCommands | None = None
 
     async def start(self):
         await self._resource.open()
@@ -149,13 +149,14 @@ class Context:
 
     async def run(self) -> Running:
         self._running = await self._resource.run(self._run_arg)
+        self._q_commands = self._resource.q_commands
         await self._registrar.run_start()
         return self._running
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
-        if self._running:
+        if self._q_commands:
             self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
@@ -173,6 +174,7 @@ class Context:
     async def finish(self) -> None:
         assert self._running
         ret = await self._running
+        self._q_commands = None
         self._running = None
 
         result, exc = None, None
