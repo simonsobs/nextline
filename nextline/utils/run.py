@@ -58,42 +58,22 @@ async def run_in_process(
     ) -> Tuple[Optional[_T], Optional[BaseException]]:
         nonlocal process
 
-        try:
-            with executor_factory() as executor:
-                loop = asyncio.get_running_loop()
-                future = loop.run_in_executor(executor, func)
-                process = list(executor._processes.values())[0]
+        with executor_factory() as executor:
+            loop = asyncio.get_running_loop()
+            future = loop.run_in_executor(executor, func)
+            process = list(executor._processes.values())[0]
 
-                now = datetime.now(timezone.utc)
-                now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-                msg = f'Process ({process.pid}) created at {now_fmt}.'
-                logger = getLogger(__name__)
-                logger.info(msg)
-
-                event.set()
-                ret = None
-                exc = None
-                try:
-                    ret = await future
-                except BrokenProcessPool:
-                    # NOTE: Not possible to use "as" for unknown reason.
-                    pass
-                except BaseException as e:
-                    exc = e
-                return ret, exc
-
-        finally:
-            if process:
-                pid = process.pid
-                now = datetime.now(timezone.utc)
-                now_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-                exitcode = process.exitcode
-                exit_fmt = f'{exitcode}'
-                if exitcode and (name := _exitcode_to_name.get(exitcode)):
-                    exit_fmt = f'{exitcode} ({name})'
-                msg = f'Process ({pid}) exited at {now_fmt}. Exitcode: {exit_fmt}.'
-                logger = getLogger(__name__)
-                logger.info(msg)
+            event.set()
+            ret = None
+            exc = None
+            try:
+                ret = await future
+            except BrokenProcessPool:
+                # NOTE: Not possible to use "as" for unknown reason.
+                pass
+            except BaseException as e:
+                exc = e
+            return ret, exc
 
     task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
     await event.wait()
@@ -117,6 +97,26 @@ class Running(Generic[_T]):
         self._process = process
         self._task = task
 
+        self.created_at = datetime.now(timezone.utc)
+        self._log_created()
+
+    def _log_created(self) -> None:
+        time_fmt = self.created_at.strftime('%Y-%m-%d %H:%M:%S (%Z)')
+        msg = f'Process ({self._process.pid}) created at {time_fmt}.'
+        logger = getLogger(__name__)
+        logger.info(msg)
+
+    def _log_exited(self, now: datetime) -> None:
+        time_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
+        exitcode = self._process.exitcode
+        exit_fmt = f'{exitcode}'
+        if exitcode and (name := _exitcode_to_name.get(exitcode)):
+            exit_fmt = f'{exitcode} ({name})'
+        pid = self._process.pid
+        msg = f'Process ({pid}) exited at {time_fmt}. Exitcode: {exit_fmt}.'
+        logger = getLogger(__name__)
+        logger.info(msg)
+
     def __repr__(self):
         return f"<{self.__class__.__name__} {self._process!r} {self._task}>"
 
@@ -136,6 +136,8 @@ class Running(Generic[_T]):
     def __await__(self) -> Generator[None, None, Result[_T]]:
         # "yield from" in "__await__": https://stackoverflow.com/a/48261042/7309855
         ret, exc = yield from self._task.__await__()
+        exited_at = datetime.now(timezone.utc)
+        self._log_exited(exited_at)
         return Result(returned=ret, raised=exc)
 
 
