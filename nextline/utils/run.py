@@ -86,6 +86,9 @@ async def run_in_process(
 class Result(Generic[_T]):
     returned: Optional[_T]
     raised: Optional[BaseException]
+    process: Process
+    process_created_at: datetime
+    process_exited_at: datetime
 
 
 class Running(Generic[_T]):
@@ -145,7 +148,13 @@ class Running(Generic[_T]):
         ret, exc = yield from self._task.__await__()
         process_exited_at = datetime.now(timezone.utc)
         self._log_exited(process_exited_at)
-        return Result(returned=ret, raised=exc)
+        return Result(
+            returned=ret,
+            raised=exc,
+            process=self.process,
+            process_created_at=self.process_created_at,
+            process_exited_at=process_exited_at,
+        )
 
 
 # Originally copied from
