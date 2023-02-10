@@ -108,7 +108,7 @@ class Context:
         self.q_commands = self._resource.q_commands
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._future: Optional[Running] = None
+        self._running: Optional[Running] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -148,26 +148,26 @@ class Context:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
     async def run(self) -> Running:
-        self._future = await self._resource.run(self._run_arg)
+        self._running = await self._resource.run(self._run_arg)
         await self._registrar.run_start()
-        return self._future
+        return self._running
 
     def interrupt(self) -> None:
-        if self._future:
-            self._future.interrupt()
+        if self._running:
+            self._running.interrupt()
 
     def terminate(self) -> None:
-        if self._future:
-            self._future.terminate()
+        if self._running:
+            self._running.terminate()
 
     def kill(self) -> None:
-        if self._future:
-            self._future.kill()
+        if self._running:
+            self._running.kill()
 
     async def finish(self) -> None:
-        assert self._future
-        ret = await self._future
-        self._future = None
+        assert self._running
+        ret = await self._running
+        self._running = None
 
         result, exc = None, None
         if ret.returned:
