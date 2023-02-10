@@ -48,6 +48,31 @@ def run_with_trace(
     q_registry: QueueRegistry,
 ) -> RunResult:
 
+    result: Any = None
+    exception: BaseException | None = None
+
+    with _trace(run_no, q_commands, q_registry) as trace:
+        with sys_trace(trace_func=trace):
+            try:
+                result = func()
+            except BaseException as e:
+                exception = e
+
+    # How to print the exception in the same way as the interpreter.
+    # import traceback
+    # traceback.print_exception(type(exc), exc, exc.__traceback__)
+
+    if exception and exception.__traceback__:
+        # remove this frame from the traceback.
+        # Note: exc.__traceback__ is sys._getframe()
+        exception.__traceback__ = exception.__traceback__.tb_next
+
+    return RunResult(ret=result, exc=exception)
+
+
+@contextmanager
+def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
+
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
 
@@ -65,27 +90,8 @@ def run_with_trace(
 
         trace = Trace(context=context)
 
-        result: Any = None
-        exception: BaseException | None = None
-
         with relay_commands(q_commands, pdb_ci_map):
-            # result, exception = call_with_trace(func, trace)
-            with sys_trace(trace_func=trace):
-                try:
-                    result = func()
-                except BaseException as e:
-                    exception = e
-
-        # How to print the exception in the same way as the interpreter.
-        # import traceback
-        # traceback.print_exception(type(exc), exc, exc.__traceback__)
-
-        if exception and exception.__traceback__:
-            # remove this frame from the traceback.
-            # Note: exc.__traceback__ is sys._getframe()
-            exception.__traceback__ = exception.__traceback__.tb_next
-
-    return RunResult(ret=result, exc=exception)
+            yield trace
 
 
 def _compile(code, filename):
