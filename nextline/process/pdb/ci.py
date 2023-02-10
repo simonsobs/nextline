@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-
+from logging import getLogger
 from queue import Queue
 from types import FrameType
 from typing import Any, Callable, Tuple
@@ -39,6 +39,8 @@ def pdb_command_interface(
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
         """send a command to pdb"""
+        logger = getLogger(__name__)
+        logger.debug(f'send_command({command!r}, {prompt_no!r})')
         callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
         queue_stdin.put(command)
 
