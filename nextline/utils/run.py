@@ -143,8 +143,8 @@ class Running(Generic[_T]):
     def __await__(self) -> Generator[None, None, Result[_T]]:
         # "yield from" in "__await__": https://stackoverflow.com/a/48261042/7309855
         ret, exc = yield from self._task.__await__()
-        exited_at = datetime.now(timezone.utc)
-        self._log_exited(exited_at)
+        process_exited_at = datetime.now(timezone.utc)
+        self._log_exited(process_exited_at)
         return Result(returned=ret, raised=exc)
 
 
