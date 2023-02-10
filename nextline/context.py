@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
 import multiprocessing as mp
-import traceback
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass, field
 from functools import partial
 from logging import getLogger
 from typing import Any, Optional
@@ -13,7 +10,7 @@ from tblib import pickling_support
 
 from . import process
 from .count import RunNoCounter
-from .process import QueueCommands, QueueRegistry, RunArg
+from .process import QueueCommands, QueueRegistry, RunArg, RunResult
 from .registrar import Registrar
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
@@ -32,41 +29,6 @@ def _call_all(*funcs) -> None:
         func()
 
 
-@dataclass
-class RunResult:
-    ret: Any | None
-    exc: BaseException | None
-    _fmt_ret: str | None = field(init=False, repr=False, default=None)
-    _fmt_exc: str | None = field(init=False, repr=False, default=None)
-
-    @property
-    def fmt_ret(self) -> str:
-        if self._fmt_ret is None:
-            self._fmt_ret = json.dumps(self.ret)
-        return self._fmt_ret
-
-    @property
-    def fmt_exc(self) -> str:
-        if self._fmt_exc is None:
-            if self.exc is None:
-                self._fmt_exc = ''
-            else:
-                self._fmt_exc = ''.join(
-                    traceback.format_exception(
-                        type(self.exc),
-                        self.exc,
-                        self.exc.__traceback__,
-                    )
-                )
-        return self._fmt_exc
-
-    def result(self) -> Any:
-        if self.exc is not None:
-            # TODO: add a test for the exception
-            raise self.exc
-        return self.ret
-
-
 class Resource:
     def __init__(self) -> None:
         self.registry = PubSub[Any, Any]()
@@ -76,7 +38,7 @@ class Resource:
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
         self.registrar = Registrar(self.registry, self._q_registry)
 
-    async def run(self, run_arg: RunArg) -> Running:
+    async def run(self, run_arg: RunArg) -> Running[RunResult]:
         func = partial(process.main, run_arg)
         self.q_commands = self._mp_context.Queue()
         initializer = partial(
@@ -108,7 +70,7 @@ class Context:
         self.registry = self._resource.registry
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._running: Optional[Running] = None
+        self._running: Optional[Running[RunResult]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -179,23 +141,15 @@ class Context:
         self._q_commands = None
         self._running = None
 
-        result, exc = None, None
-        if ret.returned:
-            try:
-                result, exc = ret.returned
-            except TypeError:
-                logger = getLogger(__name__)
-                logger.exception('')
-        else:
-            # The process was terminated.
-            logger = getLogger(__name__)
-            logger.debug(f'ret = {ret!r}')
-            pass
+        self._run_result = ret.returned or RunResult(ret=None, exc=None)
 
-        self._run_result = RunResult(result, exc)
+        if ret.raised:
+            logger = getLogger(__name__)
+            logger.exception(ret.raised)
 
         await self._registrar.run_end(
-            result=self._run_result.fmt_ret, exception=self._run_result.fmt_exc
+            result=self._run_result.fmt_ret,
+            exception=self._run_result.fmt_exc,
         )
 
     def result(self) -> Any:

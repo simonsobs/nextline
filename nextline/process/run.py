@@ -3,13 +3,13 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Any, Callable, Set, Tuple, TypedDict, TypeVar
+from typing import Any, Callable, Set, TypedDict, TypeVar
 
 from . import script
 from .call import sys_trace
 from .callback import Callback, RegistrarProxy
 from .trace import Trace
-from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg
+from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar("_T")
 
@@ -21,10 +21,8 @@ class Context(TypedDict):
 
 
 def run_(
-    run_arg: RunArg,
-    q_commands: QueueCommands,
-    q_registry: QueueRegistry,
-) -> Tuple[Any, BaseException | None]:
+    run_arg: RunArg, q_commands: QueueCommands, q_registry: QueueRegistry
+) -> RunResult:
 
     run_no = run_arg["run_no"]
     statement = run_arg.get("statement")
@@ -33,7 +31,7 @@ def run_(
     try:
         code = _compile(statement, filename)
     except BaseException as e:
-        return None, e
+        return RunResult(ret=None, exc=e)
 
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
@@ -74,7 +72,7 @@ def run_(
             # Note: exc.__traceback__ is sys._getframe()
             exception.__traceback__ = exception.__traceback__.tb_next
 
-    return result, exception
+    return RunResult(ret=result, exc=exception)
 
 
 def _compile(code, filename):
