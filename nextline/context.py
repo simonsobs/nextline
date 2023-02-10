@@ -166,20 +166,13 @@ class Context:
 
     async def finish(self) -> None:
         assert self._future
-
-        ret = None
-        try:
-            ret = await self._future
-        except BaseException:
-            logger = getLogger(__name__)
-            logger.exception('')
-        finally:
-            self._future = None
+        ret = await self._future
+        self._future = None
 
         result, exc = None, None
-        if ret:
+        if ret.returned:
             try:
-                result, exc = ret.returned  # type: ignore
+                result, exc = ret.returned
             except TypeError:
                 logger = getLogger(__name__)
                 logger.exception('')
