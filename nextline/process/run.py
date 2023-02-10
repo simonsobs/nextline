@@ -11,7 +11,7 @@ from .callback import Callback, RegistrarProxy
 from .trace import Trace
 from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
-_T = TypeVar("_T")
+_T = TypeVar('_T')
 
 
 class TraceContext(TypedDict):
@@ -24,14 +24,17 @@ def run_(
     run_arg: RunArg, q_commands: QueueCommands, q_registry: QueueRegistry
 ) -> RunResult:
 
-    run_no = run_arg["run_no"]
-    statement = run_arg.get("statement")
-    filename = run_arg.get("script_file_name", "<string>")
+    run_no = run_arg['run_no']
+
+    statement = run_arg.get('statement')
+    filename = run_arg.get('script_file_name', '<string>')
 
     try:
         code = _compile(statement, filename)
     except BaseException as e:
         return RunResult(ret=None, exc=e)
+
+    func = script.compose(code)
 
     pdb_ci_map: PdbCiMap = {}
     modules_to_trace: Set[str] = set()
@@ -49,8 +52,6 @@ def run_(
         )
 
         trace = Trace(context=context)
-
-        func = script.compose(code)
 
         result: Any = None
         exception: BaseException | None = None
@@ -77,7 +78,7 @@ def run_(
 
 def _compile(code, filename):
     if isinstance(code, str):
-        code = compile(code, filename, "exec")
+        code = compile(code, filename, 'exec')
     return code
 
 
@@ -110,4 +111,4 @@ def try_again_on_error(func: Callable[[], _T]) -> _T:
         #     raise
         except BaseException:
             logger = getLogger(__name__)
-            logger.exception("")
+            logger.exception('')
