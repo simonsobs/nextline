@@ -17,12 +17,10 @@ from typing_extensions import TypeAlias
 _T = TypeVar("_T")
 
 
-ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
-
-
 @dataclass
 class Result(Generic[_T]):
     '''An object returned by Running after the process has exited.'''
+
     returned: Optional[_T]
     raised: Optional[BaseException]
     process: Process
@@ -32,6 +30,7 @@ class Result(Generic[_T]):
 
 class Running(Generic[_T]):
     '''An awaitable return value of `run_in_process()`.'''
+
     def __init__(
         self,
         process: Process,
@@ -97,6 +96,9 @@ class Running(Generic[_T]):
         )
 
 
+ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
+
+
 async def run_in_process(
     func: Callable[[], _T], executor_factory: Optional[ExecutorFactory] = None
 ) -> Running[_T]:
@@ -130,10 +132,9 @@ async def run_in_process(
     process: Optional[Process] = None
     event = asyncio.Event()
 
-    async def _run(
-        executor_factory: ExecutorFactory, func: Callable[[], _T]
-    ) -> Tuple[Optional[_T], Optional[BaseException]]:
+    async def _run() -> Tuple[Optional[_T], Optional[BaseException]]:
         nonlocal process
+        assert executor_factory
 
         with executor_factory() as executor:
             loop = asyncio.get_running_loop()
@@ -152,7 +153,7 @@ async def run_in_process(
                 exc = e
             return ret, exc
 
-    task = asyncio.create_task(_run(executor_factory=executor_factory, func=func))
+    task = asyncio.create_task(_run())
     await event.wait()
     assert process
     ret = Running[_T](process=process, task=task)
