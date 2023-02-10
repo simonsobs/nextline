@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-__all__ = ['QueueCommands', 'QueueRegistry', 'RunArg', 'set_queues', 'main']
+__all__ = [
+    'QueueCommands',
+    'QueueRegistry',
+    'RunArg',
+    'RunResult',
+    'set_queues',
+    'main',
+]
 
 from typing import Any, Tuple
 
 from .run import run_
-from .types import QueueCommands, QueueRegistry, RunArg
+from .types import QueueCommands, QueueRegistry, RunArg, RunResult
 
 _q_commands: QueueCommands | None = None
 _q_registry: QueueRegistry | None = None
