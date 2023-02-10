@@ -37,6 +37,10 @@ class Machine:
         # because the state should be "running" until context.finish() returns.
         # The on_enter_finished() callback is called after the state is changed.
 
+    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+        assert self.is_running()  # type: ignore
+        self._context.send_pdb_command(command, prompt_no, trace_no)
+
     def interrupt(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.interrupt()

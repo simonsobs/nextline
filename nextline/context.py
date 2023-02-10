@@ -15,7 +15,7 @@ from . import process
 from .count import RunNoCounter
 from .process import QueueCommands, QueueRegistry, RunArg
 from .registrar import Registrar
-from .types import RunNo
+from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
 
 pickling_support.install()
@@ -151,6 +151,12 @@ class Context:
         self._running = await self._resource.run(self._run_arg)
         await self._registrar.run_start()
         return self._running
+
+    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+        logger = getLogger(__name__)
+        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
+        if self._running:
+            self.q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
         if self._running:

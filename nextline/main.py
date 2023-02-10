@@ -7,7 +7,7 @@ from typing import Any, AsyncIterator, Optional, Tuple
 
 from .context import Context
 from .fsm import Machine
-from .types import PromptInfo, PromptNo, RunInfo, StdoutInfo, TraceInfo, TraceNo
+from .types import PromptInfo, RunInfo, StdoutInfo, TraceInfo
 from .utils import merge_aiters
 
 
@@ -47,7 +47,6 @@ class Nextline:
         )
         self._timeout_on_exit = timeout_on_exit
         self._registry = self._context.registry
-        self._q_commands = self._context.q_commands
 
         self._started = False
         self._closed = False
@@ -88,7 +87,9 @@ class Nextline:
         await self._machine.finish()  # type: ignore
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
-        self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
+        logger = getLogger(__name__)
+        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
+        self._machine.send_pdb_command(command, prompt_no, trace_no)
 
     def interrupt(self) -> None:
         self._machine.interrupt()
