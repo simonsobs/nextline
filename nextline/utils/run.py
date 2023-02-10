@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
 from multiprocessing import Process
-from typing import Callable, Generator, Generic, Optional, Tuple, TypeVar
+from typing import Callable, Generator, Generic, Tuple, TypeVar
 
 from typing_extensions import TypeAlias
 
@@ -21,8 +21,8 @@ _T = TypeVar("_T")
 class Result(Generic[_T]):
     '''An object returned by Running after the process has exited.'''
 
-    returned: Optional[_T]
-    raised: Optional[BaseException]
+    returned: _T | None
+    raised: BaseException | None
     process: Process
     process_created_at: datetime
     process_exited_at: datetime
@@ -34,7 +34,7 @@ class Running(Generic[_T]):
     def __init__(
         self,
         process: Process,
-        task: asyncio.Task[Tuple[Optional[_T], Optional[BaseException]]],
+        task: asyncio.Task[Tuple[_T | None, BaseException | None]],
     ):
         self.process = process
         self._task = task
@@ -100,7 +100,7 @@ ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
 
 
 async def run_in_process(
-    func: Callable[[], _T], executor_factory: Optional[ExecutorFactory] = None
+    func: Callable[[], _T], executor_factory: ExecutorFactory | None = None
 ) -> Running[_T]:
     '''Call a function in a separate process and return an awaitable.
 
@@ -129,10 +129,10 @@ async def run_in_process(
     if executor_factory is None:
         executor_factory = partial(ProcessPoolExecutor, max_workers=1)
 
-    process: Optional[Process] = None
+    process: Process | None = None
     event = asyncio.Event()
 
-    async def _run() -> Tuple[Optional[_T], Optional[BaseException]]:
+    async def _run() -> Tuple[_T | None, BaseException | None]:
         nonlocal process
         assert executor_factory
 
