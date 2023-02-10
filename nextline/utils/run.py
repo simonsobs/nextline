@@ -96,18 +96,25 @@ class Running(Generic[_T]):
     ):
         self.process = process
         self._task = task
-
         self.created_at = datetime.now(timezone.utc)
+        self._created_at_fmt = self._format_time(self.created_at)
         self._log_created()
 
+    def __repr__(self):
+        ret = (
+            f'<{self.__class__.__name__}'
+            f' pid={self.process.pid!r}'
+            f' created_at="{self._created_at_fmt}">'
+        )
+        return ret
+
     def _log_created(self) -> None:
-        time_fmt = self.created_at.strftime('%Y-%m-%d %H:%M:%S (%Z)')
-        msg = f'Process ({self.process.pid}) created at {time_fmt}.'
-        logger = getLogger(__name__)
+        msg = f'Process ({self.process.pid}) created at {self._created_at_fmt}.'
+        logger = getLogger()
         logger.info(msg)
 
-    def _log_exited(self, now: datetime) -> None:
-        time_fmt = now.strftime('%Y-%m-%d %H:%M:%S (%Z)')
+    def _log_exited(self, exited_at: datetime) -> None:
+        time_fmt = self._format_time(exited_at)
         exitcode = self.process.exitcode
         exit_fmt = f'{exitcode}'
         if exitcode and (name := _exitcode_to_name.get(exitcode)):
@@ -117,8 +124,8 @@ class Running(Generic[_T]):
         logger = getLogger(__name__)
         logger.info(msg)
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.process!r} {self._task}>"
+    def _format_time(self, dt: datetime) -> str:
+        return dt.strftime('%Y-%m-%d %H:%M:%S (%Z)')
 
     def interrupt(self) -> None:
         self.send_signal(signal.SIGINT)
