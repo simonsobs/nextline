@@ -48,26 +48,26 @@ def run_with_trace(
     q_registry: QueueRegistry,
 ) -> RunResult:
 
-    result: Any = None
-    exception: BaseException | None = None
+    ret: Any = None
+    exc: BaseException | None = None
 
     with _trace(run_no, q_commands, q_registry) as trace:
         with sys_trace(trace_func=trace):
             try:
-                result = func()
+                ret = func()
             except BaseException as e:
-                exception = e
+                exc = e
 
-    # How to print the exception in the same way as the interpreter.
+    # NOTE: How to print the exception in the same way as the interpreter.
     # import traceback
     # traceback.print_exception(type(exc), exc, exc.__traceback__)
 
-    if exception and exception.__traceback__:
+    if exc and exc.__traceback__:
         # remove this frame from the traceback.
         # Note: exc.__traceback__ is sys._getframe()
-        exception.__traceback__ = exception.__traceback__.tb_next
+        exc.__traceback__ = exc.__traceback__.tb_next
 
-    return RunResult(ret=result, exc=exception)
+    return RunResult(ret=ret, exc=exc)
 
 
 @contextmanager
