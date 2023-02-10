@@ -105,7 +105,7 @@ class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._resource = Resource()
         self.registry = self._resource.registry
-        self.q_commands = self._resource.q_commands
+        self._q_commands = self._resource.q_commands
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running] = None
@@ -156,7 +156,7 @@ class Context:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
         if self._running:
-            self.q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
+            self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
     def interrupt(self) -> None:
         if self._running:
