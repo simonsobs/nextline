@@ -144,7 +144,7 @@ def TraceAddFirstModule(
 
 
 def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
-    """Create a trace that creates a new trace for each thread or asyncio task"""
+    '''Create a new trace function for each thread or asyncio task'''
 
     map: WeakKeyDictionary[Task | Thread, TraceFunc] = WeakKeyDictionary()
 
@@ -154,6 +154,9 @@ def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
         if not trace:
             trace = factory()
             map[key] = trace
+            logger = getLogger(__name__)
+            msg = f'{TraceDispatchThreadOrTask.__name__}: created trace for {key}'
+            logger.info(msg)
         return trace(frame, event, arg)
 
     return ret
