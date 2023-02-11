@@ -91,6 +91,12 @@ def run_ref(
 
 
 @pytest.fixture()
+def func() -> Callable[[], Any]:
+    '''The function to be traced. This fixture is to be overridden by the test.'''
+    raise RuntimeError('This fixture must be overridden by the test')
+
+
+@pytest.fixture()
 def wrap_target_trace_func(target_trace_func: TraceFunc) -> Mock:
     '''A mock object wrapping the trace function under test to collect trace calls.'''
     wrap = Mock(wraps=target_trace_func)
@@ -131,3 +137,12 @@ def ref_trace_func() -> Mock:
     y = Mock()
     y.return_value = y
     return y
+
+
+@pytest.fixture()
+def thread() -> bool:
+    '''Whether to use threading.settrace() in addition to sys.settrace().
+
+    To be overridden by the test.
+    '''
+    return False
