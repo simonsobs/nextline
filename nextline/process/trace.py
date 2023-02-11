@@ -107,32 +107,54 @@ def TraceAddFirstModule(
     trace: TraceFunc, modules_to_trace: MutableSet[str]
 ) -> TraceFunc:
     '''Add the module name to the set the first time traced in a module with a name.'''
+
+    def callback(frame: FrameType, event, arg) -> bool:
+        del event, arg
+        if module_name := frame.f_globals.get('__name__'):
+            # The module has a name.
+            modules_to_trace.add(module_name)
+            logger = getLogger(__name__)
+            msg = f'{TraceAddFirstModule.__name__}: added {module_name!r}'
+            logger.info(msg)
+            return True
+        return False
+
+    return TraceCallbackUntilAccepted(trace=trace, callback=callback)
+
+
+def TraceCallbackUntilAccepted(
+    trace: TraceFunc, callback: Callable[[FrameType, str, object], bool]
+) -> TraceFunc:
+    '''Execute the callback when traced until the callback returns True.'''
     first = True
-    logger = getLogger(__name__)
 
     def global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if not first:
-            # The module name has already been added.
+            # The callback has already accepted.
             return trace(frame, event, arg)
 
         def create_local_trace() -> TraceFunc:
-            '''Return a trace function that adds the module name to the set.'''
+            '''Return a trace function that executes the callback.'''
             next_trace: TraceFunc | None = trace
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
-                '''Add the module name to the set.'''
+                '''Execute the callback.'''
                 nonlocal first, next_trace
                 assert next_trace
 
-                if module_name := frame.f_globals.get('__name__'):
-                    # The module does have a name.
+                accepted = callback(frame, event, arg)
+
+                logger = getLogger(__name__)
+                name = TraceCallbackUntilAccepted.__name__
+                msg = f'{name}: the callback returned {accepted!r}'
+                logger.debug(msg)
+
+                if accepted:
+                    # Stop executing the callback.
                     first = False
-                    modules_to_trace.add(module_name)
-                    msg = f'{TraceAddFirstModule.__name__}: added {module_name!r}'
-                    logger.info(msg)
                     return next_trace(frame, event, arg)
 
-                # Continue until called in a module with a name.
+                # Continue until the callback accepts.
                 if next_trace := next_trace(frame, event, arg):
                     return local_trace
                 return None
