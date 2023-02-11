@@ -21,38 +21,38 @@ if TYPE_CHECKING:
 
 
 MODULES_TO_SKIP = {
-    "threading",
-    "queue",
-    "importlib",
-    "asyncio.*",
-    "codec",
-    "concurrent.futures.*",
-    "selectors",
-    "weakref",
-    "_weakrefset",
-    "socket",
-    "logging",
-    "os",
-    "collections.*",
-    "importlib.*",
-    "pathlib",
-    "typing",
-    "posixpath",
-    "fnmatch",
-    "_pytest.*",
-    "pluggy.*",
+    'threading',
+    'queue',
+    'importlib',
+    'asyncio.*',
+    'codec',
+    'concurrent.futures.*',
+    'selectors',
+    'weakref',
+    '_weakrefset',
+    'socket',
+    'logging',
+    'os',
+    'collections.*',
+    'importlib.*',
+    'pathlib',
+    'typing',
+    'posixpath',
+    'fnmatch',
+    '_pytest.*',
+    'pluggy.*',
 }
 
 
 def Trace(context: TraceContext) -> TraceFunc:
     '''Create the main trace function.'''
 
-    modules_to_trace = context["modules_to_trace"]
+    modules_to_trace = context['modules_to_trace']
 
     trace_func_factory = PdbInterfaceTraceFuncFactory(context=context)
 
     def create_trace_for_single_thread_or_task():
-        """To be called in the thread or task to be traced"""
+        '''To be called in the thread or task to be traced.'''
         trace_call_pdb = TraceFromFactory(factory=trace_func_factory)
         return TraceSelectFirstModule(
             trace=trace_call_pdb,
@@ -77,7 +77,7 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
         return _is_matched_to_any(module_name, skip)
 
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        module_name = frame.f_globals.get("__name__")
+        module_name = frame.f_globals.get('__name__')
         if to_skip(module_name):
             return None
         return trace(frame, event, arg)
@@ -90,7 +90,7 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
 
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         func_name = frame.f_code.co_name
-        if func_name == "<lambda>":
+        if func_name == '<lambda>':
             return None
         return trace(frame, event, arg)
 
@@ -197,11 +197,11 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
 
 
 def _is_matched_to_any(word: str | None, patterns: Iterable[str]) -> bool:
-    """Test if the word matches any of the patterns
+    '''Test if the word matches any of the patterns
 
     This function is based on Bdb.is_skipped_module():
     https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
-    """
+    '''
     if word is None:
         return False
     for pattern in patterns:
