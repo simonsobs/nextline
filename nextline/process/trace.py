@@ -4,6 +4,7 @@ import fnmatch
 from asyncio import Task
 from collections.abc import MutableSet, Set
 from functools import lru_cache
+from logging import getLogger
 from threading import Thread
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Iterable, Optional
@@ -106,6 +107,7 @@ def TraceAddFirstModule(
 ) -> TraceFunc:
     '''Add the module name to the set the first time traced in a module with a name.'''
     first = True
+    logger = getLogger(__name__)
 
     def global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if not first:
@@ -125,6 +127,8 @@ def TraceAddFirstModule(
                     # The module does have a name.
                     first = False
                     modules_to_trace.add(module_name)
+                    msg = f'{TraceAddFirstModule.__name__}: added {module_name!r}'
+                    logger.info(msg)
                     return next_trace(frame, event, arg)
 
                 # Continue until called in a module with a name.
