@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 
 MODULES_TO_SKIP = {
+    'multiprocessing.*',
     'threading',
     'queue',
     'importlib',
