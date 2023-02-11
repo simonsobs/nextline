@@ -45,7 +45,7 @@ MODULES_TO_SKIP = {
 
 
 def Trace(context: TraceContext) -> TraceFunc:
-    """Create the main trace function"""
+    '''Create the main trace function.'''
 
     modules_to_trace = context["modules_to_trace"]
 
@@ -187,13 +187,10 @@ def TraceSelectFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> Trac
 
 
 def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
-    """Create a trace that creates a trace first time called
+    '''Create a trace function first time called.
 
-    Useful when desirable to defer the creation until actually called
-
-    It is used to avoid creating instances of Pdb in threads or async tasks
-    that are not traced.
-    """
+    Used to defer the creation of the trace function until need to call it.
+    '''
     trace: TraceFunc | None = None
 
     def global_trace(frame, event, arg) -> Optional[TraceFunc]:
