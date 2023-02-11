@@ -6,7 +6,7 @@ from collections.abc import MutableSet, Set
 from functools import lru_cache
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable, Iterable, Optional
 from weakref import WeakKeyDictionary
 
 from nextline.utils import current_task_or_thread
@@ -71,7 +71,8 @@ def Trace(context: TraceContext) -> TraceFunc:
     )
 
 
-def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
+def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
+    '''Traces functions from modules that are not in skip.'''
     skip = frozenset(skip)
 
     @lru_cache
@@ -89,6 +90,7 @@ def TraceSkipModule(trace: TraceFunc, skip: Set[str]) -> TraceFunc:
 
 
 def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
+    '''Traces functions that are not lambdas.'''
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         func_name = frame.f_code.co_name
         if func_name == "<lambda>":
@@ -182,7 +184,7 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     return global_trace
 
 
-def _is_matched_to_any(word: str | None, patterns: Set[str]) -> bool:
+def _is_matched_to_any(word: str | None, patterns: Iterable[str]) -> bool:
     """Test if the word matches any of the patterns
 
     This function is based on Bdb.is_skipped_module():
