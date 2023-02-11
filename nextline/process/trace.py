@@ -91,6 +91,7 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
 
 def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
     '''Traces functions that are not lambdas.'''
+
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         func_name = frame.f_code.co_name
         if func_name == "<lambda>":
@@ -103,24 +104,30 @@ def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
 def TraceAddFirstModule(
     trace: TraceFunc, modules_to_trace: MutableSet[str]
 ) -> TraceFunc:
+    '''Add the module name to the set the first time traced in a module with a name.'''
     first = True
 
     def global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if not first:
+            # The module name has already been added.
             return trace(frame, event, arg)
 
         def create_local_trace() -> TraceFunc:
+            '''Return a trace function that adds the module name to the set.'''
             next_trace: TraceFunc | None = trace
 
             def local_trace(frame, event, arg) -> Optional[TraceFunc]:
+                '''Add the module name to the set.'''
                 nonlocal first, next_trace
                 assert next_trace
 
-                if module_name := frame.f_globals.get("__name__"):
+                if module_name := frame.f_globals.get('__name__'):
+                    # The module does have a name.
                     first = False
                     modules_to_trace.add(module_name)
                     return next_trace(frame, event, arg)
 
+                # Continue until called in a module with a name.
                 if next_trace := next_trace(frame, event, arg):
                     return local_trace
                 return None
