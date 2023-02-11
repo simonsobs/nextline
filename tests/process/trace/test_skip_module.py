@@ -29,13 +29,13 @@ def f():
 
 @pytest.fixture()
 def func():
-    yield f
+    return f
 
 
 @pytest.fixture(params=[set(), {module_a.__name__}])
 def modules_to_skip(request):
     y = request.param
-    yield y
+    return y
 
 
 @pytest.fixture()
@@ -44,9 +44,4 @@ def target_trace_func(probe_trace_func: Mock, modules_to_skip: Set[str]):
         trace=probe_trace_func,
         skip=modules_to_skip,
     )
-    yield y
-
-
-@pytest.fixture()
-def thread():
-    yield False
+    return y

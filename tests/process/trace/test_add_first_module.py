@@ -51,29 +51,29 @@ f3 = partial(exec, code, globals_)
     ]
 )
 def func_and_module_name(request):
-    yield request.param
+    return request.param
 
 
 @pytest.fixture()
 def func(func_and_module_name):
-    yield func_and_module_name[0]
+    return func_and_module_name[0]
 
 
 @pytest.fixture()
 def module_name(func_and_module_name):
-    yield func_and_module_name[1]
+    return func_and_module_name[1]
 
 
 @pytest.fixture(params=[set(), {"some_module"}])
 def modules_to_trace_init(request):
     y = request.param
-    yield y
+    return y
 
 
 @pytest.fixture()
 def modules_to_trace(modules_to_trace_init):
     y = set(modules_to_trace_init)
-    yield y
+    return y
 
 
 @pytest.fixture()
@@ -82,9 +82,4 @@ def target_trace_func(probe_trace_func: Mock, modules_to_trace: Set[str]):
         trace=probe_trace_func,
         modules_to_trace=modules_to_trace,
     )
-    yield y
-
-
-@pytest.fixture()
-def thread():
-    yield False
+    return y

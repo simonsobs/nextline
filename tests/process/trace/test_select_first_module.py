@@ -21,10 +21,7 @@ def test_one(
     assert not target.return_.module
     expected = (
         max(
-            [
-                ref.call.module[ref.call.module.index(m) :]
-                for m in modules_to_trace
-            ],
+            [ref.call.module[ref.call.module.index(m) :] for m in modules_to_trace],
             key=len,
         )
         if modules_to_trace
@@ -40,7 +37,7 @@ def f():
 
 @pytest.fixture()
 def func():
-    yield f
+    return f
 
 
 @pytest.fixture(
@@ -53,7 +50,7 @@ def func():
 )
 def modules_to_trace(request):
     y = request.param
-    yield y
+    return y
 
 
 @pytest.fixture()
@@ -62,9 +59,4 @@ def target_trace_func(probe_trace_func: Mock, modules_to_trace: Set[str]):
         trace=probe_trace_func,
         modules_to_trace=modules_to_trace,
     )
-    yield y
-
-
-@pytest.fixture()
-def thread():
-    yield False
+    return y

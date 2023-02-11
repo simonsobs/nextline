@@ -27,15 +27,10 @@ def g():
 
 @pytest.fixture(params=[f, g, lambda: module_a.func_a()])
 def func(request):
-    yield request.param
+    return request.param
 
 
 @pytest.fixture()
 def target_trace_func(probe_trace_func: Mock):
     y = TraceSkipLambda(trace=probe_trace_func)
-    yield y
-
-
-@pytest.fixture()
-def thread():
-    yield False
+    return y

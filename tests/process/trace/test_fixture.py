@@ -25,11 +25,11 @@ def target_trace_func(request, another_trace_func):
     y = Mock()
     map = {"self": y, "another": another_trace_func, "none": None}
     y.return_value = map[request.param]
-    yield y
+    return y
 
 
 @pytest.fixture()
 def another_trace_func():
     y = Mock()
     y.return_value = y
-    yield y
+    return y

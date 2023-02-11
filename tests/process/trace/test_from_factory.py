@@ -24,26 +24,15 @@ def f():
 
 @pytest.fixture()
 def func():
-    yield f
-
-
-@pytest.fixture(params=[set(), {module_a.__name__}])
-def modules_to_skip(request):
-    y = request.param
-    yield y
+    return f
 
 
 @pytest.fixture()
 def target_trace_func(mock_factory):
     y = TraceFromFactory(factory=mock_factory)
-    yield y
+    return y
 
 
 @pytest.fixture()
 def mock_factory(probe_trace_func):
     return lambda: probe_trace_func
-
-
-@pytest.fixture()
-def thread():
-    yield False
