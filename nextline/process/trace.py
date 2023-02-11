@@ -49,15 +49,9 @@ def Trace(context: TraceContext) -> TraceFunc:
 
     modules_to_trace = context['modules_to_trace']
 
-    trace_func_factory = PdbInterfaceTraceFuncFactory(context=context)
-
-    def create_trace_for_single_thread_or_task():
-        '''To be called in the thread or task to be traced.'''
-        trace_call_pdb = TraceFromFactory(factory=trace_func_factory)
-        return TraceSelectFirstModule(
-            trace=trace_call_pdb,
-            modules_to_trace=modules_to_trace,
-        )
+    create_trace_for_single_thread_or_task = TraceFactoryForThreadOrTask(
+        context=context
+    )
 
     trace = TraceDispatchThreadOrTask(factory=create_trace_for_single_thread_or_task)
     trace = TraceAddFirstModule(modules_to_trace=modules_to_trace, trace=trace)
@@ -65,6 +59,22 @@ def Trace(context: TraceContext) -> TraceFunc:
     trace = TraceSkipModule(skip=MODULES_TO_SKIP, trace=trace)
 
     return trace
+
+
+def TraceFactoryForThreadOrTask(context: TraceContext) -> Callable[[], TraceFunc]:
+
+    modules_to_trace = context['modules_to_trace']
+    trace_func_factory = PdbInterfaceTraceFuncFactory(context=context)
+
+    def _factory():
+        '''To be called in the thread or task to be traced.'''
+        trace_call_pdb = TraceFromFactory(factory=trace_func_factory)
+        return TraceSelectFirstModule(
+            trace=trace_call_pdb,
+            modules_to_trace=modules_to_trace,
+        )
+
+    return _factory
 
 
 def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
