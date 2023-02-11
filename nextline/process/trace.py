@@ -119,7 +119,7 @@ def TraceAddFirstModule(
                 if module_name := frame.f_globals.get("__name__"):
                     first = False
                     modules_to_trace.add(module_name)
-                    return trace(frame, event, arg)
+                    return next_trace(frame, event, arg)
 
                 if next_trace := next_trace(frame, event, arg):
                     return local_trace
