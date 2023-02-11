@@ -40,10 +40,6 @@ MODULES_TO_SKIP = {
     "fnmatch",
     "_pytest.*",
     "pluggy.*",
-    "nextline.pdb.*",
-    "nextline.utils.*",
-    "nextline.queuedist",
-    "nextlinegraphql.schema.bindables",
 }
 
 
