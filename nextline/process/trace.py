@@ -204,25 +204,30 @@ def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
 def TraceSelectFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> TraceFunc:
     '''Start tracing from a module in the set.
 
-    In other words, skip modules until reaching one of modules in the set. Stop
-    skipping afterward.
+    Skip modules until reaching a module in the set. Stop skipping afterward.
     '''
+
     first = True
 
-    def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def filter(frame: FrameType, event, arg) -> bool:
         nonlocal first
+        del event, arg
+
         if first:
             module_name = frame.f_globals.get('__name__')
             if not _is_matched_to_any(module_name, modules_to_trace):
-                return None
+                return False
+
             first = False
+
             logger = getLogger(__name__)
             name = TraceSelectFirstModule.__name__
             msg = f'{name}: started tracing at {module_name!r}'
             logger.info(msg)
-        return trace(frame, event, arg)
 
-    return ret
+        return True
+
+    return TraceFilter(trace=trace, filter=filter)
 
 
 def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
