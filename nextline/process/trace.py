@@ -77,7 +77,10 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
     '''Traces functions from modules that are not in skip.'''
     skip = frozenset(skip)
 
-    logger = getLogger(__name__)
+    # NOTE: logger does not work in this trace function. If logger is used, the script
+    # won't exit for unknown reasons.
+
+    # logger = getLogger(__name__)
 
     @lru_cache
     def to_skip(module_name: str | None) -> bool:
@@ -87,8 +90,9 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
     def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         module_name = frame.f_globals.get('__name__')
         if to_skip(module_name):
+            # logger.debug(f'{TraceSkipModule.__name__}: skipped {module_name!r}')
             return None
-        logger.info(f'{TraceSkipModule.__name__}: not skipped {module_name!r}')
+        # logger.info(f'{TraceSkipModule.__name__}: not skipped {module_name!r}')
         return trace(frame, event, arg)
 
     return ret
