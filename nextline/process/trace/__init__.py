@@ -10,14 +10,13 @@ from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
 from weakref import WeakKeyDictionary
 
+from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
 from nextline.utils import current_task_or_thread
-
-from .pdb.proxy import PdbInterfaceTraceFuncFactory
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from .run import TraceContext
+    from nextline.process.run import TraceContext
 
 
 MODULES_TO_SKIP = {
