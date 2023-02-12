@@ -110,6 +110,7 @@ def TraceFilter(
     trace: TraceFunc, filter: Callable[[FrameType, str, Any], bool]
 ) -> TraceFunc:
     '''Trace only if the filter returns True.'''
+
     def _trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if filter(frame, event, arg):
             return trace(frame, event, arg)
