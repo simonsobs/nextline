@@ -253,7 +253,4 @@ def _is_matched_to_any(word: str | None, patterns: Iterable[str]) -> bool:
     '''
     if word is None:
         return False
-    for pattern in patterns:
-        if fnmatch.fnmatch(word, pattern):
-            return True
-    return False
+    return any(fnmatch.fnmatch(word, pattern) for pattern in patterns)
