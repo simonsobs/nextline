@@ -7,7 +7,7 @@ from functools import lru_cache
 from logging import getLogger
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
 from weakref import WeakKeyDictionary
 
 from nextline.utils import current_task_or_thread
@@ -101,13 +101,24 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
 def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
     '''Traces functions that are not lambdas.'''
 
-    def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def filter(frame: FrameType, event, arg) -> bool:
+        del event, arg
         func_name = frame.f_code.co_name
-        if func_name == '<lambda>':
-            return None
-        return trace(frame, event, arg)
+        return not func_name == '<lambda>'
 
-    return ret
+    return TraceFilter(trace=trace, filter=filter)
+
+
+def TraceFilter(
+    trace: TraceFunc, filter: Callable[[FrameType, str, Any], bool]
+) -> TraceFunc:
+    '''Trace only if the filter returns True.'''
+    def _trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        if filter(frame, event, arg):
+            return trace(frame, event, arg)
+        return None
+
+    return _trace
 
 
 def TraceAddFirstModule(
