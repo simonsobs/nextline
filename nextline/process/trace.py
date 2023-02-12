@@ -87,15 +87,12 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
         # NOTE: _is_matched_to_any() is slow
         return _is_matched_to_any(module_name, skip)
 
-    def ret(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def filter(frame: FrameType, event, arg) -> bool:
+        del event, arg
         module_name = frame.f_globals.get('__name__')
-        if to_skip(module_name):
-            # logger.debug(f'{TraceSkipModule.__name__}: skipped {module_name!r}')
-            return None
-        # logger.info(f'{TraceSkipModule.__name__}: not skipped {module_name!r}')
-        return trace(frame, event, arg)
+        return not to_skip(module_name)
 
-    return ret
+    return TraceFilter(trace=trace, filter=filter)
 
 
 def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
