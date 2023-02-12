@@ -8,6 +8,7 @@ __all__ = [
     'to_thread',
     'ToLoop',
     'MultiprocessingLogging',
+    'match_any',
     'peek_stderr',
     'peek_stdout',
     'peek_textio',
@@ -26,6 +27,7 @@ from .done_callback import TaskDoneCallback, ThreadDoneCallback, ThreadTaskDoneC
 from .func import agen_with_wait, current_task_or_thread, merge_aiters, to_thread
 from .loop import ToLoop
 from .multiprocessing_logging import MultiprocessingLogging
+from .path import match_any
 from .peek import peek_stderr, peek_stdout, peek_textio
 from .profile import profile_func
 from .pubsub import PubSub, PubSubItem

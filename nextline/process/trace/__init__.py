@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import fnmatch
 from asyncio import Task
 from collections.abc import MutableSet, Set
 from functools import lru_cache
@@ -11,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
 from weakref import WeakKeyDictionary
 
 from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
-from nextline.utils import current_task_or_thread
+from nextline.utils import current_task_or_thread, match_any
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -242,14 +241,3 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
         return trace(frame, event, arg)
 
     return global_trace
-
-
-def match_any(filename: str | None, patterns: Iterable[str]) -> bool:
-    '''Test if the filename matches any of the patterns
-
-    This function is based on Bdb.is_skipped_module():
-    https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
-    '''
-    if filename is None:
-        return False
-    return any(fnmatch.fnmatch(filename, pattern) for pattern in patterns)
