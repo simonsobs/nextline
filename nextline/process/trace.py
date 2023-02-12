@@ -128,38 +128,38 @@ def TraceCallbackUntilAccepted(
     '''Execute the callback when traced until the callback returns True.'''
     first = True
 
+    def create_local_trace() -> TraceFunc:
+        '''Return a trace function that executes the callback.'''
+        next_trace: TraceFunc | None = trace
+
+        def local_trace(frame, event, arg) -> Optional[TraceFunc]:
+            '''Execute the callback.'''
+            nonlocal first, next_trace
+            assert next_trace
+
+            accepted = callback(frame, event, arg)
+
+            logger = getLogger(__name__)
+            name = TraceCallbackUntilAccepted.__name__
+            msg = f'{name}: the callback returned {accepted!r}'
+            logger.debug(msg)
+
+            if accepted:
+                # Stop executing the callback.
+                first = False
+                return next_trace(frame, event, arg)
+
+            # Continue until the callback accepts.
+            if next_trace := next_trace(frame, event, arg):
+                return local_trace
+            return None
+
+        return local_trace
+
     def global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if not first:
             # The callback has already accepted.
             return trace(frame, event, arg)
-
-        def create_local_trace() -> TraceFunc:
-            '''Return a trace function that executes the callback.'''
-            next_trace: TraceFunc | None = trace
-
-            def local_trace(frame, event, arg) -> Optional[TraceFunc]:
-                '''Execute the callback.'''
-                nonlocal first, next_trace
-                assert next_trace
-
-                accepted = callback(frame, event, arg)
-
-                logger = getLogger(__name__)
-                name = TraceCallbackUntilAccepted.__name__
-                msg = f'{name}: the callback returned {accepted!r}'
-                logger.debug(msg)
-
-                if accepted:
-                    # Stop executing the callback.
-                    first = False
-                    return next_trace(frame, event, arg)
-
-                # Continue until the callback accepts.
-                if next_trace := next_trace(frame, event, arg):
-                    return local_trace
-                return None
-
-            return local_trace
 
         return create_local_trace()(frame, event, arg)
 
