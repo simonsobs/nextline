@@ -84,7 +84,7 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
     @lru_cache
     def to_skip(module_name: str | None) -> bool:
         # NOTE: _is_matched_to_any() is slow
-        return _is_matched_to_any(module_name, skip)
+        return match_any(module_name, skip)
 
     def filter(frame: FrameType, event, arg) -> bool:
         del event, arg
@@ -214,7 +214,7 @@ def TraceSelectFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> Trac
 
         if first:
             module_name = frame.f_globals.get('__name__')
-            if not _is_matched_to_any(module_name, modules_to_trace):
+            if not match_any(module_name, modules_to_trace):
                 return False
 
             first = False
@@ -244,7 +244,7 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     return global_trace
 
 
-def _is_matched_to_any(filename: str | None, patterns: Iterable[str]) -> bool:
+def match_any(filename: str | None, patterns: Iterable[str]) -> bool:
     '''Test if the filename matches any of the patterns
 
     This function is based on Bdb.is_skipped_module():
