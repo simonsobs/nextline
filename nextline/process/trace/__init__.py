@@ -244,12 +244,12 @@ def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     return global_trace
 
 
-def _is_matched_to_any(word: str | None, patterns: Iterable[str]) -> bool:
-    '''Test if the word matches any of the patterns
+def _is_matched_to_any(filename: str | None, patterns: Iterable[str]) -> bool:
+    '''Test if the filename matches any of the patterns
 
     This function is based on Bdb.is_skipped_module():
     https://github.com/python/cpython/blob/v3.9.5/Lib/bdb.py#L191
     '''
-    if word is None:
+    if filename is None:
         return False
-    return any(fnmatch.fnmatch(word, pattern) for pattern in patterns)
+    return any(fnmatch.fnmatch(filename, pattern) for pattern in patterns)
