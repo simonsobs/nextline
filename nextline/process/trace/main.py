@@ -7,9 +7,9 @@ from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
 from .wrap import (
     AddFirstModule,
     DispatchForThreadOrTask,
+    FilterByModuleName,
     FilterFirstModule,
     FilterLambda,
-    FilterByModuleName,
     FromFactory,
 )
 
