@@ -6,7 +6,7 @@ from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Callable, ContextManager, Iterable, Optional
 from weakref import WeakKeyDictionary
 
 from nextline.utils import current_task_or_thread, match_any
@@ -177,3 +177,25 @@ def FromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
         return trace(frame, event, arg)
 
     return global_trace
+
+
+def WithContext(
+    trace: TraceFunc, context: Callable[[FrameType, str, Any], ContextManager[None]]
+) -> TraceFunc:
+    def _create_local_trace() -> TraceFunc:
+        next_trace: TraceFunc | None = trace
+
+        def _local_trace(frame, event, arg) -> Optional[TraceFunc]:
+            nonlocal next_trace
+            assert next_trace
+            with context(frame, event, arg):
+                if next_trace := next_trace(frame, event, arg):
+                    return _local_trace
+                return None
+
+        return _local_trace
+
+    def _global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        return _create_local_trace()(frame, event, arg)
+
+    return _global_trace

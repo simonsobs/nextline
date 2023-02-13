@@ -5,8 +5,9 @@ from contextlib import contextmanager
 from functools import partial
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, ContextManager, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
 
+from nextline.process.trace.wrap import WithContext
 from nextline.types import TraceNo
 
 from .ci import pdb_command_interface
@@ -47,28 +48,6 @@ def TraceCallCallback(
             callback.trace_call_end(trace_no)
 
     return WithContext(trace, context=_context)
-
-
-def WithContext(
-    trace: TraceFunc, context: Callable[[FrameType, str, Any], ContextManager[None]]
-) -> TraceFunc:
-    def _create_local_trace() -> TraceFunc:
-        next_trace: TraceFunc | None = trace
-
-        def _local_trace(frame, event, arg) -> Optional[TraceFunc]:
-            nonlocal next_trace
-            assert next_trace
-            with context(frame, event, arg):
-                if next_trace := next_trace(frame, event, arg):
-                    return _local_trace
-                return None
-
-        return _local_trace
-
-    def _global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        return _create_local_trace()(frame, event, arg)
-
-    return _global_trace
 
 
 class PdbInterface:
