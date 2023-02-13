@@ -45,7 +45,7 @@ MODULES_TO_SKIP = {
 
 
 def Trace(context: TraceContext) -> TraceFunc:
-    '''Create the main trace function.'''
+    '''Build the main system trace function of Nextline.'''
 
     modules_to_trace = context['modules_to_trace']
 
@@ -60,12 +60,13 @@ def Trace(context: TraceContext) -> TraceFunc:
 
 
 def TraceFactoryForThreadOrTask(context: TraceContext) -> Callable[[], TraceFunc]:
+    '''Return a function that returns a trace function for a thread or asyncio task.'''
 
     modules_to_trace = context['modules_to_trace']
     factory = PdbInterfaceTraceFuncFactory(context=context)
 
     def _factory() -> TraceFunc:
-        '''To be called in the thread or task to be traced.'''
+        '''To be called in the thread or asyncio task to be traced.'''
         trace = TraceFromFactory(factory=factory)
         return TraceSelectFirstModule(trace=trace, modules_to_trace=modules_to_trace)
 
