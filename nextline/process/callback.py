@@ -143,6 +143,9 @@ class Callback:
         if frame is not self._last_prompt_frame_map.get(trace_no):
             return
 
+        # TODO: Sending a prompt info with open = False so that the arrow in the
+        #       web UI moves when the Pdb is "continuing."
+
         prompt_info = PromptInfo(
             run_no=self._run_no,
             trace_no=trace_no,
