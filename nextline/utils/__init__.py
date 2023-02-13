@@ -19,7 +19,6 @@ __all__ = [
     'Running',
     'run_in_process',
     'ExcThread',
-    'ThreadSafeAsyncioEvent',
     'ThreadTaskIdComposer',
 ]
 
@@ -33,5 +32,4 @@ from .profile import profile_func
 from .pubsub import PubSub, PubSubItem
 from .run import ExecutorFactory, Running, run_in_process
 from .thread_exception import ExcThread
-from .thread_safe_event import ThreadSafeAsyncioEvent
 from .thread_task_id import ThreadTaskIdComposer
