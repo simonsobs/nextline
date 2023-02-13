@@ -34,7 +34,7 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
 
 def TraceCallCallback(
     trace: TraceFunc, trace_no: TraceNo, context: TraceContext
-) -> Optional[TraceFunc]:
+) -> TraceFunc:
 
     callback = context['callback']
 
@@ -51,7 +51,7 @@ def TraceCallCallback(
 
 def WithContext(
     trace: TraceFunc, context: Callable[[FrameType, str, Any], ContextManager[None]]
-) -> Optional[TraceFunc]:
+) -> TraceFunc:
     def _create_local_trace() -> TraceFunc:
         next_trace: TraceFunc | None = trace
 
