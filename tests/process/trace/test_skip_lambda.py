@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace import TraceSkipLambda
+from nextline.process.trace.wrap import TraceSkipLambda
 
 from . import module_a
 from .funcs import TraceSummary

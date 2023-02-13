@@ -1,6 +1,6 @@
 import pytest
 
-from nextline.process.trace import TraceFromFactory
+from nextline.process.trace.wrap import TraceFromFactory
 
 from . import module_a
 from .funcs import TraceSummary

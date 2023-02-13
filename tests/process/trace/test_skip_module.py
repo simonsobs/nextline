@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace import TraceSkipModule
+from nextline.process.trace.wrap import TraceSkipModule
 
 from . import module_a
 from .funcs import TraceSummary

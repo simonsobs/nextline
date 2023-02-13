@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace import TraceAddFirstModule
+from nextline.process.trace.wrap import TraceAddFirstModule
 
 from . import module_a
 from .funcs import TraceSummary

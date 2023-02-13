@@ -4,7 +4,8 @@ import sys
 import threading
 import timeit
 
-from nextline.process.trace import MODULES_TO_SKIP, TraceSkipModule
+from nextline.process.trace import MODULES_TO_SKIP
+from nextline.process.trace.wrap import TraceSkipModule
 from nextline.utils import profile_func
 
 

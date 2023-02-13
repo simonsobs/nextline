@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace import TraceDispatchThreadOrTask
+from nextline.process.trace.wrap import TraceDispatchThreadOrTask
 from nextline.utils import ExcThread, current_task_or_thread
 
 if TYPE_CHECKING:

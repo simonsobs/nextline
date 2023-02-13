@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace import TraceCallbackUntilAccepted
+from nextline.process.trace.wrap import TraceCallbackUntilAccepted
 
 from . import module_a
 from .funcs import TraceSummary, summarize_trace_calls
