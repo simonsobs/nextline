@@ -6,7 +6,8 @@ from logging import getLogger
 from types import CodeType
 from typing import Any, Callable, Set, TypedDict, TypeVar
 
-from nextline.types import RunNo
+from nextline.count import PromptNoCounter, TraceNoCounter
+from nextline.types import PromptNo, RunNo, TraceNo
 
 from . import script
 from .call import sys_trace
@@ -21,6 +22,8 @@ class TraceContext(TypedDict):
     callback: Callback
     pdb_ci_map: PdbCiMap
     modules_to_trace: Set[str]
+    trace_no_counter: Callable[[], TraceNo]
+    prompt_no_counter: Callable[[], PromptNo]
 
 
 def run_(
@@ -87,6 +90,8 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
             callback=callback,
             pdb_ci_map=pdb_ci_map,
             modules_to_trace=modules_to_trace,
+            trace_no_counter=TraceNoCounter(1),
+            prompt_no_counter=PromptNoCounter(1),
         )
 
         trace = Trace(context=context)

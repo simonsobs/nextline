@@ -7,8 +7,7 @@ from queue import Queue
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
 
-from nextline.count import PromptNoCounter, TraceNoCounter
-from nextline.types import PromptNo, TraceNo
+from nextline.types import TraceNo
 
 from .ci import pdb_command_interface
 from .custom import CustomizedPdb
@@ -21,17 +20,10 @@ if TYPE_CHECKING:
 
 
 def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFunc]:
-
-    trace_no_counter = TraceNoCounter(1)
-    prompt_no_counter = PromptNoCounter(1)
-
     def factory() -> TraceFunc:
+        trace_no_counter = context['trace_no_counter']
         trace_no = trace_no_counter()
-        pdbi = PdbInterface(
-            trace_no=trace_no,
-            context=context,
-            prompt_no_counter=prompt_no_counter,
-        )
+        pdbi = PdbInterface(trace_no=trace_no, context=context)
         context["callback"].task_or_thread_start(trace_no, pdbi)
         return pdbi.trace
 
@@ -41,12 +33,7 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
 class PdbInterface:
     """Instantiate Pdb and register its command loops"""
 
-    def __init__(
-        self,
-        trace_no: TraceNo,
-        context: TraceContext,
-        prompt_no_counter: Callable[[], PromptNo],
-    ):
+    def __init__(self, trace_no: TraceNo, context: TraceContext):
         self._trace_no = trace_no
         self._ci_map = context["pdb_ci_map"]
         self._callback = context["callback"]
@@ -64,6 +51,8 @@ class PdbInterface:
         )
 
         self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
+
+        prompt_no_counter = context['prompt_no_counter']
 
         self._cmd_interface = partial(
             pdb_command_interface,
