@@ -82,7 +82,7 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
 
     @lru_cache
     def to_skip(module_name: str | None) -> bool:
-        # NOTE: _is_matched_to_any() is slow
+        # NOTE: match_any() is slow
         return match_any(module_name, skip)
 
     def filter(frame: FrameType, event, arg) -> bool:
