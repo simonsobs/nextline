@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from asyncio import Task
 from collections.abc import MutableSet, Set
-from functools import lru_cache
+from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
 from types import FrameType
@@ -20,20 +20,13 @@ def FilterByModuleName(trace: TraceFunc, patterns: Iterable[str]) -> TraceFunc:
 
     patterns = frozenset(patterns)
 
-    # NOTE: logger does not work in this trace function. If logger is used, the script
-    # won't exit for unknown reasons.
-
-    # logger = getLogger(__name__)
-
-    @lru_cache
-    def to_skip(module_name: str | None) -> bool:
-        # NOTE: match_any() is slow
-        return match_any(module_name, patterns)
+    # NOTE: match_any() is slow
+    match_any_ = lru_cache(partial(match_any, patterns=patterns))
 
     def filter(frame: FrameType, event, arg) -> bool:
         del event, arg
         module_name = frame.f_globals.get('__name__')
-        return not to_skip(module_name)
+        return not match_any_(module_name)
 
     return Filter(trace=trace, filter=filter)
 
