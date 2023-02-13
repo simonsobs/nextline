@@ -5,7 +5,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Optional
 
-from nextline.process.trace.wrap import FilterModule
+from nextline.process.trace.wrap import FilterByModuleName
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -41,7 +41,7 @@ def sys_trace(trace_func: TraceFunc, thread: Optional[bool] = True):
 
     # Skip the context manager and this module otherwise they will be traced after
     # the yield is returned.
-    trace_func = FilterModule(trace_func, {contextmanager.__module__, __name__})
+    trace_func = FilterByModuleName(trace_func, {contextmanager.__module__, __name__})
     sys.settrace(trace_func)
 
     try:

@@ -9,7 +9,7 @@ from .wrap import (
     DispatchForThreadOrTask,
     FilterFirstModule,
     FilterLambda,
-    FilterModule,
+    FilterByModuleName,
     FromFactory,
 )
 
@@ -54,7 +54,7 @@ def Trace(context: TraceContext) -> TraceFunc:
     trace = DispatchForThreadOrTask(factory=factory)
     trace = AddFirstModule(modules_to_trace=modules_to_trace, trace=trace)
     trace = FilterLambda(trace=trace)
-    trace = FilterModule(skip=MODULES_TO_SKIP, trace=trace)
+    trace = FilterByModuleName(patterns=MODULES_TO_SKIP, trace=trace)
 
     return trace
 

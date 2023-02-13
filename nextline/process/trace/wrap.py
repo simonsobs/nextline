@@ -15,10 +15,10 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
-def FilterModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
-    '''Skip modules with names that match any of the patterns in skip.'''
+def FilterByModuleName(trace: TraceFunc, patterns: Iterable[str]) -> TraceFunc:
+    '''Skip Python modules with names that match any of the patterns.'''
 
-    skip = frozenset(skip)
+    patterns = frozenset(patterns)
 
     # NOTE: logger does not work in this trace function. If logger is used, the script
     # won't exit for unknown reasons.
@@ -28,7 +28,7 @@ def FilterModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
     @lru_cache
     def to_skip(module_name: str | None) -> bool:
         # NOTE: match_any() is slow
-        return match_any(module_name, skip)
+        return match_any(module_name, patterns)
 
     def filter(frame: FrameType, event, arg) -> bool:
         del event, arg
