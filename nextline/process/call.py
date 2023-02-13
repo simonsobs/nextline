@@ -5,7 +5,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Optional
 
-from nextline.process.trace import TraceSkipModule
+from nextline.process.trace.wrap import TraceSkipModule
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401

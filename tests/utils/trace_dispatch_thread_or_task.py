@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from nextline.process.call import sys_trace
-from nextline.process.trace import TraceDispatchThreadOrTask
+from nextline.process.trace.wrap import TraceDispatchThreadOrTask
 
 
 @pytest.fixture()
