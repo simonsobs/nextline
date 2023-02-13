@@ -1,3 +1,9 @@
-from .task import TaskDoneCallback  # noqa: F401
-from .thread import ThreadDoneCallback  # noqa: F401
-from .union import ThreadTaskDoneCallback  # noqa: F401
+__all__ = [
+    'TaskDoneCallback',
+    'ThreadDoneCallback',
+    'ThreadTaskDoneCallback',
+]
+
+from .task import TaskDoneCallback
+from .thread import ThreadDoneCallback
+from .union import ThreadTaskDoneCallback
