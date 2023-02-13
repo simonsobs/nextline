@@ -25,9 +25,44 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
         trace_no = trace_no_counter()
         pdbi = PdbInterface(trace_no=trace_no, context=context)
         context["callback"].task_or_thread_start(trace_no, pdbi)
-        return pdbi.trace
+        trace: TraceFunc = pdbi.trace
+        trace = TraceCallCallback(trace=trace, trace_no=trace_no, context=context)
+        return trace
 
     return factory
+
+
+def TraceCallCallback(
+    trace: TraceFunc, trace_no: TraceNo, context: TraceContext
+) -> Optional[TraceFunc]:
+
+    callback = context['callback']
+
+    @contextmanager
+    def _context(frame, event, arg):
+        callback.trace_call_start(trace_no, (frame, event, arg))
+        try:
+            yield
+        finally:
+            callback.trace_call_end(trace_no)
+
+    def _create_local_trace() -> TraceFunc:
+        next_trace: TraceFunc | None = trace
+
+        def _local_trace(frame, event, arg) -> Optional[TraceFunc]:
+            nonlocal next_trace
+            assert next_trace
+            with _context(frame, event, arg):
+                if next_trace := next_trace(frame, event, arg):
+                    return _local_trace
+                return None
+
+        return _local_trace
+
+    def _global_trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        return _create_local_trace()(frame, event, arg)
+
+    return _global_trace
 
 
 class PdbInterface:
@@ -72,12 +107,10 @@ class PdbInterface:
         @contextmanager
         def capture(frame, event, arg):
             self._trace_args = (frame, event, arg)
-            self._callback.trace_call_start(self._trace_no, self._trace_args)
             try:
                 yield
             finally:
                 self._trace_args = None
-                self._callback.trace_call_end(self._trace_no)
 
         def create_local_trace() -> TraceFunc:
             next_trace: TraceFunc | None = self._pdb.trace_dispatch
