@@ -118,20 +118,7 @@ class PdbInterface:
             finally:
                 self._trace_args = None
 
-        def create_local_trace() -> TraceFunc:
-            next_trace: TraceFunc | None = self._pdb.trace_dispatch
-
-            def local_trace(frame, event, arg) -> Optional[TraceFunc]:
-                nonlocal next_trace
-                assert next_trace
-                with capture(frame, event, arg):
-                    if next_trace := next_trace(frame, event, arg):
-                        return local_trace
-                    return None
-
-            return local_trace
-
-        return create_local_trace()(frame, event, arg)
+        return WithContext(self._pdb.trace_dispatch, context=capture)(frame, event, arg)
 
     def entering_cmdloop(self) -> None:
         """To be called by the custom Pdb before _cmdloop()"""
