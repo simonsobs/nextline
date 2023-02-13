@@ -15,8 +15,9 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
-def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
-    '''Traces functions from modules that are not in skip.'''
+def FilterModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
+    '''Skip modules with names that match any of the patterns in skip.'''
+
     skip = frozenset(skip)
 
     # NOTE: logger does not work in this trace function. If logger is used, the script
@@ -34,24 +35,24 @@ def TraceSkipModule(trace: TraceFunc, skip: Iterable[str]) -> TraceFunc:
         module_name = frame.f_globals.get('__name__')
         return not to_skip(module_name)
 
-    return TraceFilter(trace=trace, filter=filter)
+    return Filter(trace=trace, filter=filter)
 
 
-def TraceSkipLambda(trace: TraceFunc) -> TraceFunc:
-    '''Traces functions that are not lambdas.'''
+def FilterLambda(trace: TraceFunc) -> TraceFunc:
+    '''Skip lambda functions.'''
 
     def filter(frame: FrameType, event, arg) -> bool:
         del event, arg
         func_name = frame.f_code.co_name
         return not func_name == '<lambda>'
 
-    return TraceFilter(trace=trace, filter=filter)
+    return Filter(trace=trace, filter=filter)
 
 
-def TraceFilter(
+def Filter(
     trace: TraceFunc, filter: Callable[[FrameType, str, Any], bool]
 ) -> TraceFunc:
-    '''Trace only if the filter returns True.'''
+    '''Skip if the filter returns False.'''
 
     def _trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if filter(frame, event, arg):
@@ -61,9 +62,7 @@ def TraceFilter(
     return _trace
 
 
-def TraceAddFirstModule(
-    trace: TraceFunc, modules_to_trace: MutableSet[str]
-) -> TraceFunc:
+def AddFirstModule(trace: TraceFunc, modules_to_trace: MutableSet[str]) -> TraceFunc:
     '''Add the module name to the set the first time traced in a module with a name.'''
 
     def callback(frame: FrameType, event, arg) -> bool:
@@ -72,18 +71,18 @@ def TraceAddFirstModule(
             # The module has a name.
             modules_to_trace.add(module_name)
             logger = getLogger(__name__)
-            msg = f'{TraceAddFirstModule.__name__}: added {module_name!r}'
+            msg = f'{AddFirstModule.__name__}: added {module_name!r}'
             logger.info(msg)
             return True
         return False
 
-    return TraceCallbackUntilAccepted(trace=trace, callback=callback)
+    return CallbackUntilAccepted(trace=trace, callback=callback)
 
 
-def TraceCallbackUntilAccepted(
+def CallbackUntilAccepted(
     trace: TraceFunc, callback: Callable[[FrameType, str, object], bool]
 ) -> TraceFunc:
-    '''Execute the callback when traced until the callback returns True.'''
+    '''Call the callback when traced until the callback returns True.'''
     first = True
 
     def create_local_trace() -> TraceFunc:
@@ -98,7 +97,7 @@ def TraceCallbackUntilAccepted(
             accepted = callback(frame, event, arg)
 
             logger = getLogger(__name__)
-            name = TraceCallbackUntilAccepted.__name__
+            name = CallbackUntilAccepted.__name__
             msg = f'{name}: the callback returned {accepted!r}'
             logger.debug(msg)
 
@@ -124,8 +123,8 @@ def TraceCallbackUntilAccepted(
     return global_trace
 
 
-def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
-    '''Create a new trace function for each thread or asyncio task'''
+def DispatchForThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
+    '''Create a new trace function for each thread or asyncio task.'''
 
     map: WeakKeyDictionary[Task | Thread, TraceFunc] = WeakKeyDictionary()
 
@@ -136,14 +135,14 @@ def TraceDispatchThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
             trace = factory()
             map[key] = trace
             logger = getLogger(__name__)
-            msg = f'{TraceDispatchThreadOrTask.__name__}: created trace for {key}'
+            msg = f'{DispatchForThreadOrTask.__name__}: created trace for {key}'
             logger.info(msg)
         return trace(frame, event, arg)
 
     return ret
 
 
-def TraceSelectFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> TraceFunc:
+def FilterFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> TraceFunc:
     '''Start tracing from a module in the set.
 
     Skip modules until reaching a module in the set. Stop skipping afterward.
@@ -163,16 +162,16 @@ def TraceSelectFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> Trac
             first = False
 
             logger = getLogger(__name__)
-            name = TraceSelectFirstModule.__name__
+            name = FilterFirstModule.__name__
             msg = f'{name}: started tracing at {module_name!r}'
             logger.info(msg)
 
         return True
 
-    return TraceFilter(trace=trace, filter=filter)
+    return Filter(trace=trace, filter=filter)
 
 
-def TraceFromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
+def FromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
     '''Create a trace function first time called.
 
     Used to defer the creation of the trace function until need to call it.

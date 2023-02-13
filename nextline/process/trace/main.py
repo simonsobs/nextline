@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, Callable
 from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
 
 from .wrap import (
-    TraceAddFirstModule,
-    TraceDispatchThreadOrTask,
-    TraceFromFactory,
-    TraceSelectFirstModule,
-    TraceSkipLambda,
-    TraceSkipModule,
+    AddFirstModule,
+    DispatchForThreadOrTask,
+    FilterFirstModule,
+    FilterLambda,
+    FilterModule,
+    FromFactory,
 )
 
 if TYPE_CHECKING:
@@ -49,25 +49,26 @@ def Trace(context: TraceContext) -> TraceFunc:
 
     modules_to_trace = context['modules_to_trace']
 
-    factory = TraceFactoryForThreadOrTask(context=context)
+    factory = FactoryForThreadOrTask(context=context)
 
-    trace = TraceDispatchThreadOrTask(factory=factory)
-    trace = TraceAddFirstModule(modules_to_trace=modules_to_trace, trace=trace)
-    trace = TraceSkipLambda(trace=trace)
-    trace = TraceSkipModule(skip=MODULES_TO_SKIP, trace=trace)
+    trace = DispatchForThreadOrTask(factory=factory)
+    trace = AddFirstModule(modules_to_trace=modules_to_trace, trace=trace)
+    trace = FilterLambda(trace=trace)
+    trace = FilterModule(skip=MODULES_TO_SKIP, trace=trace)
 
     return trace
 
 
-def TraceFactoryForThreadOrTask(context: TraceContext) -> Callable[[], TraceFunc]:
+def FactoryForThreadOrTask(context: TraceContext) -> Callable[[], TraceFunc]:
     '''Return a function that returns a trace function for a thread or asyncio task.'''
 
     modules_to_trace = context['modules_to_trace']
     factory = PdbInterfaceTraceFuncFactory(context=context)
 
-    def _factory() -> TraceFunc:
+    def _trace_factory() -> TraceFunc:
         '''To be called in the thread or asyncio task to be traced.'''
-        trace = TraceFromFactory(factory=factory)
-        return TraceSelectFirstModule(trace=trace, modules_to_trace=modules_to_trace)
+        trace = FromFactory(factory=factory)
+        trace = FilterFirstModule(trace=trace, modules_to_trace=modules_to_trace)
+        return trace
 
-    return _factory
+    return _trace_factory

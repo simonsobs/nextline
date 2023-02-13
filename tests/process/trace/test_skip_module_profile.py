@@ -5,12 +5,12 @@ import threading
 import timeit
 
 from nextline.process.trace.main import MODULES_TO_SKIP
-from nextline.process.trace.wrap import TraceSkipModule
+from nextline.process.trace.wrap import FilterModule
 from nextline.utils import profile_func
 
 
 def test_one():
-    trace = TraceSkipModule(
+    trace = FilterModule(
         trace=lambda *_: None,
         skip=MODULES_TO_SKIP,
     )

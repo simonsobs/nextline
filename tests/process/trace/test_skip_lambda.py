@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace.wrap import TraceSkipLambda
+from nextline.process.trace.wrap import FilterLambda
 
 from . import module_a
 from .funcs import TraceSummary
@@ -32,5 +32,5 @@ def func(request):
 
 @pytest.fixture()
 def target_trace_func(probe_trace_func: Mock):
-    y = TraceSkipLambda(trace=probe_trace_func)
+    y = FilterLambda(trace=probe_trace_func)
     return y

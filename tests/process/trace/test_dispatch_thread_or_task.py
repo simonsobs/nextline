@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace.wrap import TraceDispatchThreadOrTask
+from nextline.process.trace.wrap import DispatchForThreadOrTask
 from nextline.utils import ExcThread, current_task_or_thread
 
 if TYPE_CHECKING:
@@ -82,7 +82,7 @@ def func(request) -> Callable[[], Any]:
 
 @pytest.fixture()
 def target_trace_func(factory: Mock) -> TraceFunc:
-    return TraceDispatchThreadOrTask(factory=factory)
+    return DispatchForThreadOrTask(factory=factory)
 
 
 @pytest.fixture(params=[True, False])

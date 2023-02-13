@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace.wrap import TraceCallbackUntilAccepted
+from nextline.process.trace.wrap import CallbackUntilAccepted
 
 from . import module_a
 from .funcs import TraceSummary, summarize_trace_calls
@@ -53,5 +53,5 @@ def callback(callback_return: bool):
 
 @pytest.fixture()
 def target_trace_func(probe_trace_func: Mock, callback: Mock):
-    y = TraceCallbackUntilAccepted(trace=probe_trace_func, callback=callback)
+    y = CallbackUntilAccepted(trace=probe_trace_func, callback=callback)
     return y

@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace.wrap import TraceSkipModule
+from nextline.process.trace.wrap import FilterModule
 
 from . import module_a
 from .funcs import TraceSummary
@@ -40,7 +40,7 @@ def modules_to_skip(request):
 
 @pytest.fixture()
 def target_trace_func(probe_trace_func: Mock, modules_to_skip: Set[str]):
-    y = TraceSkipModule(
+    y = FilterModule(
         trace=probe_trace_func,
         skip=modules_to_skip,
     )

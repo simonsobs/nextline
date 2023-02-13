@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace.wrap import TraceAddFirstModule
+from nextline.process.trace.wrap import AddFirstModule
 
 from . import module_a
 from .funcs import TraceSummary
@@ -78,7 +78,7 @@ def modules_to_trace(modules_to_trace_init):
 
 @pytest.fixture()
 def target_trace_func(probe_trace_func: Mock, modules_to_trace: Set[str]):
-    y = TraceAddFirstModule(
+    y = AddFirstModule(
         trace=probe_trace_func,
         modules_to_trace=modules_to_trace,
     )

@@ -1,6 +1,6 @@
 import pytest
 
-from nextline.process.trace.wrap import TraceFromFactory
+from nextline.process.trace.wrap import FromFactory
 
 from . import module_a
 from .funcs import TraceSummary
@@ -29,7 +29,7 @@ def func():
 
 @pytest.fixture()
 def target_trace_func(mock_factory):
-    y = TraceFromFactory(factory=mock_factory)
+    y = FromFactory(factory=mock_factory)
     return y
 
 
