@@ -47,13 +47,13 @@ def pdb_command_interface(
     return wait_prompt, send_command
 
 
-def _read_until_prompt(queue: Queue[str | None], prompt: str) -> str | None:
+def _read_until_prompt(queue_stdout: Queue[str | None], prompt: str) -> str | None:
     '''Read the queue up to the prompt.
 
     The prompt is normally "(Pdb) ".
     '''
     out = ''
-    while (m := queue.get()) is not None:
+    while (m := queue_stdout.get()) is not None:
         out += m
         if prompt == m:
             break
