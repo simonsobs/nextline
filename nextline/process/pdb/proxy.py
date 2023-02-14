@@ -55,8 +55,14 @@ def TraceCallCallback(
     return WithContext(trace, context=_context)
 
 
+class TraceNotCalled(RuntimeError):
+    pass
+
+
 class PdbInterface:
     """Instantiate Pdb and register its command loops"""
+
+    TraceNotCalled = TraceNotCalled
 
     def __init__(self, trace_no: TraceNo, context: TraceContext):
         self._trace_no = trace_no
@@ -108,7 +114,8 @@ class PdbInterface:
         """To be called by the custom Pdb before _cmdloop()"""
 
         if not self._trace_args:
-            raise RuntimeError("calling_trace() must be called first")
+            msg = f'{self.__class__.__name__}.trace() must be called first.'
+            raise self.TraceNotCalled(msg)
 
         wait_prompt, send_command = self._cmd_interface(
             trace_args=self._trace_args,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from pdb import Pdb
+import traceback
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ class CustomizedPdb(Pdb):
         """Prompt user input"""
         try:
             self._pdbi.entering_cmdloop()
-        except RuntimeError:
+        except self._pdbi.TraceNotCalled:
             # "step" at the last line
             # https://github.com/simonsobs/nextline/issues/1
             return
