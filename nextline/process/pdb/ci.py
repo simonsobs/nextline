@@ -43,7 +43,7 @@ def pdb_command_interface(
         To be run in a thread during pdb._cmdloop()
         '''
         nonlocal _prompt_no
-        while out := _read_until_prompt():
+        while (out := _read_until_prompt()) is not None:
             logger.debug(f'Pdb stdout: {out!r}')
 
             _prompt_no = prompt_no_counter()
