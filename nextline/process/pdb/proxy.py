@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from functools import partial
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Tuple
 
 from nextline.process.trace.wrap import WithContext
 from nextline.types import TraceNo
@@ -111,7 +111,7 @@ class PdbInterface:
         return WithContext(self._pdb.trace_dispatch, context=capture)(frame, event, arg)
 
     @contextmanager
-    def during_cmdloop(self):
+    def during_cmdloop(self) -> Generator[None, None, None]:
         '''To be used by CustomizedPdb._cmdloop()'''
 
         if not self._trace_args:
