@@ -31,11 +31,8 @@ def pdb_command_interface(
         while (m := queue_stdout.get()) is not None:
             out += m
             if prompt == m:
-                break
-        else:
-            return None
-
-        return out
+                return out
+        return None
 
     def wait_prompt() -> None:
         '''Receive stdout from Pdb
