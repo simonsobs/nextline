@@ -66,8 +66,6 @@ class Callback:
         self._current_trace_call_map: Dict[TraceNo, Tuple[FrameType, str, Any]] = {}
 
     def task_or_thread_start(self, trace_no: TraceNo, pdbi: PdbInterface) -> None:
-        self.trace_start(trace_no, pdbi)
-
         task_or_thread = current_task_or_thread()
         self._trace_no_map[task_or_thread] = trace_no
 
@@ -75,6 +73,8 @@ class Callback:
             self._thread_task_done_callback.register(task_or_thread)
 
         self._tasks_and_threads.add(task_or_thread)
+
+        self.trace_start(trace_no, pdbi)
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
