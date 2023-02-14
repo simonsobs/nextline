@@ -22,10 +22,10 @@ def pdb_command_interface(
     _prompt_no: PromptNo
 
     def wait_prompt() -> None:
-        """receive stdout from pdb
+        '''Receive stdout from Pdb
 
         To be run in a thread during pdb._cmdloop()
-        """
+        '''
         nonlocal _prompt_no
         while out := _read_until_prompt(queue_stdout, prompt):
             _prompt_no = prompt_no_counter()
@@ -38,7 +38,7 @@ def pdb_command_interface(
             )
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
-        """send a command to pdb"""
+        '''Send a command to Pdb'''
         logger = getLogger(__name__)
         logger.debug(f'send_command({command!r}, {prompt_no!r})')
         callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
@@ -48,8 +48,11 @@ def pdb_command_interface(
 
 
 def _read_until_prompt(queue: Queue[str | None], prompt: str) -> str | None:
-    """read the queue up to the prompt"""
-    out = ""
+    '''Read the queue up to the prompt.
+
+    The prompt is normally "(Pdb) ".
+    '''
+    out = ''
     while (m := queue.get()) is not None:
         out += m
         if prompt == m:
