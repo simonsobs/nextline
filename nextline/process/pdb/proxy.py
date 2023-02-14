@@ -118,12 +118,9 @@ class PdbInterface:
             msg = f'{self.__class__.__name__}.trace() must be called first.'
             raise self.TraceNotCalled(msg)
 
-        wait_prompt, send_command, end = self._cmd_interface(
-            trace_args=self._trace_args,
-        )
-        fut = self._executor.submit(wait_prompt)
-
-        self._ci_map[self._trace_no] = send_command
+        wait, send, end = self._cmd_interface(trace_args=self._trace_args)
+        fut = self._executor.submit(wait)
+        self._ci_map[self._trace_no] = send
 
         try:
             yield
