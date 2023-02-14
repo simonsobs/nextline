@@ -60,19 +60,6 @@ class CustomizedPdb(Pdb):
         '''
         self._set_stopinfo(self.botframe, None, -1)
 
-    # def break_here(self, frame):
-    #     ret = super().break_here(frame)
-    #     print('break_here', ret)
-    #     return ret
-
-    # def stop_here(self, frame):
-    #     ret = super().stop_here(frame)
-    #     print('stop_here', ret)
-    #     return ret
-
-    # def bp_commands(self, frame):
-    #     return True
-
     def do_list(self, arg):
         statement = self._pdbi.statement
         import linecache
