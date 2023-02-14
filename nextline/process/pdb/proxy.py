@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from functools import partial
 from queue import Queue
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Tuple
@@ -56,57 +55,58 @@ def TraceCallCallback(
 
 def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
-    _ci_map = context["pdb_ci_map"]
+    ci_map = context["pdb_ci_map"]
+    trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
-    q_stdin: Queue[str] = Queue()
-    q_stdout: Queue[str | None] = Queue()
-
-    _trace_args: Optional[Tuple[FrameType, str, Any]] = None
+    queue_stdin: Queue[str] = Queue()
+    queue_stdout: Queue[str | None] = Queue()
 
     @contextmanager
     def interface_cmdloop() -> Generator[None, None, None]:
         '''To be used by CustomizedPdb._cmdloop()'''
 
-        if not _trace_args:
-            msg = 'trace() must be called first.'
-            raise TraceNotCalled(msg)
+        if not trace_args:
+            raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
-        wait, send, end = _cmd_interface(trace_args=_trace_args)
+        wait, send, end = pdb_command_interface(
+            trace_args=trace_args,
+            trace_no=trace_no,
+            prompt_no_counter=context['prompt_no_counter'],
+            queue_stdin=queue_stdin,
+            queue_stdout=queue_stdout,
+            callback=context['callback'],
+            prompt=pdb.prompt,
+        )
         fut = context['executor'].submit(wait)
-        _ci_map[trace_no] = send
+        ci_map[trace_no] = send
 
         try:
             yield
         finally:
-            del _ci_map[trace_no]
+            del ci_map[trace_no]
             end()
             fut.result()
 
-    _pdb = CustomizedPdb(
+    pdb = CustomizedPdb(
         interface_cmdloop=interface_cmdloop,
-        stdin=StreamIn(q_stdin),
-        stdout=StreamOut(q_stdout),  # type: ignore
+        stdin=StreamIn(queue_stdin),
+        stdout=StreamOut(queue_stdout),  # type: ignore
         nosigint=True,
         readrc=False,
     )
 
-    _cmd_interface = partial(
-        pdb_command_interface,
-        trace_no=trace_no,
-        prompt_no_counter=context['prompt_no_counter'],
-        queue_stdin=q_stdin,
-        queue_stdout=q_stdout,
-        callback=context['callback'],
-        prompt=_pdb.prompt,
-    )
-
     @contextmanager
-    def capture(frame, event, arg):
-        nonlocal _trace_args
-        _trace_args = (frame, event, arg)
+    def save_trace_args(frame, event, arg):
+        '''A context during which Pdb.trace_dispatch() is called.
+
+        Save the args of the trace function so that they can be used in
+        interface_cmdloop().
+        '''
+        nonlocal trace_args
+        trace_args = (frame, event, arg)
         try:
             yield
         finally:
-            _trace_args = None
+            trace_args = None
 
-    return WithContext(_pdb.trace_dispatch, context=capture)
+    return WithContext(pdb.trace_dispatch, context=save_trace_args)
