@@ -58,7 +58,10 @@ def pdb_command_interface(
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
         '''Send a command to Pdb'''
-        logger.debug(f'send_command({command!r}, {prompt_no!r})')
+        logger.debug(f'send_command(command={command!r}, prompt_no={prompt_no!r})')
+        if prompt_no != _prompt_no:
+            logger.warning(f'PromptNo mismatch: {prompt_no} != {_prompt_no}')
+            return
         callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
         queue_stdin.put(command)
 
