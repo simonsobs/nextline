@@ -112,14 +112,7 @@ class PdbInterface:
 
     @contextmanager
     def during_cmdloop(self):
-        self.entering_cmdloop()
-        try:
-            yield
-        finally:
-            self.exited_cmdloop()
-
-    def entering_cmdloop(self) -> None:
-        """To be called by the custom Pdb before _cmdloop()"""
+        '''To be used by CustomizedPdb._cmdloop()'''
 
         if not self._trace_args:
             msg = f'{self.__class__.__name__}.trace() must be called first.'
@@ -128,16 +121,16 @@ class PdbInterface:
         wait_prompt, send_command = self._cmd_interface(
             trace_args=self._trace_args,
         )
-        self._fut = self._executor.submit(wait_prompt)
+        fut = self._executor.submit(wait_prompt)
 
         self._ci_map[self._trace_no] = send_command
 
-    def exited_cmdloop(self) -> None:
-        """To be called by the custom Pdb after _cmdloop()"""
-
-        del self._ci_map[self._trace_no]
-        self._q_stdout.put(None)  # end the thread
-        self._fut.result()
+        try:
+            yield
+        finally:
+            del self._ci_map[self._trace_no]
+            self._q_stdout.put(None)  # end wait_prompt()
+            fut.result()
 
     def close(self):
         self._executor.shutdown()
