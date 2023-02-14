@@ -32,7 +32,7 @@ class CustomizedPdb(Pdb):
         '''The main trace function of Bdb.'''
         return super().trace_dispatch(frame, event, arg)
 
-    def _cmdloop(self):
+    def _cmdloop(self) -> None:
         '''Overriding. Called when prompting user for commands.'''
         try:
             with self._pdbi.during_cmdloop():
@@ -51,7 +51,6 @@ class CustomizedPdb(Pdb):
             # https://github.com/simonsobs/nextline/issues/1
             logger = getLogger(__name__)
             logger.exception('')
-            return
 
     def set_continue(self):
         '''Override bdb.set_continue()
