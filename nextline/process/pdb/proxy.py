@@ -71,12 +71,12 @@ class PdbInterface:
         self._opened = False
 
         q_stdin: Queue[str] = Queue()
-        self._q_stdout: Queue[str | None] = Queue()
+        q_stdout: Queue[str | None] = Queue()
 
         self._pdb = CustomizedPdb(
             pdbi=self,
             stdin=StreamIn(q_stdin),
-            stdout=StreamOut(self._q_stdout),  # type: ignore
+            stdout=StreamOut(q_stdout),  # type: ignore
             nosigint=True,
             readrc=False,
         )
@@ -90,7 +90,7 @@ class PdbInterface:
             trace_no=self._trace_no,
             prompt_no_counter=prompt_no_counter,
             queue_stdin=q_stdin,
-            queue_stdout=self._q_stdout,
+            queue_stdout=q_stdout,
             callback=context["callback"],
             prompt=self._pdb.prompt,
         )
@@ -118,7 +118,7 @@ class PdbInterface:
             msg = f'{self.__class__.__name__}.trace() must be called first.'
             raise self.TraceNotCalled(msg)
 
-        wait_prompt, send_command = self._cmd_interface(
+        wait_prompt, send_command, end = self._cmd_interface(
             trace_args=self._trace_args,
         )
         fut = self._executor.submit(wait_prompt)
@@ -129,7 +129,7 @@ class PdbInterface:
             yield
         finally:
             del self._ci_map[self._trace_no]
-            self._q_stdout.put(None)  # end wait_prompt()
+            end()
             fut.result()
 
     def close(self):
