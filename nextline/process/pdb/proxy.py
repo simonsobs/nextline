@@ -24,7 +24,7 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
         trace_no_counter = context['trace_no_counter']
         trace_no = trace_no_counter()
         pdbi = PdbInterface(trace_no=trace_no, context=context)
-        context["callback"].task_or_thread_start(trace_no, pdbi)
+        context["callback"].task_or_thread_start(trace_no)
 
         trace: TraceFunc = pdbi.trace
 
@@ -127,6 +127,3 @@ class PdbInterface:
             del self._ci_map[self._trace_no]
             end()
             fut.result()
-
-    def close(self):
-        pass

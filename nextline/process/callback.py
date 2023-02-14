@@ -31,13 +31,11 @@ from nextline.utils import (
 from .io import peek_stdout_by_task_and_thread
 
 if TYPE_CHECKING:
-    from .pdb.proxy import PdbInterface
     from .run import QueueRegistry
 
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
-PdbIMap: TypeAlias = "Dict[TraceNo, PdbInterface]"
 
 
 class Callback:
@@ -59,13 +57,12 @@ class Callback:
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
         self._prompt_info_map: PromptInfoMap = {}
-        self._pdbi_map: PdbIMap = {}
         self._to_canonic = ToCanonic()
         self._entering_thread: Optional[Thread] = None
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
         self._current_trace_call_map: Dict[TraceNo, Tuple[FrameType, str, Any]] = {}
 
-    def task_or_thread_start(self, trace_no: TraceNo, pdbi: PdbInterface) -> None:
+    def task_or_thread_start(self, trace_no: TraceNo) -> None:
         task_or_thread = current_task_or_thread()
         self._trace_no_map[task_or_thread] = trace_no
 
@@ -74,14 +71,13 @@ class Callback:
 
         self._tasks_and_threads.add(task_or_thread)
 
-        self.trace_start(trace_no, pdbi)
+        self.trace_start(trace_no)
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
         self.trace_end(trace_no)
 
-    def trace_start(self, trace_no: TraceNo, pdbi: PdbInterface):
-        self._pdbi_map[trace_no] = pdbi
+    def trace_start(self, trace_no: TraceNo):
 
         # TODO: Putting a prompt info for now because otherwise tests get stuck
         # sometimes for an unknown reason. Need to investigate
@@ -111,7 +107,6 @@ class Callback:
 
     def trace_end(self, trace_no: TraceNo):
         self._registrar.end_prompt_info_for_trace(trace_no)
-        self._pdbi_map.pop(trace_no).close()
 
         nosl = list(self._trace_nos)
         nosl.remove(trace_no)
