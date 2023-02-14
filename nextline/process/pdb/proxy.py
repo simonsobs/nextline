@@ -10,7 +10,7 @@ from nextline.process.trace.wrap import WithContext
 from nextline.types import TraceNo
 
 from .ci import pdb_command_interface
-from .custom import CustomizedPdb
+from .custom import CustomizedPdb, TraceNotCalled
 from .stream import StreamIn, StreamOut
 
 if TYPE_CHECKING:
@@ -54,14 +54,8 @@ def TraceCallCallback(
     return WithContext(trace, context=_context)
 
 
-class TraceNotCalled(RuntimeError):
-    pass
-
-
 class PdbInterface:
     """Instantiate Pdb and register its command loops"""
-
-    TraceNotCalled = TraceNotCalled
 
     def __init__(self, trace_no: TraceNo, context: TraceContext):
         self._trace_no = trace_no
@@ -73,7 +67,7 @@ class PdbInterface:
         q_stdout: Queue[str | None] = Queue()
 
         self._pdb = CustomizedPdb(
-            pdbi=self,
+            interface_cmdloop=self.interface_cmdloop,
             stdin=StreamIn(q_stdin),
             stdout=StreamOut(q_stdout),  # type: ignore
             nosigint=True,
@@ -115,7 +109,7 @@ class PdbInterface:
 
         if not self._trace_args:
             msg = f'{self.__class__.__name__}.trace() must be called first.'
-            raise self.TraceNotCalled(msg)
+            raise TraceNotCalled(msg)
 
         wait, send, end = self._cmd_interface(trace_args=self._trace_args)
         fut = self._executor.submit(wait)

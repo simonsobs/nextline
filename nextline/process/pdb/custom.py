@@ -1,19 +1,26 @@
 from __future__ import annotations
 
+from contextlib import _GeneratorContextManager
 from logging import getLogger
 from pdb import Pdb
-from typing import TYPE_CHECKING
+from typing import Callable
 
-if TYPE_CHECKING:
-    from .proxy import PdbInterface
+
+class TraceNotCalled(RuntimeError):
+    pass
 
 
 class CustomizedPdb(Pdb):
-    '''A Pdb subclass that calls back PdbProxy'''
+    '''A Pdb subclass that interfaces the command loop.'''
 
-    def __init__(self, pdbi: PdbInterface, *args, **kwargs):
+    def __init__(
+        self,
+        interface_cmdloop: Callable[[], _GeneratorContextManager[None]],
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-        self._pdbi = pdbi
+        self._interface_cmdloop = interface_cmdloop
 
         # self.quitting = True # not sure if necessary
 
@@ -27,7 +34,7 @@ class CustomizedPdb(Pdb):
         Send command prompts to the user and commands to Pdb during the command loop.
         '''
         try:
-            with self._pdbi.interface_cmdloop():
+            with self._interface_cmdloop():
 
                 # Not calling the overridden method because it catches
                 # KeyboardInterrupt while calling self.cmdloop().
@@ -37,7 +44,7 @@ class CustomizedPdb(Pdb):
                 # KeyboardInterrupt be raised.
                 self.cmdloop()
 
-        except self._pdbi.TraceNotCalled:
+        except TraceNotCalled:
             # This error can happen when the user sends the Pdb command "step"
             # at the very last line of the script.
             # https://github.com/simonsobs/nextline/issues/1
