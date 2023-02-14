@@ -16,7 +16,7 @@ def getlines(func_org, statement, filename, module_globals=None):
 
 
 class CustomizedPdb(Pdb):
-    """A Pdb subclass that calls back PdbProxy"""
+    '''A Pdb subclass that calls back PdbProxy'''
 
     def __init__(self, pdbi: PdbInterface, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,11 +29,11 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)  # type: ignore
 
     def trace_dispatch(self, frame, event, arg):
-        """The main trace function of Bdb"""
+        '''The main trace function of Bdb.'''
         return super().trace_dispatch(frame, event, arg)
 
     def _cmdloop(self):
-        """Prompt user input"""
+        '''Overriding. Called when prompting user for commands.'''
         try:
             with self._pdbi.during_cmdloop():
 
@@ -54,11 +54,11 @@ class CustomizedPdb(Pdb):
             return
 
     def set_continue(self):
-        """override bdb.set_continue()
+        '''Override bdb.set_continue()
 
         To avoid sys.settrace(None) called in bdb.set_continue()
 
-        """
+        '''
         self._set_stopinfo(self.botframe, None, -1)
 
     # def break_here(self, frame):
