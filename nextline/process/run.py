@@ -24,6 +24,7 @@ class TraceContext(TypedDict):
     modules_to_trace: Set[str]
     trace_no_counter: Callable[[], TraceNo]
     prompt_no_counter: Callable[[], PromptNo]
+    executor: ThreadPoolExecutor
 
 
 def run_(
@@ -86,18 +87,21 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
         modules_to_trace=modules_to_trace,
     ) as callback:
 
-        context = TraceContext(
-            callback=callback,
-            pdb_ci_map=pdb_ci_map,
-            modules_to_trace=modules_to_trace,
-            trace_no_counter=TraceNoCounter(1),
-            prompt_no_counter=PromptNoCounter(1),
-        )
+        with ThreadPoolExecutor() as executor:
 
-        trace = Trace(context=context)
+            context = TraceContext(
+                callback=callback,
+                pdb_ci_map=pdb_ci_map,
+                modules_to_trace=modules_to_trace,
+                trace_no_counter=TraceNoCounter(1),
+                prompt_no_counter=PromptNoCounter(1),
+                executor=executor,
+            )
 
-        with relay_commands(q_commands, pdb_ci_map):
-            yield trace
+            trace = Trace(context=context)
+
+            with relay_commands(q_commands, pdb_ci_map):
+                yield trace
 
 
 def _compile(code: CodeType | str, filename: str) -> CodeType:
