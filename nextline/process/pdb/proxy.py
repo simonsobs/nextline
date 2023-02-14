@@ -110,6 +110,14 @@ class PdbInterface:
 
         return WithContext(self._pdb.trace_dispatch, context=capture)(frame, event, arg)
 
+    @contextmanager
+    def during_cmdloop(self):
+        self.entering_cmdloop()
+        try:
+            yield
+        finally:
+            self.exited_cmdloop()
+
     def entering_cmdloop(self) -> None:
         """To be called by the custom Pdb before _cmdloop()"""
 

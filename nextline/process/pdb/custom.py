@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from functools import partial
+from logging import getLogger
 from pdb import Pdb
-import traceback
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -35,16 +35,23 @@ class CustomizedPdb(Pdb):
     def _cmdloop(self):
         """Prompt user input"""
         try:
-            self._pdbi.entering_cmdloop()
+            with self._pdbi.during_cmdloop():
+
+                # Not calling the overridden method because it catches
+                # KeyboardInterrupt while calling self.cmdloop().
+                # super()._cmdloop()
+
+                # Instead directly call self.cmdloop() so to let
+                # KeyboardInterrupt be raised.
+                self.cmdloop()
+
         except self._pdbi.TraceNotCalled:
-            # "step" at the last line
+            # This error can happen when the user sends the Pdb command "step"
+            # at the very last line of the script.
             # https://github.com/simonsobs/nextline/issues/1
+            logger = getLogger(__name__)
+            logger.exception('')
             return
-        try:
-            # super()._cmdloop()  # This catches KeyboardInterrupt
-            super().cmdloop()
-        finally:
-            self._pdbi.exited_cmdloop()
 
     def set_continue(self):
         """override bdb.set_continue()
