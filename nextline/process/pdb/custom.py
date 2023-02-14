@@ -22,7 +22,7 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)  # type: ignore
 
     def _cmdloop(self) -> None:
-        '''Overriding. Called when prompting user for commands.'''
+        '''Override Pdb._cmdloop(). Called when prompting user for commands.'''
         try:
             with self._pdbi.during_cmdloop():
 
@@ -42,9 +42,6 @@ class CustomizedPdb(Pdb):
             logger.exception('')
 
     def set_continue(self):
-        '''Override bdb.set_continue()
-
-        To avoid sys.settrace(None) called in bdb.set_continue()
-
-        '''
+        '''Override Bdb.set_continue() to avoid sys.settrace(None).'''
+        # super().set_continue()
         self._set_stopinfo(self.botframe, None, -1)
