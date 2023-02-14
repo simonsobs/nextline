@@ -20,6 +20,7 @@ def pdb_command_interface(
 ) -> Tuple[Callable[[], None], Callable[[str, PromptNo], None]]:
 
     _prompt_no: PromptNo
+    logger = getLogger(__name__)
 
     def wait_prompt() -> None:
         '''Receive stdout from Pdb
@@ -28,8 +29,11 @@ def pdb_command_interface(
         '''
         nonlocal _prompt_no
         while out := _read_until_prompt(queue_stdout, prompt):
+            logger.debug(f'Pdb stdout: {out!r}')
+
             _prompt_no = prompt_no_counter()
-            # print(_prompt_no)
+            logger.debug(f'PromptNo: {_prompt_no}')
+
             callback.prompt_start(
                 trace_no=trace_no,
                 prompt_no=_prompt_no,
@@ -39,7 +43,6 @@ def pdb_command_interface(
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
         '''Send a command to Pdb'''
-        logger = getLogger(__name__)
         logger.debug(f'send_command({command!r}, {prompt_no!r})')
         callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
         queue_stdin.put(command)
