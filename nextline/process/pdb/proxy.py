@@ -24,7 +24,6 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
         trace_no_counter = context['trace_no_counter']
         trace_no = trace_no_counter()
         pdbi = PdbInterface(trace_no=trace_no, context=context)
-        context["callback"].task_or_thread_start(trace_no)
 
         trace: TraceFunc = pdbi.trace
 
@@ -42,6 +41,7 @@ def TraceCallCallback(
 ) -> TraceFunc:
 
     callback = context['callback']
+    callback.task_or_thread_start(trace_no)
 
     @contextmanager
     def _context(frame, event, arg):
