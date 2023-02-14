@@ -22,7 +22,7 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)  # type: ignore
 
     def _cmdloop(self) -> None:
-        '''Override Pdb._cmdloop().
+        '''Override Pdb._cmdloop() to interface the command loop.
 
         Send command prompts to the user and commands to Pdb during the command loop.
         '''
