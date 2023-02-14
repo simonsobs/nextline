@@ -100,18 +100,13 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         prompt=_pdb.prompt,
     )
 
-    def trace(frame, event, arg) -> Optional[TraceFunc]:
-        """Call Pdb while storing trace args"""
+    @contextmanager
+    def capture(frame, event, arg):
+        nonlocal _trace_args
+        _trace_args = (frame, event, arg)
+        try:
+            yield
+        finally:
+            _trace_args = None
 
-        @contextmanager
-        def capture(frame, event, arg):
-            nonlocal _trace_args
-            _trace_args = (frame, event, arg)
-            try:
-                yield
-            finally:
-                _trace_args = None
-
-        return WithContext(_pdb.trace_dispatch, context=capture)(frame, event, arg)
-
-    return trace
+    return WithContext(_pdb.trace_dispatch, context=capture)
