@@ -110,7 +110,7 @@ class PdbInterface:
         return WithContext(self._pdb.trace_dispatch, context=capture)(frame, event, arg)
 
     @contextmanager
-    def during_cmdloop(self) -> Generator[None, None, None]:
+    def interface_cmdloop(self) -> Generator[None, None, None]:
         '''To be used by CustomizedPdb._cmdloop()'''
 
         if not self._trace_args:

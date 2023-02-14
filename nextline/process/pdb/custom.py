@@ -22,9 +22,12 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)  # type: ignore
 
     def _cmdloop(self) -> None:
-        '''Override Pdb._cmdloop(). Called when prompting user for commands.'''
+        '''Override Pdb._cmdloop().
+
+        Send command prompts to the user and commands to Pdb during the command loop.
+        '''
         try:
-            with self._pdbi.during_cmdloop():
+            with self._pdbi.interface_cmdloop():
 
                 # Not calling the overridden method because it catches
                 # KeyboardInterrupt while calling self.cmdloop().
