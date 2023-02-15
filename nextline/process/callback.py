@@ -37,6 +37,47 @@ TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
+PromptEnd: TypeAlias = 'Callable[[str], None]'
+
+
+def prompt_start(
+    run_no: RunNo,
+    trace_no: TraceNo,
+    prompt_no: PromptNo,
+    registrar: RegistrarProxy,
+    trace_args: Tuple[FrameType, str, Any],
+    out: str,
+) -> PromptEnd:
+
+    frame, event, _ = trace_args
+    file_name = _to_canonic(frame.f_code.co_filename)
+    line_no = frame.f_lineno
+    prompt_info = PromptInfo(
+        run_no=run_no,
+        trace_no=trace_no,
+        prompt_no=prompt_no,
+        open=True,
+        event=event,
+        file_name=file_name,
+        line_no=line_no,
+        stdout=out,
+        started_at=datetime.datetime.utcnow(),
+    )
+    registrar.put_prompt_info(prompt_info)
+    registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+
+    def prompt_end(command: str) -> None:
+        prompt_info_end = dataclasses.replace(
+            prompt_info,
+            open=False,
+            command=command,
+            ended_at=datetime.datetime.utcnow(),
+        )
+        registrar.put_prompt_info(prompt_info_end)
+        registrar.put_prompt_info_for_trace(trace_no, prompt_info_end)
+
+    return prompt_end
+
 
 class Callback:
     def __init__(
@@ -56,11 +97,11 @@ class Callback:
             done=self.task_or_thread_end
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
-        self._prompt_info_map: PromptInfoMap = {}
         self._to_canonic = ToCanonic()
         self._entering_thread: Optional[Thread] = None
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
         self._current_trace_call_map: Dict[TraceNo, Tuple[FrameType, str, Any]] = {}
+        self._prompt_end_map: Dict[PromptNo, PromptEnd] = {}
 
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
         task_or_thread = current_task_or_thread()
@@ -161,37 +202,24 @@ class Callback:
         trace_args: Tuple[FrameType, str, Any],
         out: str,
     ) -> None:
-        frame, event, _ = trace_args
-        file_name = self._to_canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
-        if module_name := frame.f_globals.get("__name__"):
-            self._modules_to_trace.add(module_name)
-        prompt_info = PromptInfo(
+
+        prompt_end = prompt_start(
             run_no=self._run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
-            open=True,
-            event=event,
-            file_name=file_name,
-            line_no=line_no,
-            stdout=out,
-            started_at=datetime.datetime.utcnow(),
+            registrar=self._registrar,
+            trace_args=trace_args,
+            out=out,
         )
-        self._prompt_info_map[(trace_no, prompt_no)] = prompt_info
-        self._registrar.put_prompt_info(prompt_info)
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+        self._prompt_end_map[prompt_no] = prompt_end
+        frame, *_ = trace_args
+        if module_name := frame.f_globals.get("__name__"):
+            self._modules_to_trace.add(module_name)
         self._last_prompt_frame_map[trace_no] = frame
 
     def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
-        prompt_info = self._prompt_info_map.pop((trace_no, prompt_no))
-        prompt_info = dataclasses.replace(
-            prompt_info,
-            open=False,
-            command=command,
-            ended_at=datetime.datetime.utcnow(),
-        )
-        self._registrar.put_prompt_info(prompt_info)
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+        prompt_end = self._prompt_end_map.pop(prompt_no)
+        prompt_end(command)
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
@@ -266,3 +294,6 @@ def ToCanonic() -> Callable[[str], str]:
         return canonic
 
     return to_canonic
+
+
+_to_canonic = ToCanonic()
