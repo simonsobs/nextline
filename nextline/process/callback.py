@@ -1,11 +1,11 @@
 from __future__ import annotations
-from contextlib import contextmanager
 
 import dataclasses
 import datetime
 import os
 import threading
 from asyncio import Task
+from contextlib import contextmanager
 from threading import Thread
 from types import FrameType
 from typing import (  # noqa F401
@@ -39,6 +39,43 @@ TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
 PromptEnd: TypeAlias = 'Callable[[str], None]'
+
+
+@contextmanager
+def trace_call(
+    run_no: RunNo,
+    trace_no: TraceNo,
+    registrar: RegistrarProxy,
+    trace_args: Tuple[FrameType, str, Any],
+    last_prompt_frame_map: Dict[TraceNo, FrameType] = {},
+):
+
+    try:
+        yield
+    finally:
+        # return
+        frame, event, _ = trace_args
+        file_name = _to_canonic(frame.f_code.co_filename)
+        line_no = frame.f_lineno
+
+        if frame is not last_prompt_frame_map.get(trace_no):
+            return
+
+        # TODO: Sending a prompt info with "open=False" for now so that the
+        #       arrow in the web UI moves when the Pdb is "continuing."
+
+        prompt_info = PromptInfo(
+            run_no=run_no,
+            trace_no=trace_no,
+            prompt_no=PromptNo(-1),
+            open=False,
+            event=event,
+            file_name=file_name,
+            line_no=line_no,
+            trace_call_end=True,
+        )
+        registrar.put_prompt_info(prompt_info)
+        registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
 
 def prompt_start(
@@ -166,31 +203,15 @@ class Callback:
 
     @contextmanager
     def trace_call(self, trace_no: TraceNo, trace_args: Tuple[FrameType, str, Any]):
-        try:
+
+        with trace_call(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            registrar=self._registrar,
+            trace_args=trace_args,
+            last_prompt_frame_map=self._last_prompt_frame_map,
+        ):
             yield
-        finally:
-            frame, event, _ = trace_args
-            file_name = self._to_canonic(frame.f_code.co_filename)
-            line_no = frame.f_lineno
-
-            if frame is not self._last_prompt_frame_map.get(trace_no):
-                return
-
-            # TODO: Sending a prompt info with open = False so that the arrow in the
-            #       web UI moves when the Pdb is "continuing."
-
-            prompt_info = PromptInfo(
-                run_no=self._run_no,
-                trace_no=trace_no,
-                prompt_no=PromptNo(-1),
-                open=False,
-                event=event,
-                file_name=file_name,
-                line_no=line_no,
-                trace_call_end=True,
-            )
-            self._registrar.put_prompt_info(prompt_info)
-            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     def prompt_start(
         self,
