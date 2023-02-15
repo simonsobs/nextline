@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import contextmanager
 
 import dataclasses
 import datetime
@@ -100,7 +101,6 @@ class Callback:
         self._to_canonic = ToCanonic()
         self._entering_thread: Optional[Thread] = None
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
-        self._current_trace_call_map: Dict[TraceNo, Tuple[FrameType, str, Any]] = {}
         self._prompt_end_map: Dict[PromptNo, PromptEnd] = {}
 
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
@@ -164,36 +164,33 @@ class Callback:
 
         self._registrar.put_trace_info(trace_info)
 
-    def trace_call_start(
-        self,
-        trace_no: TraceNo,
-        trace_args: Tuple[FrameType, str, Any],
-    ):
-        self._current_trace_call_map[trace_no] = trace_args
+    @contextmanager
+    def trace_call(self, trace_no: TraceNo, trace_args: Tuple[FrameType, str, Any]):
+        try:
+            yield
+        finally:
+            frame, event, _ = trace_args
+            file_name = self._to_canonic(frame.f_code.co_filename)
+            line_no = frame.f_lineno
 
-    def trace_call_end(self, trace_no: TraceNo):
-        frame, event, _ = self._current_trace_call_map[trace_no]
-        file_name = self._to_canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
+            if frame is not self._last_prompt_frame_map.get(trace_no):
+                return
 
-        if frame is not self._last_prompt_frame_map.get(trace_no):
-            return
+            # TODO: Sending a prompt info with open = False so that the arrow in the
+            #       web UI moves when the Pdb is "continuing."
 
-        # TODO: Sending a prompt info with open = False so that the arrow in the
-        #       web UI moves when the Pdb is "continuing."
-
-        prompt_info = PromptInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            prompt_no=PromptNo(-1),
-            open=False,
-            event=event,
-            file_name=file_name,
-            line_no=line_no,
-            trace_call_end=True,
-        )
-        self._registrar.put_prompt_info(prompt_info)
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+            prompt_info = PromptInfo(
+                run_no=self._run_no,
+                trace_no=trace_no,
+                prompt_no=PromptNo(-1),
+                open=False,
+                event=event,
+                file_name=file_name,
+                line_no=line_no,
+                trace_call_end=True,
+            )
+            self._registrar.put_prompt_info(prompt_info)
+            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     def prompt_start(
         self,
