@@ -47,7 +47,7 @@ def trace_call(
     trace_no: TraceNo,
     registrar: RegistrarProxy,
     trace_args: Tuple[FrameType, str, Any],
-    last_prompt_frame_map: Dict[TraceNo, FrameType] = {},
+    last_prompt_frame_map: Dict[TraceNo, FrameType],
 ):
 
     try:
@@ -85,6 +85,8 @@ def prompt_start(
     registrar: RegistrarProxy,
     trace_args: Tuple[FrameType, str, Any],
     out: str,
+    modules_to_trace: Set[str],
+    last_prompt_frame_map: Dict[TraceNo, FrameType],
 ) -> PromptEnd:
 
     frame, event, _ = trace_args
@@ -103,6 +105,11 @@ def prompt_start(
     )
     registrar.put_prompt_info(prompt_info)
     registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+
+    if module_name := frame.f_globals.get('__name__'):
+        modules_to_trace.add(module_name)
+
+    last_prompt_frame_map[trace_no] = frame
 
     def prompt_end(command: str) -> None:
         prompt_info_end = dataclasses.replace(
@@ -228,12 +235,10 @@ class Callback:
             registrar=self._registrar,
             trace_args=trace_args,
             out=out,
+            modules_to_trace=self._modules_to_trace,
+            last_prompt_frame_map=self._last_prompt_frame_map,
         )
         self._prompt_end_map[prompt_no] = prompt_end
-        frame, *_ = trace_args
-        if module_name := frame.f_globals.get("__name__"):
-            self._modules_to_trace.add(module_name)
-        self._last_prompt_frame_map[trace_no] = frame
 
     def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
         prompt_end = self._prompt_end_map.pop(prompt_no)
