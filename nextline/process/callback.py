@@ -351,9 +351,6 @@ class Callback:
         trace_no = self._trace_no_map[task_or_thread]
         self._stdout_registrar.stdout_write(trace_no=trace_no, line=line)
 
-    def close(self) -> None:
-        self._thread_task_done_callback.close()
-
     def __enter__(self):
         self._peek_stdout = peek_stdout_by_task_and_thread(
             to_peek=self._tasks_and_threads, callback=self.stdout
@@ -364,7 +361,7 @@ class Callback:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
-        self.close()
+        self._thread_task_done_callback.close()
         if self._entering_thread:
             if trace_no := self._trace_no_map.get(self._entering_thread):
                 self.trace_end(trace_no)
