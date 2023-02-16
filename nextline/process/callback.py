@@ -52,6 +52,23 @@ TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
 
+class TraceNumbersRegistrar:
+    def __init__(self, registrar: RegistrarProxy):
+        self._registrar = registrar
+        self._trace_nos: Tuple[TraceNo, ...] = ()
+        self._trace_no_map: TraceNoMap = WeakKeyDictionary()
+
+    def trace_start(self, trace_no: TraceNo):
+        self._trace_nos = self._trace_nos + (trace_no,)
+        self._registrar.put_trace_nos(self._trace_nos)
+
+    def trace_end(self, trace_no: TraceNo):
+        nosl = list(self._trace_nos)
+        nosl.remove(trace_no)
+        self._trace_nos = tuple(nosl)
+        self._registrar.put_trace_nos(self._trace_nos)
+
+
 class TraceInfoRegistrar:
     def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
@@ -234,7 +251,6 @@ class Callback:
         self._run_no = run_no
         self._registrar = registrar
         self._add_module_to_trace = AddModuleToTrace(modules_to_trace)
-        self._trace_nos: Tuple[TraceNo, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
         self._thread_task_done_callback = ThreadTaskDoneCallback(
@@ -242,6 +258,7 @@ class Callback:
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
         self._entering_thread: Optional[Thread] = None
+        self._trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
         self._trace_info_registrar = TraceInfoRegistrar(
             run_no=run_no, registrar=registrar
         )
@@ -265,8 +282,7 @@ class Callback:
         self.trace_end(trace_no)
 
     def trace_start(self, trace_no: TraceNo):
-        self._trace_nos = self._trace_nos + (trace_no,)
-        self._registrar.put_trace_nos(self._trace_nos)
+        self._trace_numbers_registrar.trace_start(trace_no=trace_no)
 
         thread_task_id = self._trace_id_factory()
         thread_no = thread_task_id.thread_no
@@ -281,15 +297,7 @@ class Callback:
         )
 
     def trace_end(self, trace_no: TraceNo):
-
-        nosl = list(self._trace_nos)
-        nosl.remove(trace_no)
-        self._trace_nos = tuple(nosl)
-        self._registrar.put_trace_nos(self._trace_nos)
-
-        # trace_end = self._trace_end_map[trace_no]
-        # trace_end()
-
+        self._trace_numbers_registrar.trace_end(trace_no=trace_no)
         self._prompt_info_registrar.trace_end(trace_no=trace_no)
         self._trace_info_registrar.trace_end(trace_no=trace_no)
 
