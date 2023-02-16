@@ -27,6 +27,7 @@ from nextline.types import (
     TraceNo,
 )
 
+from .spec import hookimpl
 from .types import TraceArgs, TraceNoMap
 
 if TYPE_CHECKING:
@@ -39,10 +40,12 @@ class TraceNumbersRegistrar:
         self._trace_nos: Tuple[TraceNo, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
 
+    @hookimpl
     def trace_start(self, trace_no: TraceNo):
         self._trace_nos = self._trace_nos + (trace_no,)
         self._registrar.put_trace_nos(self._trace_nos)
 
+    @hookimpl
     def trace_end(self, trace_no: TraceNo):
         nosl = list(self._trace_nos)
         nosl.remove(trace_no)
@@ -56,6 +59,7 @@ class TraceInfoRegistrar:
         self._registrar = registrar
         self._trace_context_map: Dict[TraceNo, _GeneratorContextManager] = {}
 
+    @hookimpl
     def trace_start(
         self,
         trace_no: TraceNo,
@@ -88,6 +92,7 @@ class TraceInfoRegistrar:
         context.__enter__()
         self._trace_context_map[trace_no] = context
 
+    @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
         context = self._trace_context_map.pop(trace_no)
         context.__exit__(None, None, None)
@@ -102,6 +107,7 @@ class PromptInfoRegistrar:
         self._prompt_context_map: Dict[PromptNo, _GeneratorContextManager] = {}
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
 
+    @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
         @contextmanager
         def _trace():
@@ -124,10 +130,12 @@ class PromptInfoRegistrar:
         context.__enter__()
         self._trace_context_map[trace_no] = context
 
+    @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
         context = self._trace_context_map.pop(trace_no)
         context.__exit__(None, None, None)
 
+    @hookimpl
     def trace_call_start(self, trace_no: TraceNo, trace_args: TraceArgs):
         @contextmanager
         def _trace_call():
@@ -162,10 +170,12 @@ class PromptInfoRegistrar:
         context.__enter__()
         self._trace_call_context_map[trace_no] = context
 
+    @hookimpl
     def trace_call_end(self, trace_no: TraceNo) -> None:
         context = self._trace_call_context_map.pop(trace_no)
         context.__exit__(None, None, None)
 
+    @hookimpl
     def prompt_start(
         self,
         trace_no: TraceNo,
@@ -213,6 +223,7 @@ class PromptInfoRegistrar:
         context.__enter__()
         self._prompt_context_map[prompt_no] = context
 
+    @hookimpl
     def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
         context = self._prompt_context_map.pop(prompt_no)
         context.gen.send(command)
@@ -225,8 +236,9 @@ class AddModuleToTrace:
     def __init__(self, modules_to_trace: Set[str]):
         self._modules_to_trace = modules_to_trace
 
-    def prompt_start(self, trace_arg: TraceArgs):
-        frame, _, _ = trace_arg
+    @hookimpl
+    def prompt_start(self, trace_args: TraceArgs):
+        frame, _, _ = trace_args
         if module_name := frame.f_globals.get('__name__'):
             self._modules_to_trace.add(module_name)
 
@@ -236,6 +248,7 @@ class StdoutRegistrar:
         self._run_no = run_no
         self._registrar = registrar
 
+    @hookimpl
     def stdout(self, trace_no: TraceNo, line: str):
         stdout_info = StdoutInfo(
             run_no=self._run_no,
