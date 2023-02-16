@@ -137,7 +137,6 @@ def prompt_start(
     registrar: RegistrarProxy,
     trace_args: TraceArgs,
     out: str,
-    modules_to_trace: Set[str],
     last_prompt_frame_map: Dict[TraceNo, FrameType],
 ) -> PromptEnd:
 
@@ -158,9 +157,6 @@ def prompt_start(
     registrar.put_prompt_info(prompt_info)
     registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
-    if module_name := frame.f_globals.get('__name__'):
-        modules_to_trace.add(module_name)
-
     last_prompt_frame_map[trace_no] = frame
 
     def prompt_end(command: str) -> None:
@@ -176,6 +172,17 @@ def prompt_start(
     return prompt_end
 
 
+def AddModuleToTrace(modules_to_trace: Set[str]):
+    '''Trace the current Python module in new threads and asyncio tasks.'''
+
+    def _add(trace_arg: TraceArgs):
+        frame, _, _ = trace_arg
+        if module_name := frame.f_globals.get('__name__'):
+            modules_to_trace.add(module_name)
+
+    return _add
+
+
 class Callback:
     def __init__(
         self,
@@ -185,7 +192,7 @@ class Callback:
     ):
         self._run_no = run_no
         self._registrar = registrar
-        self._modules_to_trace = modules_to_trace
+        self._add_module_to_trace = AddModuleToTrace(modules_to_trace)
         self._trace_nos: Tuple[TraceNo, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
@@ -267,10 +274,10 @@ class Callback:
             registrar=self._registrar,
             trace_args=trace_args,
             out=out,
-            modules_to_trace=self._modules_to_trace,
             last_prompt_frame_map=self._last_prompt_frame_map,
         )
         self._prompt_end_map[prompt_no] = prompt_end
+        self._add_module_to_trace(trace_args)
 
     def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
         prompt_end = self._prompt_end_map.pop(prompt_no)
