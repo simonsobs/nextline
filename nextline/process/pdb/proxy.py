@@ -44,11 +44,8 @@ def TraceCallCallback(
 
     @contextmanager
     def _context(frame, event, arg):
-        callback.trace_call_start(trace_no, (frame, event, arg))
-        try:
+        with callback.trace_call(trace_no, (frame, event, arg)):
             yield
-        finally:
-            callback.trace_call_end(trace_no)
 
     return WithContext(trace, context=_context)
 
