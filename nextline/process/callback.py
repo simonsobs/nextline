@@ -95,48 +95,42 @@ def trace_start(
     return trace_end
 
 
-@contextmanager
-def trace_call(
-    run_no: RunNo,
-    trace_no: TraceNo,
-    registrar: RegistrarProxy,
-    trace_args: TraceArgs,
-    last_prompt_frame_map: Dict[TraceNo, FrameType],
-):
-
-    try:
-        yield
-    finally:
-        # return
-        frame, event, _ = trace_args
-        file_name = _to_canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
-
-        if frame is not last_prompt_frame_map.get(trace_no):
-            return
-
-        # TODO: Sending a prompt info with "open=False" for now so that the
-        #       arrow in the web UI moves when the Pdb is "continuing."
-
-        prompt_info = PromptInfo(
-            run_no=run_no,
-            trace_no=trace_no,
-            prompt_no=PromptNo(-1),
-            open=False,
-            event=event,
-            file_name=file_name,
-            line_no=line_no,
-            trace_call_end=True,
-        )
-        registrar.put_prompt_info(prompt_info)
-        registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
-
 class PromptInfoRegistrar:
     def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
         self._registrar = registrar
         self._prompt_context_map: Dict[PromptNo, _GeneratorContextManager] = {}
+        self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
+
+    @contextmanager
+    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
+
+        try:
+            yield
+        finally:
+            # return
+            frame, event, _ = trace_args
+            file_name = _to_canonic(frame.f_code.co_filename)
+            line_no = frame.f_lineno
+
+            if frame is not self._last_prompt_frame_map.get(trace_no):
+                return
+
+            # TODO: Sending a prompt info with "open=False" for now so that the
+            #       arrow in the web UI moves when the Pdb is "continuing."
+
+            prompt_info = PromptInfo(
+                run_no=self._run_no,
+                trace_no=trace_no,
+                prompt_no=PromptNo(-1),
+                open=False,
+                event=event,
+                file_name=file_name,
+                line_no=line_no,
+                trace_call_end=True,
+            )
+            self._registrar.put_prompt_info(prompt_info)
+            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     def prompt_start(
         self,
@@ -144,7 +138,6 @@ class PromptInfoRegistrar:
         prompt_no: PromptNo,
         trace_args: TraceArgs,
         out: str,
-        last_prompt_frame_map: Dict[TraceNo, FrameType],
     ) -> None:
         @contextmanager
         def _prompt() -> Generator[None, str, None]:
@@ -166,7 +159,7 @@ class PromptInfoRegistrar:
             self._registrar.put_prompt_info(prompt_info)
             self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
-            last_prompt_frame_map[trace_no] = frame
+            self._last_prompt_frame_map[trace_no] = frame
 
             # Yield twice: once to receive from send(), and once to exit.
             # https://stackoverflow.com/a/68304565/7309855
@@ -222,7 +215,6 @@ class Callback:
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
         self._entering_thread: Optional[Thread] = None
-        self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
         self._trace_end_map: Dict[TraceNo, TraceEnd] = {}
         self._prompt_info_registrar = PromptInfoRegistrar(
             run_no=run_no, registrar=registrar
@@ -273,12 +265,8 @@ class Callback:
     @contextmanager
     def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
 
-        with trace_call(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            registrar=self._registrar,
-            trace_args=trace_args,
-            last_prompt_frame_map=self._last_prompt_frame_map,
+        with self._prompt_info_registrar.trace_call(
+            trace_no=trace_no, trace_args=trace_args
         ):
             yield
 
@@ -295,7 +283,6 @@ class Callback:
             prompt_no=prompt_no,
             trace_args=trace_args,
             out=out,
-            last_prompt_frame_map=self._last_prompt_frame_map,
         )
 
         self._add_module_to_trace.prompt_start(trace_args)
