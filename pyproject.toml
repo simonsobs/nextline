@@ -22,7 +22,12 @@ classifiers = [
 	"Programming Language :: Python :: 3.10",
 	"Programming Language :: Python :: 3.11",
 ]
-dependencies = ["tblib>=1.7", "typing-extensions>=4.4", "transitions>=0.9"]
+dependencies = [
+	"tblib>=1.7",
+	"typing-extensions>=4.4",
+	"transitions>=0.9",
+	"pluggy>=1.0",
+]
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -71,5 +76,5 @@ exclude = ['script\.py']
 
 
 [[tool.mypy.overrides]]
-module = ["tblib.*"]
+module = ["tblib.*", "pluggy.*"]
 ignore_missing_imports = true
