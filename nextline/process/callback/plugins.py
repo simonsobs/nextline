@@ -3,24 +3,18 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import os
-from asyncio import Task
 from contextlib import _GeneratorContextManager, contextmanager
-from threading import Thread
 from types import FrameType
 from typing import (  # noqa F401
     TYPE_CHECKING,
-    Any,
     Callable,
     Dict,
     Generator,
-    MutableMapping,
     Optional,
     Set,
     Tuple,
 )
 from weakref import WeakKeyDictionary
-
-from typing_extensions import TypeAlias
 
 from nextline.types import (
     PromptInfo,
@@ -33,14 +27,10 @@ from nextline.types import (
     TraceNo,
 )
 
+from .types import TraceArgs, TraceNoMap
+
 if TYPE_CHECKING:
     from ..run import QueueRegistry
-
-TraceArgs: TypeAlias = Tuple[FrameType, str, Any]
-
-TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
-TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
-PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
 
 class TraceNumbersRegistrar:
