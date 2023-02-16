@@ -22,7 +22,16 @@ from weakref import WeakKeyDictionary
 
 from typing_extensions import TypeAlias
 
-from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
+from nextline.types import (
+    PromptInfo,
+    PromptNo,
+    RunNo,
+    StdoutInfo,
+    TaskNo,
+    ThreadNo,
+    TraceInfo,
+    TraceNo,
+)
 from nextline.utils import (
     ThreadTaskDoneCallback,
     ThreadTaskIdComposer,
@@ -38,7 +47,48 @@ TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
+TraceEnd: TypeAlias = "Callable[[], None]"
 PromptEnd: TypeAlias = 'Callable[[str], None]'
+
+
+def trace_start(
+    run_no: RunNo,
+    trace_no: TraceNo,
+    thread_no: ThreadNo,
+    task_no: Optional[TaskNo],
+    registrar: RegistrarProxy,
+) -> TraceEnd:
+
+    # TODO: Putting a prompt info for now because otherwise tests get stuck
+    # sometimes for an unknown reason. Need to investigate
+    prompt_info = PromptInfo(
+        run_no=run_no,
+        trace_no=trace_no,
+        prompt_no=PromptNo(-1),
+        open=False,
+    )
+    registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+
+    trace_info = TraceInfo(
+        run_no=run_no,
+        trace_no=trace_no,
+        thread_no=thread_no,
+        task_no=task_no,
+        state="running",
+        started_at=datetime.datetime.utcnow(),
+    )
+    registrar.put_trace_info(trace_info)
+
+    def trace_end():
+        registrar.end_prompt_info_for_trace(trace_no)
+        trace_info_end = dataclasses.replace(
+            trace_info,
+            state='finished',
+            ended_at=datetime.datetime.utcnow(),
+        )
+        registrar.put_trace_info(trace_info_end)
+
+    return trace_end
 
 
 @contextmanager
@@ -137,14 +187,13 @@ class Callback:
         self._trace_nos: Tuple[TraceNo, ...] = ()
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
-        self._trace_info_map: TraceInfoMap = {}
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self.task_or_thread_end
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
-        self._to_canonic = ToCanonic()
         self._entering_thread: Optional[Thread] = None
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
+        self._trace_end_map: Dict[TraceNo, TraceEnd] = {}
         self._prompt_end_map: Dict[PromptNo, PromptEnd] = {}
 
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
@@ -163,50 +212,31 @@ class Callback:
         self.trace_end(trace_no)
 
     def trace_start(self, trace_no: TraceNo):
-
-        # TODO: Putting a prompt info for now because otherwise tests get stuck
-        # sometimes for an unknown reason. Need to investigate
-        prompt_info = PromptInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            prompt_no=PromptNo(-1),
-            open=False,
-        )
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
         self._trace_nos = self._trace_nos + (trace_no,)
         self._registrar.put_trace_nos(self._trace_nos)
 
         thread_task_id = self._trace_id_factory()
+        thread_no = thread_task_id.thread_no
+        task_no = thread_task_id.task_no
 
-        trace_info = TraceInfo(
+        trace_end = trace_start(
             run_no=self._run_no,
             trace_no=trace_no,
-            thread_no=thread_task_id.thread_no,
-            task_no=thread_task_id.task_no,
-            state="running",
-            started_at=datetime.datetime.utcnow(),
+            thread_no=thread_no,
+            task_no=task_no,
+            registrar=self._registrar,
         )
-        self._trace_info_map[trace_no] = trace_info
-        self._registrar.put_trace_info(trace_info)
+        self._trace_end_map[trace_no] = trace_end
 
     def trace_end(self, trace_no: TraceNo):
-        self._registrar.end_prompt_info_for_trace(trace_no)
 
         nosl = list(self._trace_nos)
         nosl.remove(trace_no)
         self._trace_nos = tuple(nosl)
         self._registrar.put_trace_nos(self._trace_nos)
 
-        trace_info = self._trace_info_map[trace_no]
-
-        trace_info = dataclasses.replace(
-            trace_info,
-            state="finished",
-            ended_at=datetime.datetime.utcnow(),
-        )
-
-        self._registrar.put_trace_info(trace_info)
+        trace_end = self._trace_end_map[trace_no]
+        trace_end()
 
     @contextmanager
     def trace_call(self, trace_no: TraceNo, trace_args: Tuple[FrameType, str, Any]):
