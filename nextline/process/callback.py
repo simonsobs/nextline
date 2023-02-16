@@ -51,48 +51,59 @@ TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
 
-TraceEnd: TypeAlias = "Callable[[], None]"
-PromptEnd: TypeAlias = 'Callable[[str], None]'
 
+class TraceInfoRegistrar:
+    def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
+        self._run_no = run_no
+        self._registrar = registrar
+        self._trace_context_map: Dict[TraceNo, _GeneratorContextManager] = {}
 
-def trace_start(
-    run_no: RunNo,
-    trace_no: TraceNo,
-    thread_no: ThreadNo,
-    task_no: Optional[TaskNo],
-    registrar: RegistrarProxy,
-) -> TraceEnd:
+    def trace_start(
+        self,
+        trace_no: TraceNo,
+        thread_no: ThreadNo,
+        task_no: Optional[TaskNo],
+    ) -> None:
+        @contextmanager
+        def _trace():
 
-    # TODO: Putting a prompt info for now because otherwise tests get stuck
-    # sometimes for an unknown reason. Need to investigate
-    prompt_info = PromptInfo(
-        run_no=run_no,
-        trace_no=trace_no,
-        prompt_no=PromptNo(-1),
-        open=False,
-    )
-    registrar.put_prompt_info_for_trace(trace_no, prompt_info)
+            # TODO: Putting a prompt info for now because otherwise tests get stuck
+            # sometimes for an unknown reason. Need to investigate
+            prompt_info = PromptInfo(
+                run_no=self._run_no,
+                trace_no=trace_no,
+                prompt_no=PromptNo(-1),
+                open=False,
+            )
+            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
-    trace_info = TraceInfo(
-        run_no=run_no,
-        trace_no=trace_no,
-        thread_no=thread_no,
-        task_no=task_no,
-        state="running",
-        started_at=datetime.datetime.utcnow(),
-    )
-    registrar.put_trace_info(trace_info)
+            trace_info = TraceInfo(
+                run_no=self._run_no,
+                trace_no=trace_no,
+                thread_no=thread_no,
+                task_no=task_no,
+                state="running",
+                started_at=datetime.datetime.utcnow(),
+            )
+            self._registrar.put_trace_info(trace_info)
 
-    def trace_end():
-        registrar.end_prompt_info_for_trace(trace_no)
-        trace_info_end = dataclasses.replace(
-            trace_info,
-            state='finished',
-            ended_at=datetime.datetime.utcnow(),
-        )
-        registrar.put_trace_info(trace_info_end)
+            yield
 
-    return trace_end
+            self._registrar.end_prompt_info_for_trace(trace_no)
+            trace_info_end = dataclasses.replace(
+                trace_info,
+                state='finished',
+                ended_at=datetime.datetime.utcnow(),
+            )
+            self._registrar.put_trace_info(trace_info_end)
+
+        context = _trace()
+        context.__enter__()
+        self._trace_context_map[trace_no] = context
+
+    def trace_end(self, trace_no: TraceNo) -> None:
+        context = self._trace_context_map.pop(trace_no)
+        context.__exit__(None, None, None)
 
 
 class PromptInfoRegistrar:
@@ -215,7 +226,9 @@ class Callback:
         )
         self._tasks_and_threads: Set[Task | Thread] = set()
         self._entering_thread: Optional[Thread] = None
-        self._trace_end_map: Dict[TraceNo, TraceEnd] = {}
+        self._trace_info_registrar = TraceInfoRegistrar(
+            run_no=run_no, registrar=registrar
+        )
         self._prompt_info_registrar = PromptInfoRegistrar(
             run_no=run_no, registrar=registrar
         )
@@ -243,14 +256,11 @@ class Callback:
         thread_no = thread_task_id.thread_no
         task_no = thread_task_id.task_no
 
-        trace_end = trace_start(
-            run_no=self._run_no,
+        self._trace_info_registrar.trace_start(
             trace_no=trace_no,
             thread_no=thread_no,
             task_no=task_no,
-            registrar=self._registrar,
         )
-        self._trace_end_map[trace_no] = trace_end
 
     def trace_end(self, trace_no: TraceNo):
 
@@ -259,8 +269,10 @@ class Callback:
         self._trace_nos = tuple(nosl)
         self._registrar.put_trace_nos(self._trace_nos)
 
-        trace_end = self._trace_end_map[trace_no]
-        trace_end()
+        # trace_end = self._trace_end_map[trace_no]
+        # trace_end()
+
+        self._trace_info_registrar.trace_end(trace_no=trace_no)
 
     @contextmanager
     def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
