@@ -40,10 +40,10 @@ from nextline.utils import (
     current_task_or_thread,
 )
 
-from .io import peek_stdout_by_task_and_thread
+from ..io import peek_stdout_by_task_and_thread
 
 if TYPE_CHECKING:
-    from .run import QueueRegistry
+    from ..run import QueueRegistry
 
 TraceArgs: TypeAlias = Tuple[FrameType, str, Any]
 
