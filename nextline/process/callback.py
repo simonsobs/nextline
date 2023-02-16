@@ -172,15 +172,16 @@ def prompt_start(
     return prompt_end
 
 
-def AddModuleToTrace(modules_to_trace: Set[str]):
-    '''Trace the current Python module in new threads and asyncio tasks.'''
+class AddModuleToTrace:
+    '''Let Python modules be traced in new threads and asyncio tasks.'''
 
-    def _add(trace_arg: TraceArgs):
+    def __init__(self, modules_to_trace: Set[str]):
+        self._modules_to_trace = modules_to_trace
+
+    def prompt_start(self, trace_arg: TraceArgs):
         frame, _, _ = trace_arg
         if module_name := frame.f_globals.get('__name__'):
-            modules_to_trace.add(module_name)
-
-    return _add
+            self._modules_to_trace.add(module_name)
 
 
 class Callback:
@@ -277,7 +278,7 @@ class Callback:
             last_prompt_frame_map=self._last_prompt_frame_map,
         )
         self._prompt_end_map[prompt_no] = prompt_end
-        self._add_module_to_trace(trace_args)
+        self._add_module_to_trace.prompt_start(trace_args)
 
     def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
         prompt_end = self._prompt_end_map.pop(prompt_no)
