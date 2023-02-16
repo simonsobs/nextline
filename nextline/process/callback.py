@@ -241,6 +241,21 @@ class AddModuleToTrace:
             self._modules_to_trace.add(module_name)
 
 
+class StdoutRegistrar:
+    def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
+        self._run_no = run_no
+        self._registrar = registrar
+
+    def stdout_write(self, trace_no: TraceNo, line: str):
+        stdout_info = StdoutInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            text=line,
+            written_at=datetime.datetime.utcnow(),
+        )
+        self._registrar.put_stdout_info(stdout_info)
+
+
 class Callback:
     def __init__(
         self,
@@ -248,8 +263,6 @@ class Callback:
         registrar: RegistrarProxy,
         modules_to_trace: Set[str],
     ):
-        self._run_no = run_no
-        self._registrar = registrar
         self._add_module_to_trace = AddModuleToTrace(modules_to_trace)
         self._trace_no_map: TraceNoMap = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
@@ -265,6 +278,7 @@ class Callback:
         self._prompt_info_registrar = PromptInfoRegistrar(
             run_no=run_no, registrar=registrar
         )
+        self._stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
 
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
         task_or_thread = current_task_or_thread()
@@ -335,13 +349,7 @@ class Callback:
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
-        stdout_info = StdoutInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            text=line,
-            written_at=datetime.datetime.utcnow(),
-        )
-        self._registrar.put_stdout_info(stdout_info)
+        self._stdout_registrar.stdout_write(trace_no=trace_no, line=line)
 
     def close(self) -> None:
         self._thread_task_done_callback.close()
