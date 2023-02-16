@@ -43,6 +43,8 @@ from .io import peek_stdout_by_task_and_thread
 if TYPE_CHECKING:
     from .run import QueueRegistry
 
+TraceArgs: TypeAlias = Tuple[FrameType, str, Any]
+
 TraceNoMap: TypeAlias = "MutableMapping[Task | Thread, TraceNo]"
 TraceInfoMap: TypeAlias = "Dict[TraceNo, TraceInfo]"
 PromptInfoMap: TypeAlias = "Dict[Tuple[TraceNo, PromptNo], PromptInfo]"
@@ -96,7 +98,7 @@ def trace_call(
     run_no: RunNo,
     trace_no: TraceNo,
     registrar: RegistrarProxy,
-    trace_args: Tuple[FrameType, str, Any],
+    trace_args: TraceArgs,
     last_prompt_frame_map: Dict[TraceNo, FrameType],
 ):
 
@@ -133,7 +135,7 @@ def prompt_start(
     trace_no: TraceNo,
     prompt_no: PromptNo,
     registrar: RegistrarProxy,
-    trace_args: Tuple[FrameType, str, Any],
+    trace_args: TraceArgs,
     out: str,
     modules_to_trace: Set[str],
     last_prompt_frame_map: Dict[TraceNo, FrameType],
@@ -239,7 +241,7 @@ class Callback:
         trace_end()
 
     @contextmanager
-    def trace_call(self, trace_no: TraceNo, trace_args: Tuple[FrameType, str, Any]):
+    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
 
         with trace_call(
             run_no=self._run_no,
@@ -254,7 +256,7 @@ class Callback:
         self,
         trace_no: TraceNo,
         prompt_no: PromptNo,
-        trace_args: Tuple[FrameType, str, Any],
+        trace_args: TraceArgs,
         out: str,
     ) -> None:
 
