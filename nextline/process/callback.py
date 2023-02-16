@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import _GeneratorContextManager
 import dataclasses
 import datetime
 import os
@@ -13,6 +14,7 @@ from typing import (  # noqa F401
     Any,
     Callable,
     Dict,
+    Generator,
     MutableMapping,
     Optional,
     Set,
@@ -134,7 +136,7 @@ class PromptInfoRegistrar:
     def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
         self._registrar = registrar
-        self._end_map: Dict[PromptNo, PromptEnd] = {}
+        self._prompt_context_map: Dict[PromptNo, _GeneratorContextManager] = {}
 
     def prompt_start(
         self,
@@ -144,7 +146,8 @@ class PromptInfoRegistrar:
         out: str,
         last_prompt_frame_map: Dict[TraceNo, FrameType],
     ) -> None:
-        def _prompt() -> PromptEnd:
+        @contextmanager
+        def _prompt() -> Generator[None, str, None]:
 
             frame, event, _ = trace_args
             file_name = _to_canonic(frame.f_code.co_filename)
@@ -165,23 +168,28 @@ class PromptInfoRegistrar:
 
             last_prompt_frame_map[trace_no] = frame
 
-            def _end(command: str) -> None:
-                prompt_info_end = dataclasses.replace(
-                    prompt_info,
-                    open=False,
-                    command=command,
-                    ended_at=datetime.datetime.utcnow(),
-                )
-                self._registrar.put_prompt_info(prompt_info_end)
-                self._registrar.put_prompt_info_for_trace(trace_no, prompt_info_end)
+            # Yield twice: once to receive from send(), and once to exit.
+            # https://stackoverflow.com/a/68304565/7309855
+            command = yield
+            yield
 
-            return _end
+            prompt_info_end = dataclasses.replace(
+                prompt_info,
+                open=False,
+                command=command,
+                ended_at=datetime.datetime.utcnow(),
+            )
+            self._registrar.put_prompt_info(prompt_info_end)
+            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info_end)
 
-        self._end_map[prompt_no] = _prompt()
+        context = _prompt()
+        context.__enter__()
+        self._prompt_context_map[prompt_no] = context
 
     def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
-        end = self._end_map.pop(prompt_no)
-        end(command)
+        context = self._prompt_context_map.pop(prompt_no)
+        context.gen.send(command)
+        context.__exit__(None, None, None)
 
 
 class AddModuleToTrace:
