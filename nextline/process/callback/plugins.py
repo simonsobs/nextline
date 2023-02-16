@@ -236,7 +236,7 @@ class StdoutRegistrar:
         self._run_no = run_no
         self._registrar = registrar
 
-    def stdout_write(self, trace_no: TraceNo, line: str):
+    def stdout(self, trace_no: TraceNo, line: str):
         stdout_info = StdoutInfo(
             run_no=self._run_no,
             trace_no=trace_no,

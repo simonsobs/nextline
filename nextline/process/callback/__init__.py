@@ -123,7 +123,7 @@ class Callback:
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
-        self._stdout_registrar.stdout_write(trace_no=trace_no, line=line)
+        self._stdout_registrar.stdout(trace_no=trace_no, line=line)
 
     def __enter__(self):
         self._peek_stdout = peek_stdout_by_task_and_thread(
