@@ -40,6 +40,7 @@ MODULES_TO_SKIP = {
     'posixpath',
     'fnmatch',
     '_pytest.*',
+    'apluggy.*',
     'pluggy.*',
 }
 

@@ -7,7 +7,7 @@ from threading import Thread
 from typing import MutableMapping, Optional, Set
 from weakref import WeakKeyDictionary
 
-from pluggy import PluginManager
+from apluggy import PluginManager
 
 from nextline.process.io import peek_stdout_by_task_and_thread
 from nextline.types import PromptNo, RunNo, TraceNo

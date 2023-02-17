@@ -4,7 +4,7 @@ from asyncio import Task
 from threading import Thread
 from typing import Optional
 
-import pluggy
+import apluggy as pluggy
 
 from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 
