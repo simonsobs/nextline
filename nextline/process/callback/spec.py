@@ -13,7 +13,7 @@ hookspec = pluggy.HookspecMarker(PROJECT_NAME)
 hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 
-@hookimpl
+@hookspec
 def trace_start(
     trace_no: TraceNo, thread_no: ThreadNo, task_no: Optional[TaskNo]
 ) -> None:
