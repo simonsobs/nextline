@@ -4,7 +4,7 @@ import threading
 from asyncio import Task
 from contextlib import contextmanager
 from threading import Thread
-from typing import Optional, Set  # noqa F401
+from typing import MutableMapping, Optional, Set
 from weakref import WeakKeyDictionary
 
 from pluggy import PluginManager
@@ -25,7 +25,6 @@ from .plugins import (
     StdoutRegistrar,
     TraceArgs,
     TraceInfoRegistrar,
-    TraceNoMap,
     TraceNumbersRegistrar,
 )
 
@@ -37,7 +36,7 @@ class Callback:
         registrar: RegistrarProxy,
         modules_to_trace: Set[str],
     ):
-        self._trace_no_map: TraceNoMap = WeakKeyDictionary()
+        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self.task_or_thread_end
