@@ -23,10 +23,10 @@ from .plugins import (
     PromptInfoRegistrar,
     RegistrarProxy,
     StdoutRegistrar,
-    TraceArgs,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
+from .types import TraceArgs
 
 
 class Callback:
