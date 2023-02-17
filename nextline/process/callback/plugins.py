@@ -5,16 +5,7 @@ import datetime
 import os
 from contextlib import _GeneratorContextManager, contextmanager
 from types import FrameType
-from typing import (  # noqa F401
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Generator,
-    Optional,
-    Set,
-    Tuple,
-)
-from weakref import WeakKeyDictionary
+from typing import TYPE_CHECKING, Callable, Dict, Generator, Optional, Set, Tuple
 
 from nextline.types import (
     PromptInfo,
@@ -28,7 +19,7 @@ from nextline.types import (
 )
 
 from .spec import hookimpl
-from .types import TraceArgs, TraceNoMap
+from .types import TraceArgs
 
 if TYPE_CHECKING:
     from ..run import QueueRegistry
@@ -38,7 +29,6 @@ class TraceNumbersRegistrar:
     def __init__(self, registrar: RegistrarProxy):
         self._registrar = registrar
         self._trace_nos: Tuple[TraceNo, ...] = ()
-        self._trace_no_map: TraceNoMap = WeakKeyDictionary()
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo):
