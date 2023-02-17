@@ -110,17 +110,23 @@ class Callback:
         trace_no = self._trace_no_map[task_or_thread]
         self._hook.hook.stdout(trace_no=trace_no, line=line)
 
-    def __enter__(self):
+    def start(self) -> None:
         self._peek_stdout = peek_stdout_by_task_and_thread(
             to_peek=self._tasks_and_threads, callback=self.stdout
         )
         self._entering_thread = threading.current_thread()
         self._peek_stdout.__enter__()
-        return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
         self._thread_task_done_callback.close()
         if self._entering_thread:
             if trace_no := self._trace_no_map.get(self._entering_thread):
                 self.trace_end(trace_no)
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.close(exc_type, exc_value, traceback)
