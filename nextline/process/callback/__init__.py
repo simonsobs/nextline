@@ -25,8 +25,50 @@ from .plugins import (
     StdoutRegistrar,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
+    hookimpl,
 )
 from .types import TraceArgs
+
+
+class TaskOrThreadToTraceMapper:
+    def __init__(
+        self, callback: 'Callback', trace_no_map: MutableMapping[Task | Thread, TraceNo]
+    ) -> None:
+        self._callback = callback
+        self._trace_no_map = trace_no_map
+        self._thread_task_done_callback = ThreadTaskDoneCallback(
+            done=self._callback.task_or_thread_end
+        )
+        self._entering_thread: Optional[Thread] = None
+
+        self._hook = PluginManager(spec.PROJECT_NAME)
+        self._hook.add_hookspecs(spec)
+
+    @hookimpl
+    def task_or_thread_start(self, trace_no: TraceNo) -> None:
+        task_or_thread = current_task_or_thread()
+        self._trace_no_map[task_or_thread] = trace_no
+
+        if task_or_thread is not self._entering_thread:
+            self._thread_task_done_callback.register(task_or_thread)
+
+        self._callback.trace_start(trace_no)
+
+    @hookimpl
+    def task_or_thread_end(self, task_or_thread: Task | Thread):
+        trace_no = self._trace_no_map[task_or_thread]
+        self._callback.trace_end(trace_no)
+
+    @hookimpl
+    def start(self) -> None:
+        self._entering_thread = threading.current_thread()
+
+    @hookimpl
+    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
+        self._thread_task_done_callback.close()
+        if self._entering_thread:
+            if trace_no := self._trace_no_map.get(self._entering_thread):
+                self._callback.trace_end(trace_no)
 
 
 class Callback:
@@ -38,11 +80,7 @@ class Callback:
     ):
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
-        self._thread_task_done_callback = ThreadTaskDoneCallback(
-            done=self.task_or_thread_end
-        )
         self._tasks_and_threads: Set[Task | Thread] = set()
-        self._entering_thread: Optional[Thread] = None
 
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
@@ -52,30 +90,23 @@ class Callback:
         trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
+        trace_mapper = TaskOrThreadToTraceMapper(self, self._trace_no_map)
 
         self._hook.register(stdout_registrar, name='stdout')
         self._hook.register(add_module_to_trace, name='add_module_to_trace')
         self._hook.register(trace_info_registrar, name='trace_info')
         self._hook.register(prompt_info_registrar, name='prompt_info')
         self._hook.register(trace_numbers_registrar, name='trace_numbers')
+        self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
 
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
         task_or_thread = current_task_or_thread()
-        self._trace_no_map[task_or_thread] = trace_no
-
-        if task_or_thread is not self._entering_thread:
-            self._thread_task_done_callback.register(task_or_thread)
 
         self._tasks_and_threads.add(task_or_thread)
-
-        self.trace_start(trace_no)
 
         self._hook.hook.task_or_thread_start(trace_no=trace_no)
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
-        trace_no = self._trace_no_map[task_or_thread]
-        self.trace_end(trace_no)
-
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     def trace_start(self, trace_no: TraceNo):
@@ -118,16 +149,12 @@ class Callback:
         self._peek_stdout = peek_stdout_by_task_and_thread(
             to_peek=self._tasks_and_threads, callback=self.stdout
         )
-        self._entering_thread = threading.current_thread()
+
         self._peek_stdout.__enter__()
         self._hook.hook.start()
 
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
-        self._thread_task_done_callback.close()
-        if self._entering_thread:
-            if trace_no := self._trace_no_map.get(self._entering_thread):
-                self.trace_end(trace_no)
 
         self._hook.hook.close(
             exc_type=exc_type, exc_value=exc_value, traceback=traceback
