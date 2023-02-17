@@ -9,6 +9,7 @@ from weakref import WeakKeyDictionary
 
 from pluggy import PluginManager
 
+from nextline.process.io import peek_stdout_by_task_and_thread
 from nextline.types import PromptNo, RunNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,
@@ -16,7 +17,6 @@ from nextline.utils import (
     current_task_or_thread,
 )
 
-from ..io import peek_stdout_by_task_and_thread
 from . import spec
 from .plugins import (
     AddModuleToTrace,
