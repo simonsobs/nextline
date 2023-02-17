@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from asyncio import Task
+from threading import Thread
 from typing import Optional
 
 import pluggy
@@ -11,6 +15,16 @@ PROJECT_NAME = 'nextline_process_callback'
 
 hookspec = pluggy.HookspecMarker(PROJECT_NAME)
 hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
+
+
+@hookspec
+def task_or_thread_start(trace_no: TraceNo) -> None:
+    pass
+
+
+@hookspec
+def task_or_thread_end(task_or_thread: Task | Thread):
+    pass
 
 
 @hookspec
@@ -49,4 +63,14 @@ def prompt_end(trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
 
 @hookspec
 def stdout(trace_no: TraceNo, line: str) -> None:
+    pass
+
+
+@hookspec
+def start() -> None:
+    pass
+
+
+@hookspec
+def close(exc_type=None, exc_value=None, traceback=None) -> None:
     pass

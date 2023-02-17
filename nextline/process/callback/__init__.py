@@ -70,9 +70,13 @@ class Callback:
 
         self.trace_start(trace_no)
 
+        self._hook.hook.task_or_thread_start(trace_no=trace_no)
+
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
         self.trace_end(trace_no)
+
+        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     def trace_start(self, trace_no: TraceNo):
         thread_task_id = self._trace_id_factory()
@@ -116,6 +120,7 @@ class Callback:
         )
         self._entering_thread = threading.current_thread()
         self._peek_stdout.__enter__()
+        self._hook.hook.start()
 
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
@@ -123,6 +128,10 @@ class Callback:
         if self._entering_thread:
             if trace_no := self._trace_no_map.get(self._entering_thread):
                 self.trace_end(trace_no)
+
+        self._hook.hook.close(
+            exc_type=exc_type, exc_value=exc_value, traceback=traceback
+        )
 
     def __enter__(self):
         self.start()
