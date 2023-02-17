@@ -71,6 +71,28 @@ class TaskOrThreadToTraceMapper:
                 self._callback.trace_end(trace_no)
 
 
+class PeekStdout:
+    def __init__(self, callback: 'Callback') -> None:
+        self._callback = callback
+        self._tasks_and_threads: Set[Task | Thread] = set()
+
+    @hookimpl
+    def task_or_thread_start(self) -> None:
+        task_or_thread = current_task_or_thread()
+        self._tasks_and_threads.add(task_or_thread)
+
+    @hookimpl
+    def start(self) -> None:
+        self._peek_stdout = peek_stdout_by_task_and_thread(
+            to_peek=self._tasks_and_threads, callback=self._callback.stdout
+        )
+        self._peek_stdout.__enter__()
+
+    @hookimpl
+    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
+        self._peek_stdout.__exit__(exc_type, exc_value, traceback)
+
+
 class Callback:
     def __init__(
         self,
@@ -80,7 +102,6 @@ class Callback:
     ):
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._trace_id_factory = ThreadTaskIdComposer()
-        self._tasks_and_threads: Set[Task | Thread] = set()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
@@ -90,6 +111,7 @@ class Callback:
         trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
+        peek_stdout = PeekStdout(self)
         trace_mapper = TaskOrThreadToTraceMapper(self, self._trace_no_map)
 
         self._hook.register(stdout_registrar, name='stdout')
@@ -97,13 +119,10 @@ class Callback:
         self._hook.register(trace_info_registrar, name='trace_info')
         self._hook.register(prompt_info_registrar, name='prompt_info')
         self._hook.register(trace_numbers_registrar, name='trace_numbers')
+        self._hook.register(peek_stdout, name='peek_stdout')
         self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
 
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
-        task_or_thread = current_task_or_thread()
-
-        self._tasks_and_threads.add(task_or_thread)
-
         self._hook.hook.task_or_thread_start(trace_no=trace_no)
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
@@ -146,16 +165,9 @@ class Callback:
         self._hook.hook.stdout(trace_no=trace_no, line=line)
 
     def start(self) -> None:
-        self._peek_stdout = peek_stdout_by_task_and_thread(
-            to_peek=self._tasks_and_threads, callback=self.stdout
-        )
-
-        self._peek_stdout.__enter__()
         self._hook.hook.start()
 
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
-        self._peek_stdout.__exit__(exc_type, exc_value, traceback)
-
         self._hook.hook.close(
             exc_type=exc_type, exc_value=exc_value, traceback=traceback
         )
