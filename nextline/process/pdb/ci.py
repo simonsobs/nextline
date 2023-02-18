@@ -1,6 +1,6 @@
 from __future__ import annotations
-from contextlib import contextmanager
 
+from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
