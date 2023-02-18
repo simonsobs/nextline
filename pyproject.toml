@@ -76,5 +76,5 @@ exclude = ['script\.py']
 
 
 [[tool.mypy.overrides]]
-module = ["tblib.*", "pluggy.*"]
+module = ["tblib.*", "apluggy.*"]
 ignore_missing_imports = true
