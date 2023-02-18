@@ -16,7 +16,7 @@ def pdb_command_interface(
     queue_stdin: Queue[str],
     queue_stdout: Queue[str | None],
     callback: Callback,
-    prompt="(Pdb) ",
+    prompt: str,
 ) -> Tuple[Callable[[], None], Callable[[str, PromptNo], None], Callable[[], None]]:
 
     _prompt_no: PromptNo
