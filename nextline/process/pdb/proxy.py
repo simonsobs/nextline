@@ -51,6 +51,49 @@ def TraceCallCallback(
 
 
 def PdbInterface(trace_no: TraceNo, context: TraceContext):
+    '''
+    trace (WithContext)
+      |
+      | with
+      |--> save_trace_args()
+            |
+      |<----| yield
+      |
+      |--------> pdb.trace_dispatch()
+                  |
+                  |--> pdb._cmdloop()
+                        |
+                        | with
+                        |--> interface_cmdloop()
+                              |
+                              | with
+                              |--> pdb_command_interface()
+                                    |
+                              |<----| yield
+                        |<----| yield
+                        |
+                        |-------------> pdb.cmdloop()
+                                          |
+                                          V
+                        |<-----------------
+                        |
+                        |---->| exit
+                              |---->| exit
+                                    V
+                              |<-----
+                              V
+                        |<-----
+                        V
+                  |<-----
+                  V
+      |<-----------
+      |
+      |---->| exit
+            V
+      |<-----
+      V
+
+    '''
 
     trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
@@ -59,7 +102,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
     @contextmanager
     def interface_cmdloop() -> Generator[None, None, None]:
-        '''To be used by CustomizedPdb._cmdloop()'''
+        '''To be called in CustomizedPdb._cmdloop()'''
 
         if not trace_args:
             raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
