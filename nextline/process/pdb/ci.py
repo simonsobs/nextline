@@ -1,9 +1,10 @@
 from __future__ import annotations
+from contextlib import contextmanager
 
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 
 from nextline.types import PromptNo, TraceNo
 
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from nextline.process.run import TraceContext
 
 
+@contextmanager
 def pdb_command_interface(
     trace_args: Tuple[FrameType, str, Any],
     trace_no: TraceNo,
@@ -18,10 +20,11 @@ def pdb_command_interface(
     queue_stdin: Queue[str],
     queue_stdout: Queue[str | None],
     prompt: str,
-) -> Tuple[Callable[[], None], Callable[[str, PromptNo], None], Callable[[], None]]:
+):
 
     prompt_no_counter = context['prompt_no_counter']
     callback = context['callback']
+    ci_map = context['pdb_ci_map']
 
     _prompt_no: PromptNo
     logger = getLogger(__name__)
@@ -69,4 +72,12 @@ def pdb_command_interface(
         callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
         queue_stdin.put(command)
 
-    return wait_prompt, send_command, end_waiting_prompt
+    fut = context['executor'].submit(wait_prompt)
+    ci_map[trace_no] = send_command
+
+    try:
+        yield
+    finally:
+        del ci_map[trace_no]
+        end_waiting_prompt()
+        fut.result()

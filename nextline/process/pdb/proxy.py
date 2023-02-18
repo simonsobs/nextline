@@ -52,7 +52,6 @@ def TraceCallCallback(
 
 def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
-    ci_map = context["pdb_ci_map"]
     trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
     queue_stdin: Queue[str] = Queue()
@@ -65,23 +64,15 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         if not trace_args:
             raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
-        wait, send, end = pdb_command_interface(
+        with pdb_command_interface(
             trace_args=trace_args,
             trace_no=trace_no,
             context=context,
             queue_stdin=queue_stdin,
             queue_stdout=queue_stdout,
             prompt=pdb.prompt,
-        )
-        fut = context['executor'].submit(wait)
-        ci_map[trace_no] = send
-
-        try:
+        ):
             yield
-        finally:
-            del ci_map[trace_no]
-            end()
-            fut.result()
 
     pdb = CustomizedPdb(
         interface_cmdloop=interface_cmdloop,
