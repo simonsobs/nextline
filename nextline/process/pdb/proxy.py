@@ -68,10 +68,9 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         wait, send, end = pdb_command_interface(
             trace_args=trace_args,
             trace_no=trace_no,
-            prompt_no_counter=context['prompt_no_counter'],
+            context=context,
             queue_stdin=queue_stdin,
             queue_stdout=queue_stdout,
-            callback=context['callback'],
             prompt=pdb.prompt,
         )
         fut = context['executor'].submit(wait)

@@ -3,21 +3,25 @@ from __future__ import annotations
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import Any, Callable, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Tuple
 
-from nextline.process.callback import Callback
 from nextline.types import PromptNo, TraceNo
+
+if TYPE_CHECKING:
+    from nextline.process.run import TraceContext
 
 
 def pdb_command_interface(
     trace_args: Tuple[FrameType, str, Any],
     trace_no: TraceNo,
-    prompt_no_counter: Callable[[], PromptNo],
+    context: TraceContext,
     queue_stdin: Queue[str],
     queue_stdout: Queue[str | None],
-    callback: Callback,
     prompt: str,
 ) -> Tuple[Callable[[], None], Callable[[str, PromptNo], None], Callable[[], None]]:
+
+    prompt_no_counter = context['prompt_no_counter']
+    callback = context['callback']
 
     _prompt_no: PromptNo
     logger = getLogger(__name__)
