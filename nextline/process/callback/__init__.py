@@ -142,11 +142,8 @@ class Callback:
 
     @contextmanager
     def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
-        self._hook.hook.trace_call_start(trace_no=trace_no, trace_args=trace_args)
-        try:
+        with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
             yield
-        finally:
-            self._hook.hook.trace_call_end(trace_no=trace_no)
 
     def prompt_start(
         self, trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str

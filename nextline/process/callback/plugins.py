@@ -3,9 +3,11 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import os
-from contextlib import _GeneratorContextManager, contextmanager
+from contextlib import _GeneratorContextManager
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Dict, Generator, Optional, Set, Tuple
+
+from apluggy import contextmanager
 
 from nextline.types import (
     PromptInfo,
@@ -126,44 +128,34 @@ class PromptInfoRegistrar:
         context.__exit__(None, None, None)
 
     @hookimpl
-    def trace_call_start(self, trace_no: TraceNo, trace_args: TraceArgs):
-        @contextmanager
-        def _trace_call():
+    @contextmanager
+    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
 
-            try:
-                yield
-            finally:
-                frame, event, _ = trace_args
-                file_name = _to_canonic(frame.f_code.co_filename)
-                line_no = frame.f_lineno
+        try:
+            yield
+        finally:
+            frame, event, _ = trace_args
+            file_name = _to_canonic(frame.f_code.co_filename)
+            line_no = frame.f_lineno
 
-                if frame is not self._last_prompt_frame_map.get(trace_no):
-                    return
+            if frame is not self._last_prompt_frame_map.get(trace_no):
+                return
 
-                # TODO: Sending a prompt info with "open=False" for now so that the
-                #       arrow in the web UI moves when the Pdb is "continuing."
+            # TODO: Sending a prompt info with "open=False" for now so that the
+            #       arrow in the web UI moves when the Pdb is "continuing."
 
-                prompt_info = PromptInfo(
-                    run_no=self._run_no,
-                    trace_no=trace_no,
-                    prompt_no=PromptNo(-1),
-                    open=False,
-                    event=event,
-                    file_name=file_name,
-                    line_no=line_no,
-                    trace_call_end=True,
-                )
-                self._registrar.put_prompt_info(prompt_info)
-                self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
-        context = _trace_call()
-        context.__enter__()
-        self._trace_call_context_map[trace_no] = context
-
-    @hookimpl
-    def trace_call_end(self, trace_no: TraceNo) -> None:
-        context = self._trace_call_context_map.pop(trace_no)
-        context.__exit__(None, None, None)
+            prompt_info = PromptInfo(
+                run_no=self._run_no,
+                trace_no=trace_no,
+                prompt_no=PromptNo(-1),
+                open=False,
+                event=event,
+                file_name=file_name,
+                line_no=line_no,
+                trace_call_end=True,
+            )
+            self._registrar.put_prompt_info(prompt_info)
+            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     @hookimpl
     def prompt_start(

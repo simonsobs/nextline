@@ -5,6 +5,7 @@ from threading import Thread
 from typing import Optional
 
 import apluggy as pluggy
+from apluggy import contextmanager
 
 from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 
@@ -40,12 +41,8 @@ def trace_end(trace_no: TraceNo) -> None:
 
 
 @hookspec
-def trace_call_start(trace_no: TraceNo, trace_args: TraceArgs) -> None:
-    pass
-
-
-@hookspec
-def trace_call_end(trace_no: TraceNo) -> None:
+@contextmanager
+def trace_call(trace_no: TraceNo, trace_args: TraceArgs):
     pass
 
 
