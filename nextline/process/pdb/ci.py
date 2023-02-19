@@ -26,6 +26,8 @@ def pdb_command_interface(
     callback = context['callback']
     ci_map = context['pdb_ci_map']
 
+    queue: Queue[str] = Queue()
+
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
@@ -60,6 +62,12 @@ def pdb_command_interface(
                 out=out,
             )
 
+            command = queue.get()
+            callback.prompt_end(
+                trace_no=trace_no, prompt_no=_prompt_no, command=command
+            )
+            queue_stdin.put(command)
+
     def end_waiting_prompt() -> None:
         queue_stdout.put(None)
 
@@ -69,8 +77,7 @@ def pdb_command_interface(
         if prompt_no != _prompt_no:
             logger.warning(f'PromptNo mismatch: {prompt_no} != {_prompt_no}')
             return
-        callback.prompt_end(trace_no=trace_no, prompt_no=prompt_no, command=command)
-        queue_stdin.put(command)
+        queue.put(command)
 
     fut = context['executor'].submit(wait_prompt)
     ci_map[trace_no] = send_command
