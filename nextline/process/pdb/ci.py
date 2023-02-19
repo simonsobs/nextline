@@ -55,18 +55,17 @@ def pdb_command_interface(
             _prompt_no = prompt_no_counter()
             logger.debug(f'PromptNo: {_prompt_no}')
 
-            callback.prompt_start(
-                trace_no=trace_no,
-                prompt_no=_prompt_no,
-                trace_args=trace_args,
-                out=out,
-            )
-
-            command = queue.get()
-            callback.prompt_end(
-                trace_no=trace_no, prompt_no=_prompt_no, command=command
-            )
-            queue_stdin.put(command)
+            with (
+                p := callback.prompt(
+                    trace_no=trace_no,
+                    prompt_no=_prompt_no,
+                    trace_args=trace_args,
+                    out=out,
+                )
+            ):
+                command = queue.get()
+                p.gen.send(command)
+                queue_stdin.put(command)
 
     def end_waiting_prompt() -> None:
         queue_stdout.put(None)
