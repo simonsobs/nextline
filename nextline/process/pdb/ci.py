@@ -66,8 +66,8 @@ def pdb_command_interface(
                 )
             ):
                 command = queue.get()
-                p.gen.send(command)
                 c.send(command)
+                p.gen.send(command)
 
     def end_waiting_prompt() -> None:
         queue_stdout.put(None)
