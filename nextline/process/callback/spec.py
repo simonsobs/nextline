@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from asyncio import Task
 from threading import Thread
-from typing import Optional
+from typing import Generator, Optional
 
 import apluggy as pluggy
 from apluggy import contextmanager
@@ -47,15 +47,13 @@ def trace_call(trace_no: TraceNo, trace_args: TraceArgs):
 
 
 @hookspec
-def prompt_start(
+@contextmanager
+def prompt(
     trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str
-) -> None:
-    pass
-
-
-@hookspec
-def prompt_end(trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
-    pass
+) -> Generator[None, str, None]:
+    # Receive the command by gen.send().
+    command = yield  # noqa: F841
+    yield
 
 
 @hookspec
