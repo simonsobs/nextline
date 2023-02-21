@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any, Generator, Tuple
 
 from nextline.types import PromptNo, TraceNo
 
@@ -31,7 +31,7 @@ def pdb_command_interface(
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def _read_until_prompt() -> str | None:
+    def _read_until_prompt() -> Generator[str, None, None]:
         '''Return the stdout from Pdb up to the prompt.
 
         The prompt is normally "(Pdb) ".
@@ -40,8 +40,8 @@ def pdb_command_interface(
         while (m := queue_stdout.get()) is not None:
             out += m
             if prompt == m:
-                return out
-        return None
+                yield out
+                out = ''
 
     def wait_prompt() -> None:
         '''Receive stdout from Pdb
@@ -49,7 +49,7 @@ def pdb_command_interface(
         To be run in a thread during pdb._cmdloop()
         '''
         nonlocal _prompt_no
-        while (out := _read_until_prompt()) is not None:
+        for out in _read_until_prompt():
             logger.debug(f'Pdb stdout: {out!r}')
 
             _prompt_no = prompt_no_counter()
