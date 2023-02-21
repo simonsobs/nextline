@@ -145,17 +145,20 @@ class Callback:
         with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
             yield
 
-    def prompt_start(
+    @contextmanager
+    def prompt(
         self, trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str
-    ) -> None:
-        self._hook.hook.prompt_start(
-            trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=out
-        )
-
-    def prompt_end(self, trace_no: TraceNo, prompt_no: PromptNo, command: str) -> None:
-        self._hook.hook.prompt_end(
-            trace_no=trace_no, prompt_no=prompt_no, command=command
-        )
+    ):
+        with (
+            p := self._hook.with_.prompt(
+                trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=out
+            )
+        ):
+            # Yield twice: once to receive from send(), and once to exit.
+            # https://stackoverflow.com/a/68304565/7309855
+            command = yield
+            p.gen.send(command)
+            yield
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
