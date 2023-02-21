@@ -31,7 +31,7 @@ def pdb_command_interface(
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def _read_until_prompt() -> Generator[str, None, None]:
+    def _read_until_prompt() -> Generator[str, str, None]:
         '''Return the stdout from Pdb up to the prompt.
 
         The prompt is normally "(Pdb) ".
@@ -40,7 +40,9 @@ def pdb_command_interface(
         while (m := queue_stdout.get()) is not None:
             out += m
             if prompt == m:
-                yield out
+                command = yield out
+                queue_stdin.put(command)
+                yield ''
                 out = ''
 
     def wait_prompt() -> None:
@@ -49,7 +51,7 @@ def pdb_command_interface(
         To be run in a thread during pdb._cmdloop()
         '''
         nonlocal _prompt_no
-        for out in _read_until_prompt():
+        for out in (c := _read_until_prompt()):
             logger.debug(f'Pdb stdout: {out!r}')
 
             _prompt_no = prompt_no_counter()
@@ -65,7 +67,7 @@ def pdb_command_interface(
             ):
                 command = queue.get()
                 p.gen.send(command)
-                queue_stdin.put(command)
+                c.send(command)
 
     def end_waiting_prompt() -> None:
         queue_stdout.put(None)
