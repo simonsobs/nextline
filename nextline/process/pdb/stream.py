@@ -5,33 +5,47 @@ from queue import Queue
 from typing import Generator, Literal
 
 
-class StreamOut(TextIOWrapper):
+class _StdOut(TextIOWrapper):
+    '''To be given to Pdb as stdout.'''
+
     def __init__(self, cli: CmdLoopInterface):
         self._cli = cli
 
     def write(self, s: str, /) -> int:
+        '''Pdb prints user prompt or other messages to stdout.'''
         return self._cli.write(s)
 
     def flush(self):
         pass
 
 
-class StreamIn(TextIOWrapper):
+class _StdIn(TextIOWrapper):
+    '''To be given to Pdb as stdin.'''
+
     def __init__(self, cli: CmdLoopInterface):
         self._cli = cli
 
     def readline(self):
+        '''Pdb waits for user input from stdin.'''
         return self._cli.prompt()
 
 
 class CmdLoopInterface:
+    '''Deliver messages between the user and Pdb during Pdb.cmdloop().'''
+
     def __init__(self) -> None:
 
-        self._queue_stdin: Queue[str] = Queue()
-        self._queue_stdout: Queue[str | None | Literal[True]] = Queue()
+        # str: messages or prompts to be kept until True is received.
+        # True when concatenated strings to be yielded as a prompt.
+        # None when the command loop exits.
+        self._queue_stdout: Queue[str | Literal[True] | None] = Queue()
 
-        self.stdin = StreamIn(self)
-        self.stdout = StreamOut(self)
+        # User commands to be issued to Pdb.
+        self._queue_stdin: Queue[str] = Queue()
+
+        # To be given to Pdb as stdout and stdin.
+        self.stdout = _StdOut(self)
+        self.stdin = _StdIn(self)
 
     def prompts(self) -> Generator[str, str, None]:
         '''Yield each prompt from stdout.'''
@@ -43,16 +57,20 @@ class CmdLoopInterface:
                 continue
             prompt += msg
 
+    def issue(self, command: str) -> None:
+        '''Respond to a prompt with a command.'''
+        self._queue_stdin.put(command)
+
+    def close(self) -> None:
+        '''Have the generator self.prompts() return.'''
+        self._queue_stdout.put(None)
+
     def write(self, s: str) -> int:
+        '''Called by _StdOut.write()'''
         self._queue_stdout.put(s)
         return len(s)
 
     def prompt(self) -> str:
+        '''Called by _StdIn.readline()'''
         self._queue_stdout.put(True)
         return self._queue_stdin.get()
-
-    def issue(self, command: str) -> None:
-        self._queue_stdin.put(command)
-
-    def close(self) -> None:
-        self._queue_stdout.put(None)
