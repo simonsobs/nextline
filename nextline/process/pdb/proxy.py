@@ -113,7 +113,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
             context=context,
             queue_stdin=queue_stdin,
             queue_stdout=queue_stdout,
-            prompt=pdb.prompt,
+            prompt_end=pdb.prompt,
         ):
             yield
 

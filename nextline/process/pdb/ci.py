@@ -19,7 +19,7 @@ def pdb_command_interface(
     context: TraceContext,
     queue_stdin: Queue[str],
     queue_stdout: Queue[str | None],
-    prompt: str,
+    prompt_end: str,  # i.e. '(Pdb) '
 ):
 
     prompt_no_counter = context['prompt_no_counter']
@@ -31,19 +31,27 @@ def pdb_command_interface(
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def _read_until_prompt() -> Generator[str, str, None]:
+    def _prompts(
+        queue_stdout: Queue[str | None],
+        prompt_end: str,  # i.e. '(Pdb) '
+    ) -> Generator[str, str, None]:
+        '''Yield each Pdb prompt from stdout.'''
+        prompt = ''
+        while (msg := queue_stdout.get()) is not None:
+            prompt += msg
+            if prompt_end == msg:  # '(Pdb) '
+                yield prompt
+                prompt = ''
+
+    def _std_stream() -> Generator[str, str, None]:
         '''Return the stdout from Pdb up to the prompt.
 
         The prompt is normally "(Pdb) ".
         '''
-        out = ''
-        while (m := queue_stdout.get()) is not None:
-            out += m
-            if prompt == m:
-                command = yield out
-                queue_stdin.put(command)
-                yield ''
-                out = ''
+        for prompt in _prompts(queue_stdout=queue_stdout, prompt_end=prompt_end):
+            command = yield prompt
+            queue_stdin.put(command)
+            yield ''
 
     def wait_prompt() -> None:
         '''Receive stdout from Pdb
@@ -51,7 +59,7 @@ def pdb_command_interface(
         To be run in a thread during pdb._cmdloop()
         '''
         nonlocal _prompt_no
-        for out in (c := _read_until_prompt()):
+        for out in (c := _std_stream()):
             logger.debug(f'Pdb stdout: {out!r}')
 
             _prompt_no = prompt_no_counter()
