@@ -6,12 +6,11 @@ from typing import Generator, Literal
 
 
 class StreamOut(TextIOWrapper):
-    def __init__(self, queue: Queue[str]):
-        self.queue = queue
+    def __init__(self, cli: CmdLoopInterface):
+        self._cli = cli
 
     def write(self, s: str, /) -> int:
-        self.queue.put(s)
-        return len(s)
+        return self._cli.write(s)
 
     def flush(self):
         pass
@@ -32,7 +31,7 @@ class CmdLoopInterface:
         self._queue_stdout: Queue[str | None | Literal[True]] = Queue()
 
         self.stdin = StreamIn(self)
-        self.stdout = StreamOut(self._queue_stdout)  # type: ignore
+        self.stdout = StreamOut(self)
 
     def prompts(self) -> Generator[str, str, None]:
         '''Yield each prompt from stdout.'''
@@ -43,6 +42,10 @@ class CmdLoopInterface:
                 prompt = ''
                 continue
             prompt += msg
+
+    def write(self, s: str) -> int:
+        self._queue_stdout.put(s)
+        return len(s)
 
     def prompt(self) -> str:
         self._queue_stdout.put(True)
