@@ -30,7 +30,7 @@ class CmdLoopInterface:
         self,
         queue_stdin: Queue[str],
         queue_stdout: Queue[str | None],
-        prompt_end: str,  # i.e. '(Pdb) '
+        prompt_end='(Pdb) ',
     ):
         self._queue_stdin = queue_stdin
         self._queue_stdout = queue_stdout

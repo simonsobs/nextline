@@ -125,7 +125,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
     )
 
     cmdloop_interface = CmdLoopInterface(
-        queue_stdin=queue_stdin, queue_stdout=queue_stdout, prompt_end=pdb.prompt
+        queue_stdin=queue_stdin, queue_stdout=queue_stdout
     )
 
     @contextmanager
