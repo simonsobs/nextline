@@ -56,23 +56,13 @@ def pdb_command_interface(
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def _std_stream() -> Generator[str, str, None]:
-        '''Return the stdout from Pdb up to the prompt.
-
-        The prompt is normally "(Pdb) ".
-        '''
-        for prompt in cmdloop_interface.prompts():
-            command = yield prompt
-            cmdloop_interface.issue(command)
-            yield ''
-
     def wait_prompt() -> None:
         '''Receive stdout from Pdb
 
         To be run in a thread during pdb._cmdloop()
         '''
         nonlocal _prompt_no
-        for out in (c := _std_stream()):
+        for out in cmdloop_interface.prompts():
             logger.debug(f'Pdb stdout: {out!r}')
 
             _prompt_no = prompt_no_counter()
@@ -87,7 +77,7 @@ def pdb_command_interface(
                 )
             ):
                 command = queue.get()
-                c.send(command)
+                cmdloop_interface.issue(command)
                 p.gen.send(command)
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
