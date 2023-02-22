@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 from nextline.types import PromptNo, TraceNo
 
+from .stream import CmdLoopInterface
+
 if TYPE_CHECKING:
     from nextline.process.run import TraceContext
 
@@ -17,40 +19,28 @@ def pdb_command_interface(
     trace_args: Tuple[FrameType, str, Any],
     trace_no: TraceNo,
     context: TraceContext,
-    queue_stdin: Queue[str],
-    queue_stdout: Queue[str | None],
-    prompt: str,
+    cmdloop_interface: CmdLoopInterface,
+    prompt_end: str,  # i.e. '(Pdb) '
 ):
 
     prompt_no_counter = context['prompt_no_counter']
     callback = context['callback']
     ci_map = context['pdb_ci_map']
 
-    queue: Queue[str] = Queue()
+    queue: Queue[Tuple[str, PromptNo]] = Queue()
 
-    _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def _read_until_prompt() -> str | None:
-        '''Return the stdout from Pdb up to the prompt.
-
-        The prompt is normally "(Pdb) ".
-        '''
-        out = ''
-        while (m := queue_stdout.get()) is not None:
-            out += m
-            if prompt == m:
-                return out
-        return None
-
-    def wait_prompt() -> None:
-        '''Receive stdout from Pdb
+    def interact() -> None:
+        '''Issue a command to each prompt.
 
         To be run in a thread during pdb._cmdloop()
         '''
-        nonlocal _prompt_no
-        while (out := _read_until_prompt()) is not None:
-            logger.debug(f'Pdb stdout: {out!r}')
+        for prompt in cmdloop_interface.prompts():
+            logger.debug(f'Pdb stdout: {prompt!r}')
+
+            if not prompt.endswith(prompt_end):
+                logger.warning(f'{prompt!r} does not end with {prompt_end!r}')
 
             _prompt_no = prompt_no_counter()
             logger.debug(f'PromptNo: {_prompt_no}')
@@ -60,30 +50,28 @@ def pdb_command_interface(
                     trace_no=trace_no,
                     prompt_no=_prompt_no,
                     trace_args=trace_args,
-                    out=out,
+                    out=prompt,
                 )
             ):
-                command = queue.get()
+                while True:
+                    command, prompt_no_ = queue.get()
+                    if prompt_no_ == _prompt_no:
+                        break
+                    logger.warning(f'PromptNo mismatch: {prompt_no_} != {_prompt_no}')
+                cmdloop_interface.issue(command)
                 p.gen.send(command)
-                queue_stdin.put(command)
-
-    def end_waiting_prompt() -> None:
-        queue_stdout.put(None)
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
         '''Send a command to Pdb'''
         logger.debug(f'send_command(command={command!r}, prompt_no={prompt_no!r})')
-        if prompt_no != _prompt_no:
-            logger.warning(f'PromptNo mismatch: {prompt_no} != {_prompt_no}')
-            return
-        queue.put(command)
+        queue.put((command, prompt_no))
 
-    fut = context['executor'].submit(wait_prompt)
+    fut = context['executor'].submit(interact)
     ci_map[trace_no] = send_command
 
     try:
         yield
     finally:
         del ci_map[trace_no]
-        end_waiting_prompt()
+        cmdloop_interface.close()
         fut.result()
