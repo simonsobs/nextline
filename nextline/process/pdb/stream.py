@@ -18,13 +18,11 @@ class StreamOut(TextIOWrapper):
 
 
 class StreamIn(TextIOWrapper):
-    def __init__(self, queue: Queue[str], cli: CmdLoopInterface):
-        self.queue = queue
+    def __init__(self, cli: CmdLoopInterface):
         self._cli = cli
 
     def readline(self):
-        self._cli.prompt()
-        return self.queue.get()
+        return self._cli.prompt()
 
 
 class CmdLoopInterface:
@@ -33,7 +31,7 @@ class CmdLoopInterface:
         self._queue_stdin: Queue[str] = Queue()
         self._queue_stdout: Queue[str | None | Literal[True]] = Queue()
 
-        self.stdin = StreamIn(self._queue_stdin, self)
+        self.stdin = StreamIn(self)
         self.stdout = StreamOut(self._queue_stdout)  # type: ignore
 
     def prompts(self) -> Generator[str, str, None]:
@@ -46,8 +44,9 @@ class CmdLoopInterface:
                 continue
             prompt += msg
 
-    def prompt(self) -> None:
+    def prompt(self) -> str:
         self._queue_stdout.put(True)
+        return self._queue_stdin.get()
 
     def issue(self, command: str) -> None:
         self._queue_stdin.put(command)
