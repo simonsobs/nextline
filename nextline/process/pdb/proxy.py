@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from queue import Queue
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Tuple
 
 from nextline.process.trace.wrap import WithContext
 from nextline.types import TraceNo
 
-from .ci import CmdLoopInterface, pdb_command_interface
+from .ci import pdb_command_interface
 from .custom import CustomizedPdb, TraceNotCalled
-from .stream import StreamIn, StreamOut
+from .stream import CmdLoopInterface
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -97,8 +96,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
     trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
-    queue_stdin: Queue[str] = Queue()
-    queue_stdout: Queue[str | None] = Queue()
+    cmdloop_interface = CmdLoopInterface()
 
     @contextmanager
     def interface_cmdloop() -> Generator[None, None, None]:
@@ -118,14 +116,10 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
     pdb = CustomizedPdb(
         interface_cmdloop=interface_cmdloop,
-        stdin=StreamIn(queue_stdin),
-        stdout=StreamOut(queue_stdout),  # type: ignore
+        stdin=cmdloop_interface.stdin,
+        stdout=cmdloop_interface.stdout,
         nosigint=True,
         readrc=False,
-    )
-
-    cmdloop_interface = CmdLoopInterface(
-        queue_stdin=queue_stdin, queue_stdout=queue_stdout
     )
 
     @contextmanager

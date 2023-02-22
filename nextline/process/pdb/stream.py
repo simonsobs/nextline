@@ -26,15 +26,14 @@ class StreamIn(TextIOWrapper):
 
 
 class CmdLoopInterface:
-    def __init__(
-        self,
-        queue_stdin: Queue[str],
-        queue_stdout: Queue[str | None],
-        prompt_end='(Pdb) ',
-    ):
-        self._queue_stdin = queue_stdin
-        self._queue_stdout = queue_stdout
-        self._prompt_end = prompt_end
+    def __init__(self) -> None:
+        self._prompt_end = '(Pdb) '
+
+        self._queue_stdin: Queue[str] = Queue()
+        self._queue_stdout: Queue[str | None] = Queue()
+
+        self.stdin = StreamIn(self._queue_stdin)
+        self.stdout = StreamOut(self._queue_stdout)  # type: ignore
 
     def prompts(self) -> Generator[str, str, None]:
         '''Yield each Pdb prompt from stdout.'''
