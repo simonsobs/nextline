@@ -51,19 +51,17 @@ def pdb_command_interface(
     callback = context['callback']
     ci_map = context['pdb_ci_map']
 
-    queue: Queue[str] = Queue()
+    queue: Queue[Tuple[str, PromptNo]] = Queue()
 
-    _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def wait_prompt() -> None:
-        '''Receive stdout from Pdb
+    def interact() -> None:
+        '''Issue a command to each prompt.
 
         To be run in a thread during pdb._cmdloop()
         '''
-        nonlocal _prompt_no
-        for out in cmdloop_interface.prompts():
-            logger.debug(f'Pdb stdout: {out!r}')
+        for prompt in cmdloop_interface.prompts():
+            logger.debug(f'Pdb stdout: {prompt!r}')
 
             _prompt_no = prompt_no_counter()
             logger.debug(f'PromptNo: {_prompt_no}')
@@ -73,22 +71,23 @@ def pdb_command_interface(
                     trace_no=trace_no,
                     prompt_no=_prompt_no,
                     trace_args=trace_args,
-                    out=out,
+                    out=prompt,
                 )
             ):
-                command = queue.get()
+                while True:
+                    command, prompt_no_ = queue.get()
+                    if prompt_no_ == _prompt_no:
+                        break
+                    logger.warning(f'PromptNo mismatch: {prompt_no_} != {_prompt_no}')
                 cmdloop_interface.issue(command)
                 p.gen.send(command)
 
     def send_command(command: str, prompt_no: PromptNo) -> None:
         '''Send a command to Pdb'''
         logger.debug(f'send_command(command={command!r}, prompt_no={prompt_no!r})')
-        if prompt_no != _prompt_no:
-            logger.warning(f'PromptNo mismatch: {prompt_no} != {_prompt_no}')
-            return
-        queue.put(command)
+        queue.put((command, prompt_no))
 
-    fut = context['executor'].submit(wait_prompt)
+    fut = context['executor'].submit(interact)
     ci_map[trace_no] = send_command
 
     try:
