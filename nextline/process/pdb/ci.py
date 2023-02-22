@@ -45,6 +45,7 @@ def pdb_command_interface(
     trace_no: TraceNo,
     context: TraceContext,
     cmdloop_interface: CmdLoopInterface,
+    prompt_end: str,  # i.e. '(Pdb) '
 ):
 
     prompt_no_counter = context['prompt_no_counter']
@@ -62,6 +63,9 @@ def pdb_command_interface(
         '''
         for prompt in cmdloop_interface.prompts():
             logger.debug(f'Pdb stdout: {prompt!r}')
+
+            if not prompt.endswith(prompt_end):
+                logger.warning(f'{prompt!r} does not end with {prompt_end!r}')
 
             _prompt_no = prompt_no_counter()
             logger.debug(f'PromptNo: {_prompt_no}')

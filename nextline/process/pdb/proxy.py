@@ -116,6 +116,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
             trace_no=trace_no,
             context=context,
             cmdloop_interface=cmdloop_interface,
+            prompt_end=pdb.prompt,
         ):
             yield
 
