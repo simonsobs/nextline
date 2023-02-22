@@ -107,10 +107,6 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         if not trace_args:
             raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
-        cmdloop_interface = CmdLoopInterface(
-            queue_stdin=queue_stdin, queue_stdout=queue_stdout, prompt_end=pdb.prompt
-        )
-
         with pdb_command_interface(
             trace_args=trace_args,
             trace_no=trace_no,
@@ -126,6 +122,10 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         stdout=StreamOut(queue_stdout),  # type: ignore
         nosigint=True,
         readrc=False,
+    )
+
+    cmdloop_interface = CmdLoopInterface(
+        queue_stdin=queue_stdin, queue_stdout=queue_stdout, prompt_end=pdb.prompt
     )
 
     @contextmanager
