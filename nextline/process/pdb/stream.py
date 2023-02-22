@@ -31,7 +31,45 @@ class _StdIn(TextIOWrapper):
 
 
 class CmdLoopInterface:
-    '''Deliver messages between the user and Pdb during Pdb.cmdloop().'''
+    '''Deliver messages between the user and Pdb during Pdb.cmdloop().
+
+    Example:
+
+    >>> cli = CmdLoopInterface()
+
+    Define a client function that responds to a prompt.
+
+    >>> def user():
+    ...     for prompt in cli.prompts():
+    ...         cli.issue(f'Hi, I am the user. You said: {prompt!r}')
+
+    Run the function in a thread.
+
+    >>> from threading import Thread
+    >>> thread = Thread(target=user)
+    >>> thread.start()
+
+    Send a message to the client function.
+
+    >>> _ = cli.write('Hello, I am Pdb.')
+
+    Wait for a response.
+
+    >>> response = cli.prompt()
+    >>> response
+    "Hi, I am the user. You said: 'Hello, I am Pdb.'"
+
+    Stop the iteration of the "for" loop in the client function.
+
+    >>> cli.close()
+
+    End the thread.
+
+    >>> thread.join()
+
+
+
+    '''
 
     def __init__(self) -> None:
 
