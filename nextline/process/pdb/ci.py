@@ -44,9 +44,7 @@ def pdb_command_interface(
     trace_args: Tuple[FrameType, str, Any],
     trace_no: TraceNo,
     context: TraceContext,
-    queue_stdin: Queue[str],
-    queue_stdout: Queue[str | None],
-    prompt_end: str,  # i.e. '(Pdb) '
+    cmdloop_interface: CmdLoopInterface,
 ):
 
     prompt_no_counter = context['prompt_no_counter']
@@ -58,18 +56,14 @@ def pdb_command_interface(
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    _cmdloop_interface = CmdLoopInterface(
-        queue_stdin=queue_stdin, queue_stdout=queue_stdout, prompt_end=prompt_end
-    )
-
     def _std_stream() -> Generator[str, str, None]:
         '''Return the stdout from Pdb up to the prompt.
 
         The prompt is normally "(Pdb) ".
         '''
-        for prompt in _cmdloop_interface.prompts():
+        for prompt in cmdloop_interface.prompts():
             command = yield prompt
-            _cmdloop_interface.issue(command)
+            cmdloop_interface.issue(command)
             yield ''
 
     def wait_prompt() -> None:
@@ -111,5 +105,5 @@ def pdb_command_interface(
         yield
     finally:
         del ci_map[trace_no]
-        _cmdloop_interface.close()
+        cmdloop_interface.close()
         fut.result()

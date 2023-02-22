@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Tuple
 from nextline.process.trace.wrap import WithContext
 from nextline.types import TraceNo
 
-from .ci import pdb_command_interface
+from .ci import CmdLoopInterface, pdb_command_interface
 from .custom import CustomizedPdb, TraceNotCalled
 from .stream import StreamIn, StreamOut
 
@@ -107,13 +107,15 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         if not trace_args:
             raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
+        cmdloop_interface = CmdLoopInterface(
+            queue_stdin=queue_stdin, queue_stdout=queue_stdout, prompt_end=pdb.prompt
+        )
+
         with pdb_command_interface(
             trace_args=trace_args,
             trace_no=trace_no,
             context=context,
-            queue_stdin=queue_stdin,
-            queue_stdout=queue_stdout,
-            prompt_end=pdb.prompt,
+            cmdloop_interface=cmdloop_interface,
         ):
             yield
 
