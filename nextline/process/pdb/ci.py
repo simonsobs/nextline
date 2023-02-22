@@ -31,26 +31,44 @@ def pdb_command_interface(
     _prompt_no: PromptNo
     logger = getLogger(__name__)
 
-    def _prompts(
-        queue_stdout: Queue[str | None],
-        prompt_end: str,  # i.e. '(Pdb) '
-    ) -> Generator[str, str, None]:
-        '''Yield each Pdb prompt from stdout.'''
-        prompt = ''
-        while (msg := queue_stdout.get()) is not None:
-            prompt += msg
-            if prompt_end == msg:  # '(Pdb) '
-                yield prompt
-                prompt = ''
+    class CmdLoopInterface:
+        def __init__(
+            self,
+            queue_stdin: Queue[str],
+            queue_stdout: Queue[str | None],
+            prompt_end: str,  # i.e. '(Pdb) '
+        ):
+            self._queue_stdin = queue_stdin
+            self._queue_stdout = queue_stdout
+            self._prompt_end = prompt_end
+
+        def prompts(self) -> Generator[str, str, None]:
+            '''Yield each Pdb prompt from stdout.'''
+            prompt = ''
+            while (msg := self._queue_stdout.get()) is not None:
+                prompt += msg
+                if self._prompt_end == msg:  # '(Pdb) '
+                    yield prompt
+                    prompt = ''
+
+        def issue(self, command: str) -> None:
+            self._queue_stdin.put(command)
+
+        def close(self) -> None:
+            self._queue_stdout.put(None)
+
+    _cmdloop_interface = CmdLoopInterface(
+        queue_stdin=queue_stdin, queue_stdout=queue_stdout, prompt_end=prompt_end
+    )
 
     def _std_stream() -> Generator[str, str, None]:
         '''Return the stdout from Pdb up to the prompt.
 
         The prompt is normally "(Pdb) ".
         '''
-        for prompt in _prompts(queue_stdout=queue_stdout, prompt_end=prompt_end):
+        for prompt in _cmdloop_interface.prompts():
             command = yield prompt
-            queue_stdin.put(command)
+            _cmdloop_interface.issue(command)
             yield ''
 
     def wait_prompt() -> None:
@@ -77,9 +95,6 @@ def pdb_command_interface(
                 c.send(command)
                 p.gen.send(command)
 
-    def end_waiting_prompt() -> None:
-        queue_stdout.put(None)
-
     def send_command(command: str, prompt_no: PromptNo) -> None:
         '''Send a command to Pdb'''
         logger.debug(f'send_command(command={command!r}, prompt_no={prompt_no!r})')
@@ -95,5 +110,5 @@ def pdb_command_interface(
         yield
     finally:
         del ci_map[trace_no]
-        end_waiting_prompt()
+        _cmdloop_interface.close()
         fut.result()
