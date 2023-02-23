@@ -9,7 +9,7 @@ from nextline.types import TraceNo
 
 from .ci import pdb_command_interface
 from .custom import CustomizedPdb, TraceNotCalled
-from .stream import CmdLoopInterface
+from .stream import CmdLoopInterface_
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -96,7 +96,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
     trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
-    cmdloop_interface = CmdLoopInterface()
+    cmdloop_interface = CmdLoopInterface_()
 
     @contextmanager
     def interface_cmdloop() -> Generator[None, None, None]:

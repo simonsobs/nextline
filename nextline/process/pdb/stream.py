@@ -8,7 +8,7 @@ from typing import Generator, Literal
 class _StdOut(TextIOWrapper):
     '''To be given to Pdb as stdout.'''
 
-    def __init__(self, cli: CmdLoopInterface):
+    def __init__(self, cli: CmdLoopInterface_):
         self._cli = cli
 
     def write(self, s: str, /) -> int:
@@ -22,7 +22,7 @@ class _StdOut(TextIOWrapper):
 class _StdIn(TextIOWrapper):
     '''To be given to Pdb as stdin.'''
 
-    def __init__(self, cli: CmdLoopInterface):
+    def __init__(self, cli: CmdLoopInterface_):
         self._cli = cli
 
     def readline(self):
@@ -30,7 +30,7 @@ class _StdIn(TextIOWrapper):
         return self._cli.prompt()
 
 
-class CmdLoopInterface:
+class CmdLoopInterface_:
     '''Deliver messages between the user and Pdb during Pdb.cmdloop().
 
     Example:

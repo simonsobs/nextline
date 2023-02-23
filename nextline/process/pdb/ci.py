@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 from nextline.types import PromptNo, TraceNo
 
-from .stream import CmdLoopInterface
+from .stream import CmdLoopInterface_
 
 if TYPE_CHECKING:
     from nextline.process.run import TraceContext
@@ -19,7 +19,7 @@ def pdb_command_interface(
     trace_args: Tuple[FrameType, str, Any],
     trace_no: TraceNo,
     context: TraceContext,
-    cmdloop_interface: CmdLoopInterface,
+    cmdloop_interface: CmdLoopInterface_,
     prompt_end: str,  # i.e. '(Pdb) '
 ):
 
