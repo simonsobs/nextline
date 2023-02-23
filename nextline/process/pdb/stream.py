@@ -66,9 +66,8 @@ class CmdLoopInterface:
         self._logger.debug(f'Pdb stdout: {self._prompt!r}')
 
         if not self._prompt.endswith(self.prompt_end):
-            self._logger.warning(
-                f'{self._prompt!r} does not end with {self.prompt_end!r}'
-            )
+            msg = f'{self._prompt!r} does not end with {self.prompt_end!r}'
+            self._logger.warning(msg)
 
         command = self._callback.prompt(out=self._prompt)
 
