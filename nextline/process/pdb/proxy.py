@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Generator
 
 from nextline.process.trace.wrap import WithContext
 
-from .custom import CustomizedPdb, TraceNotCalled
+from .custom import CustomizedPdb
 from .stream import CmdLoopInterface
 
 if TYPE_CHECKING:
@@ -44,62 +43,41 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
 
 def PdbInterface(context: TraceContext):
     '''
-
-    (This sequence diagram is not up-to-date.)
-
-    trace (WithContext)
-      |
-      | with
-      |--> save_trace_args()
-            |
-      |<----| yield
-      |
-      |--------> pdb.trace_dispatch()
-                  |
-                  |--> pdb._cmdloop()
-                        |
-                        | with
-                        |--> interface_cmdloop()
-                              |
-                              | with
-                              |--> pdb_command_interface()
-                                    |
-                              |<----| yield
-                        |<----| yield
-                        |
-                        |-------------> pdb.cmdloop()
-                                          |
-                                          V
-                        |<-----------------
-                        |
-                        |---->| exit
-                              |---->| exit
-                                    V
-                              |<-----
-                              V
-                        |<-----
-                        V
-                  |<-----
-                  V
-      |<-----------
-      |
-      |---->| exit
-            V
-      |<-----
-      V
+      pdb.trace_dispatch()
+       |
+       |--> pdb._cmdloop()
+             |
+             | with
+             |--> interface_cmdloop()
+                   |
+                   | with
+                   |--> callback.cmdloop()
+                         |
+                   |<----| yield
+             |<----| yield
+             |
+             |-------------> pdb.cmdloop()
+                               |
+                               V
+             |<-----------------
+             |
+             |---->| exit
+                   |---->| exit
+                         V
+                   |<-----
+                   V
+             |<-----
+             V
+       |<-----
+       V
 
     '''
-
-    trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
     cmdloop_interface = CmdLoopInterface(context=context)
 
     @contextmanager
     def interface_cmdloop() -> Generator[None, None, None]:
         '''To be called in CustomizedPdb._cmdloop()'''
-
-        if not trace_args:
-            raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
         with context['callback'].cmdloop(issue=cmdloop_interface.issue):
             yield
@@ -113,18 +91,4 @@ def PdbInterface(context: TraceContext):
     )
     cmdloop_interface.prompt_end = pdb.prompt
 
-    @contextmanager
-    def save_trace_args(frame, event, arg):
-        '''A context during which Pdb.trace_dispatch() is called.
-
-        Save the args of the trace function so that they can be used in
-        interface_cmdloop().
-        '''
-        nonlocal trace_args
-        trace_args = (frame, event, arg)
-        try:
-            yield
-        finally:
-            trace_args = None
-
-    return WithContext(pdb.trace_dispatch, context=save_trace_args)
+    return pdb.trace_dispatch
