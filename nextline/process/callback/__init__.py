@@ -124,8 +124,10 @@ class Callback:
         self._hook.register(peek_stdout, name='peek_stdout')
         self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
 
-    def task_or_thread_start(self, trace_no: TraceNo) -> None:
+    def task_or_thread_start(self) -> TraceNo:
+        trace_no = self._trace_no_counter()
         self._hook.hook.task_or_thread_start(trace_no=trace_no)
+        return trace_no
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)

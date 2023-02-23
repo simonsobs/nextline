@@ -18,10 +18,9 @@ if TYPE_CHECKING:
 
 def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFunc]:
     def factory() -> TraceFunc:
-        trace_no_counter = context['trace_no_counter']
-        trace_no = trace_no_counter()
+
         callback = context['callback']
-        callback.task_or_thread_start(trace_no)
+        trace_no = callback.task_or_thread_start()
         trace = PdbInterface(trace_no=trace_no, context=context)
 
         # trace: TraceFunc = pdbi.trace
