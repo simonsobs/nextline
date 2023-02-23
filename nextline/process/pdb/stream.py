@@ -40,7 +40,6 @@ class CmdLoopInterface:
         # Must be assigned to Pdb.prompt.
         self.prompt_end: Optional[str] = None
 
-        self._prompt_no_counter = context['prompt_no_counter']
         self._callback = context['callback']
 
         # To be given to Pdb as stdout and stdin.
@@ -71,10 +70,7 @@ class CmdLoopInterface:
                 f'{self._prompt!r} does not end with {self.prompt_end!r}'
             )
 
-        _prompt_no = self._prompt_no_counter()
-        self._logger.debug(f'PromptNo: {_prompt_no}')
-
-        command = self._callback.prompt(prompt_no=_prompt_no, out=self._prompt)
+        command = self._callback.prompt(out=self._prompt)
 
         self._prompt = ''
         return command

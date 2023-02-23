@@ -1,9 +1,9 @@
 from __future__ import annotations
-from logging import getLogger
 
 import threading
 from asyncio import Task
 from contextlib import contextmanager
+from logging import getLogger
 from queue import Queue
 from threading import Thread
 from typing import Dict, MutableMapping, Optional, Set
@@ -11,10 +11,10 @@ from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
 
-from nextline.count import TraceNoCounter
+from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.io import peek_stdout_by_task_and_thread
 from nextline.process.types import CommandQueueMap
-from nextline.types import PromptNo, RunNo, TraceNo
+from nextline.types import RunNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,
     ThreadTaskIdComposer,
@@ -106,6 +106,7 @@ class Callback:
         command_queue_map: CommandQueueMap,
     ):
         self._trace_no_counter = TraceNoCounter(1)
+        self._prompt_no_counter = PromptNoCounter(1)
         self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
@@ -170,8 +171,10 @@ class Callback:
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
-    def prompt(self, prompt_no: PromptNo, out: str) -> str:
+    def prompt(self, out: str) -> str:
         trace_no = self._trace_no_map[current_task_or_thread()]
+        prompt_no = self._prompt_no_counter()
+        self._logger.debug(f'PromptNo: {prompt_no}')
         trace_args = self._trace_args_map[trace_no]
         with (
             p := self._hook.with_.prompt(
