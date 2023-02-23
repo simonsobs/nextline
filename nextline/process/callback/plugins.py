@@ -4,6 +4,7 @@ import dataclasses
 import datetime
 import os
 from contextlib import _GeneratorContextManager
+from logging import getLogger
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Dict, Generator, Optional, Set, Tuple
 
@@ -206,12 +207,15 @@ class AddModuleToTrace:
 
     def __init__(self, modules_to_trace: Set[str]):
         self._modules_to_trace = modules_to_trace
+        self._logger = getLogger(__name__)
 
     @hookimpl
     @contextmanager
     def cmdloop(self, trace_args: TraceArgs) -> Generator[None, str, None]:
         frame, _, _ = trace_args
         if module_name := frame.f_globals.get('__name__'):
+            msg = f'{self.__class__.__name__}: adding {module_name!r}'
+            self._logger.info(msg)
             self._modules_to_trace.add(module_name)
         yield
 
