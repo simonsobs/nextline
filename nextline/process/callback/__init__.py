@@ -145,7 +145,8 @@ class Callback:
         self._hook.hook.trace_end(trace_no=trace_no)
 
     @contextmanager
-    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
+    def trace_call(self, trace_args: TraceArgs):
+        trace_no = self._trace_no_map[current_task_or_thread()]
         with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
             yield
 

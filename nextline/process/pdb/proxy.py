@@ -23,7 +23,7 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
         trace_no = callback.task_or_thread_start()
         trace = PdbInterface(trace_no=trace_no, context=context)
 
-        trace = TraceCallCallback(trace=trace, trace_no=trace_no, context=context)
+        trace = TraceCallCallback(trace=trace, context=context)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
@@ -32,15 +32,12 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
     return factory
 
 
-def TraceCallCallback(
-    trace: TraceFunc, trace_no: TraceNo, context: TraceContext
-) -> TraceFunc:
-
+def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
     callback = context['callback']
 
     @contextmanager
     def _context(frame, event, arg):
-        with callback.trace_call(trace_no, (frame, event, arg)):
+        with callback.trace_call(trace_args=(frame, event, arg)):
             yield
 
     return WithContext(trace, context=_context)
