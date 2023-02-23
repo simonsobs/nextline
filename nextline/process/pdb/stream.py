@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 from io import TextIOWrapper
 from logging import getLogger
 from queue import Queue
@@ -40,10 +39,11 @@ class _StdIn(TextIOWrapper):
 class CmdLoopInterface:
     def __init__(self, context: TraceContext) -> None:
 
+        # Must be assigned to Pdb.prompt.
+        self.prompt_end: Optional[str] = None
+
         self._prompt_no_counter = context['prompt_no_counter']
         self._callback = context['callback']
-
-        self._prompt_end: Optional[str] = None
 
         self._queue: Queue[Tuple[str, PromptNo]] = Queue()
 
@@ -63,16 +63,16 @@ class CmdLoopInterface:
     def prompt(self) -> str:
         '''Called by _StdIn.readline()'''
         try:
-            assert self._prompt_end is not None
+            assert self.prompt_end is not None
         except AssertionError:
             self._logger.exception('prompt() called before cmdloop()')
             raise
 
         self._logger.debug(f'Pdb stdout: {self._prompt!r}')
 
-        if not self._prompt.endswith(self._prompt_end):
+        if not self._prompt.endswith(self.prompt_end):
             self._logger.warning(
-                f'{self._prompt!r} does not end with {self._prompt_end!r}'
+                f'{self._prompt!r} does not end with {self.prompt_end!r}'
             )
 
         _prompt_no = self._prompt_no_counter()
@@ -92,11 +92,3 @@ class CmdLoopInterface:
     def issue(self, command: str, prompt_no: PromptNo) -> None:
         self._logger.debug(f'issue(command={command!r}, prompt_no={prompt_no!r})')
         self._queue.put((command, prompt_no))
-
-    @contextmanager
-    def cmdloop(self, prompt_end):
-        self._prompt_end = prompt_end  # i.e. '(Pdb) '
-        try:
-            yield
-        finally:
-            self._prompt_end = None
