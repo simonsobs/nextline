@@ -11,6 +11,7 @@ from apluggy import PluginManager
 
 from nextline.count import TraceNoCounter
 from nextline.process.io import peek_stdout_by_task_and_thread
+from nextline.process.types import PdbCiMap
 from nextline.types import PromptNo, RunNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,
@@ -100,8 +101,10 @@ class Callback:
         run_no: RunNo,
         registrar: RegistrarProxy,
         modules_to_trace: Set[str],
+        pdb_ci_map: PdbCiMap,
     ):
         self._trace_no_counter = TraceNoCounter(1)
+        self._pdb_ci_map = pdb_ci_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
         self._trace_id_factory = ThreadTaskIdComposer()

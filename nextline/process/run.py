@@ -83,6 +83,7 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
         run_no=run_no,
         registrar=RegistrarProxy(q_registry),
         modules_to_trace=modules_to_trace,
+        pdb_ci_map=pdb_ci_map,
     ) as callback:
 
         context = TraceContext(
