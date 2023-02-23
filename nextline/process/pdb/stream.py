@@ -4,8 +4,7 @@ from contextlib import contextmanager
 from io import TextIOWrapper
 from logging import getLogger
 from queue import Queue
-from types import FrameType
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from nextline.types import PromptNo, TraceNo
 
@@ -46,7 +45,6 @@ class CmdLoopInterface:
         self._callback = context['callback']
         self._ci_map = context['pdb_ci_map']
 
-        self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
         self._prompt_end: Optional[str] = None
 
         self._queue: Queue[Tuple[str, PromptNo]] = Queue()
@@ -68,7 +66,6 @@ class CmdLoopInterface:
         '''Called by _StdIn.readline()'''
         try:
             assert self._prompt_end is not None
-            assert self._trace_args is not None
         except AssertionError:
             self._logger.exception('prompt() called before cmdloop()')
             raise
@@ -83,13 +80,7 @@ class CmdLoopInterface:
         _prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {_prompt_no}')
 
-        with (
-            p := self._callback.prompt(
-                prompt_no=_prompt_no,
-                trace_args=self._trace_args,
-                out=self._prompt,
-            )
-        ):
+        with (p := self._callback.prompt(prompt_no=_prompt_no, out=self._prompt)):
 
             while True:
                 command, prompt_no_ = self._queue.get()
@@ -105,17 +96,11 @@ class CmdLoopInterface:
         self._queue.put((command, prompt_no))
 
     @contextmanager
-    def cmdloop(
-        self,
-        trace_args: Tuple[FrameType, str, Any],
-        prompt_end: str,  # i.e. '(Pdb) '
-    ):
-        self._trace_args = trace_args
-        self._prompt_end = prompt_end
+    def cmdloop(self, prompt_end):
+        self._prompt_end = prompt_end  # i.e. '(Pdb) '
         self._ci_map[self._trace_no] = self.issue
         try:
             yield
         finally:
             del self._ci_map[self._trace_no]
             self._prompt_end = None
-            self._trace_args = None

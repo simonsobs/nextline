@@ -4,7 +4,7 @@ import threading
 from asyncio import Task
 from contextlib import contextmanager
 from threading import Thread
-from typing import MutableMapping, Optional, Set
+from typing import Dict, MutableMapping, Optional, Set
 from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
@@ -103,6 +103,7 @@ class Callback:
     ):
         self._trace_no_counter = TraceNoCounter(1)
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+        self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
         self._trace_id_factory = ThreadTaskIdComposer()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
@@ -147,18 +148,24 @@ class Callback:
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
         trace_no = self._trace_no_map[current_task_or_thread()]
+        self._trace_args_map[trace_no] = trace_args
         with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
-            yield
+            try:
+                yield
+            finally:
+                del self._trace_args_map[trace_no]
 
     @contextmanager
-    def cmdloop(self, trace_args: TraceArgs):
+    def cmdloop(self):
         trace_no = self._trace_no_map[current_task_or_thread()]
+        trace_args = self._trace_args_map[trace_no]
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
     @contextmanager
-    def prompt(self, prompt_no: PromptNo, trace_args: TraceArgs, out: str):
+    def prompt(self, prompt_no: PromptNo, out: str):
         trace_no = self._trace_no_map[current_task_or_thread()]
+        trace_args = self._trace_args_map[trace_no]
         with (
             p := self._hook.with_.prompt(
                 trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=out

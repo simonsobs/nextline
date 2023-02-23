@@ -102,10 +102,8 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         if not trace_args:
             raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
-        with context['callback'].cmdloop(trace_args=trace_args):
-            with cmdloop_interface.cmdloop(
-                trace_args=trace_args, prompt_end=pdb.prompt
-            ):
+        with context['callback'].cmdloop():
+            with cmdloop_interface.cmdloop(prompt_end=pdb.prompt):
                 yield
 
     pdb = CustomizedPdb(
