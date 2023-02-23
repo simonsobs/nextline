@@ -1,17 +1,19 @@
 from __future__ import annotations
+from logging import getLogger
 
 import threading
 from asyncio import Task
 from contextlib import contextmanager
+from queue import Queue
 from threading import Thread
-from typing import Callable, Dict, MutableMapping, Optional, Set
+from typing import Dict, MutableMapping, Optional, Set
 from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
 
 from nextline.count import TraceNoCounter
 from nextline.process.io import peek_stdout_by_task_and_thread
-from nextline.process.types import PdbCiMap
+from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, RunNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,
@@ -101,16 +103,18 @@ class Callback:
         run_no: RunNo,
         registrar: RegistrarProxy,
         modules_to_trace: Set[str],
-        pdb_ci_map: PdbCiMap,
+        command_queue_map: CommandQueueMap,
     ):
         self._trace_no_counter = TraceNoCounter(1)
-        self._pdb_ci_map = pdb_ci_map
+        self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
         self._trace_id_factory = ThreadTaskIdComposer()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
+
+        self._logger = getLogger(__name__)
 
         stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
         add_module_to_trace = AddModuleToTrace(modules_to_trace)
@@ -139,6 +143,7 @@ class Callback:
         thread_task_id = self._trace_id_factory()
         thread_no = thread_task_id.thread_no
         task_no = thread_task_id.task_no
+        self._command_queue_map[trace_no] = Queue()
 
         self._hook.hook.trace_start(
             trace_no=trace_no, thread_no=thread_no, task_no=task_no
@@ -146,6 +151,7 @@ class Callback:
 
     def trace_end(self, trace_no: TraceNo):
         self._hook.hook.trace_end(trace_no=trace_no)
+        del self._command_queue_map[trace_no]
 
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
@@ -158,18 +164,13 @@ class Callback:
                 del self._trace_args_map[trace_no]
 
     @contextmanager
-    def cmdloop(self, issue: Callable[[str, PromptNo], None]):
+    def cmdloop(self):
         trace_no = self._trace_no_map[current_task_or_thread()]
         trace_args = self._trace_args_map[trace_no]
-        self._pdb_ci_map[trace_no] = issue
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
-            try:
-                yield
-            finally:
-                del self._pdb_ci_map[trace_no]
+            yield
 
-    @contextmanager
-    def prompt(self, prompt_no: PromptNo, out: str):
+    def prompt(self, prompt_no: PromptNo, out: str) -> str:
         trace_no = self._trace_no_map[current_task_or_thread()]
         trace_args = self._trace_args_map[trace_no]
         with (
@@ -177,11 +178,19 @@ class Callback:
                 trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=out
             )
         ):
-            # Yield twice: once to receive from send(), and once to exit.
-            # https://stackoverflow.com/a/68304565/7309855
-            command = yield
+            while True:
+                command, prompt_no_, trace_no_ = self._command_queue_map[trace_no].get()
+                try:
+                    assert trace_no_ == trace_no
+                except AssertionError:
+                    msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
+                    self._logger.exception(msg)
+                    raise
+                if prompt_no_ == prompt_no:
+                    break
+                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
             p.gen.send(command)
-            yield
+        return command
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]

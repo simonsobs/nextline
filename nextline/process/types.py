@@ -2,7 +2,7 @@ import json
 import traceback
 from dataclasses import dataclass, field
 from queue import Queue
-from typing import Any, Callable, MutableMapping, Optional, Tuple, TypedDict
+from typing import Any, MutableMapping, Optional, Tuple, TypedDict
 
 from typing_extensions import TypeAlias
 
@@ -11,7 +11,10 @@ from nextline.types import PromptNo, RunNo, TraceNo
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
 QueueRegistry: TypeAlias = "Queue[Tuple[str, Any, bool]]"
-PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand, PromptNo], None]]
+
+CommandQueueMap: TypeAlias = MutableMapping[
+    TraceNo, 'Queue[Tuple[PdbCommand, PromptNo, TraceNo]]'
+]
 
 
 class RunArg(TypedDict):

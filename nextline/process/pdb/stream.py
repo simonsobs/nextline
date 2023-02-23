@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from io import TextIOWrapper
 from logging import getLogger
-from queue import Queue
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
-from nextline.types import PromptNo
 
 if TYPE_CHECKING:
     from nextline.process.run import TraceContext
@@ -45,8 +43,6 @@ class CmdLoopInterface:
         self._prompt_no_counter = context['prompt_no_counter']
         self._callback = context['callback']
 
-        self._queue: Queue[Tuple[str, PromptNo]] = Queue()
-
         # To be given to Pdb as stdout and stdin.
         self.stdout = _StdOut(self)
         self.stdin = _StdIn(self)
@@ -78,17 +74,7 @@ class CmdLoopInterface:
         _prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {_prompt_no}')
 
-        with (p := self._callback.prompt(prompt_no=_prompt_no, out=self._prompt)):
+        command = self._callback.prompt(prompt_no=_prompt_no, out=self._prompt)
 
-            while True:
-                command, prompt_no_ = self._queue.get()
-                if prompt_no_ == _prompt_no:
-                    break
-                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {_prompt_no}')
-            p.gen.send(command)
         self._prompt = ''
         return command
-
-    def issue(self, command: str, prompt_no: PromptNo) -> None:
-        self._logger.debug(f'issue(command={command!r}, prompt_no={prompt_no!r})')
-        self._queue.put((command, prompt_no))

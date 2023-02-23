@@ -13,14 +13,13 @@ from . import script
 from .call import sys_trace
 from .callback import Callback, RegistrarProxy
 from .trace import Trace
-from .types import PdbCiMap, QueueCommands, QueueRegistry, RunArg, RunResult
+from .types import QueueCommands, QueueRegistry, RunArg, RunResult, CommandQueueMap
 
 _T = TypeVar('_T')
 
 
 class TraceContext(TypedDict):
     callback: Callback
-    pdb_ci_map: PdbCiMap
     modules_to_trace: Set[str]
     prompt_no_counter: Callable[[], PromptNo]
 
@@ -76,26 +75,25 @@ def run_with_trace(
 @contextmanager
 def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
 
-    pdb_ci_map: PdbCiMap = {}
+    command_queue_map: CommandQueueMap = {}
     modules_to_trace: Set[str] = set()
 
     with Callback(
         run_no=run_no,
         registrar=RegistrarProxy(q_registry),
         modules_to_trace=modules_to_trace,
-        pdb_ci_map=pdb_ci_map,
+        command_queue_map=command_queue_map,
     ) as callback:
 
         context = TraceContext(
             callback=callback,
-            pdb_ci_map=pdb_ci_map,
             modules_to_trace=modules_to_trace,
             prompt_no_counter=PromptNoCounter(1),
         )
 
         trace = Trace(context=context)
 
-        with relay_commands(q_commands, pdb_ci_map):
+        with relay_commands(q_commands, command_queue_map):
             yield trace
 
 
@@ -106,7 +104,7 @@ def _compile(code: CodeType | str, filename: str) -> CodeType:
 
 
 @contextmanager
-def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
+def relay_commands(q_commands: QueueCommands, command_queue_map: CommandQueueMap):
     '''Pass the Pdb commands from the main process to the Pdb instances.'''
     logger = getLogger(__name__)
 
@@ -115,8 +113,7 @@ def relay_commands(q_commands: QueueCommands, pdb_ci_map: PdbCiMap):
         while m := q_commands.get():
             logger.debug(f'q_commands.get() -> {m!r}')
             command, prompt_no, trace_no = m
-            pdb_ci = pdb_ci_map[trace_no]
-            pdb_ci(command, prompt_no)
+            command_queue_map[trace_no].put(m)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(try_again_on_error, fn)  # type: ignore

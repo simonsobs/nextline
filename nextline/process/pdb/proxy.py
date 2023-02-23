@@ -79,7 +79,7 @@ def PdbInterface(context: TraceContext):
     def interface_cmdloop() -> Generator[None, None, None]:
         '''To be called in CustomizedPdb._cmdloop()'''
 
-        with context['callback'].cmdloop(issue=cmdloop_interface.issue):
+        with context['callback'].cmdloop():
             yield
 
     pdb = CustomizedPdb(
