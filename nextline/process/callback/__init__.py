@@ -151,7 +151,8 @@ class Callback:
             yield
 
     @contextmanager
-    def cmdloop(self, trace_no: TraceNo, trace_args: TraceArgs):
+    def cmdloop(self, trace_args: TraceArgs):
+        trace_no = self._trace_no_map[current_task_or_thread()]
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
