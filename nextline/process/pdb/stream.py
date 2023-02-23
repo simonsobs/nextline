@@ -85,7 +85,6 @@ class CmdLoopInterface:
 
         with (
             p := self._callback.prompt(
-                trace_no=self._trace_no,
                 prompt_no=_prompt_no,
                 trace_args=self._trace_args,
                 out=self._prompt,

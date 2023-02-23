@@ -157,9 +157,8 @@ class Callback:
             yield
 
     @contextmanager
-    def prompt(
-        self, trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str
-    ):
+    def prompt(self, prompt_no: PromptNo, trace_args: TraceArgs, out: str):
+        trace_no = self._trace_no_map[current_task_or_thread()]
         with (
             p := self._hook.with_.prompt(
                 trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=out
