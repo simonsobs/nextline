@@ -209,12 +209,10 @@ class AddModuleToTrace:
 
     @hookimpl
     @contextmanager
-    def prompt(self, trace_args: TraceArgs) -> Generator[None, str, None]:
+    def cmdloop(self, trace_args: TraceArgs) -> Generator[None, str, None]:
         frame, _, _ = trace_args
         if module_name := frame.f_globals.get('__name__'):
             self._modules_to_trace.add(module_name)
-
-        # _ = yield
         yield
 
 
