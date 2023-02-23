@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from io import TextIOWrapper
+from logging import getLogger
 from queue import Queue
-from typing import Generator, Literal
+from types import FrameType
+from typing import TYPE_CHECKING, Any, Optional, Tuple
+
+from nextline.types import PromptNo, TraceNo
+
+if TYPE_CHECKING:
+    from nextline.process.run import TraceContext
 
 
 class _StdOut(TextIOWrapper):
@@ -31,84 +39,84 @@ class _StdIn(TextIOWrapper):
 
 
 class CmdLoopInterface:
-    '''Deliver messages between the user and Pdb during Pdb.cmdloop().
+    def __init__(self, trace_no: TraceNo, context: TraceContext) -> None:
 
-    Example:
+        self._trace_no = trace_no
+        self._prompt_no_counter = context['prompt_no_counter']
+        self._callback = context['callback']
+        self._ci_map = context['pdb_ci_map']
 
-    >>> cli = CmdLoopInterface()
+        self._trace_args: Optional[Tuple[FrameType, str, Any]] = None
+        self._prompt_end: Optional[str] = None
 
-    Define a client function that responds to a prompt.
-
-    >>> def user():
-    ...     for prompt in cli.prompts():
-    ...         cli.issue(f'Hi, I am the user. You said: {prompt!r}')
-
-    Run the function in a thread.
-
-    >>> from threading import Thread
-    >>> thread = Thread(target=user)
-    >>> thread.start()
-
-    Send a message to the client function.
-
-    >>> _ = cli.write('Hello, I am Pdb.')
-
-    Wait for a response.
-
-    >>> response = cli.prompt()
-    >>> response
-    "Hi, I am the user. You said: 'Hello, I am Pdb.'"
-
-    Stop the iteration of the "for" loop in the client function.
-
-    >>> cli.close()
-
-    End the thread.
-
-    >>> thread.join()
-
-
-
-    '''
-
-    def __init__(self) -> None:
-
-        # str: messages or prompts to be kept until True is received.
-        # True when concatenated strings to be yielded as a prompt.
-        # None when the command loop exits.
-        self._queue_stdout: Queue[str | Literal[True] | None] = Queue()
-
-        # User commands to be issued to Pdb.
-        self._queue_stdin: Queue[str] = Queue()
+        self._queue: Queue[Tuple[str, PromptNo]] = Queue()
 
         # To be given to Pdb as stdout and stdin.
         self.stdout = _StdOut(self)
         self.stdin = _StdIn(self)
 
-    def prompts(self) -> Generator[str, str, None]:
-        '''Yield each prompt from stdout.'''
-        prompt = ''
-        while (msg := self._queue_stdout.get()) is not None:
-            if msg is True:
-                yield prompt
-                prompt = ''
-                continue
-            prompt += msg
+        self._prompt = ''
 
-    def issue(self, command: str) -> None:
-        '''Respond to a prompt with a command.'''
-        self._queue_stdin.put(command)
-
-    def close(self) -> None:
-        '''Have the generator self.prompts() return.'''
-        self._queue_stdout.put(None)
+        self._logger = getLogger(__name__)
 
     def write(self, s: str) -> int:
         '''Called by _StdOut.write()'''
-        self._queue_stdout.put(s)
+        self._prompt += s
         return len(s)
 
     def prompt(self) -> str:
         '''Called by _StdIn.readline()'''
-        self._queue_stdout.put(True)
-        return self._queue_stdin.get()
+        try:
+            assert self._prompt_end is not None
+            assert self._trace_args is not None
+        except AssertionError:
+            self._logger.exception('prompt() called before cmdloop()')
+            raise
+
+        self._logger.debug(f'Pdb stdout: {self._prompt!r}')
+
+        if not self._prompt.endswith(self._prompt_end):
+            self._logger.warning(
+                f'{self._prompt!r} does not end with {self._prompt_end!r}'
+            )
+
+        _prompt_no = self._prompt_no_counter()
+        self._logger.debug(f'PromptNo: {_prompt_no}')
+
+        with (
+            p := self._callback.prompt(
+                trace_no=self._trace_no,
+                prompt_no=_prompt_no,
+                trace_args=self._trace_args,
+                out=self._prompt,
+            )
+        ):
+
+            while True:
+                command, prompt_no_ = self._queue.get()
+                if prompt_no_ == _prompt_no:
+                    break
+                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {_prompt_no}')
+            p.gen.send(command)
+        self._prompt = ''
+        return command
+
+    def issue(self, command: str, prompt_no: PromptNo) -> None:
+        self._logger.debug(f'issue(command={command!r}, prompt_no={prompt_no!r})')
+        self._queue.put((command, prompt_no))
+
+    @contextmanager
+    def cmdloop(
+        self,
+        trace_args: Tuple[FrameType, str, Any],
+        prompt_end: str,  # i.e. '(Pdb) '
+    ):
+        self._trace_args = trace_args
+        self._prompt_end = prompt_end
+        self._ci_map[self._trace_no] = self.issue
+        try:
+            yield
+        finally:
+            del self._ci_map[self._trace_no]
+            self._prompt_end = None
+            self._trace_args = None
