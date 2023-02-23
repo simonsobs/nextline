@@ -11,7 +11,7 @@ from nextline.types import PromptNo, RunNo, TraceNo
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
 QueueRegistry: TypeAlias = "Queue[Tuple[str, Any, bool]]"
-PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand, PromptNo], Any]]
+PdbCiMap: TypeAlias = MutableMapping[TraceNo, Callable[[PdbCommand, PromptNo], None]]
 
 
 class RunArg(TypedDict):
