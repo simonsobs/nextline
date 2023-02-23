@@ -48,6 +48,12 @@ def trace_call(trace_no: TraceNo, trace_args: TraceArgs):
 
 @hookspec
 @contextmanager
+def cmdloop(trace_no: TraceNo, trace_args: TraceArgs):
+    pass
+
+
+@hookspec
+@contextmanager
 def prompt(
     trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str
 ) -> Generator[None, str, None]:

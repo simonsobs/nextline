@@ -146,6 +146,11 @@ class Callback:
             yield
 
     @contextmanager
+    def cmdloop(self, trace_no: TraceNo, trace_args: TraceArgs):
+        with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
+            yield
+
+    @contextmanager
     def prompt(
         self, trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str
     ):
