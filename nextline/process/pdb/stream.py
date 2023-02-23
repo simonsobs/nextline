@@ -65,7 +65,7 @@ class CmdLoopInterface:
         try:
             assert self.prompt_end is not None
         except AssertionError:
-            self._logger.exception('prompt() called before cmdloop()')
+            self._logger.exception(f'{self.__class__.__name__!r} has no prompt_end')
             raise
 
         self._logger.debug(f'Pdb stdout: {self._prompt!r}')
