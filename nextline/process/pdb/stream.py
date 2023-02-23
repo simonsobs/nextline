@@ -6,7 +6,7 @@ from logging import getLogger
 from queue import Queue
 from typing import TYPE_CHECKING, Optional, Tuple
 
-from nextline.types import PromptNo, TraceNo
+from nextline.types import PromptNo
 
 if TYPE_CHECKING:
     from nextline.process.run import TraceContext
@@ -38,12 +38,10 @@ class _StdIn(TextIOWrapper):
 
 
 class CmdLoopInterface:
-    def __init__(self, trace_no: TraceNo, context: TraceContext) -> None:
+    def __init__(self, context: TraceContext) -> None:
 
-        self._trace_no = trace_no
         self._prompt_no_counter = context['prompt_no_counter']
         self._callback = context['callback']
-        self._ci_map = context['pdb_ci_map']
 
         self._prompt_end: Optional[str] = None
 
@@ -98,9 +96,7 @@ class CmdLoopInterface:
     @contextmanager
     def cmdloop(self, prompt_end):
         self._prompt_end = prompt_end  # i.e. '(Pdb) '
-        self._ci_map[self._trace_no] = self.issue
         try:
             yield
         finally:
-            del self._ci_map[self._trace_no]
             self._prompt_end = None

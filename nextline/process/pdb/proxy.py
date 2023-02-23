@@ -5,7 +5,6 @@ from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Tuple
 
 from nextline.process.trace.wrap import WithContext
-from nextline.types import TraceNo
 
 from .custom import CustomizedPdb, TraceNotCalled
 from .stream import CmdLoopInterface
@@ -20,8 +19,8 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
     def factory() -> TraceFunc:
 
         callback = context['callback']
-        trace_no = callback.task_or_thread_start()
-        trace = PdbInterface(trace_no=trace_no, context=context)
+        callback.task_or_thread_start()
+        trace = PdbInterface(context=context)
 
         trace = TraceCallCallback(trace=trace, context=context)
         # TODO: Add a test. The tests pass without the above line.  Without it,
@@ -43,7 +42,7 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
     return WithContext(trace, context=_context)
 
 
-def PdbInterface(trace_no: TraceNo, context: TraceContext):
+def PdbInterface(context: TraceContext):
     '''
 
     (This sequence diagram is not up-to-date.)
@@ -93,7 +92,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
 
     trace_args: Optional[Tuple[FrameType, str, Any]] = None
 
-    cmdloop_interface = CmdLoopInterface(trace_no=trace_no, context=context)
+    cmdloop_interface = CmdLoopInterface(context=context)
 
     @contextmanager
     def interface_cmdloop() -> Generator[None, None, None]:
@@ -102,7 +101,7 @@ def PdbInterface(trace_no: TraceNo, context: TraceContext):
         if not trace_args:
             raise TraceNotCalled(f'{save_trace_args.__name__}() must be called.')
 
-        with context['callback'].cmdloop():
+        with context['callback'].cmdloop(issue=cmdloop_interface.issue):
             with cmdloop_interface.cmdloop(prompt_end=pdb.prompt):
                 yield
 
