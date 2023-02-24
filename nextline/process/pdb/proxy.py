@@ -19,7 +19,7 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
 
         callback = context['callback']
         callback.task_or_thread_start()
-        trace = PdbInterface(context=context)
+        trace = instantiate_pdb(context=context)
 
         trace = TraceCallCallback(trace=trace, context=context)
         # TODO: Add a test. The tests pass without the above line.  Without it,
@@ -41,31 +41,8 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
     return WithContext(trace, context=_context)
 
 
-def PdbInterface(context: TraceContext):
-    '''
-    pdb.trace_dispatch()
-     |
-     |--> pdb.cmdloop()
-           |
-           | with
-           |--> cmdloop_hook()
-                 |
-           |<----| yield
-           |
-           | super
-           |--------> pdb.cmdloop()
-                       |
-                       V
-           |<-----------
-           |
-           |---->| exit
-                 V
-           |<-----
-           V
-     |<-----
-     V
-
-    '''
+def instantiate_pdb(context: TraceContext):
+    '''Create a new Pdb instance with callback hooked and return its trace function.'''
 
     cmdloop_interface = CmdLoopInterface(context=context)
 
