@@ -83,7 +83,7 @@ def PdbInterface(context: TraceContext):
             yield
 
     pdb = CustomizedPdb(
-        interface_cmdloop=interface_cmdloop,
+        cmdloop_hook=interface_cmdloop,
         stdin=cmdloop_interface.stdin,
         stdout=cmdloop_interface.stdout,
         nosigint=True,
