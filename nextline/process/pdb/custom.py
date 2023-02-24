@@ -5,9 +5,7 @@ from logging import getLogger
 from pdb import Pdb
 from typing import Callable
 
-
-class TraceNotCalled(RuntimeError):
-    pass
+from nextline.process.exc import TraceNotCalled
 
 
 class CustomizedPdb(Pdb):
