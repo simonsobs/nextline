@@ -12,6 +12,7 @@ from weakref import WeakKeyDictionary
 from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter, TraceNoCounter
+from nextline.process.exc import TraceNotCalled
 from nextline.process.io import peek_stdout_by_task_and_thread
 from nextline.process.types import CommandQueueMap
 from nextline.types import RunNo, TraceNo
@@ -167,7 +168,8 @@ class Callback:
     @contextmanager
     def cmdloop(self):
         trace_no = self._trace_no_map[current_task_or_thread()]
-        trace_args = self._trace_args_map[trace_no]
+        if (trace_args := self._trace_args_map.get(trace_no)) is None:
+            raise TraceNotCalled
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
