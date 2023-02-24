@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from io import TextIOWrapper
 from logging import getLogger
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    from nextline.process.run import TraceContext
+from typing import Optional, Protocol
 
 
 class _StdOut(TextIOWrapper):
@@ -33,13 +30,18 @@ class _StdIn(TextIOWrapper):
         return self._cli.prompt()
 
 
+class PromptFunc(Protocol):
+    def __call__(self, text: str) -> str:
+        ...
+
+
 class CmdLoopInterface:
-    def __init__(self, context: TraceContext) -> None:
+    def __init__(self, prompt_func: PromptFunc) -> None:
 
         # Must be assigned to Pdb.prompt.
         self.prompt_end: Optional[str] = None
 
-        self._prompt = context['callback'].prompt
+        self._prompt = prompt_func
 
         # To be given to Pdb as stdout and stdin.
         self.stdout = _StdOut(self)

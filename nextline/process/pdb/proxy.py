@@ -44,7 +44,7 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
 def instantiate_pdb(context: TraceContext):
     '''Create a new Pdb instance with callback hooked and return its trace function.'''
 
-    cmdloop_interface = CmdLoopInterface(context=context)
+    cmdloop_interface = CmdLoopInterface(prompt_func=context['callback'].prompt)
 
     pdb = CustomizedPdb(
         cmdloop_hook=context['callback'].cmdloop,
