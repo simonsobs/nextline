@@ -4,7 +4,6 @@ from io import TextIOWrapper
 from logging import getLogger
 from typing import TYPE_CHECKING, Optional
 
-
 if TYPE_CHECKING:
     from nextline.process.run import TraceContext
 

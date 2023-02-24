@@ -12,7 +12,7 @@ from . import script
 from .call import sys_trace
 from .callback import Callback, RegistrarProxy
 from .trace import Trace
-from .types import QueueCommands, QueueRegistry, RunArg, RunResult, CommandQueueMap
+from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar('_T')
 
