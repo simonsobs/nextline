@@ -68,7 +68,7 @@ class CmdLoopInterface:
             msg = f'{self._prompt!r} does not end with {self.prompt_end!r}'
             self._logger.warning(msg)
 
-        command = self._callback.prompt(out=self._prompt)
+        command = self._callback.prompt(text=self._prompt)
 
         self._prompt = ''
         return command

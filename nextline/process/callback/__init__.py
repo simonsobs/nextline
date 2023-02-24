@@ -173,14 +173,14 @@ class Callback:
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
-    def prompt(self, out: str) -> str:
+    def prompt(self, text: str) -> str:
         trace_no = self._trace_no_map[current_task_or_thread()]
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
         trace_args = self._trace_args_map[trace_no]
         with (
             p := self._hook.with_.prompt(
-                trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=out
+                trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=text
             )
         ):
             while True:
