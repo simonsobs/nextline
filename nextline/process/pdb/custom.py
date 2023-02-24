@@ -27,25 +27,16 @@ class CustomizedPdb(Pdb):
         self._set_stopinfo(None, None)  # type: ignore
 
     def _cmdloop(self) -> None:
-        '''Override Pdb._cmdloop() to interface the command loop.
+        '''Override Pdb._cmdloop() to keep it from catching KeyboardInterrupt.'''
+        # super()._cmdloop()
+        self.cmdloop()
 
-        Send command prompts to the user and commands to Pdb during the command loop.
-        '''
+    def cmdloop(self, intro=None) -> None:
+        '''Override Cmd.cmdloop() to call it inside a context manager.'''
         try:
             with self._interface_cmdloop():
-
-                # Not calling the overridden method because it catches
-                # KeyboardInterrupt while calling self.cmdloop().
-                # super()._cmdloop()
-
-                # Instead directly call self.cmdloop() so to let
-                # KeyboardInterrupt be raised.
-                self.cmdloop()
-
+                super().cmdloop(intro=intro)
         except TraceNotCalled:
-            # This error can happen when the user sends the Pdb command "step"
-            # at the very last line of the script.
-            # https://github.com/simonsobs/nextline/issues/1
             logger = getLogger(__name__)
             logger.exception('')
 
