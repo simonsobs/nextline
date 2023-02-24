@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Callable, Generator
+from typing import TYPE_CHECKING, Callable
 
 from nextline.process.trace.wrap import WithContext
 
@@ -43,47 +43,34 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
 
 def PdbInterface(context: TraceContext):
     '''
-      pdb.trace_dispatch()
-       |
-       |--> pdb._cmdloop()
-             |
-             | with
-             |--> interface_cmdloop()
-                   |
-                   | with
-                   |--> callback.cmdloop()
-                         |
-                   |<----| yield
-             |<----| yield
-             |
-             |-------------> pdb.cmdloop()
-                               |
-                               V
-             |<-----------------
-             |
-             |---->| exit
-                   |---->| exit
-                         V
-                   |<-----
-                   V
-             |<-----
-             V
-       |<-----
-       V
+    pdb.trace_dispatch()
+     |
+     |--> pdb.cmdloop()
+           |
+           | with
+           |--> cmdloop_hook()
+                 |
+           |<----| yield
+           |
+           | super
+           |--------> pdb.cmdloop()
+                       |
+                       V
+           |<-----------
+           |
+           |---->| exit
+                 V
+           |<-----
+           V
+     |<-----
+     V
 
     '''
 
     cmdloop_interface = CmdLoopInterface(context=context)
 
-    @contextmanager
-    def interface_cmdloop() -> Generator[None, None, None]:
-        '''To be called in CustomizedPdb._cmdloop()'''
-
-        with context['callback'].cmdloop():
-            yield
-
     pdb = CustomizedPdb(
-        cmdloop_hook=interface_cmdloop,
+        cmdloop_hook=context['callback'].cmdloop,
         stdin=cmdloop_interface.stdin,
         stdout=cmdloop_interface.stdout,
         nosigint=True,
