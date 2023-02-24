@@ -56,9 +56,11 @@ class CmdLoopInterface:
     def prompt(self) -> str:
         '''Called by _StdIn.readline()'''
 
+        prompt_text = self._prompt_text
+
         logger = getLogger(__name__)
 
-        logger.debug(f'Prompt text: {self._prompt_text!r}')
+        logger.debug(f'Prompt text: {prompt_text!r}')
 
         try:
             assert self.prompt_end is not None
@@ -66,12 +68,12 @@ class CmdLoopInterface:
             logger.exception(f'{self.__class__.__name__!r} has no prompt_end')
             raise
 
-        if not self._prompt_text.endswith(self.prompt_end):
-            msg = f'{self._prompt_text!r} does not end with {self.prompt_end!r}'
+        if not prompt_text.endswith(self.prompt_end):
+            msg = f'{prompt_text!r} does not end with {self.prompt_end!r}'
             logger.warning(msg)
 
-        command = self._prompt(text=self._prompt_text)
-
         self._prompt_text = ''
+
+        command = self._prompt(text=prompt_text)
 
         return command
