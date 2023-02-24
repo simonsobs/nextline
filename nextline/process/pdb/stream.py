@@ -41,15 +41,12 @@ class CmdLoopInterface:
         # Must be assigned to Pdb.prompt.
         self.prompt_end: Optional[str] = None
 
-        self._prompt = prompt_func
-
         # To be given to Pdb as stdout and stdin.
         self.stdout = _StdOut(self)
         self.stdin = _StdIn(self)
 
+        self._prompt = prompt_func
         self._prompt_text = ''
-
-        self._logger = getLogger(__name__)
 
     def write(self, s: str) -> int:
         '''Called by _StdOut.write()'''
@@ -58,17 +55,20 @@ class CmdLoopInterface:
 
     def prompt(self) -> str:
         '''Called by _StdIn.readline()'''
+
+        logger = getLogger(__name__)
+
+        logger.debug(f'Prompt text: {self._prompt_text!r}')
+
         try:
             assert self.prompt_end is not None
         except AssertionError:
-            self._logger.exception(f'{self.__class__.__name__!r} has no prompt_end')
+            logger.exception(f'{self.__class__.__name__!r} has no prompt_end')
             raise
-
-        self._logger.debug(f'Pdb stdout: {self._prompt_text!r}')
 
         if not self._prompt_text.endswith(self.prompt_end):
             msg = f'{self._prompt_text!r} does not end with {self.prompt_end!r}'
-            self._logger.warning(msg)
+            logger.warning(msg)
 
         command = self._prompt(text=self._prompt_text)
 
