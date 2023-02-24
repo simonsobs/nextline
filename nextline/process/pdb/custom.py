@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from logging import getLogger
 from pdb import Pdb
-from typing import Callable, ContextManager
+from typing import IO, Callable, ContextManager
 
 from nextline.process.exc import TraceNotCalled
 
 
 class CustomizedPdb(Pdb):
-    '''A Pdb subclass that interfaces the command loop.'''
+    '''A Pdb subclass that hooks the command loop.'''
 
     def __init__(
         self,
         cmdloop_hook: Callable[[], ContextManager[None]],
-        *args,
-        **kwargs,
+        stdin: IO[str],
+        stdout: IO[str],
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(stdin=stdin, stdout=stdout, nosigint=True, readrc=False)
         self._cmdloop_hook = cmdloop_hook
 
         # self.quitting = True # not sure if necessary

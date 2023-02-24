@@ -73,8 +73,6 @@ def PdbInterface(context: TraceContext):
         cmdloop_hook=context['callback'].cmdloop,
         stdin=cmdloop_interface.stdin,
         stdout=cmdloop_interface.stdout,
-        nosigint=True,
-        readrc=False,
     )
     cmdloop_interface.prompt_end = pdb.prompt
 
