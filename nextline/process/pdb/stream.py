@@ -39,19 +39,19 @@ class CmdLoopInterface:
         # Must be assigned to Pdb.prompt.
         self.prompt_end: Optional[str] = None
 
-        self._callback = context['callback']
+        self._prompt = context['callback'].prompt
 
         # To be given to Pdb as stdout and stdin.
         self.stdout = _StdOut(self)
         self.stdin = _StdIn(self)
 
-        self._prompt = ''
+        self._prompt_text = ''
 
         self._logger = getLogger(__name__)
 
     def write(self, s: str) -> int:
         '''Called by _StdOut.write()'''
-        self._prompt += s
+        self._prompt_text += s
         return len(s)
 
     def prompt(self) -> str:
@@ -62,13 +62,14 @@ class CmdLoopInterface:
             self._logger.exception(f'{self.__class__.__name__!r} has no prompt_end')
             raise
 
-        self._logger.debug(f'Pdb stdout: {self._prompt!r}')
+        self._logger.debug(f'Pdb stdout: {self._prompt_text!r}')
 
-        if not self._prompt.endswith(self.prompt_end):
-            msg = f'{self._prompt!r} does not end with {self.prompt_end!r}'
+        if not self._prompt_text.endswith(self.prompt_end):
+            msg = f'{self._prompt_text!r} does not end with {self.prompt_end!r}'
             self._logger.warning(msg)
 
-        command = self._callback.prompt(text=self._prompt)
+        command = self._prompt(text=self._prompt_text)
 
-        self._prompt = ''
+        self._prompt_text = ''
+
         return command
