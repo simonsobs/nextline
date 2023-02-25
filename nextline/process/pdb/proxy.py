@@ -48,8 +48,8 @@ def instantiate_pdb(context: TraceContext):
 
     pdb = CustomizedPdb(
         cmdloop_hook=context['callback'].cmdloop,
-        stdin=cmdloop_interface.stdin,
-        stdout=cmdloop_interface.stdout,
+        stdin=cmdloop_interface,
+        stdout=cmdloop_interface,
     )
     cmdloop_interface.prompt_end = pdb.prompt
 

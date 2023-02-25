@@ -6,12 +6,14 @@ from typing import Optional, Protocol
 
 
 class PromptFunc(Protocol):
+    '''Prompt the user with text for a command.'''
+
     def __call__(self, text: str) -> str:
         ...
 
 
-class CmdLoopInterface:
-    '''Call the prompt_func() when stdin.readline() is called.
+class CmdLoopInterface(TextIOWrapper):
+    '''A stdin and stdout interface for prompt_func().
 
     Example:
 
@@ -25,16 +27,16 @@ class CmdLoopInterface:
     Initialize CmdLoopInterface with the prompt_func().
     >>> cli = CmdLoopInterface(prompt_func=prompt_func)
 
-    The cli.stdout and cli.stdin are to be given as stdout and stdin to Pdb, or any
-    other Python object that can be operated via standard output and input streams.
+    The cli is to be given as both stdin and stdout to Pdb, or any other Python
+    object that can be operated via stdout.write() and stdin.readline().
 
-    In this example, we will call cli.stdout.write() and cli.stdin.readline() directly.
+    In this example, we will call cli.write() and cli.readline() directly.
 
     Write the prompt text to stdout.
-    >>> _ = cli.stdout.write('Hello, I am Pdb. ')
+    >>> _ = cli.write('Hello, I am Pdb. ')
 
     Wait for the user response.
-    >>> cli.stdin.readline()
+    >>> cli.readline()
     "Hi, I am the user. You said: 'Hello, I am Pdb. '"
 
     '''
@@ -46,20 +48,26 @@ class CmdLoopInterface:
         # To be matched to the end of prompt text if not None.
         self.prompt_end = prompt_end
 
-        # To be given as stdout and stdin to Pdb, for example.
-        self.stdout = _StdOut(self)
-        self.stdin = _StdIn(self)
-
         self._prompt = prompt_func
         self._prompt_text = ''
 
     def write(self, s: str) -> int:
-        '''Called by _StdOut.write()'''
+        '''Print prompt or other text.
+        
+        For example, Pdb calls this method as stdout.write(pdb.prompt).
+        '''
         self._prompt_text += s
         return len(s)
 
-    def prompt(self) -> str:
-        '''Called by _StdIn.readline()'''
+    def flush(self):
+        '''To replace stdout.flush()'''
+        pass
+
+    def readline(self):
+        '''Call the prompt_func() with the text given to write() and return the result.
+        
+        For example, Pdb calls this method as stdin.readline() for user command.
+        '''
 
         prompt_text = self._prompt_text
 
@@ -82,28 +90,3 @@ class CmdLoopInterface:
         command = self._prompt(text=prompt_text)
 
         return command
-
-
-class _StdOut(TextIOWrapper):
-    '''To be given as stdout to Pdb, for example.'''
-
-    def __init__(self, cli: CmdLoopInterface):
-        self._cli = cli
-
-    def write(self, s: str, /) -> int:
-        '''E.g., Pdb prints user prompt or other messages to stdout.'''
-        return self._cli.write(s)
-
-    def flush(self):
-        pass
-
-
-class _StdIn(TextIOWrapper):
-    '''To be given as stdin to Pdb, for example.'''
-
-    def __init__(self, cli: CmdLoopInterface):
-        self._cli = cli
-
-    def readline(self):
-        '''E.g., Pdb waits for user input from stdin.'''
-        return self._cli.prompt()
