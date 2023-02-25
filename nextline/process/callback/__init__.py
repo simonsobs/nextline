@@ -30,8 +30,8 @@ from .plugins import (
     StdoutRegistrar,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
-    hookimpl,
 )
+from .spec import hookimpl
 from .types import TraceArgs
 
 
