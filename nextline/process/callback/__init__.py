@@ -13,7 +13,6 @@ from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.exc import TraceNotCalled
-from nextline.process.io import peek_stdout_by_task_and_thread
 from nextline.process.types import CommandQueueMap
 from nextline.types import RunNo, TraceNo
 from nextline.utils import (
@@ -25,6 +24,7 @@ from nextline.utils import (
 from . import spec
 from .plugins import (
     AddModuleToTrace,
+    PeekStdout,
     PromptInfoRegistrar,
     RegistrarProxy,
     StdoutRegistrar,
@@ -74,28 +74,6 @@ class TaskOrThreadToTraceMapper:
         if self._entering_thread:
             if trace_no := self._trace_no_map.get(self._entering_thread):
                 self._callback.trace_end(trace_no)
-
-
-class PeekStdout:
-    def __init__(self, callback: 'Callback') -> None:
-        self._callback = callback
-        self._tasks_and_threads: Set[Task | Thread] = set()
-
-    @hookimpl
-    def task_or_thread_start(self) -> None:
-        task_or_thread = current_task_or_thread()
-        self._tasks_and_threads.add(task_or_thread)
-
-    @hookimpl
-    def start(self) -> None:
-        self._peek_stdout = peek_stdout_by_task_and_thread(
-            to_peek=self._tasks_and_threads, callback=self._callback.stdout
-        )
-        self._peek_stdout.__enter__()
-
-    @hookimpl
-    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
-        self._peek_stdout.__exit__(exc_type, exc_value, traceback)
 
 
 class Callback:
