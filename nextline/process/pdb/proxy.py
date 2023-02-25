@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable
 from nextline.process.trace.wrap import WithContext
 
 from .custom import CustomizedPdb
-from .stream import CmdLoopInterface
+from .stream import StdInOut
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -44,13 +44,13 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
 def instantiate_pdb(context: TraceContext):
     '''Create a new Pdb instance with callback hooked and return its trace function.'''
 
-    cmdloop_interface = CmdLoopInterface(prompt_func=context['callback'].prompt)
+    stdio = StdInOut(prompt_func=context['callback'].prompt)
 
     pdb = CustomizedPdb(
         cmdloop_hook=context['callback'].cmdloop,
-        stdin=cmdloop_interface,
-        stdout=cmdloop_interface,
+        stdin=stdio,
+        stdout=stdio,
     )
-    cmdloop_interface.prompt_end = pdb.prompt
+    stdio.prompt_end = pdb.prompt
 
     return pdb.trace_dispatch

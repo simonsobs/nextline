@@ -12,8 +12,8 @@ class PromptFunc(Protocol):
         ...
 
 
-class CmdLoopInterface(TextIOWrapper):
-    '''A stdin and stdout interface for prompt_func().
+class StdInOut(TextIOWrapper):
+    '''A stdin and stdout interface to prompt_func(text: str) -> str.
 
     Example:
 
@@ -24,19 +24,19 @@ class CmdLoopInterface(TextIOWrapper):
     In practice, the prompt_func() would prompt the user for a command and be blocked
     until the user responds.  Here, we just return a string.
 
-    Initialize CmdLoopInterface with the prompt_func().
-    >>> cli = CmdLoopInterface(prompt_func=prompt_func)
+    Initialize with the prompt_func().
+    >>> stdio = StdInOut(prompt_func=prompt_func)
 
-    The cli is to be given as both stdin and stdout to Pdb, or any other Python
-    object that can be operated via stdout.write() and stdin.readline().
+    The `stdio` is to be given as both stdin and stdout to Pdb, or any other
+    Python object that can be operated via stdout.write() and stdin.readline().
 
-    In this example, we will call cli.write() and cli.readline() directly.
+    In this example, we will call stdio.write() and stdio.readline() directly.
 
     Write the prompt text to stdout.
-    >>> _ = cli.write('Hello, I am Pdb. ')
+    >>> _ = stdio.write('Hello, I am Pdb. ')
 
     Wait for the user response.
-    >>> cli.readline()
+    >>> stdio.readline()
     "Hi, I am the user. You said: 'Hello, I am Pdb. '"
 
     '''
