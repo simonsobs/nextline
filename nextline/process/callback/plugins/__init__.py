@@ -21,11 +21,11 @@ from nextline.types import (
     TraceNo,
 )
 
-from .spec import hookimpl
-from .types import TraceArgs
+from ..spec import hookimpl
+from ..types import TraceArgs
 
 if TYPE_CHECKING:
-    from ..run import QueueRegistry
+    from ...run import QueueRegistry
 
 
 class TraceNumbersRegistrar:
