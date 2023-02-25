@@ -24,10 +24,10 @@ class CmdLoopInterface:
 
     Initialize CmdLoopInterface with the prompt_func().
     >>> cli = CmdLoopInterface(prompt_func=prompt_func)
-    
+
     The cli.stdout and cli.stdin are to be given as stdout and stdin to Pdb, or any
     other Python object that can be operated via standard output and input streams.
-    
+
     In this example, we will call cli.stdout.write() and cli.stdin.readline() directly.
 
     Write the prompt text to stdout.
