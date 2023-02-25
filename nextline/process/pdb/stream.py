@@ -53,7 +53,7 @@ class StdInOut(TextIOWrapper):
 
     def write(self, s: str) -> int:
         '''Print prompt or other text.
-        
+
         For example, Pdb calls this method as stdout.write(pdb.prompt).
         '''
         self._prompt_text += s
@@ -65,7 +65,7 @@ class StdInOut(TextIOWrapper):
 
     def readline(self):
         '''Call the prompt_func() with the text given to write() and return the result.
-        
+
         For example, Pdb calls this method as stdin.readline() for user command.
         '''
 
