@@ -6,7 +6,7 @@ from logging import getLogger
 from queue import Queue
 from threading import Thread
 from types import FrameType
-from typing import Callable, Dict, MutableMapping, Set, Tuple
+from typing import Callable, Dict, MutableMapping, Tuple
 from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
@@ -146,7 +146,6 @@ class Callback:
         self,
         run_no: RunNo,
         registrar: RegistrarProxy,
-        modules_to_trace: Set[str],
         command_queue_map: CommandQueueMap,
     ):
         self._trace_no_counter = TraceNoCounter(1)
@@ -164,7 +163,7 @@ class Callback:
         self._logger = getLogger(__name__)
 
         stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
-        add_module_to_trace = AddModuleToTrace(modules_to_trace)
+        add_module_to_trace = AddModuleToTrace()
         trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)

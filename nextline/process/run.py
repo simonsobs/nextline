@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
 from types import CodeType
-from typing import Any, Callable, Set, TypedDict, TypeVar
+from typing import Any, Callable, TypedDict, TypeVar
 
 from nextline.types import RunNo
 
@@ -19,7 +19,6 @@ _T = TypeVar('_T')
 
 class TraceContext(TypedDict):
     callback: Callback
-    modules_to_trace: Set[str]
 
 
 def run_(
@@ -74,19 +73,14 @@ def run_with_trace(
 def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
 
     command_queue_map: CommandQueueMap = {}
-    modules_to_trace: Set[str] = set()
 
     with Callback(
         run_no=run_no,
         registrar=RegistrarProxy(q_registry),
-        modules_to_trace=modules_to_trace,
         command_queue_map=command_queue_map,
     ) as callback:
 
-        context = TraceContext(
-            callback=callback,
-            modules_to_trace=modules_to_trace,
-        )
+        context = TraceContext(callback=callback)
 
         trace = Trace(context=context)
 

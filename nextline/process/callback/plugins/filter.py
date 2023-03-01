@@ -44,8 +44,8 @@ class FilterLambda:
 class AddModuleToTrace:
     '''Let Python modules be traced in new threads and asyncio tasks.'''
 
-    def __init__(self, modules_to_trace: Set[str]):
-        self._modules_to_trace = modules_to_trace
+    def __init__(self) -> None:
+        self._modules_to_trace: Set[str] = set()
         self._first_module_added = False
         self._entering_thread: Optional[Thread] = None
         self._traced_tasks_and_threads: Set[Task | Thread] = set()
