@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from asyncio import Task
-from collections.abc import Set
 from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
@@ -108,35 +107,6 @@ def DispatchForThreadOrTask(factory: Callable[[], TraceFunc]) -> TraceFunc:
         return trace(frame, event, arg)
 
     return ret
-
-
-def FilterFirstModule(trace: TraceFunc, modules_to_trace: Set[str]) -> TraceFunc:
-    '''Start tracing from a module in the set.
-
-    Skip modules until reaching a module in the set. Stop skipping afterward.
-    '''
-
-    first = True
-
-    def filter(frame: FrameType, event, arg) -> bool:
-        nonlocal first
-        del event, arg
-
-        if first:
-            module_name = frame.f_globals.get('__name__')
-            if not match_any(module_name, modules_to_trace):
-                return False
-
-            first = False
-
-            logger = getLogger(__name__)
-            name = FilterFirstModule.__name__
-            msg = f'{name}: started tracing at {module_name!r}'
-            logger.info(msg)
-
-        return True
-
-    return Filter(trace=trace, filter=filter)
 
 
 def FromFactory(factory: Callable[[], TraceFunc]) -> TraceFunc:
