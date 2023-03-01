@@ -20,6 +20,7 @@ from nextline.utils import ThreadTaskIdComposer
 from . import spec
 from .plugins import (
     AddModuleToTrace,
+    FilterByModuleName,
     PeekStdout,
     PromptInfoRegistrar,
     RegistrarProxy,
@@ -29,6 +30,31 @@ from .plugins import (
     TraceNumbersRegistrar,
 )
 from .types import TraceArgs
+
+MODULES_TO_SKIP = {
+    'multiprocessing.*',
+    'threading',
+    'queue',
+    'importlib',
+    'asyncio.*',
+    'codec',
+    'concurrent.futures.*',
+    'selectors',
+    'weakref',
+    '_weakrefset',
+    'socket',
+    'logging',
+    'os',
+    'collections.*',
+    'importlib.*',
+    'pathlib',
+    'typing',
+    'posixpath',
+    'fnmatch',
+    '_pytest.*',
+    'apluggy.*',
+    'pluggy.*',
+}
 
 
 class CallbackForTrace:
@@ -151,6 +177,9 @@ class Callback:
         self._hook.register(trace_numbers_registrar, name='trace_numbers')
         self._hook.register(peek_stdout, name='peek_stdout')
         self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
+
+        filter_by_module_name = FilterByModuleName(patterns=MODULES_TO_SKIP)
+        self._hook.register(filter_by_module_name, name='filter_by_module_name')
 
     def filter(self, frame: FrameType, event, arg) -> bool:
         accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))

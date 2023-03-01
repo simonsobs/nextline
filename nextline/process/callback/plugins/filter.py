@@ -1,12 +1,31 @@
 from __future__ import annotations
 
+from functools import lru_cache, partial
 from logging import getLogger
-from typing import Generator, Set
+from typing import Generator, Iterable, Set
 
 from apluggy import contextmanager
 
 from nextline.process.callback.spec import hookimpl
 from nextline.process.callback.types import TraceArgs
+from nextline.utils import match_any
+
+
+class FilterByModuleName:
+    '''Skip Python modules with names that match any of the patterns.'''
+
+    def __init__(self, patterns: Iterable[str]):
+        self._patterns = frozenset(patterns)
+
+        # NOTE: Use lru_cache() as match_any() is slow
+        self._match_any_ = lru_cache(partial(match_any, patterns=patterns))
+
+    @hookimpl
+    def filter(self, trace_args: TraceArgs) -> bool | None:
+        frame = trace_args[0]
+        module_name = frame.f_globals.get('__name__')
+        matched = self._match_any_(module_name)
+        return matched or None
 
 
 class AddModuleToTrace:
