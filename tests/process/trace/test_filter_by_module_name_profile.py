@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nextline.process.trace.main import MODULES_TO_SKIP
+from nextline.process.callback import MODULES_TO_SKIP
 from nextline.process.trace.wrap import FilterByModuleName
 from nextline.utils import profile_func
 

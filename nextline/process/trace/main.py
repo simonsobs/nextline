@@ -7,9 +7,8 @@ from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
 from .wrap import (
     AddFirstModule,
     DispatchForThreadOrTask,
-    FilterByModuleName,
+    Filter,
     FilterFirstModule,
-    FilterLambda,
     FromFactory,
 )
 
@@ -17,32 +16,6 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
     from nextline.process.run import TraceContext
-
-
-MODULES_TO_SKIP = {
-    'multiprocessing.*',
-    'threading',
-    'queue',
-    'importlib',
-    'asyncio.*',
-    'codec',
-    'concurrent.futures.*',
-    'selectors',
-    'weakref',
-    '_weakrefset',
-    'socket',
-    'logging',
-    'os',
-    'collections.*',
-    'importlib.*',
-    'pathlib',
-    'typing',
-    'posixpath',
-    'fnmatch',
-    '_pytest.*',
-    'apluggy.*',
-    'pluggy.*',
-}
 
 
 def Trace(context: TraceContext) -> TraceFunc:
@@ -54,8 +27,7 @@ def Trace(context: TraceContext) -> TraceFunc:
 
     trace = DispatchForThreadOrTask(factory=factory)
     trace = AddFirstModule(modules_to_trace=modules_to_trace, trace=trace)
-    trace = FilterLambda(trace=trace)
-    trace = FilterByModuleName(patterns=MODULES_TO_SKIP, trace=trace)
+    trace = Filter(trace=trace, filter=context['callback'].filter)
 
     return trace
 
