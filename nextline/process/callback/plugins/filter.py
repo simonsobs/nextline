@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import threading
 from functools import lru_cache, partial
 from logging import getLogger
-from typing import Generator, Iterable, Set
+from threading import Thread
+from typing import Generator, Iterable, Optional, Set
 
 from apluggy import contextmanager
 
@@ -43,14 +45,35 @@ class AddModuleToTrace:
 
     def __init__(self, modules_to_trace: Set[str]):
         self._modules_to_trace = modules_to_trace
+        self._first_module_added = False
+        self._entering_thread: Optional[Thread] = None
         self._logger = getLogger(__name__)
+
+    @hookimpl(trylast=True)
+    def filter(self, trace_args: TraceArgs) -> bool | None:
+        if not self._first_module_added:
+            if self._entering_thread == threading.current_thread():
+                self._add(trace_args)
+                self._first_module_added = True
+        return None
+
+    @hookimpl
+    def start(self) -> None:
+        self._entering_thread = threading.current_thread()
+        msg = f'{self.__class__.__name__}: entering thread {self._entering_thread}'
+        self._logger.info(msg)
 
     @hookimpl
     @contextmanager
     def cmdloop(self, trace_args: TraceArgs) -> Generator[None, str, None]:
-        frame, _, _ = trace_args
-        if module_name := frame.f_globals.get('__name__'):
-            msg = f'{self.__class__.__name__}: adding {module_name!r}'
-            self._logger.info(msg)
-            self._modules_to_trace.add(module_name)
+        self._add(trace_args)
         yield
+
+    def _add(self, trace_args: TraceArgs):
+        frame, _, _ = trace_args
+        module_name = frame.f_globals.get('__name__')
+        if module_name is None:
+            return
+        msg = f'{self.__class__.__name__}: adding {module_name!r}'
+        self._logger.info(msg)
+        self._modules_to_trace.add(module_name)

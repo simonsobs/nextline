@@ -4,13 +4,7 @@ from typing import TYPE_CHECKING, Callable
 
 from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
 
-from .wrap import (
-    AddFirstModule,
-    DispatchForThreadOrTask,
-    Filter,
-    FilterFirstModule,
-    FromFactory,
-)
+from .wrap import DispatchForThreadOrTask, Filter, FilterFirstModule, FromFactory
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -21,12 +15,9 @@ if TYPE_CHECKING:
 def Trace(context: TraceContext) -> TraceFunc:
     '''Build the main system trace function of Nextline.'''
 
-    modules_to_trace = context['modules_to_trace']
-
     factory = FactoryForThreadOrTask(context=context)
 
     trace = DispatchForThreadOrTask(factory=factory)
-    trace = AddFirstModule(modules_to_trace=modules_to_trace, trace=trace)
     trace = Filter(trace=trace, filter=context['callback'].filter)
 
     return trace
