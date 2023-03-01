@@ -31,17 +31,6 @@ def FilterByModuleName(trace: TraceFunc, patterns: Iterable[str]) -> TraceFunc:
     return Filter(trace=trace, filter=filter)
 
 
-def FilterLambda(trace: TraceFunc) -> TraceFunc:
-    '''Skip lambda functions.'''
-
-    def filter(frame: FrameType, event, arg) -> bool:
-        del event, arg
-        func_name = frame.f_code.co_name
-        return not func_name == '<lambda>'
-
-    return Filter(trace=trace, filter=filter)
-
-
 def Filter(
     trace: TraceFunc, filter: Callable[[FrameType, str, Any], bool]
 ) -> TraceFunc:
