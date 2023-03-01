@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Callable
 
+from nextline.process.callback import Callback
 from nextline.process.trace.wrap import WithContext
 
 from .custom import CustomizedPdb
@@ -19,9 +20,9 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
 
         callback = context['callback']
         callback.task_or_thread_start()
-        trace = instantiate_pdb(context=context)
+        trace = instantiate_pdb(callback=callback)
 
-        trace = TraceCallCallback(trace=trace, context=context)
+        trace = TraceCallCallback(trace=trace, callback=callback)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
@@ -30,9 +31,7 @@ def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFun
     return factory
 
 
-def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
-    callback = context['callback']
-
+def TraceCallCallback(trace: TraceFunc, callback: Callback) -> TraceFunc:
     @contextmanager
     def _context(frame, event, arg):
         with callback.trace_call(trace_args=(frame, event, arg)):
@@ -41,13 +40,13 @@ def TraceCallCallback(trace: TraceFunc, context: TraceContext) -> TraceFunc:
     return WithContext(trace, context=_context)
 
 
-def instantiate_pdb(context: TraceContext):
+def instantiate_pdb(callback: Callback):
     '''Create a new Pdb instance with callback hooked and return its trace function.'''
 
-    stdio = StdInOut(prompt_func=context['callback'].prompt)
+    stdio = StdInOut(prompt_func=callback.prompt)
 
     pdb = CustomizedPdb(
-        cmdloop_hook=context['callback'].cmdloop,
+        cmdloop_hook=callback.cmdloop,
         stdin=stdio,
         stdout=stdio,
     )
