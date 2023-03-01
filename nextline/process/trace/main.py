@@ -64,7 +64,7 @@ def FactoryForThreadOrTask(context: TraceContext) -> Callable[[], TraceFunc]:
     '''Return a function that returns a trace function for a thread or asyncio task.'''
 
     modules_to_trace = context['modules_to_trace']
-    factory = PdbInterfaceTraceFuncFactory(context=context)
+    factory = PdbInterfaceTraceFuncFactory(callback=context['callback'])
 
     def _trace_factory() -> TraceFunc:
         '''To be called in the thread or asyncio task to be traced.'''

@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Callable
 
-from nextline.process.callback import CallbackForTrace
+from nextline.process.callback import Callback, CallbackForTrace
 from nextline.process.trace.wrap import WithContext
 
 from .custom import CustomizedPdb
@@ -12,13 +12,10 @@ from .stream import StdInOut
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.run import TraceContext
 
-
-def PdbInterfaceTraceFuncFactory(context: TraceContext) -> Callable[[], TraceFunc]:
+def PdbInterfaceTraceFuncFactory(callback: Callback) -> Callable[[], TraceFunc]:
     def factory() -> TraceFunc:
 
-        callback = context['callback']
         callback_for_trace = callback.task_or_thread_start()
         trace = instantiate_pdb(callback=callback_for_trace)
 
