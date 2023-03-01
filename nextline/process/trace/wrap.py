@@ -16,7 +16,10 @@ if TYPE_CHECKING:
 
 
 def FilterByModuleName(trace: TraceFunc, patterns: Iterable[str]) -> TraceFunc:
-    '''Skip Python modules with names that match any of the patterns.'''
+    '''Skip Python modules with names that match any of the patterns.
+
+    TODO: To be deleted. Still used in nextline/process/call.py.
+    '''
 
     patterns = frozenset(patterns)
 
