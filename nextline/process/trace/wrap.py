@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from asyncio import Task
-from collections.abc import MutableSet, Set
+from collections.abc import Set
 from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
@@ -45,23 +45,6 @@ def Filter(
         return None
 
     return _trace
-
-
-def AddFirstModule(trace: TraceFunc, modules_to_trace: MutableSet[str]) -> TraceFunc:
-    '''Add the module name to the set the first time traced in a module with a name.'''
-
-    def callback(frame: FrameType, event, arg) -> bool:
-        del event, arg
-        if module_name := frame.f_globals.get('__name__'):
-            # The module has a name.
-            modules_to_trace.add(module_name)
-            logger = getLogger(__name__)
-            msg = f'{AddFirstModule.__name__}: added {module_name!r}'
-            logger.info(msg)
-            return True
-        return False
-
-    return CallbackUntilAccepted(trace=trace, callback=callback)
 
 
 def CallbackUntilAccepted(
