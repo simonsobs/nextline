@@ -3,19 +3,15 @@ from __future__ import annotations
 import sys
 import threading
 import timeit
-from typing import TYPE_CHECKING
 
 import pytest
 
 from nextline.process.callback import MODULES_TO_SKIP
-from nextline.process.trace.wrap import FilterByModuleName
+from nextline.process.callback.plugins import FilterByModuleName
 from nextline.utils import profile_func
 
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-
-def test_timeit(trace_func: TraceFunc):
+def test_timeit(plugin: FilterByModuleName):
 
     n_calls = 200_000
 
@@ -24,14 +20,14 @@ def test_timeit(trace_func: TraceFunc):
 
     frame = sys._current_frames()[thread_id]
 
-    sec = timeit.timeit(lambda: trace_func(frame, "line", None), number=n_calls)
+    sec = timeit.timeit(lambda: plugin.filter((frame, "line", None)), number=n_calls)
 
     # print(f'{sec:.3f} seconds for {n_calls:,} calls')
 
     assert sec < 1
 
 
-def test_profile(trace_func: TraceFunc):
+def test_profile(plugin: FilterByModuleName):
     '''Used to print the profile.'''
 
     n_calls = 20_000
@@ -43,7 +39,7 @@ def test_profile(trace_func: TraceFunc):
 
     def func():
         for _ in range(n_calls):
-            trace_func(frame, "line", None)
+            plugin.filter((frame, "line", None))
 
     profile, _ = profile_func(func)
 
@@ -51,5 +47,5 @@ def test_profile(trace_func: TraceFunc):
 
 
 @pytest.fixture()
-def trace_func():
-    return FilterByModuleName(trace=lambda *_: None, patterns=MODULES_TO_SKIP)
+def plugin():
+    return FilterByModuleName(patterns=MODULES_TO_SKIP)
