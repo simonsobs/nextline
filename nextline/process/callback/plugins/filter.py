@@ -28,6 +28,16 @@ class FilterByModuleName:
         return matched or None
 
 
+class FilterLambda:
+    '''Skip lambda functions.'''
+
+    @hookimpl
+    def filter(self, trace_args: TraceArgs) -> bool | None:
+        frame = trace_args[0]
+        func_name = frame.f_code.co_name
+        return func_name == '<lambda>' or None
+
+
 class AddModuleToTrace:
     '''Let Python modules be traced in new threads and asyncio tasks.'''
 

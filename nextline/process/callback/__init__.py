@@ -21,6 +21,7 @@ from . import spec
 from .plugins import (
     AddModuleToTrace,
     FilterByModuleName,
+    FilterLambda,
     PeekStdout,
     PromptInfoRegistrar,
     RegistrarProxy,
@@ -178,7 +179,10 @@ class Callback:
         self._hook.register(peek_stdout, name='peek_stdout')
         self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
 
+        filter_lambda = FilterLambda()
         filter_by_module_name = FilterByModuleName(patterns=MODULES_TO_SKIP)
+
+        self._hook.register(filter_lambda, name='filter_lambda')
         self._hook.register(filter_by_module_name, name='filter_by_module_name')
 
     def filter(self, frame: FrameType, event, arg) -> bool:
