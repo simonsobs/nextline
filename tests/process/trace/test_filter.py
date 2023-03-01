@@ -1,11 +1,28 @@
+from __future__ import annotations
+
+from types import FrameType
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.trace.wrap import FilterLambda
+from nextline.process.trace.wrap import Filter
 
 from . import module_a
 from .funcs import TraceSummary
+
+if TYPE_CHECKING:
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+
+
+def FilterLambda(trace: TraceFunc) -> TraceFunc:
+    '''An example filter'''
+    def filter(frame: FrameType, event, arg) -> bool:
+        del event, arg
+        func_name = frame.f_code.co_name
+        return not func_name == '<lambda>'
+
+    return Filter(trace=trace, filter=filter)
 
 
 def test_one(target: TraceSummary, probe: TraceSummary, ref: TraceSummary):

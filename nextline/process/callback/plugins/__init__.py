@@ -1,5 +1,7 @@
 __all__ = [
-    'AddModuleToTrace',
+    'FilerByModule',
+    'FilterByModuleName',
+    'FilterLambda',
     'PeekStdout',
     'PromptInfoRegistrar',
     'RegistrarProxy',
@@ -10,7 +12,7 @@ __all__ = [
 ]
 
 
-from .filter import AddModuleToTrace
+from .filter import FilerByModule, FilterByModuleName, FilterLambda
 from .peek import PeekStdout
 from .registrar import (
     PromptInfoRegistrar,

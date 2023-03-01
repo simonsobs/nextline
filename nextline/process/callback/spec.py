@@ -18,6 +18,15 @@ hookspec = pluggy.HookspecMarker(PROJECT_NAME)
 hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 
+@hookspec(firstresult=True)
+def filter(trace_args: TraceArgs) -> bool | None:
+    '''True to reject, False to accept, None to pass to the next hook implementation.
+
+    Accepted if no hook implementation returns True or False.
+    '''
+    pass
+
+
 @hookspec
 def task_or_thread_start(trace_no: TraceNo) -> None:
     pass
