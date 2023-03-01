@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from threading import Thread
-from typing import Dict, MutableMapping, Set
+from typing import Callable, Dict, MutableMapping, Set, Tuple
 from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
@@ -13,7 +13,7 @@ from apluggy import PluginManager
 from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.exc import TraceNotCalled
 from nextline.process.types import CommandQueueMap
-from nextline.types import RunNo, TraceNo
+from nextline.types import PromptNo, RunNo, TraceNo
 from nextline.utils import ThreadTaskIdComposer, current_task_or_thread
 
 from . import spec
@@ -30,6 +30,89 @@ from .plugins import (
 from .types import TraceArgs
 
 
+class CallbackForTrace:
+    def __init__(
+        self,
+        trace_no: TraceNo,
+        hook: PluginManager,
+        callback: Callback,
+        command_queue_map: CommandQueueMap,
+        trace_id_factory: ThreadTaskIdComposer,
+        prompt_no_counter: Callable[[], PromptNo],
+    ):
+        self._trace_no = trace_no
+        self._hook = hook
+        self._callback = callback
+        self._command_queue_map = command_queue_map
+        self._trace_id_factory = trace_id_factory
+        self._prompt_no_counter = prompt_no_counter
+
+        self._command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
+        self._trace_args: TraceArgs | None = None
+
+        self._logger = getLogger(__name__)
+
+    def trace_start(self):
+        thread_task_id = self._trace_id_factory()
+        thread_no = thread_task_id.thread_no
+        task_no = thread_task_id.task_no
+
+        self._command_queue_map[self._trace_no] = self._command_queue = Queue()
+
+        self._hook.hook.trace_start(
+            trace_no=self._trace_no, thread_no=thread_no, task_no=task_no
+        )
+
+    def trace_end(self):
+        self._hook.hook.trace_end(trace_no=self._trace_no)
+        del self._command_queue_map[self._trace_no]
+
+    @contextmanager
+    def trace_call(self, trace_args: TraceArgs):
+        self._trace_args = trace_args
+        with self._hook.with_.trace_call(
+            trace_no=self._trace_no, trace_args=trace_args
+        ):
+            try:
+                yield
+            finally:
+                self._trace_args = None
+
+    @contextmanager
+    def cmdloop(self):
+        if self._trace_args is None:
+            raise TraceNotCalled
+        with self._hook.with_.cmdloop(
+            trace_no=self._trace_no, trace_args=self._trace_args
+        ):
+            yield
+
+    def prompt(self, text: str) -> str:
+        prompt_no = self._prompt_no_counter()
+        self._logger.debug(f'PromptNo: {prompt_no}')
+        with (
+            p := self._hook.with_.prompt(
+                trace_no=self._trace_no,
+                prompt_no=prompt_no,
+                trace_args=self._trace_args,
+                out=text,
+            )
+        ):
+            while True:
+                command, prompt_no_, trace_no_ = self._command_queue.get()
+                try:
+                    assert trace_no_ == self._trace_no
+                except AssertionError:
+                    msg = f'TraceNo mismatch: {trace_no_} != {self._trace_no}'
+                    self._logger.exception(msg)
+                    raise
+                if prompt_no_ == prompt_no:
+                    break
+                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+            p.gen.send(command)
+        return command
+
+
 class Callback:
     def __init__(
         self,
@@ -42,7 +125,9 @@ class Callback:
         self._prompt_no_counter = PromptNoCounter(1)
         self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
-        self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
+
+        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
+
         self._trace_id_factory = ThreadTaskIdComposer()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
@@ -74,60 +159,36 @@ class Callback:
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     def trace_start(self, trace_no: TraceNo):
-        thread_task_id = self._trace_id_factory()
-        thread_no = thread_task_id.thread_no
-        task_no = thread_task_id.task_no
-        self._command_queue_map[trace_no] = Queue()
-
-        self._hook.hook.trace_start(
-            trace_no=trace_no, thread_no=thread_no, task_no=task_no
+        callback_for_trace = CallbackForTrace(
+            trace_no=trace_no,
+            hook=self._hook,
+            callback=self,
+            command_queue_map=self._command_queue_map,
+            trace_id_factory=self._trace_id_factory,
+            prompt_no_counter=self._prompt_no_counter,
         )
+        self._callback_for_trace_map[trace_no] = callback_for_trace
+        callback_for_trace.trace_start()
 
     def trace_end(self, trace_no: TraceNo):
-        self._hook.hook.trace_end(trace_no=trace_no)
-        del self._command_queue_map[trace_no]
+        self._callback_for_trace_map[trace_no].trace_end()
+        del self._callback_for_trace_map[trace_no]
 
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
         trace_no = self._trace_no_map[current_task_or_thread()]
-        self._trace_args_map[trace_no] = trace_args
-        with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
-            try:
-                yield
-            finally:
-                del self._trace_args_map[trace_no]
+        with self._callback_for_trace_map[trace_no].trace_call(trace_args):
+            yield
 
     @contextmanager
     def cmdloop(self):
         trace_no = self._trace_no_map[current_task_or_thread()]
-        if (trace_args := self._trace_args_map.get(trace_no)) is None:
-            raise TraceNotCalled
-        with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
+        with self._callback_for_trace_map[trace_no].cmdloop():
             yield
 
     def prompt(self, text: str) -> str:
         trace_no = self._trace_no_map[current_task_or_thread()]
-        prompt_no = self._prompt_no_counter()
-        self._logger.debug(f'PromptNo: {prompt_no}')
-        trace_args = self._trace_args_map[trace_no]
-        with (
-            p := self._hook.with_.prompt(
-                trace_no=trace_no, prompt_no=prompt_no, trace_args=trace_args, out=text
-            )
-        ):
-            while True:
-                command, prompt_no_, trace_no_ = self._command_queue_map[trace_no].get()
-                try:
-                    assert trace_no_ == trace_no
-                except AssertionError:
-                    msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
-                    self._logger.exception(msg)
-                    raise
-                if prompt_no_ == prompt_no:
-                    break
-                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
-            p.gen.send(command)
-        return command
+        return self._callback_for_trace_map[trace_no].prompt(text)
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
