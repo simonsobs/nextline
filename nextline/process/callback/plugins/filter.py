@@ -41,7 +41,7 @@ class FilterLambda:
         return func_name == '<lambda>' or None
 
 
-class AddModuleToTrace:
+class FilerByModule:
     '''Let Python modules be traced in new threads and asyncio tasks.'''
 
     def __init__(self) -> None:

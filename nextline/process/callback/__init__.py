@@ -19,7 +19,7 @@ from nextline.utils import ThreadTaskIdComposer
 
 from . import spec
 from .plugins import (
-    AddModuleToTrace,
+    FilerByModule,
     FilterByModuleName,
     FilterLambda,
     PeekStdout,
@@ -163,7 +163,7 @@ class Callback:
         self._logger = getLogger(__name__)
 
         stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
-        add_module_to_trace = AddModuleToTrace()
+        add_module_to_trace = FilerByModule()
         trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
