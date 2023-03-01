@@ -42,7 +42,7 @@ class FilterLambda:
 
 
 class FilerByModule:
-    '''Let Python modules be traced in new threads and asyncio tasks.'''
+    '''Accept the first module and modules ever in the cmdloop() context.'''
 
     def __init__(self) -> None:
         self._modules_to_trace: Set[str] = set()
@@ -53,16 +53,24 @@ class FilerByModule:
 
     @hookimpl(trylast=True)
     def filter(self, trace_args: TraceArgs) -> bool | None:
+
+        # Accept the first module in the main thread.
         if not self._first_module_added:
             if self._entering_thread == threading.current_thread():
                 self._add(trace_args)
                 self._first_module_added = True
+
+        # Accept tasks and threads once they are accepted.
         task_or_thread = current_task_or_thread()
         if task_or_thread in self._traced_tasks_and_threads:
             return None
+
+        # Accept if the module was in the cmdloop() in other tasks or threads.
         if self._to_trace(trace_args):
             self._traced_tasks_and_threads.add(task_or_thread)
             return None
+
+        # Reject else.
         return True
 
     @hookimpl
