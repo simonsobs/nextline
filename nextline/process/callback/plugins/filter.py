@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from asyncio import Task
 from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
@@ -10,7 +11,7 @@ from apluggy import contextmanager
 
 from nextline.process.callback.spec import hookimpl
 from nextline.process.callback.types import TraceArgs
-from nextline.utils import match_any
+from nextline.utils import current_task_or_thread, match_any
 
 
 class FilterByModuleName:
@@ -47,6 +48,7 @@ class AddModuleToTrace:
         self._modules_to_trace = modules_to_trace
         self._first_module_added = False
         self._entering_thread: Optional[Thread] = None
+        self._traced_tasks_and_threads: Set[Task | Thread] = set()
         self._logger = getLogger(__name__)
 
     @hookimpl(trylast=True)
@@ -55,7 +57,13 @@ class AddModuleToTrace:
             if self._entering_thread == threading.current_thread():
                 self._add(trace_args)
                 self._first_module_added = True
-        return None
+        task_or_thread = current_task_or_thread()
+        if task_or_thread in self._traced_tasks_and_threads:
+            return None
+        if self._to_trace(trace_args):
+            self._traced_tasks_and_threads.add(task_or_thread)
+            return None
+        return True
 
     @hookimpl
     def start(self) -> None:
@@ -77,3 +85,8 @@ class AddModuleToTrace:
         msg = f'{self.__class__.__name__}: adding {module_name!r}'
         self._logger.info(msg)
         self._modules_to_trace.add(module_name)
+
+    def _to_trace(self, trace_args: TraceArgs) -> bool:
+        frame, _, _ = trace_args
+        module_name = frame.f_globals.get('__name__')
+        return match_any(module_name, self._modules_to_trace)

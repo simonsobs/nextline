@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable
 
 from nextline.process.pdb.proxy import PdbInterfaceTraceFuncFactory
 
-from .wrap import DispatchForThreadOrTask, Filter, FilterFirstModule, FromFactory
+from .wrap import DispatchForThreadOrTask, Filter, FromFactory
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -26,13 +26,11 @@ def Trace(context: TraceContext) -> TraceFunc:
 def FactoryForThreadOrTask(context: TraceContext) -> Callable[[], TraceFunc]:
     '''Return a function that returns a trace function for a thread or asyncio task.'''
 
-    modules_to_trace = context['modules_to_trace']
     factory = PdbInterfaceTraceFuncFactory(callback=context['callback'])
 
     def _trace_factory() -> TraceFunc:
         '''To be called in the thread or asyncio task to be traced.'''
         trace = FromFactory(factory=factory)
-        trace = FilterFirstModule(trace=trace, modules_to_trace=modules_to_trace)
         return trace
 
     return _trace_factory
