@@ -14,7 +14,7 @@ from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.exc import TraceNotCalled
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, RunNo, TraceNo
-from nextline.utils import ThreadTaskIdComposer, current_task_or_thread
+from nextline.utils import ThreadTaskIdComposer
 
 from . import spec
 from .plugins import (
@@ -151,9 +151,10 @@ class Callback:
         self._hook.register(peek_stdout, name='peek_stdout')
         self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
 
-    def task_or_thread_start(self) -> None:
+    def task_or_thread_start(self) -> CallbackForTrace:
         trace_no = self._trace_no_counter()
         self._hook.hook.task_or_thread_start(trace_no=trace_no)
+        return self._callback_for_trace_map[trace_no]
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
@@ -173,22 +174,6 @@ class Callback:
     def trace_end(self, trace_no: TraceNo):
         self._callback_for_trace_map[trace_no].trace_end()
         del self._callback_for_trace_map[trace_no]
-
-    @contextmanager
-    def trace_call(self, trace_args: TraceArgs):
-        trace_no = self._trace_no_map[current_task_or_thread()]
-        with self._callback_for_trace_map[trace_no].trace_call(trace_args):
-            yield
-
-    @contextmanager
-    def cmdloop(self):
-        trace_no = self._trace_no_map[current_task_or_thread()]
-        with self._callback_for_trace_map[trace_no].cmdloop():
-            yield
-
-    def prompt(self, text: str) -> str:
-        trace_no = self._trace_no_map[current_task_or_thread()]
-        return self._callback_for_trace_map[trace_no].prompt(text)
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
