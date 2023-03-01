@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from threading import Thread
+from types import FrameType
 from typing import Callable, Dict, MutableMapping, Set, Tuple
 from weakref import WeakKeyDictionary
 
@@ -150,6 +151,10 @@ class Callback:
         self._hook.register(trace_numbers_registrar, name='trace_numbers')
         self._hook.register(peek_stdout, name='peek_stdout')
         self._hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
+
+    def filter(self, frame: FrameType, event, arg) -> bool:
+        accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
+        return not (accepted or False)
 
     def task_or_thread_start(self) -> CallbackForTrace:
         trace_no = self._trace_no_counter()
