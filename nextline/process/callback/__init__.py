@@ -5,14 +5,13 @@ from contextlib import contextmanager
 from logging import getLogger
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Dict, MutableMapping, Optional
+from typing import TYPE_CHECKING, MutableMapping, Optional
 from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.call import sys_trace
-from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
 from nextline.process.types import CommandQueueMap
 from nextline.types import RunNo, TraceNo
 from nextline.utils import ThreadTaskIdComposer
@@ -31,7 +30,6 @@ from .plugins import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
-from .plugins.trace import CallbackForTrace
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -80,8 +78,6 @@ class Callback:
             Task | Thread, TraceFunc
         ] = WeakKeyDictionary()
 
-        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
-
         self._trace_id_factory = ThreadTaskIdComposer()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
@@ -95,7 +91,14 @@ class Callback:
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
         peek_stdout = PeekStdout(self)
-        trace_mapper = TaskOrThreadToTraceMapper(self, self._trace_no_map)
+        trace_mapper = TaskOrThreadToTraceMapper(
+            callback=self,
+            trace_no_map=self._trace_no_map,
+            hook=self._hook,
+            command_queue_map=self._command_queue_map,
+            trace_id_factory=self._trace_id_factory,
+            prompt_no_counter=self._prompt_no_counter,
+        )
 
         self._hook.register(stdout_registrar, name='stdout')
         self._hook.register(add_module_to_trace, name='add_module_to_trace')
@@ -117,8 +120,8 @@ class Callback:
         task_or_thread = current_task_or_thread()
         local_trace_func = self._local_trace_func_map.get(task_or_thread)
         if local_trace_func is None:
-            callback_for_trace = self.task_or_thread_start()
-            local_trace_func = self.create_local_trace_func(callback_for_trace)
+            self.task_or_thread_start()
+            local_trace_func = self.create_local_trace_func()
             self._local_trace_func_map[task_or_thread] = local_trace_func
         return local_trace_func(frame, event, arg)
 
@@ -126,37 +129,15 @@ class Callback:
         accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
         return accepted or False
 
-    def create_local_trace_func(self, callback_for_trace: CallbackForTrace):
-        trace = instantiate_pdb(callback=callback_for_trace)
+    def create_local_trace_func(self):
+        return self._hook.hook.create_local_trace_func()
 
-        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
-        # TODO: Add a test. The tests pass without the above line.  Without it,
-        #       the arrow in the web UI does not move when the Pdb is "continuing."
-
-        return trace
-
-    def task_or_thread_start(self) -> CallbackForTrace:
+    def task_or_thread_start(self) -> None:
         trace_no = self._trace_no_counter()
         self._hook.hook.task_or_thread_start(trace_no=trace_no)
-        return self._callback_for_trace_map[trace_no]
 
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
-
-    def trace_start(self, trace_no: TraceNo):
-        callback_for_trace = CallbackForTrace(
-            trace_no=trace_no,
-            hook=self._hook,
-            command_queue_map=self._command_queue_map,
-            trace_id_factory=self._trace_id_factory,
-            prompt_no_counter=self._prompt_no_counter,
-        )
-        self._callback_for_trace_map[trace_no] = callback_for_trace
-        callback_for_trace.trace_start()
-
-    def trace_end(self, trace_no: TraceNo):
-        self._callback_for_trace_map[trace_no].trace_end()
-        del self._callback_for_trace_map[trace_no]
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]

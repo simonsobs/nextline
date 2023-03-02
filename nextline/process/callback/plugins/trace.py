@@ -6,13 +6,14 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from threading import Thread
-from typing import TYPE_CHECKING, Callable, MutableMapping, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, MutableMapping, Optional, Tuple
 
 from apluggy import PluginManager
 
 from nextline.process.callback.spec import hookimpl
 from nextline.process.callback.types import TraceArgs
 from nextline.process.exc import TraceNotCalled
+from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, TraceNo
 from nextline.utils import (
@@ -22,6 +23,8 @@ from nextline.utils import (
 )
 
 if TYPE_CHECKING:
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+
     from nextline.process.callback import Callback
 
 
@@ -108,14 +111,40 @@ class CallbackForTrace:
 
 class TaskOrThreadToTraceMapper:
     def __init__(
-        self, callback: 'Callback', trace_no_map: MutableMapping[Task | Thread, TraceNo]
+        self,
+        callback: 'Callback',
+        trace_no_map: MutableMapping[Task | Thread, TraceNo],
+        hook: PluginManager,
+        command_queue_map: CommandQueueMap,
+        trace_id_factory: ThreadTaskIdComposer,
+        prompt_no_counter: Callable[[], PromptNo],
     ) -> None:
         self._callback = callback
         self._trace_no_map = trace_no_map
+        self._hook = hook
+        self._command_queue_map = command_queue_map
+        self._trace_id_factory = trace_id_factory
+        self._prompt_no_counter = prompt_no_counter
+
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self._callback.task_or_thread_end
         )
         self._entering_thread: Optional[Thread] = None
+        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
+
+    @hookimpl
+    def create_local_trace_func(self) -> TraceFunc:
+        task_or_thread = current_task_or_thread()
+        trace_no = self._trace_no_map[task_or_thread]
+        callback_for_trace = self._callback_for_trace_map[trace_no]
+
+        trace = instantiate_pdb(callback=callback_for_trace)
+
+        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
+        # TODO: Add a test. The tests pass without the above line.  Without it,
+        #       the arrow in the web UI does not move when the Pdb is "continuing."
+
+        return trace
 
     @hookimpl
     def task_or_thread_start(self, trace_no: TraceNo) -> None:
@@ -125,12 +154,27 @@ class TaskOrThreadToTraceMapper:
         if task_or_thread is not self._entering_thread:
             self._thread_task_done_callback.register(task_or_thread)
 
-        self._callback.trace_start(trace_no)
+        self.trace_start(trace_no)
 
     @hookimpl
     def task_or_thread_end(self, task_or_thread: Task | Thread):
         trace_no = self._trace_no_map[task_or_thread]
-        self._callback.trace_end(trace_no)
+        self.trace_end(trace_no)
+
+    def trace_start(self, trace_no: TraceNo):
+        callback_for_trace = CallbackForTrace(
+            trace_no=trace_no,
+            hook=self._hook,
+            command_queue_map=self._command_queue_map,
+            trace_id_factory=self._trace_id_factory,
+            prompt_no_counter=self._prompt_no_counter,
+        )
+        self._callback_for_trace_map[trace_no] = callback_for_trace
+        callback_for_trace.trace_start()
+
+    def trace_end(self, trace_no: TraceNo):
+        self._callback_for_trace_map[trace_no].trace_end()
+        del self._callback_for_trace_map[trace_no]
 
     @hookimpl
     def start(self) -> None:
@@ -141,4 +185,4 @@ class TaskOrThreadToTraceMapper:
         self._thread_task_done_callback.close()
         if self._entering_thread:
             if trace_no := self._trace_no_map.get(self._entering_thread):
-                self._callback.trace_end(trace_no)
+                self.trace_end(trace_no)
