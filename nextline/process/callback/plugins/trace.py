@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Callable, Dict, MutableMapping, Optional, Tupl
 
 from apluggy import PluginManager
 
+from nextline.count import PromptNoCounter
 from nextline.process.callback.spec import hookimpl
 from nextline.process.callback.types import TraceArgs
 from nextline.process.exc import TraceNotCalled
@@ -116,15 +117,14 @@ class TaskOrThreadToTraceMapper:
         trace_no_map: MutableMapping[Task | Thread, TraceNo],
         hook: PluginManager,
         command_queue_map: CommandQueueMap,
-        trace_id_factory: ThreadTaskIdComposer,
-        prompt_no_counter: Callable[[], PromptNo],
     ) -> None:
         self._callback = callback
         self._trace_no_map = trace_no_map
         self._hook = hook
         self._command_queue_map = command_queue_map
-        self._trace_id_factory = trace_id_factory
-        self._prompt_no_counter = prompt_no_counter
+
+        self._trace_id_factory = ThreadTaskIdComposer()
+        self._prompt_no_counter = PromptNoCounter(1)
 
         self._thread_task_done_callback = ThreadTaskDoneCallback(
             done=self._callback.task_or_thread_end

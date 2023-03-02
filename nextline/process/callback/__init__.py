@@ -10,11 +10,10 @@ from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
 
-from nextline.count import PromptNoCounter, TraceNoCounter
+from nextline.count import TraceNoCounter
 from nextline.process.call import sys_trace
 from nextline.process.types import CommandQueueMap
 from nextline.types import RunNo, TraceNo
-from nextline.utils import ThreadTaskIdComposer
 from nextline.utils.func import current_task_or_thread
 
 from . import spec
@@ -70,15 +69,12 @@ class Callback:
         command_queue_map: CommandQueueMap,
     ):
         self._trace_no_counter = TraceNoCounter(1)
-        self._prompt_no_counter = PromptNoCounter(1)
         self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
 
         self._local_trace_func_map: MutableMapping[
             Task | Thread, TraceFunc
         ] = WeakKeyDictionary()
-
-        self._trace_id_factory = ThreadTaskIdComposer()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
@@ -96,8 +92,6 @@ class Callback:
             trace_no_map=self._trace_no_map,
             hook=self._hook,
             command_queue_map=self._command_queue_map,
-            trace_id_factory=self._trace_id_factory,
-            prompt_no_counter=self._prompt_no_counter,
         )
 
         self._hook.register(stdout_registrar, name='stdout')
