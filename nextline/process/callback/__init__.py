@@ -14,6 +14,7 @@ from apluggy import PluginManager
 from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.call import sys_trace
 from nextline.process.exc import TraceNotCalled
+from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, RunNo, TraceNo
 from nextline.utils import ThreadTaskIdComposer
@@ -190,6 +191,16 @@ class Callback:
     def filter(self, frame: FrameType, event, arg) -> bool:
         accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
         return not (accepted or False)
+
+    def factory(self):
+        callback_for_trace = self.task_or_thread_start()
+        trace = instantiate_pdb(callback=callback_for_trace)
+
+        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
+        # TODO: Add a test. The tests pass without the above line.  Without it,
+        #       the arrow in the web UI does not move when the Pdb is "continuing."
+
+        return trace
 
     def task_or_thread_start(self) -> CallbackForTrace:
         trace_no = self._trace_no_counter()
