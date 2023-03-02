@@ -30,14 +30,12 @@ class CallbackForTrace:
         self,
         trace_no: TraceNo,
         hook: PluginManager,
-        callback: Callback,
         command_queue_map: CommandQueueMap,
         trace_id_factory: ThreadTaskIdComposer,
         prompt_no_counter: Callable[[], PromptNo],
     ):
         self._trace_no = trace_no
         self._hook = hook
-        self._callback = callback
         self._command_queue_map = command_queue_map
         self._trace_id_factory = trace_id_factory
         self._prompt_no_counter = prompt_no_counter

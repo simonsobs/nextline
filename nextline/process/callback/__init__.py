@@ -147,7 +147,6 @@ class Callback:
         callback_for_trace = CallbackForTrace(
             trace_no=trace_no,
             hook=self._hook,
-            callback=self,
             command_queue_map=self._command_queue_map,
             trace_id_factory=self._trace_id_factory,
             prompt_no_counter=self._prompt_no_counter,
