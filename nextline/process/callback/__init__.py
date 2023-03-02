@@ -6,7 +6,7 @@ from logging import getLogger
 from queue import Queue
 from threading import Thread
 from types import FrameType
-from typing import Callable, Dict, MutableMapping, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, MutableMapping, Optional, Tuple
 from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
@@ -18,6 +18,7 @@ from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, RunNo, TraceNo
 from nextline.utils import ThreadTaskIdComposer
+from nextline.utils.func import current_task_or_thread
 
 from . import spec
 from .plugins import (
@@ -33,6 +34,9 @@ from .plugins import (
     TraceNumbersRegistrar,
 )
 from .types import TraceArgs
+
+if TYPE_CHECKING:
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 MODULES_TO_SKIP = {
     'multiprocessing.*',
@@ -157,6 +161,10 @@ class Callback:
         self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
 
+        self._local_trace_func_map: MutableMapping[
+            Task | Thread, TraceFunc
+        ] = WeakKeyDictionary()
+
         self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
 
         self._trace_id_factory = ThreadTaskIdComposer()
@@ -187,6 +195,16 @@ class Callback:
 
         self._hook.register(filter_lambda, name='filter_lambda')
         self._hook.register(filter_by_module_name, name='filter_by_module_name')
+
+    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        if not self.filter(frame, event, arg):
+            return None
+        task_or_thread = current_task_or_thread()
+        local_trace_func = self._local_trace_func_map.get(task_or_thread)
+        if local_trace_func is None:
+            local_trace_func = self.factory()
+            self._local_trace_func_map[task_or_thread] = local_trace_func
+        return local_trace_func(frame, event, arg)
 
     def filter(self, frame: FrameType, event, arg) -> bool:
         accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
