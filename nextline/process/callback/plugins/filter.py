@@ -92,9 +92,9 @@ class FilerByModule:
             return
         if module_name in self._modules_to_trace:
             return
-        msg = f'{self.__class__.__name__}: adding {module_name!r}'
-        self._logger.info(msg)
         self._modules_to_trace.add(module_name)
+        msg = f'{self.__class__.__name__}: added {module_name!r}'
+        self._logger.info(msg)
 
     def _to_trace(self, trace_args: TraceArgs) -> bool:
         frame, _, _ = trace_args
