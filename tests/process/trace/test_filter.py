@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from types import FrameType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Optional
 from unittest.mock import Mock
 
 import pytest
-
-from nextline.process.trace.wrap import Filter
 
 from . import module_a
 from .funcs import TraceSummary
@@ -15,8 +13,22 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
+def Filter(
+    trace: TraceFunc, filter: Callable[[FrameType, str, Any], bool]
+) -> TraceFunc:
+    '''Skip if the filter returns False.'''
+
+    def _trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        if filter(frame, event, arg):
+            return trace(frame, event, arg)
+        return None
+
+    return _trace
+
+
 def FilterLambda(trace: TraceFunc) -> TraceFunc:
     '''An example filter'''
+
     def filter(frame: FrameType, event, arg) -> bool:
         del event, arg
         func_name = frame.f_code.co_name
