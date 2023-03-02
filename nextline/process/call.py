@@ -21,13 +21,17 @@ def sys_trace(trace_func: TraceFunc, thread: Optional[bool] = True):
 
     Example:
 
-    Define a trace function that prints the module and function name of each
-    call, line, and return event.
+    Define a trace function.
     >>> def trace_func(frame, event, arg):
+    ...     # Print the module name, function name, and event.
     ...     module_name = frame.f_globals.get('__name__')
     ...     func_name = frame.f_code.co_name
     ...     print(f'trace_func(): {module_name}.{func_name}() # {event}')
-    ...     return trace_func
+    ...
+    ...     # Return the trace function only if the function name is 'callable'.
+    ...     if func_name == 'callable':
+    ...         return trace_func
+    ...     return None
 
     Define a callable to trace.
     >>> def callable():
@@ -41,11 +45,7 @@ def sys_trace(trace_func: TraceFunc, thread: Optional[bool] = True):
     callable()
     trace_func(): nextline.process.call.callable() # return
     trace_func(): contextlib.__exit__() # call
-    trace_func(): contextlib.__exit__() # line
-    trace_func(): contextlib.__exit__() # line
-    trace_func(): contextlib.__exit__() # line
     trace_func(): nextline.process.call.sys_trace() # call
-    trace_func(): nextline.process.call.sys_trace() # line
 
 
     The callable is traced.
