@@ -11,7 +11,6 @@ from nextline.types import RunNo
 from . import script
 from .call import sys_trace
 from .callback import Callback, RegistrarProxy
-from .trace import Trace
 from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar('_T')
@@ -76,10 +75,8 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
         command_queue_map=command_queue_map,
     ) as callback:
 
-        trace = Trace(callback=callback)
-
         with relay_commands(q_commands, command_queue_map):
-            yield trace
+            yield callback.global_trace_func
 
 
 def _compile(code: CodeType | str, filename: str) -> CodeType:
