@@ -12,6 +12,7 @@ from weakref import WeakKeyDictionary
 from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter, TraceNoCounter
+from nextline.process.call import sys_trace
 from nextline.process.exc import TraceNotCalled
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, RunNo, TraceNo
@@ -55,6 +56,8 @@ MODULES_TO_SKIP = {
     '_pytest.*',
     'apluggy.*',
     'pluggy.*',
+    sys_trace.__module__,  # skip the 1st line of the finally clause in sys_trace()
+    contextmanager.__module__,  # to skip contextlib.__exit__() in sys_trace()
 }
 
 
