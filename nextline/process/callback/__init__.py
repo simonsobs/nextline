@@ -202,7 +202,7 @@ class Callback:
         task_or_thread = current_task_or_thread()
         local_trace_func = self._local_trace_func_map.get(task_or_thread)
         if local_trace_func is None:
-            local_trace_func = self.factory()
+            local_trace_func = self.create_local_trace_func()
             self._local_trace_func_map[task_or_thread] = local_trace_func
         return local_trace_func(frame, event, arg)
 
@@ -210,7 +210,7 @@ class Callback:
         accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
         return accepted or False
 
-    def factory(self):
+    def create_local_trace_func(self):
         callback_for_trace = self.task_or_thread_start()
         trace = instantiate_pdb(callback=callback_for_trace)
 
