@@ -197,7 +197,7 @@ class Callback:
         self._hook.register(filter_by_module_name, name='filter_by_module_name')
 
     def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        if not self.filter(frame, event, arg):
+        if self.filter(frame, event, arg):
             return None
         task_or_thread = current_task_or_thread()
         local_trace_func = self._local_trace_func_map.get(task_or_thread)
@@ -208,7 +208,7 @@ class Callback:
 
     def filter(self, frame: FrameType, event, arg) -> bool:
         accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
-        return not (accepted or False)
+        return accepted or False
 
     def factory(self):
         callback_for_trace = self.task_or_thread_start()
