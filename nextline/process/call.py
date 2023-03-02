@@ -21,15 +21,38 @@ def sys_trace(trace_func: TraceFunc, thread: Optional[bool] = True):
 
     Example:
 
+    Define a trace function that prints the module and function name of each
+    call, line, and return event.
     >>> def trace_func(frame, event, arg):
-    ...     # will be skipped in the doctest because of TraceSkipModule
+    ...     module_name = frame.f_globals.get('__name__')
+    ...     func_name = frame.f_code.co_name
+    ...     print(f'trace_func(): {module_name}.{func_name}() # {event}')
     ...     return trace_func
 
+    Define a callable to trace.
     >>> def callable():
-    ...     pass
+    ...     print('callable()')
 
+    Trace the callable.
     >>> with sys_trace(trace_func):
     ...     callable()
+    trace_func(): nextline.process.call.callable() # call
+    trace_func(): nextline.process.call.callable() # line
+    callable()
+    trace_func(): nextline.process.call.callable() # return
+    trace_func(): contextlib.__exit__() # call
+    trace_func(): contextlib.__exit__() # line
+    trace_func(): contextlib.__exit__() # line
+    trace_func(): contextlib.__exit__() # line
+    trace_func(): nextline.process.call.sys_trace() # call
+    trace_func(): nextline.process.call.sys_trace() # line
+
+
+    The callable is traced.
+
+    However, as can be seen in the output, after the callable returns, the
+    trace function continues to be called until sys.settrace(None) is called in
+    the finally clause.
 
     '''
     trace_func_org = sys.gettrace()
