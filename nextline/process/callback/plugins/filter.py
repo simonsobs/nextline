@@ -90,6 +90,8 @@ class FilerByModule:
         module_name = frame.f_globals.get('__name__')
         if module_name is None:
             return
+        if module_name in self._modules_to_trace:
+            return
         msg = f'{self.__class__.__name__}: adding {module_name!r}'
         self._logger.info(msg)
         self._modules_to_trace.add(module_name)
