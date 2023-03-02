@@ -120,8 +120,8 @@ class Callback:
         return local_trace_func(frame, event, arg)
 
     def filter(self, frame: FrameType, event, arg) -> bool:
-        accepted: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
-        return accepted or False
+        rejected: bool | None = self._hook.hook.filter(trace_args=(frame, event, arg))
+        return rejected or False
 
     def create_local_trace_func(self):
         return self._hook.hook.create_local_trace_func()
