@@ -1,6 +1,5 @@
 import sys
 import threading
-from unittest.mock import Mock
 
 import pytest
 
@@ -12,18 +11,6 @@ def recover_trace():
     yield
     sys.settrace(trace_org)
     threading.settrace(trace_org)
-
-
-@pytest.fixture
-def monkey_patch_trace(monkeypatch):
-    """Mock the class Trace in the module nextline.run"""
-    from nextline.process import run
-
-    mock_instance = Mock()
-    mock_instance.return_value = None
-    mock_class = Mock(return_value=mock_instance)
-    monkeypatch.setattr(run, "Trace", mock_class)
-    yield mock_class
 
 
 if not sys.version_info >= (3, 9):
