@@ -1,36 +1,16 @@
 from __future__ import annotations
 
 from asyncio import Task
-from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, ContextManager, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Callable, ContextManager, Optional
 from weakref import WeakKeyDictionary
 
-from nextline.utils import current_task_or_thread, match_any
+from nextline.utils import current_task_or_thread
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
-
-
-def FilterByModuleName(trace: TraceFunc, patterns: Iterable[str]) -> TraceFunc:
-    '''Skip Python modules with names that match any of the patterns.
-
-    TODO: To be deleted. Still used in nextline/process/call.py.
-    '''
-
-    patterns = frozenset(patterns)
-
-    # NOTE: match_any() is slow
-    match_any_ = lru_cache(partial(match_any, patterns=patterns))
-
-    def filter(frame: FrameType, event, arg) -> bool:
-        del event, arg
-        module_name = frame.f_globals.get('__name__')
-        return not match_any_(module_name)
-
-    return Filter(trace=trace, filter=filter)
 
 
 def Filter(
