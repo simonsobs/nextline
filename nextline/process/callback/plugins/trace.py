@@ -26,8 +26,6 @@ from nextline.utils import (
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.callback import Callback
-
 
 class CallbackForTrace:
     def __init__(
@@ -113,12 +111,10 @@ class CallbackForTrace:
 class TaskOrThreadToTraceMapper:
     def __init__(
         self,
-        callback: 'Callback',
         trace_no_map: MutableMapping[Task | Thread, TraceNo],
         hook: PluginManager,
         command_queue_map: CommandQueueMap,
     ) -> None:
-        self._callback = callback
         self._trace_no_map = trace_no_map
         self._hook = hook
         self._command_queue_map = command_queue_map
@@ -127,7 +123,7 @@ class TaskOrThreadToTraceMapper:
         self._prompt_no_counter = PromptNoCounter(1)
 
         self._thread_task_done_callback = ThreadTaskDoneCallback(
-            done=self._callback.task_or_thread_end
+            done=self._task_or_thread_end
         )
         self._entering_thread: Optional[Thread] = None
         self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
@@ -145,6 +141,9 @@ class TaskOrThreadToTraceMapper:
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
+
+    def _task_or_thread_end(self, task_or_thread: Task | Thread):
+        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     @hookimpl
     def task_or_thread_start(self, trace_no: TraceNo) -> None:

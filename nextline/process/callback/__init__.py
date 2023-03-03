@@ -88,7 +88,6 @@ class Callback:
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
         peek_stdout = PeekStdout(self)
         trace_mapper = TaskOrThreadToTraceMapper(
-            callback=self,
             trace_no_map=self._trace_no_map,
             hook=self._hook,
             command_queue_map=self._command_queue_map,
@@ -122,9 +121,6 @@ class Callback:
     def task_or_thread_start(self) -> None:
         trace_no = self._trace_no_counter()
         self._hook.hook.task_or_thread_start(trace_no=trace_no)
-
-    def task_or_thread_end(self, task_or_thread: Task | Thread):
-        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]
