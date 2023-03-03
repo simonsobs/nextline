@@ -31,6 +31,11 @@ def filter(trace_args: TraceArgs) -> bool | None:
 
 
 @hookspec(firstresult=True)
+def get_local_trace_func() -> TraceFunc:
+    pass
+
+
+@hookspec(firstresult=True)
 def create_local_trace_func() -> TraceFunc:
     pass
 

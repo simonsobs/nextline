@@ -10,11 +10,9 @@ from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
 
-from nextline.count import TraceNoCounter
 from nextline.process.call import sys_trace
 from nextline.process.types import CommandQueueMap
 from nextline.types import RunNo, TraceNo
-from nextline.utils.func import current_task_or_thread
 
 from . import spec
 from .plugins import (
@@ -68,7 +66,6 @@ class Callback:
         registrar: RegistrarProxy,
         command_queue_map: CommandQueueMap,
     ):
-        self._trace_no_counter = TraceNoCounter(1)
         self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
 
@@ -110,17 +107,8 @@ class Callback:
     def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if self._hook.hook.filter(trace_args=(frame, event, arg)):
             return None
-        task_or_thread = current_task_or_thread()
-        local_trace_func = self._local_trace_func_map.get(task_or_thread)
-        if local_trace_func is None:
-            self.task_or_thread_start()
-            local_trace_func = self._hook.hook.create_local_trace_func()
-            self._local_trace_func_map[task_or_thread] = local_trace_func
+        local_trace_func = self._hook.hook.get_local_trace_func()
         return local_trace_func(frame, event, arg)
-
-    def task_or_thread_start(self) -> None:
-        trace_no = self._trace_no_counter()
-        self._hook.hook.task_or_thread_start(trace_no=trace_no)
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
         trace_no = self._trace_no_map[task_or_thread]

@@ -7,10 +7,11 @@ from logging import getLogger
 from queue import Queue
 from threading import Thread
 from typing import TYPE_CHECKING, Callable, Dict, MutableMapping, Optional, Tuple
+from weakref import WeakKeyDictionary
 
 from apluggy import PluginManager
 
-from nextline.count import PromptNoCounter
+from nextline.count import PromptNoCounter, TraceNoCounter
 from nextline.process.callback.spec import hookimpl
 from nextline.process.callback.types import TraceArgs
 from nextline.process.exc import TraceNotCalled
@@ -120,6 +121,7 @@ class TaskOrThreadToTraceMapper:
         self._command_queue_map = command_queue_map
 
         self._trace_id_factory = ThreadTaskIdComposer()
+        self._trace_no_counter = TraceNoCounter(1)
         self._prompt_no_counter = PromptNoCounter(1)
 
         self._thread_task_done_callback = ThreadTaskDoneCallback(
@@ -127,6 +129,20 @@ class TaskOrThreadToTraceMapper:
         )
         self._entering_thread: Optional[Thread] = None
         self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
+
+        self._local_trace_func_map: MutableMapping[
+            Task | Thread, TraceFunc
+        ] = WeakKeyDictionary()
+
+    @hookimpl
+    def get_local_trace_func(self) -> TraceFunc:
+        task_or_thread = current_task_or_thread()
+        local_trace_func = self._local_trace_func_map.get(task_or_thread)
+        if local_trace_func is None:
+            self._task_or_thread_start()
+            local_trace_func = self._hook.hook.create_local_trace_func()
+            self._local_trace_func_map[task_or_thread] = local_trace_func
+        return local_trace_func
 
     @hookimpl
     def create_local_trace_func(self) -> TraceFunc:
@@ -141,6 +157,10 @@ class TaskOrThreadToTraceMapper:
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
+
+    def _task_or_thread_start(self) -> None:
+        trace_no = self._trace_no_counter()
+        self._hook.hook.task_or_thread_start(trace_no=trace_no)
 
     def _task_or_thread_end(self, task_or_thread: Task | Thread):
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
