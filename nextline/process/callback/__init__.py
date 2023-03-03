@@ -69,10 +69,6 @@ class Callback:
         self._command_queue_map = command_queue_map
         self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
 
-        self._local_trace_func_map: MutableMapping[
-            Task | Thread, TraceFunc
-        ] = WeakKeyDictionary()
-
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
 
