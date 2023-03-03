@@ -108,6 +108,11 @@ class Callback:
         if self._hook.hook.filter(trace_args=(frame, event, arg)):
             return None
         local_trace_func = self._hook.hook.get_local_trace_func()
+        try:
+            assert callable(local_trace_func)
+        except AssertionError:
+            self._logger.exception('')
+            raise
         return local_trace_func(frame, event, arg)
 
     def stdout(self, task_or_thread: Task | Thread, line: str):
