@@ -35,11 +35,6 @@ def get_local_trace_func() -> TraceFunc:
     pass
 
 
-@hookspec(firstresult=True)
-def create_local_trace_func() -> TraceFunc:
-    pass
-
-
 @hookspec
 def task_or_thread_start(trace_no: TraceNo) -> None:
     pass

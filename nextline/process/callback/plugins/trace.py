@@ -140,12 +140,11 @@ class TaskOrThreadToTraceMapper:
         local_trace_func = self._local_trace_func_map.get(task_or_thread)
         if local_trace_func is None:
             self._task_or_thread_start()
-            local_trace_func = self._hook.hook.create_local_trace_func()
+            local_trace_func = self._create_local_trace_func()
             self._local_trace_func_map[task_or_thread] = local_trace_func
         return local_trace_func
 
-    @hookimpl
-    def create_local_trace_func(self) -> TraceFunc:
+    def _create_local_trace_func(self) -> TraceFunc:
         task_or_thread = current_task_or_thread()
         trace_no = self._trace_no_map[task_or_thread]
         callback_for_trace = self._callback_for_trace_map[trace_no]
