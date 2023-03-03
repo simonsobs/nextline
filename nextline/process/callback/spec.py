@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from asyncio import Task
 from threading import Thread
-from typing import Generator, Optional
+from typing import TYPE_CHECKING, Generator, Optional
 
 import apluggy as pluggy
 from apluggy import contextmanager
@@ -10,6 +10,9 @@ from apluggy import contextmanager
 from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 
 from .types import TraceArgs
+
+if TYPE_CHECKING:
+    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 PROJECT_NAME = 'nextline_process_callback'
 
@@ -24,6 +27,11 @@ def filter(trace_args: TraceArgs) -> bool | None:
 
     Accepted if no hook implementation returns True or False.
     '''
+    pass
+
+
+@hookspec(firstresult=True)
+def create_local_trace_func() -> TraceFunc:
     pass
 
 
