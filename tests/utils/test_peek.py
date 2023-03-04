@@ -8,7 +8,7 @@ import pytest
 from nextline.utils import peek_stderr, peek_stdout
 
 
-def test_stdout(capsys):
+def test_stdout(capsys: pytest.CaptureFixture):
     callback = Mock()
 
     with peek_stdout(callback):
@@ -25,7 +25,7 @@ def test_stdout(capsys):
     assert "foo\nbar\n" == captured.out
 
 
-def test_stderr(capsys):
+def test_stderr(capsys: pytest.CaptureFixture):
     callback = Mock()
 
     with peek_stderr(callback):
@@ -42,7 +42,7 @@ def test_stderr(capsys):
     assert "foo\nbar\n" == captured.err
 
 
-def test_stdout_target(capsys):
+def test_stdout_target(capsys: pytest.CaptureFixture):
     callback = Mock()
 
     with peek_stdout(callback) as t:
@@ -54,7 +54,7 @@ def test_stdout_target(capsys):
     assert "foo" == captured.out
 
 
-def test_stderr_target(capsys):
+def test_stderr_target(capsys: pytest.CaptureFixture):
     callback = Mock()
 
     with peek_stderr(callback) as t:
@@ -66,7 +66,7 @@ def test_stderr_target(capsys):
     assert "foo" == captured.err
 
 
-def test_raise(capsys):
+def test_raise(capsys: pytest.CaptureFixture):
     callback = Mock(side_effect=MockError)
 
     with peek_stdout(callback):
