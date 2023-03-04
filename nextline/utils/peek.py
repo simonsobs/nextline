@@ -41,6 +41,8 @@ def peek_stderr(callback: Callable[[str], Any]):
 
 @contextmanager
 def peek_textio(textio: TextIO, callback: Callable[[str], Any]):
+    '''A context manager that executes the callback with text written to the textio.'''
+
     org_write = textio.write
 
     def write(s: str, /) -> int:
