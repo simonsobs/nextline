@@ -28,6 +28,9 @@ def peek_stdout(callback: Callable[[str], Any]):
     hello
     world
 
+
+    NOTE: Do not write to stdout in the callback. This will cause an infinite recursion.
+
     '''
     textio = sys.stdout
     with peek_textio(textio, callback) as t:
