@@ -5,6 +5,30 @@ from typing import Any, Callable, TextIO
 
 @contextmanager
 def peek_stdout(callback: Callable[[str], Any]):
+    '''Execute the callback with text written to stdout.
+
+    Example:
+
+    Collect arguments to the callback in this list:
+    >>> written = []
+
+    Define a callback that appends the argument to the list:
+    >>> def callback(s: str) -> None:
+    ...     written.append(s)
+
+    Write to stdout in a context:
+    >>> with peek_stdout(callback):
+    ...     print('hello')
+    ...     print('world')
+    hello
+    world
+
+    The callback was called with the text written to stdout:
+    >>> print(''.join(written), end='')
+    hello
+    world
+
+    '''
     textio = sys.stdout
     with peek_textio(textio, callback) as t:
         yield t
@@ -12,6 +36,7 @@ def peek_stdout(callback: Callable[[str], Any]):
 
 @contextmanager
 def peek_stderr(callback: Callable[[str], Any]):
+    '''Execute the callback with text written to stderr.'''
     textio = sys.stderr
     with peek_textio(textio, callback) as t:
         yield t
