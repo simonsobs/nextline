@@ -32,7 +32,7 @@ def filter(trace_args: TraceArgs) -> bool | None:
 
 @hookspec(firstresult=True)
 def get_local_trace_func() -> TraceFunc:
-    pass
+    return lambda frame, event, arg: None  # for mypy
 
 
 @hookspec
