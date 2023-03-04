@@ -3,9 +3,8 @@ from contextlib import contextmanager
 from typing import Any, Callable, TextIO
 
 
-@contextmanager
 def peek_stdout(callback: Callable[[str], Any]):
-    '''Execute the callback with text written to stdout.
+    '''A context manager that executes the callback with text written to stdout.
 
     Example:
 
@@ -32,17 +31,12 @@ def peek_stdout(callback: Callable[[str], Any]):
     NOTE: Do not write to stdout in the callback. This will cause an infinite recursion.
 
     '''
-    textio = sys.stdout
-    with peek_textio(textio, callback) as t:
-        yield t
+    return peek_textio(sys.stdout, callback)
 
 
-@contextmanager
 def peek_stderr(callback: Callable[[str], Any]):
-    '''Execute the callback with text written to stderr.'''
-    textio = sys.stderr
-    with peek_textio(textio, callback) as t:
-        yield t
+    '''A context manager that executes the callback with text written to stderr.'''
+    return peek_textio(sys.stderr, callback)
 
 
 @contextmanager
