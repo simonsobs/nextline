@@ -49,16 +49,16 @@ def test_one(capsys: pytest.CaptureFixture, data: st.DataObject):
             t.join()
 
     expected = sorted(
-        [
+        (
             (thread, f'{t}\n')
             for thread, ll in zip(threads, lines_list)
             for t in ll
             if thread in to_peek and ll
-        ],
+        ),
         key=lambda x: x[0].name,
     )
 
-    actual = sorted([c.args for c in callback.call_args_list], key=lambda x: x[0].name)
+    actual = sorted((c.args for c in callback.call_args_list), key=lambda x: x[0].name)
 
     assert expected == actual
 
