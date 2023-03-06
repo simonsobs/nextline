@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import random
-import string
 import time
-from itertools import groupby
-from operator import itemgetter
 from threading import Thread
 from typing import Iterator, Optional, TextIO
 from unittest.mock import Mock
+
+import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from nextline.process.io import peek_stdout_by_task_and_thread
 
@@ -18,54 +18,48 @@ def print_lines(lines: Iterator[str], file: Optional[TextIO] = None):
         print(line, file=file)
 
 
-def test_one(capsys):
-    config = (
-        (tuple(random_strings()), True),
-        (tuple(random_strings()), True),
-        (tuple(random_strings()), False),
+@given(st.data())
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_one(capsys: pytest.CaptureFixture, data: st.DataObject):
+    capsys.readouterr()  # clear
+
+    # exclude line breaks
+    st_chars = st.characters(
+        blacklist_categories=('Cc', 'Cs'), blacklist_characters='\r\n'
     )
-    thread_added = tuple(
-        (Thread(target=print_lines, args=(c[0],)),) + c for c in config
+
+    # text to be printed per thread
+    st_lines = st.lists(st.text(st_chars))
+
+    # text to be printed in each thread
+    lines_list = data.draw(st.lists(st_lines, max_size=10), label='lines')
+
+    threads = tuple(Thread(target=print_lines, args=(t,)) for t in lines_list)
+
+    to_peek = data.draw(
+        st.lists(st.sampled_from(threads) if threads else st.nothing(), unique=True)
     )
-    threads = tuple(c[0] for c in thread_added)
-    to_return = [c[0] for c in thread_added if c[2]]
+
     callback = Mock()
-    with peek_stdout_by_task_and_thread(to_peek=to_return, callback=callback):
+
+    with peek_stdout_by_task_and_thread(to_peek=to_peek, callback=callback):
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-    results = {
-        k: "".join(v[1] for v in v)
-        for k, v in groupby(
-            sorted(
-                (c.args for c in callback.call_args_list),
-                key=lambda args: args[0].name,
-            ),
-            itemgetter(0),
-        )
-    }
-    expected = {c[0]: "\n".join(c[1]) + "\n" for c in thread_added if c[2]}
-    assert results == expected
 
-
-def test_random_strings():
-    lines = random_strings()
-    assert all(isinstance(line, str) for line in lines)
-
-
-def random_strings():
-    n_lines_range = (100, 200)
-    # n_lines_range = (3, 10)
-    n_letters_per_line_range = (0, 300)
-    # n_letters_per_line_range = (0, 5)
-    # letters = string.printable
-    letters = string.ascii_letters
-    r = (
-        "".join(
-            random.choice(letters)
-            for _ in range(random.randint(*n_letters_per_line_range))
-        )
-        for _ in range(random.randint(*n_lines_range))
+    expected = sorted(
+        [
+            (thread, f'{t}\n')
+            for thread, ll in zip(threads, lines_list)
+            for t in ll
+            if thread in to_peek and ll
+        ],
+        key=lambda x: x[0].name,
     )
-    return r
+
+    actual = sorted([c.args for c in callback.call_args_list], key=lambda x: x[0].name)
+
+    assert expected == actual
+
+    capsys.readouterr()
