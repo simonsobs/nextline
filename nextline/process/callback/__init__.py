@@ -67,7 +67,7 @@ class Callback:
         command_queue_map: CommandQueueMap,
     ):
         self._command_queue_map = command_queue_map
-        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+        trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
@@ -79,9 +79,9 @@ class Callback:
         trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
-        peek_stdout = PeekStdout(self)
+        peek_stdout = PeekStdout(trace_no_map=trace_no_map, hook=self._hook)
         trace_mapper = TaskOrThreadToTraceMapper(
-            trace_no_map=self._trace_no_map,
+            trace_no_map=trace_no_map,
             hook=self._hook,
             command_queue_map=self._command_queue_map,
         )
@@ -110,10 +110,6 @@ class Callback:
             self._logger.exception('')
             raise
         return local_trace_func(frame, event, arg)
-
-    def stdout(self, task_or_thread: Task | Thread, line: str):
-        trace_no = self._trace_no_map[task_or_thread]
-        self._hook.hook.stdout(trace_no=trace_no, line=line)
 
     def start(self) -> None:
         self._hook.hook.start()
