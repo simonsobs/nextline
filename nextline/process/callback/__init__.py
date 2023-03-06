@@ -101,15 +101,11 @@ class Callback:
         self._hook.register(filter_by_module_name, name='filter_by_module_name')
 
     def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        if self._hook.hook.filter(trace_args=(frame, event, arg)):
-            return None
-        local_trace_func = self._hook.hook.get_local_trace_func()
         try:
-            assert callable(local_trace_func)
-        except AssertionError:
+            return self._hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
+        except BaseException:
             self._logger.exception('')
             raise
-        return local_trace_func(frame, event, arg)
 
     def start(self) -> None:
         self._hook.hook.start()

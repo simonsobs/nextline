@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from asyncio import Task
 from threading import Thread
+from types import FrameType
 from typing import TYPE_CHECKING, Generator, Optional
 
 import apluggy as pluggy
@@ -31,8 +32,8 @@ def filter(trace_args: TraceArgs) -> bool | None:
 
 
 @hookspec(firstresult=True)
-def get_local_trace_func() -> TraceFunc:
-    return lambda frame, event, arg: None  # for mypy
+def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    pass
 
 
 @hookspec
