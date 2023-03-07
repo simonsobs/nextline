@@ -1,27 +1,11 @@
 from __future__ import annotations
 
-from asyncio import Task
 from collections import defaultdict
-from threading import Thread
-from typing import Any, Callable, Collection, DefaultDict, TypeVar
+from typing import Any, Callable, DefaultDict, TypeVar
 
-from typing_extensions import TypeAlias
-
-from nextline.utils import current_task_or_thread, peek_stdout
+from nextline.utils import peek_stdout
 
 _T = TypeVar('_T')
-_Key: TypeAlias = 'Task | Thread'
-
-
-def CurrentTaskOrThreadIfInCollection(
-    collection: Collection[_Key],
-) -> Callable[[], _Key | None]:
-    def fn() -> _Key | None:
-        if (key := current_task_or_thread()) in collection:
-            return key
-        return None
-
-    return fn
 
 
 def peek_stdout_by_key(

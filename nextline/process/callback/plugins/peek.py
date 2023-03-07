@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from asyncio import Task
 from threading import Thread
-from typing import MutableMapping, Set
+from typing import Callable, Collection, MutableMapping, Set
 
 from apluggy import PluginManager
 
 from nextline.process.callback.spec import hookimpl
-from nextline.process.io import CurrentTaskOrThreadIfInCollection, peek_stdout_by_key
+from nextline.process.io import peek_stdout_by_key
 from nextline.types import TraceNo
 from nextline.utils import current_task_or_thread
 
@@ -43,3 +43,14 @@ class PeekStdout:
     @hookimpl
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._peek_stdout.__exit__(exc_type, exc_value, traceback)
+
+
+def CurrentTaskOrThreadIfInCollection(
+    collection: Collection[Task | Thread],
+) -> Callable[[], Task | Thread | None]:
+    def fn() -> Task | Thread | None:
+        if (key := current_task_or_thread()) in collection:
+            return key
+        return None
+
+    return fn
