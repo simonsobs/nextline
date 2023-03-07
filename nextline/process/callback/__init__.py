@@ -1,27 +1,24 @@
 from __future__ import annotations
 
+
 from logging import getLogger
 from types import FrameType
 from typing import TYPE_CHECKING, Optional
 
-from nextline.process.types import CommandQueueMap
-from nextline.types import RunNo
 
 from .hook import build_hook
 from .plugins import RegistrarProxy
+from apluggy import PluginManager
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
+__all__ = ['build_hook', 'RegistrarProxy', 'Callback']
+
 
 class Callback:
-    def __init__(
-        self,
-        run_no: RunNo,
-        registrar: RegistrarProxy,
-        command_queue_map: CommandQueueMap,
-    ):
-        self._hook = build_hook(run_no, registrar, command_queue_map)
+    def __init__(self, hook: PluginManager):
+        self._hook = hook
         self._logger = getLogger(__name__)
 
     def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:

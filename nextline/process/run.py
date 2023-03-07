@@ -10,7 +10,7 @@ from nextline.types import RunNo
 
 from . import script
 from .call import sys_trace
-from .callback import Callback, RegistrarProxy
+from .callback import Callback, RegistrarProxy, build_hook
 from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar('_T')
@@ -69,12 +69,13 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
 
     command_queue_map: CommandQueueMap = {}
 
-    with Callback(
+    hook = build_hook(
         run_no=run_no,
         registrar=RegistrarProxy(q_registry),
         command_queue_map=command_queue_map,
-    ) as callback:
+    )
 
+    with Callback(hook=hook) as callback:
         with relay_commands(q_commands, command_queue_map):
             yield callback.global_trace_func
 
