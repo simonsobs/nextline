@@ -200,6 +200,11 @@ class TaskOrThreadToTraceMapper:
         del self._callback_for_trace_map[trace_no]
 
     @hookimpl
+    def current_trace_no(self) -> Optional[TraceNo]:
+        task_or_thread = current_task_or_thread()
+        return self._trace_no_map.get(task_or_thread)
+
+    @hookimpl
     def start(self) -> None:
         self._entering_thread = threading.current_thread()
 

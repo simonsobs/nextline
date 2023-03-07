@@ -53,6 +53,11 @@ def trace_start(
     pass
 
 
+@hookspec(firstresult=True)
+def current_trace_no() -> TraceNo | None:
+    pass
+
+
 @hookspec
 def trace_end(trace_no: TraceNo) -> None:
     pass
