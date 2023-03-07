@@ -55,6 +55,7 @@ def build_hook(
     queue_registry: QueueRegistry,
     command_queue_map: CommandQueueMap,
 ) -> PluginManager:
+    '''Return a plugin manager with the plugins registered.'''
 
     hook = PluginManager(spec.PROJECT_NAME)
     hook.add_hookspecs(spec)
