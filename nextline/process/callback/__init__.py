@@ -79,7 +79,7 @@ class Callback:
         trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
         prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
-        peek_stdout = PeekStdout(trace_no_map=trace_no_map, hook=self._hook)
+        peek_stdout = PeekStdout(hook=self._hook)
         trace_mapper = TaskOrThreadToTraceMapper(
             trace_no_map=trace_no_map,
             hook=self._hook,

@@ -1,56 +1,33 @@
 from __future__ import annotations
 
-from asyncio import Task
-from threading import Thread
-from typing import Callable, Collection, MutableMapping, Set
-
 from apluggy import PluginManager
 
 from nextline.process.callback.spec import hookimpl
 from nextline.process.io import peek_stdout_by_key
 from nextline.types import TraceNo
-from nextline.utils import current_task_or_thread
 
 
 class PeekStdout:
-    def __init__(
-        self,
-        trace_no_map: MutableMapping[Task | Thread, TraceNo],
-        hook: PluginManager,
-    ) -> None:
-        self._tasks_and_threads: Set[Task | Thread] = set()
-        self._trace_no_map = trace_no_map
+    def __init__(self, hook: PluginManager) -> None:
         self._hook = hook
 
-    def _stdout(self, task_or_thread: Task | Thread, line: str):
-        trace_no = self._trace_no_map[task_or_thread]
+    def _stdout(self, trace_no: TraceNo, line: str):
         self._hook.hook.stdout(trace_no=trace_no, line=line)
 
     @hookimpl
-    def task_or_thread_start(self) -> None:
-        task_or_thread = current_task_or_thread()
-        self._tasks_and_threads.add(task_or_thread)
+    def trace_start(self, trace_no: TraceNo) -> None:
+        assert trace_no == self._key_factory()
+
+    def _key_factory(self) -> TraceNo | None:
+        return self._hook.hook.current_trace_no()
 
     @hookimpl
     def start(self) -> None:
-        to_peek = self._tasks_and_threads
-        key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
-        self._peek_stdout = peek_stdout_by_key(  # type: ignore
-            key_factory=key_factory, callback=self._stdout
+        self._peek = peek_stdout_by_key(
+            key_factory=self._key_factory, callback=self._stdout
         )
-        self._peek_stdout.__enter__()
+        self._peek.__enter__()
 
     @hookimpl
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
-        self._peek_stdout.__exit__(exc_type, exc_value, traceback)
-
-
-def CurrentTaskOrThreadIfInCollection(
-    collection: Collection[Task | Thread],
-) -> Callable[[], Task | Thread | None]:
-    def fn() -> Task | Thread | None:
-        if (key := current_task_or_thread()) in collection:
-            return key
-        return None
-
-    return fn
+        self._peek.__exit__(exc_type, exc_value, traceback)
