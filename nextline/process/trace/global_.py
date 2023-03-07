@@ -24,11 +24,13 @@ class Callback:
 
     def start(self) -> None:
         self._hook.hook.start()
+        self._logger.info(f'{self.__class__.__name__}: started the hook')
 
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._hook.hook.close(
             exc_type=exc_type, exc_value=exc_value, traceback=traceback
         )
+        self._logger.info(f'{self.__class__.__name__}: closed the hook')
 
     def __enter__(self):
         self.start()
