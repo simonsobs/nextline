@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from asyncio import Task  # noqa F401
+from asyncio import Task
 from collections import defaultdict
 from contextlib import contextmanager
-from threading import Thread  # noqa F401
+from threading import Thread
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
 from typing_extensions import TypeAlias
 
 from nextline.utils import current_task_or_thread, peek_stdout
 
-_T = TypeVar("_T")
-_Key: TypeAlias = "Task | Thread"
+_T = TypeVar('_T')
+_Key: TypeAlias = 'Task | Thread'
 
 
 @contextmanager
@@ -42,7 +42,7 @@ def ReadLinesByKey(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], An
 
     def read_lines_by_key(key: _T, s: str) -> None:
         buffer[key] += s
-        if s.endswith("\n"):
+        if s.endswith('\n'):
             line = buffer.pop(key)
             callback(key, line)
 
