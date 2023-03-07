@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from asyncio import Task
 from collections import defaultdict
-from contextlib import contextmanager
 from threading import Thread
 from typing import Any, Callable, Collection, DefaultDict, TypeVar
 
@@ -14,7 +13,6 @@ _T = TypeVar('_T')
 _Key: TypeAlias = 'Task | Thread'
 
 
-@contextmanager
 def peek_stdout_by_task_and_thread(
     to_peek: Collection[_Key],
     callback: Callable[[_Key, str], Any],
@@ -22,8 +20,7 @@ def peek_stdout_by_task_and_thread(
     key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
     callback_ = ReadLinesByKey(callback)
     assign_key = AssignKey(key_factory=key_factory, callback=callback_)  # type: ignore
-    with peek_stdout(assign_key) as t:
-        yield t
+    return peek_stdout(assign_key)
 
 
 def CurrentTaskOrThreadIfInCollection(
