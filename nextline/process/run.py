@@ -77,7 +77,7 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
 
     with Callback(hook=hook) as callback:
         with relay_commands(q_commands, command_queue_map):
-            yield callback.global_trace_func
+            yield callback
 
 
 def _compile(code: CodeType | str, filename: str) -> CodeType:

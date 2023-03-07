@@ -15,7 +15,7 @@ class Callback:
         self._hook = hook
         self._logger = getLogger(__name__)
 
-    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def __call__(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
         try:
             return self._hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
         except BaseException:
