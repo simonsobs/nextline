@@ -13,14 +13,6 @@ _T = TypeVar('_T')
 _Key: TypeAlias = 'Task | Thread'
 
 
-def peek_stdout_by_task_and_thread(
-    to_peek: Collection[_Key],
-    callback: Callable[[_Key, str], Any],
-):
-    key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
-    return peek_stdout_by_key(key_factory=key_factory, callback=callback)  # type: ignore
-
-
 def CurrentTaskOrThreadIfInCollection(
     collection: Collection[_Key],
 ) -> Callable[[], _Key | None]:
