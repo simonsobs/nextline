@@ -24,9 +24,8 @@ def test_one(capsys: pytest.CaptureFixture, data: st.DataObject):
     capsys.readouterr()  # clear
 
     # exclude line breaks
-    st_chars = st.characters(
-        blacklist_categories=('Cc', 'Cs'), blacklist_characters='\r\n'
-    )
+    # https://hypothesis.works/articles/generating-the-right-data/
+    st_chars = st.characters(blacklist_categories=('Cc', 'Cs'))
 
     # text to be printed per thread
     st_lines = st.lists(st.text(st_chars))
@@ -36,24 +35,22 @@ def test_one(capsys: pytest.CaptureFixture, data: st.DataObject):
 
     threads = tuple(Thread(target=print_lines, args=(t,)) for t in lines_list)
 
-    to_peek = data.draw(
-        st.lists(st.sampled_from(threads) if threads else st.nothing(), unique=True)
-    )
+    to_peek = data.draw(st.lists(st.sampled_from(threads) if threads else st.nothing()))
 
     callback = Mock()
 
     with peek_stdout_by_task_and_thread(to_peek=to_peek, callback=callback):
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
 
     expected = sorted(
         (
-            (thread, f'{t}\n')
-            for thread, ll in zip(threads, lines_list)
-            for t in ll
-            if thread in to_peek and ll
+            (thread, f'{line}\n')
+            for thread, lines in zip(threads, lines_list)
+            for line in lines
+            if thread in to_peek and lines
         ),
         key=lambda x: x[0].name,
     )
