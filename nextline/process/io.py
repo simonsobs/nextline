@@ -18,9 +18,7 @@ def peek_stdout_by_task_and_thread(
     callback: Callable[[_Key, str], Any],
 ):
     key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
-    callback_ = ReadLinesByKey(callback)
-    assign_key = AssignKey(key_factory=key_factory, callback=callback_)  # type: ignore
-    return peek_stdout(assign_key)
+    return peek_stdout_by_key(key_factory=key_factory, callback=callback)  # type: ignore
 
 
 def CurrentTaskOrThreadIfInCollection(
@@ -32,6 +30,15 @@ def CurrentTaskOrThreadIfInCollection(
         return None
 
     return fn
+
+
+def peek_stdout_by_key(
+    key_factory: Callable[[], _T | None],
+    callback: Callable[[_T, str], Any],
+):
+    callback_ = ReadLinesByKey(callback)
+    assign_key = AssignKey(key_factory=key_factory, callback=callback_)
+    return peek_stdout(assign_key)
 
 
 def ReadLinesByKey(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], Any]:
