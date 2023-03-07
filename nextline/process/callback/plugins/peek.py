@@ -7,7 +7,7 @@ from typing import MutableMapping, Set
 from apluggy import PluginManager
 
 from nextline.process.callback.spec import hookimpl
-from nextline.process.io import peek_stdout_by_task_and_thread
+from nextline.process.io import CurrentTaskOrThreadIfInCollection, peek_stdout_by_key
 from nextline.types import TraceNo
 from nextline.utils import current_task_or_thread
 
@@ -33,8 +33,10 @@ class PeekStdout:
 
     @hookimpl
     def start(self) -> None:
-        self._peek_stdout = peek_stdout_by_task_and_thread(
-            to_peek=self._tasks_and_threads, callback=self._stdout
+        to_peek = self._tasks_and_threads
+        key_factory = CurrentTaskOrThreadIfInCollection(collection=to_peek)
+        self._peek_stdout = peek_stdout_by_key(  # type: ignore
+            key_factory=key_factory, callback=self._stdout
         )
         self._peek_stdout.__enter__()
 
