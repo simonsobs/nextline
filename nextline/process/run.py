@@ -10,7 +10,7 @@ from nextline.types import RunNo
 
 from . import script
 from .call import sys_trace
-from .callback import Callback, RegistrarProxy, build_hook
+from .trace import Callback, RegistrarProxy, build_hook
 from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar('_T')

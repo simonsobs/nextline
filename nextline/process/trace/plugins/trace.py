@@ -13,10 +13,10 @@ from weakref import WeakKeyDictionary
 from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter, TraceNoCounter
-from nextline.process.callback.spec import hookimpl
-from nextline.process.callback.types import TraceArgs
 from nextline.process.exc import TraceNotCalled
 from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
+from nextline.process.trace.spec import hookimpl
+from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, TraceNo
 from nextline.utils import (

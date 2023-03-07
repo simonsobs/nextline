@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from apluggy import PluginManager
 
-from nextline.process.callback.spec import hookimpl
 from nextline.process.io import peek_stdout_by_key
+from nextline.process.trace.spec import hookimpl
 from nextline.types import TraceNo
 
 

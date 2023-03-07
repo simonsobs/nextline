@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, Callable, Dict, Generator, Optional, Set, Tupl
 
 from apluggy import contextmanager
 
-from nextline.process.callback.spec import hookimpl
-from nextline.process.callback.types import TraceArgs
+from nextline.process.trace.spec import hookimpl
+from nextline.process.trace.types import TraceArgs
 from nextline.types import (
     PromptInfo,
     PromptNo,

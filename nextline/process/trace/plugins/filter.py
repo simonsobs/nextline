@@ -9,8 +9,8 @@ from typing import Generator, Iterable, Optional, Set
 
 from apluggy import contextmanager
 
-from nextline.process.callback.spec import hookimpl
-from nextline.process.callback.types import TraceArgs
+from nextline.process.trace.spec import hookimpl
+from nextline.process.trace.types import TraceArgs
 from nextline.utils import current_task_or_thread, match_any
 
 
