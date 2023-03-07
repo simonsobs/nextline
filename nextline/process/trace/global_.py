@@ -6,11 +6,41 @@ from typing import TYPE_CHECKING, Optional
 
 from apluggy import PluginManager
 
+from . import spec
+
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
+assert spec.PROJECT_NAME  # used in the doctest
+
+
 class GlobalTraceFunc:
+    '''The global trace function of Nextline to be set by sys.settrace().
+
+    Python docs: sys.settrace():
+    https://docs.python.org/3/library/sys.html#sys.settrace
+
+    Example:
+
+    Save the original trace function.
+    >>> import sys
+    >>> trace_org = sys.gettrace()
+
+    Initialize a plugin manager of apluggy.
+    >>> hook = PluginManager(spec.PROJECT_NAME)
+    >>> hook.add_hookspecs(spec)
+
+    >>> # In practice, plugins are registered here.
+
+    Set an instance of this class as the global trace function inside the "with" block.
+    >>> with GlobalTraceFunc(hook) as global_trace_func:
+    ...     sys.settrace(global_trace_func)
+    ...     # run the Nextline client function here
+    ...     sys.settrace(trace_org)
+
+    '''
+
     def __init__(self, hook: PluginManager):
         self._hook = hook
         self._logger = getLogger(__name__)
