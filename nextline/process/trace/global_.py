@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
-class Callback:
+class GlobalTraceFunc:
     def __init__(self, hook: PluginManager):
         self._hook = hook
         self._logger = getLogger(__name__)
