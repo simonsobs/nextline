@@ -113,11 +113,10 @@ class CallbackForTrace:
 class TaskOrThreadToTraceMapper:
     def __init__(
         self,
-        trace_no_map: MutableMapping[Task | Thread, TraceNo],
         hook: PluginManager,
         command_queue_map: CommandQueueMap,
     ) -> None:
-        self._trace_no_map = trace_no_map
+        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._hook = hook
         self._command_queue_map = command_queue_map
 

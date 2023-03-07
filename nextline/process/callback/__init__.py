@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from asyncio import Task
 from contextlib import contextmanager
 from logging import getLogger
-from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, MutableMapping, Optional
-from weakref import WeakKeyDictionary
+from typing import TYPE_CHECKING, Optional
 
 from apluggy import PluginManager
 
 from nextline.process.call import sys_trace
 from nextline.process.types import CommandQueueMap
-from nextline.types import RunNo, TraceNo
+from nextline.types import RunNo
 
 from . import spec
 from .plugins import (
@@ -67,7 +64,6 @@ class Callback:
         command_queue_map: CommandQueueMap,
     ):
         self._command_queue_map = command_queue_map
-        trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
 
         self._hook = PluginManager(spec.PROJECT_NAME)
         self._hook.add_hookspecs(spec)
@@ -81,9 +77,7 @@ class Callback:
         trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
         peek_stdout = PeekStdout(hook=self._hook)
         trace_mapper = TaskOrThreadToTraceMapper(
-            trace_no_map=trace_no_map,
-            hook=self._hook,
-            command_queue_map=self._command_queue_map,
+            hook=self._hook, command_queue_map=self._command_queue_map
         )
 
         self._hook.register(stdout_registrar, name='stdout')
