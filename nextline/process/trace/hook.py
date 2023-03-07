@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
 
 from apluggy import PluginManager
 
 from nextline.process.call import sys_trace
-from nextline.process.types import CommandQueueMap
+from nextline.process.types import CommandQueueMap, QueueRegistry
 from nextline.types import RunNo
 
 from . import spec
@@ -22,9 +21,6 @@ from .plugins import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 MODULES_TO_SKIP = {
     'multiprocessing.*',
@@ -56,12 +52,14 @@ MODULES_TO_SKIP = {
 
 def build_hook(
     run_no: RunNo,
-    registrar: RegistrarProxy,
+    queue_registry: QueueRegistry,
     command_queue_map: CommandQueueMap,
 ) -> PluginManager:
 
     hook = PluginManager(spec.PROJECT_NAME)
     hook.add_hookspecs(spec)
+
+    registrar = RegistrarProxy(queue=queue_registry)
 
     stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
     add_module_to_trace = FilerByModule()

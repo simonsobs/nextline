@@ -10,7 +10,7 @@ from nextline.types import RunNo
 
 from . import script
 from .call import sys_trace
-from .trace import Callback, RegistrarProxy, build_hook
+from .trace import Callback, build_hook
 from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar('_T')
@@ -71,7 +71,7 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
 
     hook = build_hook(
         run_no=run_no,
-        registrar=RegistrarProxy(q_registry),
+        queue_registry=q_registry,
         command_queue_map=command_queue_map,
     )
 
