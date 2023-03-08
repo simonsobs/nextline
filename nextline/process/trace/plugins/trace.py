@@ -99,63 +99,16 @@ class CallbackForTrace:
         return command
 
 
-class TaskOrThreadToTraceMapper:
+class LocalTraceFunc:
     @hookimpl
     def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
-        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._hook = hook
         self._command_queue_map = command_queue_map
-
-        self._trace_id_factory = ThreadTaskIdComposer()
-        self._trace_no_counter = TraceNoCounter(1)
         self._prompt_no_counter = PromptNoCounter(1)
 
-        self._thread_task_done_callback = ThreadTaskDoneCallback(
-            done=self._task_or_thread_end
-        )
-        self._entering_thread: Optional[Thread] = None
         self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
 
         self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
-
-        self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
-
-        self._logger = getLogger(__name__)
-
-    @hookimpl
-    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        if self._hook.hook.filter(trace_args=(frame, event, arg)):
-            return None
-        task_or_thread = current_task_or_thread()
-        if task_or_thread not in self._tasks_or_threads:
-            self._task_or_thread_start()
-            self._tasks_or_threads.add(task_or_thread)
-        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
-
-    def _task_or_thread_start(self) -> None:
-        task_or_thread = current_task_or_thread()
-
-        trace_no = self._trace_no_counter()
-        self._trace_no_map[task_or_thread] = trace_no
-
-        if task_or_thread is not self._entering_thread:
-            self._thread_task_done_callback.register(task_or_thread)
-
-        self._hook.hook.task_or_thread_start()
-
-        self._trace_start(trace_no)
-
-    def _task_or_thread_end(self, task_or_thread: Task | Thread):
-        trace_no = self._trace_no_map[task_or_thread]
-        self._trace_end(trace_no)
-        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
-
-    def _trace_start(self, trace_no: TraceNo):
-        self._trace_id_factory()  # increment the thread and task numbers
-        self._hook.hook.trace_start(trace_no=trace_no)
-
-    def _trace_end(self, trace_no: TraceNo):
-        self._hook.hook.trace_end(trace_no=trace_no)
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
@@ -196,6 +149,60 @@ class TaskOrThreadToTraceMapper:
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
+
+
+class TaskOrThreadToTraceMapper:
+    @hookimpl
+    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
+        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+        self._hook = hook
+
+        self._trace_id_factory = ThreadTaskIdComposer()
+        self._trace_no_counter = TraceNoCounter(1)
+
+        self._thread_task_done_callback = ThreadTaskDoneCallback(
+            done=self._task_or_thread_end
+        )
+        self._entering_thread: Optional[Thread] = None
+
+        self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
+
+        self._logger = getLogger(__name__)
+
+    @hookimpl
+    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        if self._hook.hook.filter(trace_args=(frame, event, arg)):
+            return None
+        task_or_thread = current_task_or_thread()
+        if task_or_thread not in self._tasks_or_threads:
+            self._task_or_thread_start()
+            self._tasks_or_threads.add(task_or_thread)
+        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
+
+    def _task_or_thread_start(self) -> None:
+        task_or_thread = current_task_or_thread()
+
+        trace_no = self._trace_no_counter()
+        self._trace_no_map[task_or_thread] = trace_no
+
+        if task_or_thread is not self._entering_thread:
+            self._thread_task_done_callback.register(task_or_thread)
+
+        self._hook.hook.task_or_thread_start()
+
+        self._trace_start(trace_no)
+
+    def _task_or_thread_end(self, task_or_thread: Task | Thread):
+        trace_no = self._trace_no_map[task_or_thread]
+        self._trace_end(trace_no)
+        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
+
+    def _trace_start(self, trace_no: TraceNo):
+        self._trace_id_factory()  # increment the thread and task numbers
+        self._hook.hook.trace_start(trace_no=trace_no)
+
+    def _trace_end(self, trace_no: TraceNo):
+        self._hook.hook.trace_end(trace_no=trace_no)
 
     @hookimpl
     def current_thread_no(self) -> ThreadNo:
