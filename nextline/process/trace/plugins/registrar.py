@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import os
-from contextlib import _GeneratorContextManager
 from logging import getLogger
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Dict, Generator, Set, Tuple
@@ -12,14 +11,7 @@ from apluggy import PluginManager, contextmanager
 
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
-from nextline.types import (
-    PromptInfo,
-    PromptNo,
-    RunNo,
-    StdoutInfo,
-    TraceInfo,
-    TraceNo,
-)
+from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
 
 if TYPE_CHECKING:
     from ...run import QueueRegistry
@@ -82,38 +74,24 @@ class PromptInfoRegistrar:
     def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
         self._registrar = registrar
-        self._trace_context_map: Dict[TraceNo, _GeneratorContextManager] = {}
-        # self._trace_call_context_map: Dict[TraceNo, _GeneratorContextManager] = {}
-        # self._prompt_context_map: Dict[PromptNo, _GeneratorContextManager] = {}
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
-        @contextmanager
-        def _trace():
 
-            # TODO: Putting a prompt info for now because otherwise tests get stuck
-            # sometimes for an unknown reason. Need to investigate
-            prompt_info = PromptInfo(
-                run_no=self._run_no,
-                trace_no=trace_no,
-                prompt_no=PromptNo(-1),
-                open=False,
-            )
-            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
-            yield
-
-            self._registrar.end_prompt_info_for_trace(trace_no)
-
-        context = _trace()
-        context.__enter__()
-        self._trace_context_map[trace_no] = context
+        # TODO: Putting a prompt info for now because otherwise tests get stuck
+        # sometimes for an unknown reason. Need to investigate
+        prompt_info = PromptInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            prompt_no=PromptNo(-1),
+            open=False,
+        )
+        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
-        context = self._trace_context_map.pop(trace_no)
-        context.__exit__(None, None, None)
+        self._registrar.end_prompt_info_for_trace(trace_no)
 
     @hookimpl
     @contextmanager
