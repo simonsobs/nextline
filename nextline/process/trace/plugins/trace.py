@@ -121,7 +121,7 @@ class TaskOrThreadToTraceMapper:
         self._local_trace_func_map: MutableMapping[
             Task | Thread, TraceFunc
         ] = WeakKeyDictionary()
-        
+
         self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
 
         self._logger = getLogger(__name__)
@@ -136,27 +136,6 @@ class TaskOrThreadToTraceMapper:
             self._tasks_or_threads.add(task_or_thread)
         local_trace_func = self._get_local_trace_func()
         return local_trace_func(frame, event, arg)
-
-    def _get_local_trace_func(self) -> TraceFunc:
-        task_or_thread = current_task_or_thread()
-        local_trace_func = self._local_trace_func_map.get(task_or_thread)
-        if local_trace_func is None:
-            local_trace_func = self._create_local_trace_func()
-            self._local_trace_func_map[task_or_thread] = local_trace_func
-        return local_trace_func
-
-    def _create_local_trace_func(self) -> TraceFunc:
-        task_or_thread = current_task_or_thread()
-        trace_no = self._trace_no_map[task_or_thread]
-        callback_for_trace = self._callback_for_trace_map[trace_no]
-
-        trace = instantiate_pdb(callback=callback_for_trace)
-
-        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
-        # TODO: Add a test. The tests pass without the above line.  Without it,
-        #       the arrow in the web UI does not move when the Pdb is "continuing."
-
-        return trace
 
     def _task_or_thread_start(self) -> None:
         task_or_thread = current_task_or_thread()
@@ -190,6 +169,27 @@ class TaskOrThreadToTraceMapper:
     def _trace_end(self, trace_no: TraceNo):
         self._callback_for_trace_map[trace_no].trace_end()
         del self._callback_for_trace_map[trace_no]
+
+    def _get_local_trace_func(self) -> TraceFunc:
+        task_or_thread = current_task_or_thread()
+        local_trace_func = self._local_trace_func_map.get(task_or_thread)
+        if local_trace_func is None:
+            local_trace_func = self._create_local_trace_func()
+            self._local_trace_func_map[task_or_thread] = local_trace_func
+        return local_trace_func
+
+    def _create_local_trace_func(self) -> TraceFunc:
+        task_or_thread = current_task_or_thread()
+        trace_no = self._trace_no_map[task_or_thread]
+        callback_for_trace = self._callback_for_trace_map[trace_no]
+
+        trace = instantiate_pdb(callback=callback_for_trace)
+
+        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
+        # TODO: Add a test. The tests pass without the above line.  Without it,
+        #       the arrow in the web UI does not move when the Pdb is "continuing."
+
+        return trace
 
     @hookimpl
     def current_thread_no(self) -> ThreadNo:
