@@ -132,7 +132,7 @@ class TaskOrThreadToTraceMapper:
         if task_or_thread not in self._tasks_or_threads:
             self._task_or_thread_start()
             self._tasks_or_threads.add(task_or_thread)
-        return self._local_trace_func(frame=frame, event=event, arg=arg)
+        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
 
     def _task_or_thread_start(self) -> None:
         task_or_thread = current_task_or_thread()
@@ -167,7 +167,8 @@ class TaskOrThreadToTraceMapper:
         self._callback_for_trace_map[trace_no].trace_end()
         del self._callback_for_trace_map[trace_no]
 
-    def _local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    @hookimpl
+    def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
         local_trace_func = self._get_local_trace_func()
         return local_trace_func(frame, event, arg)
 
