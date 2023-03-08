@@ -153,6 +153,12 @@ class TaskOrThreadToTraceMapper:
     def _trace_start(self, trace_no: TraceNo):
         self._trace_id_factory()  # increment the thread and task numbers
         self._hook.hook.trace_start(trace_no=trace_no)
+
+    def _trace_end(self, trace_no: TraceNo):
+        self._hook.hook.trace_end(trace_no=trace_no)
+
+    @hookimpl
+    def trace_start(self, trace_no: TraceNo) -> None:
         callback_for_trace = CallbackForTrace(
             trace_no=trace_no,
             hook=self._hook,
@@ -162,8 +168,8 @@ class TaskOrThreadToTraceMapper:
         self._callback_for_trace_map[trace_no] = callback_for_trace
         callback_for_trace.trace_start()
 
-    def _trace_end(self, trace_no: TraceNo):
-        self._hook.hook.trace_end(trace_no=trace_no)
+    @hookimpl
+    def trace_end(self, trace_no: TraceNo) -> None:
         self._callback_for_trace_map[trace_no].trace_end()
         del self._callback_for_trace_map[trace_no]
 
