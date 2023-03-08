@@ -6,9 +6,9 @@ import os
 from contextlib import _GeneratorContextManager
 from logging import getLogger
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, Dict, Generator, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, Generator, Set, Tuple
 
-from apluggy import contextmanager
+from apluggy import PluginManager, contextmanager
 
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
@@ -17,8 +17,6 @@ from nextline.types import (
     PromptNo,
     RunNo,
     StdoutInfo,
-    TaskNo,
-    ThreadNo,
     TraceInfo,
     TraceNo,
 )
@@ -46,18 +44,18 @@ class TraceNumbersRegistrar:
 
 
 class TraceInfoRegistrar:
-    def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
+    def __init__(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):
+        self._hook = hook
         self._run_no = run_no
         self._registrar = registrar
         self._trace_context_map: Dict[TraceNo, _GeneratorContextManager] = {}
 
     @hookimpl
-    def trace_start(
-        self,
-        trace_no: TraceNo,
-        thread_no: ThreadNo,
-        task_no: Optional[TaskNo],
-    ) -> None:
+    def trace_start(self, trace_no: TraceNo) -> None:
+
+        thread_no = self._hook.hook.current_thread_no()
+        task_no = self._hook.hook.current_task_no()
+
         @contextmanager
         def _trace():
 

@@ -48,14 +48,8 @@ class CallbackForTrace:
         self._logger = getLogger(__name__)
 
     def trace_start(self):
-        thread_no = self._hook.hook.current_thread_no()
-        task_no = self._hook.hook.current_task_no()
-
         self._command_queue_map[self._trace_no] = self._command_queue = Queue()
-
-        self._hook.hook.trace_start(
-            trace_no=self._trace_no, thread_no=thread_no, task_no=task_no
-        )
+        self._hook.hook.trace_start(trace_no=self._trace_no)
 
     def trace_end(self):
         self._hook.hook.trace_end(trace_no=self._trace_no)
@@ -188,6 +182,7 @@ class TaskOrThreadToTraceMapper:
             prompt_no_counter=self._prompt_no_counter,
         )
         self._callback_for_trace_map[trace_no] = callback_for_trace
+        self._trace_id_factory()  # increment the thread and task numbers
         callback_for_trace.trace_start()
 
     def _trace_end(self, trace_no: TraceNo):

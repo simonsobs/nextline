@@ -47,9 +47,7 @@ def task_or_thread_end(task_or_thread: Task | Thread):
 
 
 @hookspec
-def trace_start(
-    trace_no: TraceNo, thread_no: ThreadNo, task_no: Optional[TaskNo]
-) -> None:
+def trace_start(trace_no: TraceNo) -> None:
     pass
 
 

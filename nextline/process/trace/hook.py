@@ -64,7 +64,9 @@ def build_hook(
 
     stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
     add_module_to_trace = FilerByModule()
-    trace_info_registrar = TraceInfoRegistrar(run_no=run_no, registrar=registrar)
+    trace_info_registrar = TraceInfoRegistrar(
+        hook=hook, run_no=run_no, registrar=registrar
+    )
     prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
     trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
     peek_stdout = PeekStdout(hook=hook)
