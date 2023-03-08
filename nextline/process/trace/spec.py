@@ -23,16 +23,16 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 
 @hookspec(firstresult=True)
+def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    pass
+
+
+@hookspec(firstresult=True)
 def filter(trace_args: TraceArgs) -> bool | None:
     '''True to reject, False to accept, None to pass to the next hook implementation.
 
     Accepted if no hook implementation returns True or False.
     '''
-    pass
-
-
-@hookspec(firstresult=True)
-def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunc]:
     pass
 
 
