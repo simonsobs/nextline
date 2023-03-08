@@ -53,6 +53,7 @@ class TraceInfoRegistrar:
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
 
+        assert trace_no == self._hook.hook.current_trace_no()
         thread_no = self._hook.hook.current_thread_no()
         task_no = self._hook.hook.current_task_no()
 
