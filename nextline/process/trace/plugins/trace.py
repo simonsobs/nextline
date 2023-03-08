@@ -190,6 +190,8 @@ class TaskOrThreadToTraceMapper:
 
         self._hook.hook.task_or_thread_start()
 
+        self._thread_task_nums_counter()  # increment the counter
+
         self._trace_start(trace_no)
 
     def _task_or_thread_end(self, task_or_thread: Task | Thread):
@@ -198,7 +200,6 @@ class TaskOrThreadToTraceMapper:
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     def _trace_start(self, trace_no: TraceNo):
-        self._thread_task_nums_counter()  # increment the thread and task numbers
         self._hook.hook.trace_start(trace_no=trace_no)
 
     def _trace_end(self, trace_no: TraceNo):
