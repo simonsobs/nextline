@@ -174,7 +174,7 @@ class TaskOrThreadToTraceMapper:
         if task_or_thread is not self._entering_thread:
             self._thread_task_done_callback.register(task_or_thread)
 
-        self._hook.hook.task_or_thread_start(trace_no=trace_no)
+        self._hook.hook.task_or_thread_start()
 
         self._trace_start(trace_no)
 

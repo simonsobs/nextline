@@ -37,7 +37,7 @@ def filter(trace_args: TraceArgs) -> bool | None:
 
 
 @hookspec
-def task_or_thread_start(trace_no: TraceNo) -> None:
+def task_or_thread_start() -> None:
     pass
 
 
