@@ -48,4 +48,6 @@ def test_profile(plugin: FilterByModuleName):
 
 @pytest.fixture()
 def plugin():
-    return FilterByModuleName(patterns=MODULES_TO_SKIP)
+    p = FilterByModuleName()
+    p.init(modules_to_skip=MODULES_TO_SKIP)
+    return p

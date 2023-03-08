@@ -3,23 +3,37 @@ from __future__ import annotations
 from asyncio import Task
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Generator, Optional
+from typing import TYPE_CHECKING, Collection, Generator, Optional
 
 import apluggy as pluggy
-from apluggy import contextmanager
+from apluggy import PluginManager, contextmanager
 
-from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
+from nextline.process.types import CommandQueueMap
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 from .types import TraceArgs
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
+    from nextline.process.trace.plugins.registrar import RegistrarProxy
+
 PROJECT_NAME = 'nextline_process_callback'
 
 
 hookspec = pluggy.HookspecMarker(PROJECT_NAME)
 hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
+
+
+@hookspec
+def init(
+    hook: PluginManager,
+    run_no: RunNo,
+    registrar: RegistrarProxy,
+    command_queue_map: CommandQueueMap,
+    modules_to_skip: Collection[str],
+) -> None:
+    pass
 
 
 @hookspec(firstresult=True)

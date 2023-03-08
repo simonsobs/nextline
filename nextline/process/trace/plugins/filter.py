@@ -17,11 +17,12 @@ from nextline.utils import current_task_or_thread, match_any
 class FilterByModuleName:
     '''Skip Python modules with names that match any of the patterns.'''
 
-    def __init__(self, patterns: Iterable[str]):
-        self._patterns = frozenset(patterns)
+    @hookimpl
+    def init(self, modules_to_skip: Iterable[str]):
+        self._patterns = frozenset(modules_to_skip)
 
         # NOTE: Use lru_cache() as match_any() is slow
-        self._match_any_ = lru_cache(partial(match_any, patterns=patterns))
+        self._match_any_ = lru_cache(partial(match_any, patterns=modules_to_skip))
 
     @hookimpl
     def filter(self, trace_args: TraceArgs) -> bool | None:

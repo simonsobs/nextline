@@ -62,30 +62,23 @@ def build_hook(
 
     registrar = RegistrarProxy(queue=queue_registry)
 
-    stdout_registrar = StdoutRegistrar(run_no=run_no, registrar=registrar)
-    add_module_to_trace = FilerByModule()
-    trace_info_registrar = TraceInfoRegistrar(
-        hook=hook, run_no=run_no, registrar=registrar
+    hook.register(StdoutRegistrar(), name='stdout')
+    hook.register(FilerByModule(), name='add_module_to_trace')
+    hook.register(TraceInfoRegistrar(), name='trace_info')
+    hook.register(PromptInfoRegistrar(), name='prompt_info')
+    hook.register(TraceNumbersRegistrar(), name='trace_numbers')
+    hook.register(PeekStdout(), name='peek_stdout')
+    hook.register(TaskOrThreadToTraceMapper(), name='task_or_thread_to_trace_mapper')
+
+    hook.register(FilterLambda(), name='filter_lambda')
+    hook.register(FilterByModuleName(), name='filter_by_module_name')
+
+    hook.hook.init(
+        hook=hook,
+        run_no=run_no,
+        registrar=registrar,
+        command_queue_map=command_queue_map,
+        modules_to_skip=MODULES_TO_SKIP,
     )
-    prompt_info_registrar = PromptInfoRegistrar(run_no=run_no, registrar=registrar)
-    trace_numbers_registrar = TraceNumbersRegistrar(registrar=registrar)
-    peek_stdout = PeekStdout(hook=hook)
-    trace_mapper = TaskOrThreadToTraceMapper(
-        hook=hook, command_queue_map=command_queue_map
-    )
-
-    hook.register(stdout_registrar, name='stdout')
-    hook.register(add_module_to_trace, name='add_module_to_trace')
-    hook.register(trace_info_registrar, name='trace_info')
-    hook.register(prompt_info_registrar, name='prompt_info')
-    hook.register(trace_numbers_registrar, name='trace_numbers')
-    hook.register(peek_stdout, name='peek_stdout')
-    hook.register(trace_mapper, name='task_or_thread_to_trace_mapper')
-
-    filter_lambda = FilterLambda()
-    filter_by_module_name = FilterByModuleName(patterns=MODULES_TO_SKIP)
-
-    hook.register(filter_lambda, name='filter_lambda')
-    hook.register(filter_by_module_name, name='filter_by_module_name')
 
     return hook

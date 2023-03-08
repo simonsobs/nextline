@@ -8,7 +8,8 @@ from nextline.types import TraceNo
 
 
 class PeekStdout:
-    def __init__(self, hook: PluginManager) -> None:
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
     def _stdout(self, trace_no: TraceNo, line: str):

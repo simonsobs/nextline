@@ -16,7 +16,8 @@ from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, T
 
 
 class TraceNumbersRegistrar:
-    def __init__(self, registrar: RegistrarProxy):
+    @hookimpl
+    def init(self, registrar: RegistrarProxy):
         self._registrar = registrar
         self._trace_nos: Tuple[TraceNo, ...] = ()
 
@@ -34,7 +35,8 @@ class TraceNumbersRegistrar:
 
 
 class TraceInfoRegistrar:
-    def __init__(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):
+    @hookimpl
+    def init(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):
         self._hook = hook
         self._run_no = run_no
         self._registrar = registrar
@@ -69,7 +71,8 @@ class TraceInfoRegistrar:
 
 
 class PromptInfoRegistrar:
-    def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
+    @hookimpl
+    def init(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
         self._registrar = registrar
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
@@ -184,7 +187,8 @@ class AddModuleToTrace:
 
 
 class StdoutRegistrar:
-    def __init__(self, run_no: RunNo, registrar: RegistrarProxy):
+    @hookimpl
+    def init(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
         self._registrar = registrar
 
