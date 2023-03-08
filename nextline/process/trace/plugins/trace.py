@@ -18,7 +18,7 @@ from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
-from nextline.types import PromptNo, TraceNo
+from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,
     ThreadTaskIdComposer,
@@ -35,13 +35,11 @@ class CallbackForTrace:
         trace_no: TraceNo,
         hook: PluginManager,
         command_queue_map: CommandQueueMap,
-        trace_id_factory: ThreadTaskIdComposer,
         prompt_no_counter: Callable[[], PromptNo],
     ):
         self._trace_no = trace_no
         self._hook = hook
         self._command_queue_map = command_queue_map
-        self._trace_id_factory = trace_id_factory
         self._prompt_no_counter = prompt_no_counter
 
         self._command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
@@ -50,9 +48,8 @@ class CallbackForTrace:
         self._logger = getLogger(__name__)
 
     def trace_start(self):
-        thread_task_id = self._trace_id_factory()
-        thread_no = thread_task_id.thread_no
-        task_no = thread_task_id.task_no
+        thread_no = self._hook.hook.current_thread_no()
+        task_no = self._hook.hook.current_task_no()
 
         self._command_queue_map[self._trace_no] = self._command_queue = Queue()
 
@@ -188,7 +185,6 @@ class TaskOrThreadToTraceMapper:
             trace_no=trace_no,
             hook=self._hook,
             command_queue_map=self._command_queue_map,
-            trace_id_factory=self._trace_id_factory,
             prompt_no_counter=self._prompt_no_counter,
         )
         self._callback_for_trace_map[trace_no] = callback_for_trace
@@ -197,6 +193,16 @@ class TaskOrThreadToTraceMapper:
     def _trace_end(self, trace_no: TraceNo):
         self._callback_for_trace_map[trace_no].trace_end()
         del self._callback_for_trace_map[trace_no]
+
+    @hookimpl
+    def current_thread_no(self) -> ThreadNo:
+        thread_task_id = self._trace_id_factory()
+        return thread_task_id.thread_no
+
+    @hookimpl
+    def current_task_no(self) -> Optional[TaskNo]:
+        thread_task_id = self._trace_id_factory()
+        return thread_task_id.task_no
 
     @hookimpl
     def current_trace_no(self) -> Optional[TraceNo]:

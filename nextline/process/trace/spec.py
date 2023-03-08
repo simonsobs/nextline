@@ -54,6 +54,16 @@ def trace_start(
 
 
 @hookspec(firstresult=True)
+def current_thread_no() -> ThreadNo | None:
+    pass
+
+
+@hookspec(firstresult=True)
+def current_task_no() -> TaskNo | None:
+    pass
+
+
+@hookspec(firstresult=True)
 def current_trace_no() -> TraceNo | None:
     pass
 
