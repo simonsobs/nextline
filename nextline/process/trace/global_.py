@@ -52,19 +52,13 @@ class GlobalTraceFunc:
             self._logger.exception('')
             raise
 
-    def start(self) -> None:
+    def __enter__(self):
         self._hook.hook.start()
         self._logger.info(f'{self.__class__.__name__}: started the hook')
+        return self
 
-    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._hook.hook.close(
             exc_type=exc_type, exc_value=exc_value, traceback=traceback
         )
         self._logger.info(f'{self.__class__.__name__}: closed the hook')
-
-    def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self.close(exc_type, exc_value, traceback)
