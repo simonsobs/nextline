@@ -3,9 +3,8 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import os
-from logging import getLogger
 from types import FrameType
-from typing import Callable, Dict, Generator, Set, Tuple
+from typing import Callable, Dict, Generator, Tuple
 
 from apluggy import PluginManager, contextmanager
 
@@ -166,24 +165,6 @@ class PromptInfoRegistrar:
         )
         self._registrar.put_prompt_info(prompt_info_end)
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info_end)
-
-
-class AddModuleToTrace:
-    '''Let Python modules be traced in new threads and asyncio tasks.'''
-
-    def __init__(self, modules_to_trace: Set[str]):
-        self._modules_to_trace = modules_to_trace
-        self._logger = getLogger(__name__)
-
-    @hookimpl
-    @contextmanager
-    def cmdloop(self, trace_args: TraceArgs) -> Generator[None, str, None]:
-        frame, _, _ = trace_args
-        if module_name := frame.f_globals.get('__name__'):
-            msg = f'{self.__class__.__name__}: adding {module_name!r}'
-            self._logger.info(msg)
-            self._modules_to_trace.add(module_name)
-        yield
 
 
 class StdoutRegistrar:
