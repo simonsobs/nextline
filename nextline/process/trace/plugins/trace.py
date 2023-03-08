@@ -179,8 +179,7 @@ class TaskOrThreadToTraceMapper:
         return local_trace_func
 
     def _create_local_trace_func(self) -> TraceFunc:
-        task_or_thread = current_task_or_thread()
-        trace_no = self._trace_no_map[task_or_thread]
+        trace_no = self._hook.hook.current_trace_no()
         callback_for_trace = self._callback_for_trace_map[trace_no]
 
         trace = instantiate_pdb(callback=callback_for_trace)
