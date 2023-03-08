@@ -151,9 +151,9 @@ class TaskOrThreadToTraceMapper:
         self._trace_start(trace_no)
 
     def _task_or_thread_end(self, task_or_thread: Task | Thread):
-        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
         trace_no = self._trace_no_map[task_or_thread]
         self._trace_end(trace_no)
+        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     def _trace_start(self, trace_no: TraceNo):
         callback_for_trace = CallbackForTrace(
