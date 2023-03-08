@@ -118,9 +118,7 @@ class TaskOrThreadToTraceMapper:
         self._entering_thread: Optional[Thread] = None
         self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
 
-        self._local_trace_func_map: MutableMapping[
-            Task | Thread, TraceFunc
-        ] = WeakKeyDictionary()
+        self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
 
         self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
 
@@ -171,15 +169,14 @@ class TaskOrThreadToTraceMapper:
         del self._callback_for_trace_map[trace_no]
 
     def _get_local_trace_func(self) -> TraceFunc:
-        task_or_thread = current_task_or_thread()
-        local_trace_func = self._local_trace_func_map.get(task_or_thread)
+        trace_no = self._hook.hook.current_trace_no()
+        local_trace_func = self._local_trace_func_map.get(trace_no)
         if local_trace_func is None:
-            local_trace_func = self._create_local_trace_func()
-            self._local_trace_func_map[task_or_thread] = local_trace_func
+            local_trace_func = self._create_local_trace_func(trace_no)
+            self._local_trace_func_map[trace_no] = local_trace_func
         return local_trace_func
 
-    def _create_local_trace_func(self) -> TraceFunc:
-        trace_no = self._hook.hook.current_trace_no()
+    def _create_local_trace_func(self, trace_no: TraceNo) -> TraceFunc:
         callback_for_trace = self._callback_for_trace_map[trace_no]
 
         trace = instantiate_pdb(callback=callback_for_trace)
