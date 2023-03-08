@@ -48,45 +48,34 @@ class TraceInfoRegistrar:
         self._hook = hook
         self._run_no = run_no
         self._registrar = registrar
-        self._trace_context_map: Dict[TraceNo, _GeneratorContextManager] = {}
+        self._trace_info_map: Dict[TraceNo, TraceInfo] = {}
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
-
         assert trace_no == self._hook.hook.current_trace_no()
         thread_no = self._hook.hook.current_thread_no()
         task_no = self._hook.hook.current_task_no()
 
-        @contextmanager
-        def _trace():
-
-            trace_info = TraceInfo(
-                run_no=self._run_no,
-                trace_no=trace_no,
-                thread_no=thread_no,
-                task_no=task_no,
-                state="running",
-                started_at=datetime.datetime.utcnow(),
-            )
-            self._registrar.put_trace_info(trace_info)
-
-            yield
-
-            trace_info_end = dataclasses.replace(
-                trace_info,
-                state='finished',
-                ended_at=datetime.datetime.utcnow(),
-            )
-            self._registrar.put_trace_info(trace_info_end)
-
-        context = _trace()
-        context.__enter__()
-        self._trace_context_map[trace_no] = context
+        trace_info = TraceInfo(
+            run_no=self._run_no,
+            trace_no=trace_no,
+            thread_no=thread_no,
+            task_no=task_no,
+            state="running",
+            started_at=datetime.datetime.utcnow(),
+        )
+        self._trace_info_map[trace_no] = trace_info
+        self._registrar.put_trace_info(trace_info)
 
     @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
-        context = self._trace_context_map.pop(trace_no)
-        context.__exit__(None, None, None)
+        trace_info = self._trace_info_map.pop(trace_no)
+        trace_info_end = dataclasses.replace(
+            trace_info,
+            state='finished',
+            ended_at=datetime.datetime.utcnow(),
+        )
+        self._registrar.put_trace_info(trace_info_end)
 
 
 class PromptInfoRegistrar:
