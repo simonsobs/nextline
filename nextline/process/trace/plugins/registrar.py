@@ -5,16 +5,14 @@ import datetime
 import os
 from logging import getLogger
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, Dict, Generator, Set, Tuple
+from typing import Callable, Dict, Generator, Set, Tuple
 
 from apluggy import PluginManager, contextmanager
 
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
+from nextline.process.types import QueueRegistry
 from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
-
-if TYPE_CHECKING:
-    from ...run import QueueRegistry
 
 
 class TraceNumbersRegistrar:
