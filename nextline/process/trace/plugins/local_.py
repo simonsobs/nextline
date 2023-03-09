@@ -1,11 +1,11 @@
 from __future__ import annotations
-from collections import defaultdict
 
+from collections import defaultdict
 from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, DefaultDict, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager
 
@@ -72,7 +72,7 @@ class CallbackForTrace:
         self._command_queue_map = command_queue_map
         self._prompt_no_counter = prompt_no_counter
 
-        self._trace_args: TraceArgs | None = None
+        self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
 
         self._logger = getLogger(__name__)
 
@@ -86,27 +86,27 @@ class CallbackForTrace:
     def trace_call(self, trace_args: TraceArgs):
         trace_no = self._hook.hook.current_trace_no()
         self._traces_on_call.add(trace_no)
-        self._trace_args = trace_args
+        self._trace_args_map[trace_no] = trace_args
 
         with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
             try:
                 yield
             finally:
                 self._traces_on_call.remove(trace_no)
-                self._trace_args = None
+                del self._trace_args_map[trace_no]
 
     @contextmanager
     def cmdloop(self):
-        trace_no = self._hook.hook.current_trace_no()
         if not self._is_on_call():
             raise TraceNotCalled
-        if self._trace_args is None:
-            raise TraceNotCalled
-        with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=self._trace_args):
+        trace_no = self._hook.hook.current_trace_no()
+        trace_args = self._trace_args_map[trace_no]
+        with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
     def prompt(self, text: str) -> str:
         trace_no = self._hook.hook.current_trace_no()
+        trace_args = self._trace_args_map[trace_no]
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
         queue = self._command_queue_map[trace_no]
@@ -114,7 +114,7 @@ class CallbackForTrace:
             p := self._hook.with_.prompt(
                 trace_no=trace_no,
                 prompt_no=prompt_no,
-                trace_args=self._trace_args,
+                trace_args=trace_args,
                 out=text,
             )
         ):
