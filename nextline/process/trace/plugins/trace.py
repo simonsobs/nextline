@@ -75,8 +75,9 @@ class TaskAndThreadKeeper:
 
         self._hook.hook.task_or_thread_start()
 
-    def _on_end(self, task_or_thread: Task | Thread):
-        self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
+    def _on_end(self, ending: Task | Thread):
+        # The "ending" is not the "current" unless it is the main thread.
+        self._hook.hook.task_or_thread_end(task_or_thread=ending)
 
     @hookimpl
     def current_thread_no(self) -> ThreadNo:
