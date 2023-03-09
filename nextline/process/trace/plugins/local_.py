@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
+from typing import TYPE_CHECKING, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager
 
@@ -15,7 +15,7 @@ from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
-from nextline.types import PromptNo, TraceNo
+from nextline.types import TraceNo
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 
 class LocalTraceFunc:
     def __init__(self) -> None:
-        self._prompt_no_counter = PromptNoCounter(1)
         self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
 
     @hookimpl
@@ -34,7 +33,6 @@ class LocalTraceFunc:
         self._callback = Callback(
             hook=self._hook,
             command_queue_map=self._command_queue_map,
-            prompt_no_counter=self._prompt_no_counter,
         )
 
     @hookimpl
@@ -67,11 +65,11 @@ class Callback:
         self,
         hook: PluginManager,
         command_queue_map: CommandQueueMap,
-        prompt_no_counter: Callable[[], PromptNo],
     ):
         self._hook = hook
         self._command_queue_map = command_queue_map
-        self._prompt_no_counter = prompt_no_counter
+
+        self._prompt_no_counter = PromptNoCounter(1)
 
         self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
 
