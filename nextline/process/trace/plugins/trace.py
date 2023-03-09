@@ -47,57 +47,55 @@ class TaskAndThreadKeeper:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
-        self._thread_task_nums_counter = ThreadTaskIdComposer()
+        self._counter = ThreadTaskIdComposer()
+        self._callback = ThreadTaskDoneCallback(done=self._on_end)
 
-        self._done_callback = ThreadTaskDoneCallback(done=self._task_or_thread_end)
-        self._entering_thread: Optional[Thread] = None
-        self._thread_to_end: Optional[Thread] = None
+        self._main_thread: Optional[Thread] = None
+        self._to_end: Optional[Thread] = None
 
-        self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
+        self._set: WeakSet[Task | Thread] = WeakSet()
 
         self._logger = getLogger(__name__)
 
     @hookimpl
     def filtered(self) -> None:
-        task_or_thread = current_task_or_thread()
-        if task_or_thread not in self._tasks_or_threads:
-            self._task_or_thread_start()
-            self._tasks_or_threads.add(task_or_thread)
+        current = current_task_or_thread()
+        if current not in self._set:
+            self._on_start(current)
+            self._set.add(current)
 
-    def _task_or_thread_start(self) -> None:
-        task_or_thread = current_task_or_thread()
+    def _on_start(self, current: Task | Thread) -> None:
 
-        if task_or_thread is self._entering_thread:
-            self._thread_to_end = self._entering_thread
+        if current is self._main_thread:
+            self._to_end = self._main_thread
         else:
-            self._done_callback.register(task_or_thread)
+            self._callback.register(current)
 
-        self._thread_task_nums_counter()  # increment the counter
+        self._counter()  # increment the counter
 
         self._hook.hook.task_or_thread_start()
 
-    def _task_or_thread_end(self, task_or_thread: Task | Thread):
+    def _on_end(self, task_or_thread: Task | Thread):
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     @hookimpl
     def current_thread_no(self) -> ThreadNo:
-        thread_task_id = self._thread_task_nums_counter()
+        thread_task_id = self._counter()
         return thread_task_id.thread_no
 
     @hookimpl
     def current_task_no(self) -> Optional[TaskNo]:
-        thread_task_id = self._thread_task_nums_counter()
+        thread_task_id = self._counter()
         return thread_task_id.task_no
 
     @hookimpl
     def start(self) -> None:
-        self._entering_thread = threading.current_thread()
+        self._main_thread = threading.current_thread()
 
     @hookimpl
-    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
-        self._done_callback.close()
-        if self._thread_to_end:
-            self._task_or_thread_end(self._thread_to_end)
+    def close(self) -> None:
+        self._callback.close()
+        self._to_end and self._on_end(self._to_end)
 
 
 class TaskOrThreadToTraceMapper:
