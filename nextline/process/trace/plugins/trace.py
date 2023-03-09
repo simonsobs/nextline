@@ -95,13 +95,14 @@ class TaskAndThreadKeeper:
 
 
 class TaskOrThreadToTraceMapper:
-    @hookimpl
-    def init(self, hook: PluginManager) -> None:
-        self._hook = hook
-
+    def __init__(self) -> None:
         self._map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
         self._counter = TraceNoCounter(1)
         self._logger = getLogger(__name__)
+
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._hook = hook
 
     @hookimpl
     def task_or_thread_start(self) -> None:
