@@ -97,7 +97,7 @@ def trace_end(trace_no: TraceNo) -> None:
 
 @hookspec
 @contextmanager
-def trace_call(trace_no: TraceNo, trace_args: TraceArgs):
+def trace_call(trace_args: TraceArgs):
     pass
 
 

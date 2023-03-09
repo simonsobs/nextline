@@ -74,7 +74,8 @@ class PromptInfoRegistrar:
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
 
     @hookimpl
-    def init(self, run_no: RunNo, registrar: RegistrarProxy):
+    def init(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):
+        self._hook = hook
         self._run_no = run_no
         self._registrar = registrar
 
@@ -97,7 +98,8 @@ class PromptInfoRegistrar:
 
     @hookimpl
     @contextmanager
-    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
+    def trace_call(self, trace_args: TraceArgs):
+        trace_no = self._hook.hook.current_trace_no()
 
         try:
             yield

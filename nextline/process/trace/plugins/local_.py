@@ -70,7 +70,8 @@ class TraceCallHandler:
 
     @hookimpl
     @contextmanager
-    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
+    def trace_call(self, trace_args: TraceArgs):
+        trace_no = self._hook.hook.current_trace_no()
         self._traces_on_call.add(trace_no)
         self._trace_args_map[trace_no] = trace_args
         try:
@@ -93,9 +94,8 @@ class TraceCallHandler:
 def TraceCallContext(trace: TraceFunc, hook: PluginManager) -> TraceFunc:
     @contextmanager
     def _context(frame, event, arg):
-        trace_no = hook.hook.current_trace_no()
         trace_args = (frame, event, arg)
-        with hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
+        with hook.with_.trace_call(trace_args=trace_args):
             yield
 
     return WithContext(trace, context=_context)
