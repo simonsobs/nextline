@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, DefaultDict, Optional, Tuple
 
 from apluggy import PluginManager
 
@@ -42,13 +42,9 @@ class LocalTraceFunc:
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        local_trace_func = self._get_local_trace_func()
-        return local_trace_func(frame, event, arg)
-
-    def _get_local_trace_func(self) -> TraceFunc:
         trace_no = self._hook.hook.current_trace_no()
         local_trace_func = self._map[trace_no]
-        return local_trace_func
+        return local_trace_func(frame, event, arg)
 
     def _create(self) -> TraceFunc:
         trace_no = self._hook.hook.current_trace_no()
