@@ -33,18 +33,19 @@ class LocalTraceFunc:
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
+        command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
+        self._command_queue_map[trace_no] = command_queue
         callback_for_trace = CallbackForTrace(
             trace_no=trace_no,
             hook=self._hook,
-            command_queue_map=self._command_queue_map,
+            command_queue=command_queue,
             prompt_no_counter=self._prompt_no_counter,
         )
         self._callback_for_trace_map[trace_no] = callback_for_trace
-        callback_for_trace.trace_start()
 
     @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
-        self._callback_for_trace_map[trace_no].trace_end()
+        del self._command_queue_map[trace_no]
         del self._callback_for_trace_map[trace_no]
 
     @hookimpl
@@ -77,24 +78,17 @@ class CallbackForTrace:
         self,
         trace_no: TraceNo,
         hook: PluginManager,
-        command_queue_map: CommandQueueMap,
+        command_queue: Queue[Tuple[str, PromptNo, TraceNo]],
         prompt_no_counter: Callable[[], PromptNo],
     ):
         self._trace_no = trace_no
         self._hook = hook
-        self._command_queue_map = command_queue_map
         self._prompt_no_counter = prompt_no_counter
 
-        self._command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
+        self._command_queue = command_queue
         self._trace_args: TraceArgs | None = None
 
         self._logger = getLogger(__name__)
-
-    def trace_start(self):
-        self._command_queue_map[self._trace_no] = self._command_queue = Queue()
-
-    def trace_end(self):
-        del self._command_queue_map[self._trace_no]
 
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
