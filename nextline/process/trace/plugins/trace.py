@@ -123,15 +123,15 @@ class TaskOrThreadToTraceMapper:
 
 
 class LocalTraceFunc:
+    def __init__(self) -> None:
+        self._prompt_no_counter = PromptNoCounter(1)
+        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
+        self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
+
     @hookimpl
     def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
         self._hook = hook
         self._command_queue_map = command_queue_map
-        self._prompt_no_counter = PromptNoCounter(1)
-
-        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
-
-        self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
