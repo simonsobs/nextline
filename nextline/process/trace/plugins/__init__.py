@@ -8,6 +8,7 @@ __all__ = [
     'StdoutRegistrar',
     'TraceInfoRegistrar',
     'TraceNumbersRegistrar',
+    'GlobalTraceFunc',
     'LocalTraceFunc',
     'TaskAndThreadKeeper',
     'TaskOrThreadToTraceMapper',
@@ -23,4 +24,9 @@ from .registrar import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
-from .trace import LocalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMapper
+from .trace import (
+    GlobalTraceFunc,
+    LocalTraceFunc,
+    TaskAndThreadKeeper,
+    TaskOrThreadToTraceMapper,
+)

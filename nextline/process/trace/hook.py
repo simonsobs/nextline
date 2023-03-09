@@ -13,6 +13,7 @@ from .plugins import (
     FilerByModule,
     FilterByModuleName,
     FilterLambda,
+    GlobalTraceFunc,
     LocalTraceFunc,
     PeekStdout,
     PromptInfoRegistrar,
@@ -76,6 +77,8 @@ def build_hook(
 
     hook.register(FilterLambda(), name='filter_lambda')
     hook.register(FilterByModuleName(), name='filter_by_module_name')
+
+    hook.register(GlobalTraceFunc(), name='global_trace_func')
 
     hook.hook.init(
         hook=hook,

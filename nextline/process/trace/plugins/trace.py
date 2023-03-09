@@ -29,6 +29,19 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
+class GlobalTraceFunc:
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._hook = hook
+
+    @hookimpl
+    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        if self._hook.hook.filter(trace_args=(frame, event, arg)):
+            return None
+        self._hook.hook.filtered(trace_args=(frame, event, arg))
+        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
+
+
 class TaskAndThreadKeeper:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
@@ -43,13 +56,6 @@ class TaskAndThreadKeeper:
         self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
 
         self._logger = getLogger(__name__)
-
-    @hookimpl
-    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        if self._hook.hook.filter(trace_args=(frame, event, arg)):
-            return None
-        self._hook.hook.filtered(trace_args=(frame, event, arg))
-        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
 
     @hookimpl
     def filtered(self) -> None:
