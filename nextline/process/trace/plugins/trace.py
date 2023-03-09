@@ -65,7 +65,7 @@ class TaskAndThreadKeeper:
             self._set.add(current)
 
     def _on_start(self, current: Task | Thread) -> None:
-        
+
         self._logger.info(f'{self.__class__.__name__}._on_start: {current}')
 
         if current is self._main_thread:
@@ -79,7 +79,7 @@ class TaskAndThreadKeeper:
 
     def _on_end(self, ending: Task | Thread):
         # The "ending" is not the "current" unless it is the main thread.
-        self._logger.info(f'{self.__class__.__name__}._on_end: {ending}') 
+        self._logger.info(f'{self.__class__.__name__}._on_end: {ending}')
         self._hook.hook.task_or_thread_end(task_or_thread=ending)
 
     @hookimpl
