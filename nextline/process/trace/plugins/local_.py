@@ -33,8 +33,7 @@ class LocalTraceFunc:
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
-        command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
-        self._command_queue_map[trace_no] = command_queue
+        self._command_queue_map[trace_no] = Queue()
 
     @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
