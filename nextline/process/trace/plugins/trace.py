@@ -48,11 +48,14 @@ class TaskAndThreadKeeper:
     def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
         if self._hook.hook.filter(trace_args=(frame, event, arg)):
             return None
+        self.filtered()
+        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
+
+    def filtered(self) -> None:
         task_or_thread = current_task_or_thread()
         if task_or_thread not in self._tasks_or_threads:
             self._task_or_thread_start()
             self._tasks_or_threads.add(task_or_thread)
-        return self._hook.hook.local_trace_func(frame=frame, event=event, arg=arg)
 
     def _task_or_thread_start(self) -> None:
         task_or_thread = current_task_or_thread()
