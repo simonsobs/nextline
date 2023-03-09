@@ -79,7 +79,8 @@ class CallbackForTrace:
         self._traces_on_call: Set[TraceNo] = set()
 
     def _is_on_call(self) -> bool:
-        return self._trace_args is not None
+        trace_no = self._hook.hook.current_trace_no()
+        return trace_no in self._traces_on_call
 
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
@@ -97,7 +98,7 @@ class CallbackForTrace:
     @contextmanager
     def cmdloop(self):
         trace_no = self._hook.hook.current_trace_no()
-        if trace_no not in self._traces_on_call:
+        if not self._is_on_call():
             raise TraceNotCalled
         if self._trace_args is None:
             raise TraceNotCalled
