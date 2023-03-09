@@ -52,7 +52,7 @@ class LocalTraceFunc:
 
         trace = instantiate_pdb(callback=self._callback)
 
-        trace = TraceCallCallback(trace=trace, callback=self._callback)
+        trace = TraceCallCallback(trace=trace, hook=self._hook)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
@@ -104,13 +104,6 @@ class Callback:
         self._logger = getLogger(__name__)
 
     @contextmanager
-    def trace_call(self, trace_args: TraceArgs):
-        trace_no = self._hook.hook.current_trace_no()
-
-        with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
-            yield
-
-    @contextmanager
     def cmdloop(self):
         if not self._hook.hook.is_on_trace_call():
             raise TraceNotCalled
@@ -148,10 +141,12 @@ class Callback:
         return command
 
 
-def TraceCallCallback(trace: TraceFunc, callback: Callback) -> TraceFunc:
+def TraceCallCallback(trace: TraceFunc, hook: PluginManager) -> TraceFunc:
     @contextmanager
     def _context(frame, event, arg):
-        with callback.trace_call(trace_args=(frame, event, arg)):
+        trace_no = hook.hook.current_trace_no()
+        trace_args = (frame, event, arg)
+        with hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
             yield
 
     return WithContext(trace, context=_context)
