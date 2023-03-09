@@ -1,10 +1,11 @@
 from __future__ import annotations
+from collections import defaultdict
 
 from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Tuple
 
 from apluggy import PluginManager
 
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 class LocalTraceFunc:
     def __init__(self) -> None:
         self._prompt_no_counter = PromptNoCounter(1)
-        self._map: Dict[TraceNo, TraceFunc] = {}
+        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
 
     @hookimpl
     def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
@@ -46,10 +47,7 @@ class LocalTraceFunc:
 
     def _get_local_trace_func(self) -> TraceFunc:
         trace_no = self._hook.hook.current_trace_no()
-        local_trace_func = self._map.get(trace_no)
-        if local_trace_func is None:
-            local_trace_func = self._create()
-            self._map[trace_no] = local_trace_func
+        local_trace_func = self._map[trace_no]
         return local_trace_func
 
     def _create(self) -> TraceFunc:
