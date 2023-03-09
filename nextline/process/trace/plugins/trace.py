@@ -162,6 +162,7 @@ class TaskOrThreadToTraceMapper:
 
         self._done_callback = ThreadTaskDoneCallback(done=self._task_or_thread_end)
         self._entering_thread: Optional[Thread] = None
+        self._thread_to_end: Optional[Thread] = None
 
         self._tasks_or_threads: WeakSet[Task | Thread] = WeakSet()
 
@@ -180,7 +181,9 @@ class TaskOrThreadToTraceMapper:
     def _task_or_thread_start(self) -> None:
         task_or_thread = current_task_or_thread()
 
-        if task_or_thread is not self._entering_thread:
+        if task_or_thread is self._entering_thread:
+            self._thread_to_end = self._entering_thread
+        else:
             self._done_callback.register(task_or_thread)
 
         self._thread_task_nums_counter()  # increment the counter
@@ -230,6 +233,5 @@ class TaskOrThreadToTraceMapper:
     @hookimpl
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._done_callback.close()
-        if self._entering_thread:
-            if trace_no := self._trace_no_map.get(self._entering_thread):
-                self._trace_end(trace_no)
+        if self._thread_to_end:
+            self._task_or_thread_end(self._thread_to_end)
