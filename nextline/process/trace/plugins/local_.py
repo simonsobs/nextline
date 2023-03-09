@@ -31,6 +31,12 @@ class LocalTraceFunc:
         self._hook = hook
         self._command_queue_map = command_queue_map
 
+        self._callback = CallbackForTrace(
+            hook=self._hook,
+            command_queue_map=self._command_queue_map,
+            prompt_no_counter=self._prompt_no_counter,
+        )
+
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
         self._command_queue_map[trace_no] = Queue()
@@ -46,15 +52,10 @@ class LocalTraceFunc:
         return local_trace_func(frame, event, arg)
 
     def _create(self) -> TraceFunc:
-        callback = CallbackForTrace(
-            hook=self._hook,
-            command_queue_map=self._command_queue_map,
-            prompt_no_counter=self._prompt_no_counter,
-        )
 
-        trace = instantiate_pdb(callback=callback)
+        trace = instantiate_pdb(callback=self._callback)
 
-        trace = TraceCallCallback(trace=trace, callback=callback)
+        trace = TraceCallCallback(trace=trace, callback=self._callback)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
