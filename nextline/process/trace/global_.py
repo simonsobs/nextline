@@ -9,7 +9,7 @@ from apluggy import PluginManager
 from . import spec
 
 if TYPE_CHECKING:
-    from sys import TraceFunction   # type: ignore  # noqa: F401
+    from sys import TraceFunction  # type: ignore  # noqa: F401
 
 
 assert spec.PROJECT_NAME  # used in the doctest
@@ -20,6 +20,9 @@ class TraceFunc:
 
     Python docs: sys.settrace():
     https://docs.python.org/3/library/sys.html#sys.settrace
+
+    This class only calls a hook function. The actual trace function is
+    implemented in plugins.
 
     Example:
 
@@ -33,10 +36,15 @@ class TraceFunc:
 
     >>> # In practice, plugins are registered here.
 
-    Set an instance of this class as the global trace function inside the "with" block.
+    Enter the "with" block:
     >>> with TraceFunc(hook) as trace_func:
+    ...
+    ...     # Set the trace function.
     ...     sys.settrace(trace_func)
+    ...
     ...     # run the Nextline client function here
+    ...
+    ...     # Unset the trace function.
     ...     sys.settrace(trace_org)
 
     '''
