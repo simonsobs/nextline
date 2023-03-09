@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, DefaultDict, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, DefaultDict, Optional, Set, Tuple
 
 from apluggy import PluginManager
 
@@ -48,7 +48,6 @@ class LocalTraceFunc:
     def _create(self) -> TraceFunc:
         trace_no = self._hook.hook.current_trace_no()
         callback = CallbackForTrace(
-            trace_no=trace_no,
             hook=self._hook,
             command_queue=self._command_queue_map[trace_no],
             prompt_no_counter=self._prompt_no_counter,
@@ -66,12 +65,10 @@ class LocalTraceFunc:
 class CallbackForTrace:
     def __init__(
         self,
-        trace_no: TraceNo,
         hook: PluginManager,
         command_queue: Queue[Tuple[str, PromptNo, TraceNo]],
         prompt_no_counter: Callable[[], PromptNo],
     ):
-        self._trace_no = trace_no
         self._hook = hook
         self._prompt_no_counter = prompt_no_counter
 
@@ -80,32 +77,45 @@ class CallbackForTrace:
 
         self._logger = getLogger(__name__)
 
+        self._traces_on_call: Set[TraceNo] = set()
+
+    def _is_on_call(self) -> bool:
+        return self._trace_args is not None
+
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
+        trace_no = self._hook.hook.current_trace_no()
+        self._traces_on_call.add(trace_no)
         self._trace_args = trace_args
+
         with self._hook.with_.trace_call(
-            trace_no=self._trace_no, trace_args=trace_args
+            trace_no=trace_no, trace_args=trace_args
         ):
             try:
                 yield
             finally:
+                self._traces_on_call.remove(trace_no)
                 self._trace_args = None
 
     @contextmanager
     def cmdloop(self):
+        trace_no = self._hook.hook.current_trace_no()
+        if trace_no not in self._traces_on_call:
+            raise TraceNotCalled
         if self._trace_args is None:
             raise TraceNotCalled
         with self._hook.with_.cmdloop(
-            trace_no=self._trace_no, trace_args=self._trace_args
+            trace_no=trace_no, trace_args=self._trace_args
         ):
             yield
 
     def prompt(self, text: str) -> str:
+        trace_no = self._hook.hook.current_trace_no()
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
         with (
             p := self._hook.with_.prompt(
-                trace_no=self._trace_no,
+                trace_no=trace_no,
                 prompt_no=prompt_no,
                 trace_args=self._trace_args,
                 out=text,
@@ -114,9 +124,9 @@ class CallbackForTrace:
             while True:
                 command, prompt_no_, trace_no_ = self._command_queue.get()
                 try:
-                    assert trace_no_ == self._trace_no
+                    assert trace_no_ == trace_no
                 except AssertionError:
-                    msg = f'TraceNo mismatch: {trace_no_} != {self._trace_no}'
+                    msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
                     self._logger.exception(msg)
                     raise
                 if prompt_no_ == prompt_no:
