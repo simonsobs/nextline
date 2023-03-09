@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, ContextManager, Optional
 
@@ -11,15 +10,6 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
     from nextline.process.trace.plugins.local_ import Callback
-
-
-def TraceCallCallback(trace: TraceFunc, callback: Callback) -> TraceFunc:
-    @contextmanager
-    def _context(frame, event, arg):
-        with callback.trace_call(trace_args=(frame, event, arg)):
-            yield
-
-    return WithContext(trace, context=_context)
 
 
 def WithContext(

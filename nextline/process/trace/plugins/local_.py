@@ -10,7 +10,7 @@ from apluggy import PluginManager, contextmanager
 
 from nextline.count import PromptNoCounter
 from nextline.process.exc import TraceNotCalled
-from nextline.process.pdb.proxy import TraceCallCallback, instantiate_pdb
+from nextline.process.pdb.proxy import WithContext, instantiate_pdb
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
@@ -146,3 +146,12 @@ class Callback:
                 self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
             p.gen.send(command)
         return command
+
+
+def TraceCallCallback(trace: TraceFunc, callback: Callback) -> TraceFunc:
+    @contextmanager
+    def _context(frame, event, arg):
+        with callback.trace_call(trace_args=(frame, event, arg)):
+            yield
+
+    return WithContext(trace, context=_context)
