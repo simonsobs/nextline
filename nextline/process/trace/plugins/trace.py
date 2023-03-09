@@ -81,13 +81,11 @@ class TaskAndThreadKeeper:
 
     @hookimpl
     def current_thread_no(self) -> ThreadNo:
-        thread_task_id = self._counter()
-        return thread_task_id.thread_no
+        return self._counter().thread_no
 
     @hookimpl
     def current_task_no(self) -> Optional[TaskNo]:
-        thread_task_id = self._counter()
-        return thread_task_id.task_no
+        return self._counter().task_no
 
     @hookimpl
     def start(self) -> None:
