@@ -105,32 +105,24 @@ class TaskOrThreadToTraceMapper:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
-        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
-        self._trace_no_counter = TraceNoCounter(1)
+        self._map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+        self._counter = TraceNoCounter(1)
         self._logger = getLogger(__name__)
 
     @hookimpl
     def task_or_thread_start(self) -> None:
-        task_or_thread = current_task_or_thread()
-        trace_no = self._trace_no_counter()
-        self._trace_no_map[task_or_thread] = trace_no
-        self._trace_start(trace_no)
+        trace_no = self._counter()
+        self._map[current_task_or_thread()] = trace_no
+        self._hook.hook.trace_start(trace_no=trace_no)
 
     @hookimpl
     def task_or_thread_end(self, task_or_thread: Task | Thread):
-        trace_no = self._trace_no_map[task_or_thread]
-        self._trace_end(trace_no)
-
-    def _trace_start(self, trace_no: TraceNo):
-        self._hook.hook.trace_start(trace_no=trace_no)
-
-    def _trace_end(self, trace_no: TraceNo):
+        trace_no = self._map[task_or_thread]
         self._hook.hook.trace_end(trace_no=trace_no)
 
     @hookimpl
     def current_trace_no(self) -> Optional[TraceNo]:
-        task_or_thread = current_task_or_thread()
-        return self._trace_no_map.get(task_or_thread)
+        return self._map.get(current_task_or_thread())
 
 
 class LocalTraceFunc:
