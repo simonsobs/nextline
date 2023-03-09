@@ -43,19 +43,17 @@ class GlobalTraceFunc:
 
 
 class TaskAndThreadKeeper:
+    def __init__(self) -> None:
+        self._set: WeakSet[Task | Thread] = WeakSet()
+        self._counter = ThreadTaskIdComposer()
+        self._callback = ThreadTaskDoneCallback(done=self._on_end)
+        self._main_thread: Optional[Thread] = None
+        self._to_end: Optional[Thread] = None
+        self._logger = getLogger(__name__)
+
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
-
-        self._counter = ThreadTaskIdComposer()
-        self._callback = ThreadTaskDoneCallback(done=self._on_end)
-
-        self._main_thread: Optional[Thread] = None
-        self._to_end: Optional[Thread] = None
-
-        self._set: WeakSet[Task | Thread] = WeakSet()
-
-        self._logger = getLogger(__name__)
 
     @hookimpl
     def filtered(self) -> None:
@@ -65,16 +63,12 @@ class TaskAndThreadKeeper:
             self._set.add(current)
 
     def _on_start(self, current: Task | Thread) -> None:
-
         self._logger.info(f'{self.__class__.__name__}._on_start: {current}')
-
         if current is self._main_thread:
             self._to_end = self._main_thread
         else:
             self._callback.register(current)
-
         self._counter()  # increment the counter
-
         self._hook.hook.task_or_thread_start()
 
     def _on_end(self, ending: Task | Thread):
