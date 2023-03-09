@@ -46,10 +46,9 @@ class LocalTraceFunc:
         return local_trace_func(frame, event, arg)
 
     def _create(self) -> TraceFunc:
-        trace_no = self._hook.hook.current_trace_no()
         callback = CallbackForTrace(
             hook=self._hook,
-            command_queue=self._command_queue_map[trace_no],
+            command_queue_map=self._command_queue_map,
             prompt_no_counter=self._prompt_no_counter,
         )
 
@@ -66,13 +65,13 @@ class CallbackForTrace:
     def __init__(
         self,
         hook: PluginManager,
-        command_queue: Queue[Tuple[str, PromptNo, TraceNo]],
+        command_queue_map: CommandQueueMap,
         prompt_no_counter: Callable[[], PromptNo],
     ):
         self._hook = hook
+        self._command_queue_map = command_queue_map
         self._prompt_no_counter = prompt_no_counter
 
-        self._command_queue = command_queue
         self._trace_args: TraceArgs | None = None
 
         self._logger = getLogger(__name__)
@@ -88,9 +87,7 @@ class CallbackForTrace:
         self._traces_on_call.add(trace_no)
         self._trace_args = trace_args
 
-        with self._hook.with_.trace_call(
-            trace_no=trace_no, trace_args=trace_args
-        ):
+        with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
             try:
                 yield
             finally:
@@ -104,15 +101,14 @@ class CallbackForTrace:
             raise TraceNotCalled
         if self._trace_args is None:
             raise TraceNotCalled
-        with self._hook.with_.cmdloop(
-            trace_no=trace_no, trace_args=self._trace_args
-        ):
+        with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=self._trace_args):
             yield
 
     def prompt(self, text: str) -> str:
         trace_no = self._hook.hook.current_trace_no()
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
+        queue = self._command_queue_map[trace_no]
         with (
             p := self._hook.with_.prompt(
                 trace_no=trace_no,
@@ -122,7 +118,7 @@ class CallbackForTrace:
             )
         ):
             while True:
-                command, prompt_no_, trace_no_ = self._command_queue.get()
+                command, prompt_no_, trace_no_ = queue.get()
                 try:
                     assert trace_no_ == trace_no
                 except AssertionError:
