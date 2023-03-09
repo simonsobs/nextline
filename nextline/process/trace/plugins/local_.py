@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 class LocalTraceFunc:
     def __init__(self) -> None:
         self._prompt_no_counter = PromptNoCounter(1)
-        self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
+        self._map: Dict[TraceNo, TraceFunc] = {}
 
     @hookimpl
     def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
@@ -46,10 +46,10 @@ class LocalTraceFunc:
 
     def _get_local_trace_func(self) -> TraceFunc:
         trace_no = self._hook.hook.current_trace_no()
-        local_trace_func = self._local_trace_func_map.get(trace_no)
+        local_trace_func = self._map.get(trace_no)
         if local_trace_func is None:
             local_trace_func = self._create_local_trace_func(trace_no)
-            self._local_trace_func_map[trace_no] = local_trace_func
+            self._map[trace_no] = local_trace_func
         return local_trace_func
 
     def _create_local_trace_func(self, trace_no: TraceNo) -> TraceFunc:
