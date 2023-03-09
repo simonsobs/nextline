@@ -48,11 +48,11 @@ class LocalTraceFunc:
         trace_no = self._hook.hook.current_trace_no()
         local_trace_func = self._map.get(trace_no)
         if local_trace_func is None:
-            local_trace_func = self._create_local_trace_func(trace_no)
+            local_trace_func = self._create(trace_no)
             self._map[trace_no] = local_trace_func
         return local_trace_func
 
-    def _create_local_trace_func(self, trace_no: TraceNo) -> TraceFunc:
+    def _create(self, trace_no: TraceNo) -> TraceFunc:
         callback_for_trace = CallbackForTrace(
             trace_no=trace_no,
             hook=self._hook,
