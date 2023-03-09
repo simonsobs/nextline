@@ -1,8 +1,8 @@
 __all__ = [
-    'GlobalTraceFunc',
+    'TraceFunc',
     'build_hook',
 ]
 
 
-from .global_ import GlobalTraceFunc
+from .global_ import TraceFunc
 from .hook import build_hook

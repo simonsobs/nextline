@@ -9,14 +9,14 @@ from apluggy import PluginManager
 from . import spec
 
 if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+    from sys import TraceFunction   # type: ignore  # noqa: F401
 
 
 assert spec.PROJECT_NAME  # used in the doctest
 
 
-class GlobalTraceFunc:
-    '''The global trace function of Nextline to be set by sys.settrace().
+class TraceFunc:
+    '''The trace function of Nextline to be set by sys.settrace().
 
     Python docs: sys.settrace():
     https://docs.python.org/3/library/sys.html#sys.settrace
@@ -34,8 +34,8 @@ class GlobalTraceFunc:
     >>> # In practice, plugins are registered here.
 
     Set an instance of this class as the global trace function inside the "with" block.
-    >>> with GlobalTraceFunc(hook) as global_trace_func:
-    ...     sys.settrace(global_trace_func)
+    >>> with TraceFunc(hook) as trace_func:
+    ...     sys.settrace(trace_func)
     ...     # run the Nextline client function here
     ...     sys.settrace(trace_org)
 
@@ -45,7 +45,7 @@ class GlobalTraceFunc:
         self._hook = hook
         self._logger = getLogger(__name__)
 
-    def __call__(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def __call__(self, frame: FrameType, event, arg) -> Optional[TraceFunction]:
         try:
             return self._hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
         except BaseException:

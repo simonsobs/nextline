@@ -10,7 +10,7 @@ from nextline.types import RunNo
 
 from . import script
 from .call import sys_trace
-from .trace import GlobalTraceFunc, build_hook
+from .trace import TraceFunc, build_hook
 from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
 
 _T = TypeVar('_T')
@@ -75,7 +75,7 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
         command_queue_map=command_queue_map,
     )
 
-    with GlobalTraceFunc(hook=hook) as trace_func:
+    with TraceFunc(hook=hook) as trace_func:
         with relay_commands(q_commands, command_queue_map):
             yield trace_func
 
