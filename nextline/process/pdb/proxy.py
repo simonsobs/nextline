@@ -10,7 +10,7 @@ from .stream import StdInOut
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.trace.plugins.trace import CallbackForTrace
+    from nextline.process.trace.plugins.global_ import CallbackForTrace
 
 
 def TraceCallCallback(trace: TraceFunc, callback: CallbackForTrace) -> TraceFunc:

@@ -16,6 +16,12 @@ __all__ = [
 
 
 from .filter import FilerByModule, FilterByModuleName, FilterLambda
+from .global_ import (
+    GlobalTraceFunc,
+    LocalTraceFunc,
+    TaskAndThreadKeeper,
+    TaskOrThreadToTraceMapper,
+)
 from .peek import PeekStdout
 from .registrar import (
     PromptInfoRegistrar,
@@ -23,10 +29,4 @@ from .registrar import (
     StdoutRegistrar,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
-)
-from .trace import (
-    GlobalTraceFunc,
-    LocalTraceFunc,
-    TaskAndThreadKeeper,
-    TaskOrThreadToTraceMapper,
 )
