@@ -70,11 +70,13 @@ class TraceInfoRegistrar:
 
 
 class PromptInfoRegistrar:
+    def __init__(self) -> None:
+        self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
+
     @hookimpl
     def init(self, run_no: RunNo, registrar: RegistrarProxy):
         self._run_no = run_no
         self._registrar = registrar
-        self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
