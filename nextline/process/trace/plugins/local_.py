@@ -31,7 +31,7 @@ class LocalTraceFunc:
         self._hook = hook
         self._command_queue_map = command_queue_map
 
-        self._callback = CallbackForTrace(
+        self._callback = Callback(
             hook=self._hook,
             command_queue_map=self._command_queue_map,
             prompt_no_counter=self._prompt_no_counter,
@@ -62,7 +62,7 @@ class LocalTraceFunc:
         return trace
 
 
-class CallbackForTrace:
+class Callback:
     def __init__(
         self,
         hook: PluginManager,

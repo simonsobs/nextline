@@ -10,10 +10,10 @@ from .stream import StdInOut
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.trace.plugins.local_ import CallbackForTrace
+    from nextline.process.trace.plugins.local_ import Callback
 
 
-def TraceCallCallback(trace: TraceFunc, callback: CallbackForTrace) -> TraceFunc:
+def TraceCallCallback(trace: TraceFunc, callback: Callback) -> TraceFunc:
     @contextmanager
     def _context(frame, event, arg):
         with callback.trace_call(trace_args=(frame, event, arg)):
@@ -44,7 +44,7 @@ def WithContext(
     return _global_trace
 
 
-def instantiate_pdb(callback: CallbackForTrace):
+def instantiate_pdb(callback: Callback):
     '''Create a new Pdb instance with callback hooked and return its trace function.'''
 
     stdio = StdInOut(prompt_func=callback.prompt)
