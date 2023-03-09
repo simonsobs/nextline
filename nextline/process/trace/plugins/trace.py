@@ -29,128 +29,6 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
-class CallbackForTrace:
-    def __init__(
-        self,
-        trace_no: TraceNo,
-        hook: PluginManager,
-        command_queue_map: CommandQueueMap,
-        prompt_no_counter: Callable[[], PromptNo],
-    ):
-        self._trace_no = trace_no
-        self._hook = hook
-        self._command_queue_map = command_queue_map
-        self._prompt_no_counter = prompt_no_counter
-
-        self._command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
-        self._trace_args: TraceArgs | None = None
-
-        self._logger = getLogger(__name__)
-
-    def trace_start(self):
-        self._command_queue_map[self._trace_no] = self._command_queue = Queue()
-
-    def trace_end(self):
-        del self._command_queue_map[self._trace_no]
-
-    @contextmanager
-    def trace_call(self, trace_args: TraceArgs):
-        self._trace_args = trace_args
-        with self._hook.with_.trace_call(
-            trace_no=self._trace_no, trace_args=trace_args
-        ):
-            try:
-                yield
-            finally:
-                self._trace_args = None
-
-    @contextmanager
-    def cmdloop(self):
-        if self._trace_args is None:
-            raise TraceNotCalled
-        with self._hook.with_.cmdloop(
-            trace_no=self._trace_no, trace_args=self._trace_args
-        ):
-            yield
-
-    def prompt(self, text: str) -> str:
-        prompt_no = self._prompt_no_counter()
-        self._logger.debug(f'PromptNo: {prompt_no}')
-        with (
-            p := self._hook.with_.prompt(
-                trace_no=self._trace_no,
-                prompt_no=prompt_no,
-                trace_args=self._trace_args,
-                out=text,
-            )
-        ):
-            while True:
-                command, prompt_no_, trace_no_ = self._command_queue.get()
-                try:
-                    assert trace_no_ == self._trace_no
-                except AssertionError:
-                    msg = f'TraceNo mismatch: {trace_no_} != {self._trace_no}'
-                    self._logger.exception(msg)
-                    raise
-                if prompt_no_ == prompt_no:
-                    break
-                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
-            p.gen.send(command)
-        return command
-
-
-class LocalTraceFunc:
-    @hookimpl
-    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
-        self._hook = hook
-        self._command_queue_map = command_queue_map
-        self._prompt_no_counter = PromptNoCounter(1)
-
-        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
-
-        self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
-
-    @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
-        callback_for_trace = CallbackForTrace(
-            trace_no=trace_no,
-            hook=self._hook,
-            command_queue_map=self._command_queue_map,
-            prompt_no_counter=self._prompt_no_counter,
-        )
-        self._callback_for_trace_map[trace_no] = callback_for_trace
-        callback_for_trace.trace_start()
-
-    @hookimpl
-    def trace_end(self, trace_no: TraceNo) -> None:
-        self._callback_for_trace_map[trace_no].trace_end()
-        del self._callback_for_trace_map[trace_no]
-
-    @hookimpl
-    def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
-        local_trace_func = self._get_local_trace_func()
-        return local_trace_func(frame, event, arg)
-
-    def _get_local_trace_func(self) -> TraceFunc:
-        trace_no = self._hook.hook.current_trace_no()
-        local_trace_func = self._local_trace_func_map.get(trace_no)
-        if local_trace_func is None:
-            local_trace_func = self._create_local_trace_func(trace_no)
-            self._local_trace_func_map[trace_no] = local_trace_func
-        return local_trace_func
-
-    def _create_local_trace_func(self, trace_no: TraceNo) -> TraceFunc:
-        callback_for_trace = self._callback_for_trace_map[trace_no]
-
-        trace = instantiate_pdb(callback=callback_for_trace)
-
-        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
-        # TODO: Add a test. The tests pass without the above line.  Without it,
-        #       the arrow in the web UI does not move when the Pdb is "continuing."
-
-        return trace
-
-
 class TaskOrThreadToTraceMapper:
     @hookimpl
     def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
@@ -235,3 +113,125 @@ class TaskOrThreadToTraceMapper:
         self._done_callback.close()
         if self._thread_to_end:
             self._task_or_thread_end(self._thread_to_end)
+
+
+class LocalTraceFunc:
+    @hookimpl
+    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
+        self._hook = hook
+        self._command_queue_map = command_queue_map
+        self._prompt_no_counter = PromptNoCounter(1)
+
+        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
+
+        self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
+
+    @hookimpl
+    def trace_start(self, trace_no: TraceNo) -> None:
+        callback_for_trace = CallbackForTrace(
+            trace_no=trace_no,
+            hook=self._hook,
+            command_queue_map=self._command_queue_map,
+            prompt_no_counter=self._prompt_no_counter,
+        )
+        self._callback_for_trace_map[trace_no] = callback_for_trace
+        callback_for_trace.trace_start()
+
+    @hookimpl
+    def trace_end(self, trace_no: TraceNo) -> None:
+        self._callback_for_trace_map[trace_no].trace_end()
+        del self._callback_for_trace_map[trace_no]
+
+    @hookimpl
+    def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+        local_trace_func = self._get_local_trace_func()
+        return local_trace_func(frame, event, arg)
+
+    def _get_local_trace_func(self) -> TraceFunc:
+        trace_no = self._hook.hook.current_trace_no()
+        local_trace_func = self._local_trace_func_map.get(trace_no)
+        if local_trace_func is None:
+            local_trace_func = self._create_local_trace_func(trace_no)
+            self._local_trace_func_map[trace_no] = local_trace_func
+        return local_trace_func
+
+    def _create_local_trace_func(self, trace_no: TraceNo) -> TraceFunc:
+        callback_for_trace = self._callback_for_trace_map[trace_no]
+
+        trace = instantiate_pdb(callback=callback_for_trace)
+
+        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
+        # TODO: Add a test. The tests pass without the above line.  Without it,
+        #       the arrow in the web UI does not move when the Pdb is "continuing."
+
+        return trace
+
+
+class CallbackForTrace:
+    def __init__(
+        self,
+        trace_no: TraceNo,
+        hook: PluginManager,
+        command_queue_map: CommandQueueMap,
+        prompt_no_counter: Callable[[], PromptNo],
+    ):
+        self._trace_no = trace_no
+        self._hook = hook
+        self._command_queue_map = command_queue_map
+        self._prompt_no_counter = prompt_no_counter
+
+        self._command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
+        self._trace_args: TraceArgs | None = None
+
+        self._logger = getLogger(__name__)
+
+    def trace_start(self):
+        self._command_queue_map[self._trace_no] = self._command_queue = Queue()
+
+    def trace_end(self):
+        del self._command_queue_map[self._trace_no]
+
+    @contextmanager
+    def trace_call(self, trace_args: TraceArgs):
+        self._trace_args = trace_args
+        with self._hook.with_.trace_call(
+            trace_no=self._trace_no, trace_args=trace_args
+        ):
+            try:
+                yield
+            finally:
+                self._trace_args = None
+
+    @contextmanager
+    def cmdloop(self):
+        if self._trace_args is None:
+            raise TraceNotCalled
+        with self._hook.with_.cmdloop(
+            trace_no=self._trace_no, trace_args=self._trace_args
+        ):
+            yield
+
+    def prompt(self, text: str) -> str:
+        prompt_no = self._prompt_no_counter()
+        self._logger.debug(f'PromptNo: {prompt_no}')
+        with (
+            p := self._hook.with_.prompt(
+                trace_no=self._trace_no,
+                prompt_no=prompt_no,
+                trace_args=self._trace_args,
+                out=text,
+            )
+        ):
+            while True:
+                command, prompt_no_, trace_no_ = self._command_queue.get()
+                try:
+                    assert trace_no_ == self._trace_no
+                except AssertionError:
+                    msg = f'TraceNo mismatch: {trace_no_} != {self._trace_no}'
+                    self._logger.exception(msg)
+                    raise
+                if prompt_no_ == prompt_no:
+                    break
+                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+            p.gen.send(command)
+        return command
