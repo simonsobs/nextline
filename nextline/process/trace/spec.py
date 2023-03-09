@@ -50,6 +50,11 @@ def filter(trace_args: TraceArgs) -> bool | None:
     pass
 
 
+@hookspec
+def filtered(trace_args: TraceArgs) -> None:
+    pass
+
+
 @hookspec(firstresult=True)
 def local_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunc]:
     pass
