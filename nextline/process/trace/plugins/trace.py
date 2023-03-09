@@ -182,15 +182,15 @@ class TaskOrThreadToTraceMapper:
     def _task_or_thread_start(self) -> None:
         task_or_thread = current_task_or_thread()
 
-        trace_no = self._trace_no_counter()
-        self._trace_no_map[task_or_thread] = trace_no
-
         if task_or_thread is not self._entering_thread:
             self._thread_task_done_callback.register(task_or_thread)
 
+        self._thread_task_nums_counter()  # increment the counter
+
         self._hook.hook.task_or_thread_start()
 
-        self._thread_task_nums_counter()  # increment the counter
+        trace_no = self._trace_no_counter()
+        self._trace_no_map[task_or_thread] = trace_no
 
         self._trace_start(trace_no)
 
