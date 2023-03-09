@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 class LocalTraceFunc:
     def __init__(self) -> None:
         self._prompt_no_counter = PromptNoCounter(1)
-        self._callback_for_trace_map: Dict[TraceNo, CallbackForTrace] = {}
         self._local_trace_func_map: Dict[TraceNo, TraceFunc] = {}
 
     @hookimpl
@@ -35,18 +34,10 @@ class LocalTraceFunc:
     def trace_start(self, trace_no: TraceNo) -> None:
         command_queue: Queue[Tuple[str, PromptNo, TraceNo]] = Queue()
         self._command_queue_map[trace_no] = command_queue
-        callback_for_trace = CallbackForTrace(
-            trace_no=trace_no,
-            hook=self._hook,
-            command_queue=command_queue,
-            prompt_no_counter=self._prompt_no_counter,
-        )
-        self._callback_for_trace_map[trace_no] = callback_for_trace
 
     @hookimpl
     def trace_end(self, trace_no: TraceNo) -> None:
         del self._command_queue_map[trace_no]
-        del self._callback_for_trace_map[trace_no]
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
@@ -62,7 +53,12 @@ class LocalTraceFunc:
         return local_trace_func
 
     def _create_local_trace_func(self, trace_no: TraceNo) -> TraceFunc:
-        callback_for_trace = self._callback_for_trace_map[trace_no]
+        callback_for_trace = CallbackForTrace(
+            trace_no=trace_no,
+            hook=self._hook,
+            command_queue=self._command_queue_map[trace_no],
+            prompt_no_counter=self._prompt_no_counter,
+        )
 
         trace = instantiate_pdb(callback=callback_for_trace)
 
