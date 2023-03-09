@@ -21,6 +21,7 @@ from .plugins import (
     StdoutRegistrar,
     TaskAndThreadKeeper,
     TaskOrThreadToTraceMapper,
+    TraceCallHandler,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
@@ -71,7 +72,10 @@ def build_hook(
     hook.register(PromptInfoRegistrar(), name='prompt_info')
     hook.register(TraceNumbersRegistrar(), name='trace_numbers')
     hook.register(PeekStdout(), name='peek_stdout')
+
+    hook.register(TraceCallHandler(), name='trace_call_handler')
     hook.register(LocalTraceFunc(), name='local_trace_func')
+
     hook.register(TaskOrThreadToTraceMapper(), name='task_or_thread_to_trace_mapper')
     hook.register(TaskAndThreadKeeper(), name='task_and_thread_keeper')
 

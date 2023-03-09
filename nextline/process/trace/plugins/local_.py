@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from types import FrameType
 from typing import TYPE_CHECKING, DefaultDict, Dict, Optional, Set
 
-from apluggy import PluginManager
+from apluggy import PluginManager, contextmanager
 
 from nextline.count import PromptNoCounter
 from nextline.process.exc import TraceNotCalled
@@ -60,6 +59,37 @@ class LocalTraceFunc:
         return trace
 
 
+class TraceCallHandler:
+    def __init__(self) -> None:
+        self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
+        self._traces_on_call: Set[TraceNo] = set()
+
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._hook = hook
+
+    @hookimpl
+    @contextmanager
+    def trace_call(self, trace_no: TraceNo, trace_args: TraceArgs):
+        self._traces_on_call.add(trace_no)
+        self._trace_args_map[trace_no] = trace_args
+        try:
+            yield
+        finally:
+            self._traces_on_call.remove(trace_no)
+            del self._trace_args_map[trace_no]
+
+    @hookimpl
+    def is_on_trace_call(self) -> Optional[bool]:
+        trace_no = self._hook.hook.current_trace_no()
+        return trace_no in self._traces_on_call
+
+    @hookimpl
+    def current_trace_args(self) -> Optional[TraceArgs]:
+        trace_no = self._hook.hook.current_trace_no()
+        return self._trace_args_map.get(trace_no)
+
+
 class Callback:
     def __init__(
         self,
@@ -71,41 +101,27 @@ class Callback:
 
         self._prompt_no_counter = PromptNoCounter(1)
 
-        self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
-
         self._logger = getLogger(__name__)
-
-        self._traces_on_call: Set[TraceNo] = set()
-
-    def _is_on_call(self) -> bool:
-        trace_no = self._hook.hook.current_trace_no()
-        return trace_no in self._traces_on_call
 
     @contextmanager
     def trace_call(self, trace_args: TraceArgs):
         trace_no = self._hook.hook.current_trace_no()
-        self._traces_on_call.add(trace_no)
-        self._trace_args_map[trace_no] = trace_args
 
         with self._hook.with_.trace_call(trace_no=trace_no, trace_args=trace_args):
-            try:
-                yield
-            finally:
-                self._traces_on_call.remove(trace_no)
-                del self._trace_args_map[trace_no]
+            yield
 
     @contextmanager
     def cmdloop(self):
-        if not self._is_on_call():
+        if not self._hook.hook.is_on_trace_call():
             raise TraceNotCalled
         trace_no = self._hook.hook.current_trace_no()
-        trace_args = self._trace_args_map[trace_no]
+        trace_args = self._hook.hook.current_trace_args()
         with self._hook.with_.cmdloop(trace_no=trace_no, trace_args=trace_args):
             yield
 
     def prompt(self, text: str) -> str:
         trace_no = self._hook.hook.current_trace_no()
-        trace_args = self._trace_args_map[trace_no]
+        trace_args = self._hook.hook.current_trace_args()
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
         queue = self._command_queue_map[trace_no]

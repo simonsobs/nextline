@@ -101,6 +101,16 @@ def trace_call(trace_no: TraceNo, trace_args: TraceArgs):
     pass
 
 
+@hookspec(firstresult=True)
+def is_on_trace_call() -> Optional[bool]:
+    pass
+
+
+@hookspec(firstresult=True)
+def current_trace_args() -> Optional[TraceArgs]:
+    pass
+
+
 @hookspec
 @contextmanager
 def cmdloop(trace_no: TraceNo, trace_args: TraceArgs):
