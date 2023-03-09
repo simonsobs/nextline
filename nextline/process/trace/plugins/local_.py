@@ -53,16 +53,16 @@ class LocalTraceFunc:
         return local_trace_func
 
     def _create(self, trace_no: TraceNo) -> TraceFunc:
-        callback_for_trace = CallbackForTrace(
+        callback = CallbackForTrace(
             trace_no=trace_no,
             hook=self._hook,
             command_queue=self._command_queue_map[trace_no],
             prompt_no_counter=self._prompt_no_counter,
         )
 
-        trace = instantiate_pdb(callback=callback_for_trace)
+        trace = instantiate_pdb(callback=callback)
 
-        trace = TraceCallCallback(trace=trace, callback=callback_for_trace)
+        trace = TraceCallCallback(trace=trace, callback=callback)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
