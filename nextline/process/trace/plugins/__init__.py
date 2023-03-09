@@ -9,6 +9,7 @@ __all__ = [
     'TraceInfoRegistrar',
     'TraceNumbersRegistrar',
     'LocalTraceFunc',
+    'TaskAndThreadKeeper',
     'TaskOrThreadToTraceMapper',
 ]
 
@@ -22,4 +23,4 @@ from .registrar import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
-from .trace import LocalTraceFunc, TaskOrThreadToTraceMapper
+from .trace import LocalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMapper

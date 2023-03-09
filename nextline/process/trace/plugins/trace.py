@@ -29,14 +29,12 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
-class TaskOrThreadToTraceMapper:
+class TaskAndThreadKeeper:
     @hookimpl
-    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
-        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+    def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
         self._thread_task_nums_counter = ThreadTaskIdComposer()
-        self._trace_no_counter = TraceNoCounter(1)
 
         self._done_callback = ThreadTaskDoneCallback(done=self._task_or_thread_end)
         self._entering_thread: Optional[Thread] = None
@@ -72,6 +70,36 @@ class TaskOrThreadToTraceMapper:
         self._hook.hook.task_or_thread_end(task_or_thread=task_or_thread)
 
     @hookimpl
+    def current_thread_no(self) -> ThreadNo:
+        thread_task_id = self._thread_task_nums_counter()
+        return thread_task_id.thread_no
+
+    @hookimpl
+    def current_task_no(self) -> Optional[TaskNo]:
+        thread_task_id = self._thread_task_nums_counter()
+        return thread_task_id.task_no
+
+    @hookimpl
+    def start(self) -> None:
+        self._entering_thread = threading.current_thread()
+
+    @hookimpl
+    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
+        self._done_callback.close()
+        if self._thread_to_end:
+            self._task_or_thread_end(self._thread_to_end)
+
+
+class TaskOrThreadToTraceMapper:
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._hook = hook
+
+        self._trace_no_map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+        self._trace_no_counter = TraceNoCounter(1)
+        self._logger = getLogger(__name__)
+
+    @hookimpl
     def task_or_thread_start(self) -> None:
         task_or_thread = current_task_or_thread()
         trace_no = self._trace_no_counter()
@@ -90,29 +118,9 @@ class TaskOrThreadToTraceMapper:
         self._hook.hook.trace_end(trace_no=trace_no)
 
     @hookimpl
-    def current_thread_no(self) -> ThreadNo:
-        thread_task_id = self._thread_task_nums_counter()
-        return thread_task_id.thread_no
-
-    @hookimpl
-    def current_task_no(self) -> Optional[TaskNo]:
-        thread_task_id = self._thread_task_nums_counter()
-        return thread_task_id.task_no
-
-    @hookimpl
     def current_trace_no(self) -> Optional[TraceNo]:
         task_or_thread = current_task_or_thread()
         return self._trace_no_map.get(task_or_thread)
-
-    @hookimpl
-    def start(self) -> None:
-        self._entering_thread = threading.current_thread()
-
-    @hookimpl
-    def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
-        self._done_callback.close()
-        if self._thread_to_end:
-            self._task_or_thread_end(self._thread_to_end)
 
 
 class LocalTraceFunc:
