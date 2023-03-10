@@ -21,7 +21,7 @@ class PdbInstanceFactory:
     Each time the first result only hook `create_local_trace_func` is called,
     this plugin creates a new instance of the customized Pdb class and returns
     its trace function.
-    
+
     The hook `create_local_trace_func` is called for each async task or thread.
     '''
 
@@ -52,6 +52,8 @@ def Factory(hook: PluginManager):
 
 
 def CmdloopHook(hook: PluginManager):
+    '''Return a context manager in which Pdb.cmdloop() is called.'''
+
     def cmdloop():
         if not hook.hook.is_on_trace_call():
             raise NotOnTraceCall
@@ -61,6 +63,7 @@ def CmdloopHook(hook: PluginManager):
 
 
 def PromptFunc(hook: PluginManager) -> PromptFuncType:
+    '''Return a function that responds to Pdb prompts with user commands.'''
 
     counter = PromptNoCounter(1)
     logger = getLogger(__name__)
