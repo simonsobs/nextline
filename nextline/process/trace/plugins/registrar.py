@@ -129,13 +129,9 @@ class PromptInfoRegistrar:
 
     @hookimpl
     @contextmanager
-    def prompt(
-        self,
-        trace_no: TraceNo,
-        prompt_no: PromptNo,
-        trace_args: TraceArgs,
-        out: str,
-    ) -> Generator[None, str, None]:
+    def prompt(self, prompt_no: PromptNo, out: str) -> Generator[None, str, None]:
+        trace_no = self._hook.hook.current_trace_no()
+        trace_args = self._hook.hook.current_trace_args()
 
         frame, event, _ = trace_args
         file_name = _to_canonic(frame.f_code.co_filename)

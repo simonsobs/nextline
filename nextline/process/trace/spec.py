@@ -119,9 +119,7 @@ def cmdloop():
 
 @hookspec
 @contextmanager
-def prompt(
-    trace_no: TraceNo, prompt_no: PromptNo, trace_args: TraceArgs, out: str
-) -> Generator[None, str, None]:
+def prompt(prompt_no: PromptNo, out: str) -> Generator[None, str, None]:
     # Receive the command by gen.send().
     command = yield  # noqa: F841
     yield

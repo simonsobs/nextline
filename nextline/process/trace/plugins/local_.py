@@ -116,18 +116,10 @@ class Callback:
 
     def prompt(self, text: str) -> str:
         trace_no = self._hook.hook.current_trace_no()
-        trace_args = self._hook.hook.current_trace_args()
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
         queue = self._command_queue_map[trace_no]
-        with (
-            p := self._hook.with_.prompt(
-                trace_no=trace_no,
-                prompt_no=prompt_no,
-                trace_args=trace_args,
-                out=text,
-            )
-        ):
+        with (p := self._hook.with_.prompt(prompt_no=prompt_no, out=text)):
             while True:
                 command, prompt_no_, trace_no_ = queue.get()
                 try:
