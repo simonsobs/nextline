@@ -3,13 +3,8 @@ from __future__ import annotations
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, ContextManager, Optional
 
-from .custom import CustomizedPdb
-from .stream import StdInOut
-
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
-
-    from nextline.process.trace.plugins.local_ import PromptFunc
 
 
 def WithContext(
@@ -32,18 +27,3 @@ def WithContext(
         return _create_local_trace()(frame, event, arg)
 
     return _global_trace
-
-
-def instantiate_pdb(callback: PromptFunc):
-    '''Create a new Pdb instance with callback hooked and return its trace function.'''
-
-    stdio = StdInOut(prompt_func=callback.prompt)
-
-    pdb = CustomizedPdb(
-        cmdloop_hook=callback.cmdloop,
-        stdin=stdio,
-        stdout=stdio,
-    )
-    stdio.prompt_end = pdb.prompt
-
-    return pdb.trace_dispatch
