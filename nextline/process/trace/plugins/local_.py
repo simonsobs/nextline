@@ -126,7 +126,7 @@ def PromptFunc(hook: PluginManager, command_queue_map: CommandQueueMap):
     def _prompt_func(text: str) -> str:
         prompt_no = counter()
         logger.debug(f'PromptNo: {prompt_no}')
-        with (p := hook.with_.on_prompt(prompt_no=prompt_no, out=text)):
+        with (p := hook.with_.on_prompt(prompt_no=prompt_no, text=text)):
             command = _get_command(prompt_no=prompt_no)
             p.gen.send(command)
         return command

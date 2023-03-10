@@ -129,7 +129,7 @@ class PromptInfoRegistrar:
 
     @hookimpl
     @contextmanager
-    def on_prompt(self, prompt_no: PromptNo, out: str) -> Generator[None, str, None]:
+    def on_prompt(self, prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
         trace_no = self._hook.hook.current_trace_no()
         trace_args = self._hook.hook.current_trace_args()
 
@@ -144,7 +144,7 @@ class PromptInfoRegistrar:
             event=event,
             file_name=file_name,
             line_no=line_no,
-            stdout=out,
+            stdout=text,
             started_at=datetime.datetime.utcnow(),
         )
         self._registrar.put_prompt_info(prompt_info)

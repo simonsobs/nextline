@@ -119,7 +119,7 @@ def cmdloop():
 
 @hookspec
 @contextmanager
-def on_prompt(prompt_no: PromptNo, out: str) -> Generator[None, str, None]:
+def on_prompt(prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
     # Receive the command by gen.send().
     command = yield  # noqa: F841
     yield
