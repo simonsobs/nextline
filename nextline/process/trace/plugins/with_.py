@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 def WithContext(
     trace: TraceFunc, context: Callable[[FrameType, str, Any], ContextManager[None]]
 ) -> TraceFunc:
+    '''Return a new trace func that calls the given trace func in the context.'''
+
     def _create_local_trace() -> TraceFunc:
         next_trace: TraceFunc | None = trace
 
