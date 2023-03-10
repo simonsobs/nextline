@@ -4,7 +4,7 @@ from collections import defaultdict
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
+from typing import TYPE_CHECKING, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager, contextmanager
 
@@ -27,7 +27,6 @@ class LocalTraceFunc:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
-        self._factory = PdbInstanceFactory(hook=hook)
         self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
 
     @hookimpl
@@ -37,28 +36,26 @@ class LocalTraceFunc:
         return local_trace_func(frame, event, arg)
 
     def _create(self) -> TraceFunc:
-        return TraceCallContext(trace=self._factory(), hook=self._hook)
+        trace = self._hook.hook.create_local_trace_func()
+        return TraceCallContext(trace=trace, hook=self._hook)
 
 
-def PdbInstanceFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
+class PdbInstanceFactory:
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._cmdloop_hook = CmdloopHook(hook=hook)
+        self._prompt_func = PromptFunc(hook=hook)
 
-    cmdloop_hook = CmdloopHook(hook=hook)
-    prompt_func = PromptFunc(hook=hook)
-
-    def _factory() -> TraceFunc:
-
-        stdio = StdInOut(prompt_func=prompt_func)
-
+    @hookimpl
+    def create_local_trace_func(self) -> TraceFunc:
+        stdio = StdInOut(prompt_func=self._prompt_func)
         pdb = CustomizedPdb(
-            cmdloop_hook=cmdloop_hook,
+            cmdloop_hook=self._cmdloop_hook,
             stdin=stdio,
             stdout=stdio,
         )
         stdio.prompt_end = pdb.prompt
-
         return pdb.trace_dispatch
-
-    return _factory
 
 
 class Prompt:

@@ -15,6 +15,7 @@ from .plugins import (
     FilterLambda,
     GlobalTraceFunc,
     LocalTraceFunc,
+    PdbInstanceFactory,
     PeekStdout,
     Prompt,
     PromptInfoRegistrar,
@@ -75,6 +76,8 @@ def build_hook(
     hook.register(PeekStdout(), name='peek_stdout')
 
     hook.register(Prompt(), name='prompt')
+    hook.register(PdbInstanceFactory(), name='pdb_instance_factory')
+
     hook.register(TraceCallHandler(), name='trace_call_handler')
     hook.register(LocalTraceFunc(), name='local_trace_func')
 

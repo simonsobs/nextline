@@ -60,6 +60,11 @@ def local_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunc]:
     pass
 
 
+@hookspec(firstresult=True)
+def create_local_trace_func() -> Optional[TraceFunc]:
+    pass
+
+
 @hookspec
 def task_or_thread_start() -> None:
     pass
