@@ -53,7 +53,7 @@ class LocalTraceFunc:
 
     def _create(self) -> TraceFunc:
 
-        stdio = StdInOut(prompt_func=self._callback.prompt)
+        stdio = StdInOut(prompt_func=self._callback)
 
         pdb = CustomizedPdb(
             cmdloop_hook=self._cmdloop_hook,
@@ -119,29 +119,23 @@ def CmdloopHook(hook: PluginManager):
     return cmdloop
 
 
-class Callback:
-    def __init__(
-        self,
-        hook: PluginManager,
-        command_queue_map: CommandQueueMap,
-    ):
-        self._hook = hook
-        self._command_queue_map = command_queue_map
-        self._prompt_no_counter = PromptNoCounter(1)
-        self._logger = getLogger(__name__)
+def Callback(hook: PluginManager, command_queue_map: CommandQueueMap):
 
-    def prompt(self, text: str) -> str:
-        prompt_no = self._prompt_no_counter()
-        self._logger.debug(f'PromptNo: {prompt_no}')
-        with (p := self._hook.with_.prompt(prompt_no=prompt_no, out=text)):
-            command = self._get_command(prompt_no=prompt_no)
+    prompt_no_counter = PromptNoCounter(1)
+    logger = getLogger(__name__)
+
+    def prompt(text: str) -> str:
+        prompt_no = prompt_no_counter()
+        logger.debug(f'PromptNo: {prompt_no}')
+        with (p := hook.with_.prompt(prompt_no=prompt_no, out=text)):
+            command = _get_command(prompt_no=prompt_no)
             p.gen.send(command)
         return command
 
-    def _get_command(self, prompt_no: PromptNo) -> str:
-        trace_no = self._hook.hook.current_trace_no()
-        self._logger.debug(f'PromptNo: {prompt_no}')
-        queue = self._command_queue_map[trace_no]
+    def _get_command(prompt_no: PromptNo) -> str:
+        trace_no = hook.hook.current_trace_no()
+        logger.debug(f'PromptNo: {prompt_no}')
+        queue = command_queue_map[trace_no]
 
         while True:
             command, prompt_no_, trace_no_ = queue.get()
@@ -149,9 +143,11 @@ class Callback:
                 assert trace_no_ == trace_no
             except AssertionError:
                 msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
-                self._logger.exception(msg)
+                logger.exception(msg)
                 raise
             if not prompt_no_ == prompt_no:
-                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+                logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
                 continue
             return command
+
+    return prompt
