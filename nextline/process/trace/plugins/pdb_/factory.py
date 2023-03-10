@@ -18,19 +18,28 @@ if TYPE_CHECKING:
 class PdbInstanceFactory:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
-        self._cmdloop_hook = CmdloopHook(hook=hook)
-        self._prompt_func = PromptFunc(hook=hook)
+        self._factory = Factory(hook=hook)
 
     @hookimpl
     def create_local_trace_func(self) -> TraceFunc:
-        stdio = StdInOut(prompt_func=self._prompt_func)
+        return self._factory()
+
+
+def Factory(hook: PluginManager):
+    cmdloop_hook = CmdloopHook(hook=hook)
+    prompt_func = PromptFunc(hook=hook)
+
+    def _factory():
+        stdio = StdInOut(prompt_func=prompt_func)
         pdb = CustomizedPdb(
-            cmdloop_hook=self._cmdloop_hook,
+            cmdloop_hook=cmdloop_hook,
             stdin=stdio,
             stdout=stdio,
         )
         stdio.prompt_end = pdb.prompt
         return pdb.trace_dispatch
+
+    return _factory
 
 
 def CmdloopHook(hook: PluginManager):
