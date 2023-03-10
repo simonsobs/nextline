@@ -6,9 +6,9 @@ __all__ = [
     'TaskAndThreadKeeper',
     'TaskOrThreadToTraceMapper',
     'LocalTraceFunc',
+    'TraceCallHandler',
     'PdbInstanceFactory',
     'Prompt',
-    'TraceCallHandler',
     'PeekStdout',
     'PromptInfoRegistrar',
     'RegistrarProxy',
@@ -20,7 +20,8 @@ __all__ = [
 
 from .filter import FilerByModule, FilterByModuleName, FilterLambda
 from .global_ import GlobalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMapper
-from .local_ import LocalTraceFunc, PdbInstanceFactory, Prompt, TraceCallHandler
+from .local_ import LocalTraceFunc, TraceCallHandler
+from .pdb_ import PdbInstanceFactory, Prompt
 from .peek import PeekStdout
 from .registrar import (
     PromptInfoRegistrar,
