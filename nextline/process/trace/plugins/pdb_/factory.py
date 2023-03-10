@@ -16,6 +16,15 @@ if TYPE_CHECKING:
 
 
 class PdbInstanceFactory:
+    '''A plugin that creates local trace functions.
+
+    Each time the first result only hook `create_local_trace_func` is called,
+    this plugin creates a new instance of the customized Pdb class and returns
+    its trace function.
+    
+    The hook `create_local_trace_func` is called for each async task or thread.
+    '''
+
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._factory = Factory(hook=hook)
