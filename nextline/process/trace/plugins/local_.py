@@ -11,7 +11,7 @@ from apluggy import PluginManager, contextmanager
 from nextline.count import PromptNoCounter
 from nextline.process.exc import NotOnTraceCall
 from nextline.process.pdb.custom import CustomizedPdb
-from nextline.process.pdb.stream import StdInOut
+from nextline.process.pdb.stream import PromptFuncType, StdInOut
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
@@ -135,7 +135,7 @@ def CmdloopHook(hook: PluginManager):
     return cmdloop
 
 
-def PromptFunc(hook: PluginManager):
+def PromptFunc(hook: PluginManager) -> PromptFuncType:
 
     counter = PromptNoCounter(1)
     logger = getLogger(__name__)
