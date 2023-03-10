@@ -26,23 +26,13 @@ if TYPE_CHECKING:
 class LocalTraceFunc:
     def __init__(self) -> None:
         self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
-        self._logger = getLogger(__name__)
 
     @hookimpl
-    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
+    def init(self, hook: PluginManager) -> None:
         self._hook = hook
-        self._command_queue_map = command_queue_map
 
         self._cmdloop_hook = CmdloopHook(hook=self._hook)
         self._prompt_func = PromptFunc(hook=self._hook)
-
-    @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
-        self._command_queue_map[trace_no] = Queue()
-
-    @hookimpl
-    def trace_end(self, trace_no: TraceNo) -> None:
-        del self._command_queue_map[trace_no]
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
@@ -66,6 +56,24 @@ class LocalTraceFunc:
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
+
+
+class Prompt:
+    def __init__(self) -> None:
+        self._logger = getLogger(__name__)
+
+    @hookimpl
+    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
+        self._hook = hook
+        self._command_queue_map = command_queue_map
+
+    @hookimpl
+    def trace_start(self, trace_no: TraceNo) -> None:
+        self._command_queue_map[trace_no] = Queue()
+
+    @hookimpl
+    def trace_end(self, trace_no: TraceNo) -> None:
+        del self._command_queue_map[trace_no]
 
     @hookimpl
     def prompt(self, prompt_no: PromptNo) -> str:

@@ -6,6 +6,7 @@ __all__ = [
     'TaskAndThreadKeeper',
     'TaskOrThreadToTraceMapper',
     'LocalTraceFunc',
+    'Prompt',
     'TraceCallHandler',
     'PeekStdout',
     'PromptInfoRegistrar',
@@ -18,7 +19,7 @@ __all__ = [
 
 from .filter import FilerByModule, FilterByModuleName, FilterLambda
 from .global_ import GlobalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMapper
-from .local_ import LocalTraceFunc, TraceCallHandler
+from .local_ import LocalTraceFunc, Prompt, TraceCallHandler
 from .peek import PeekStdout
 from .registrar import (
     PromptInfoRegistrar,

@@ -16,6 +16,7 @@ from .plugins import (
     GlobalTraceFunc,
     LocalTraceFunc,
     PeekStdout,
+    Prompt,
     PromptInfoRegistrar,
     RegistrarProxy,
     StdoutRegistrar,
@@ -73,6 +74,7 @@ def build_hook(
     hook.register(TraceNumbersRegistrar(), name='trace_numbers')
     hook.register(PeekStdout(), name='peek_stdout')
 
+    hook.register(Prompt(), name='prompt')
     hook.register(TraceCallHandler(), name='trace_call_handler')
     hook.register(LocalTraceFunc(), name='local_trace_func')
 
