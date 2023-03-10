@@ -10,7 +10,9 @@ from apluggy import PluginManager, contextmanager
 
 from nextline.count import PromptNoCounter
 from nextline.process.exc import NotOnTraceCall
-from nextline.process.pdb.proxy import WithContext, instantiate_pdb
+from nextline.process.pdb.custom import CustomizedPdb
+from nextline.process.pdb.proxy import WithContext
+from nextline.process.pdb.stream import StdInOut
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
@@ -50,7 +52,16 @@ class LocalTraceFunc:
 
     def _create(self) -> TraceFunc:
 
-        trace = instantiate_pdb(callback=self._callback)
+        stdio = StdInOut(prompt_func=self._callback.prompt)
+
+        pdb = CustomizedPdb(
+            cmdloop_hook=self._callback.cmdloop,
+            stdin=stdio,
+            stdout=stdio,
+        )
+        stdio.prompt_end = pdb.prompt
+
+        trace = pdb.trace_dispatch
 
         trace = TraceCallContext(trace=trace, hook=self._hook)
         # TODO: Add a test. The tests pass without the above line.  Without it,
