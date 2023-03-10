@@ -4,7 +4,7 @@ from collections import defaultdict
 from logging import getLogger
 from queue import Queue
 from types import FrameType
-from typing import TYPE_CHECKING, DefaultDict, Dict, Optional, Set
+from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager, contextmanager
 
@@ -24,15 +24,12 @@ if TYPE_CHECKING:
 
 
 class LocalTraceFunc:
-    def __init__(self) -> None:
-        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
-
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
-        self._cmdloop_hook = CmdloopHook(hook=self._hook)
-        self._prompt_func = PromptFunc(hook=self._hook)
+        factory = LocalTraceFuncFactory(hook=hook)
+        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(factory)
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
@@ -40,22 +37,30 @@ class LocalTraceFunc:
         local_trace_func = self._map[trace_no]
         return local_trace_func(frame, event, arg)
 
-    def _create(self) -> TraceFunc:
 
-        stdio = StdInOut(prompt_func=self._prompt_func)
+def LocalTraceFuncFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
+
+    cmdloop_hook = CmdloopHook(hook=hook)
+    prompt_func = PromptFunc(hook=hook)
+
+    def _factory() -> TraceFunc:
+
+        stdio = StdInOut(prompt_func=prompt_func)
 
         pdb = CustomizedPdb(
-            cmdloop_hook=self._cmdloop_hook,
+            cmdloop_hook=cmdloop_hook,
             stdin=stdio,
             stdout=stdio,
         )
         stdio.prompt_end = pdb.prompt
 
-        trace = TraceCallContext(trace=pdb.trace_dispatch, hook=self._hook)
+        trace = TraceCallContext(trace=pdb.trace_dispatch, hook=hook)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
+
+    return _factory
 
 
 class Prompt:
