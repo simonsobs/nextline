@@ -106,17 +106,13 @@ class Callback:
     ):
         self._hook = hook
         self._command_queue_map = command_queue_map
-
         self._prompt_no_counter = PromptNoCounter(1)
-
         self._logger = getLogger(__name__)
 
-    @contextmanager
     def cmdloop(self):
         if not self._hook.hook.is_on_trace_call():
             raise TraceNotCalled
-        with self._hook.with_.cmdloop():
-            yield
+        return self._hook.with_.cmdloop()
 
     def prompt(self, text: str) -> str:
         trace_no = self._hook.hook.current_trace_no()
