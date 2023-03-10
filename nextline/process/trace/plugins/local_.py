@@ -35,6 +35,7 @@ class LocalTraceFunc:
             hook=self._hook,
             command_queue_map=self._command_queue_map,
         )
+        self._cmdloop_hook = CmdloopHook(hook=self._hook)
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
@@ -55,7 +56,7 @@ class LocalTraceFunc:
         stdio = StdInOut(prompt_func=self._callback.prompt)
 
         pdb = CustomizedPdb(
-            cmdloop_hook=self._callback.cmdloop,
+            cmdloop_hook=self._cmdloop_hook,
             stdin=stdio,
             stdout=stdio,
         )
@@ -109,6 +110,15 @@ def TraceCallContext(trace: TraceFunc, hook: PluginManager) -> TraceFunc:
     return WithContext(trace, context=_context)
 
 
+def CmdloopHook(hook: PluginManager):
+    def cmdloop():
+        if not hook.hook.is_on_trace_call():
+            raise NotOnTraceCall
+        return hook.with_.cmdloop()
+
+    return cmdloop
+
+
 class Callback:
     def __init__(
         self,
@@ -119,11 +129,6 @@ class Callback:
         self._command_queue_map = command_queue_map
         self._prompt_no_counter = PromptNoCounter(1)
         self._logger = getLogger(__name__)
-
-    def cmdloop(self):
-        if not self._hook.hook.is_on_trace_call():
-            raise NotOnTraceCall
-        return self._hook.with_.cmdloop()
 
     def prompt(self, text: str) -> str:
         prompt_no = self._prompt_no_counter()
