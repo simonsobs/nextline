@@ -63,9 +63,7 @@ class LocalTraceFunc:
         )
         stdio.prompt_end = pdb.prompt
 
-        trace = pdb.trace_dispatch
-
-        trace = TraceCallContext(trace=trace, hook=self._hook)
+        trace = TraceCallContext(trace=pdb.trace_dispatch, hook=self._hook)
         # TODO: Add a test. The tests pass without the above line.  Without it,
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
