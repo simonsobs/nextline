@@ -129,7 +129,7 @@ class PromptInfoRegistrar:
 
     @hookimpl
     @contextmanager
-    def prompt(self, prompt_no: PromptNo, out: str) -> Generator[None, str, None]:
+    def on_prompt(self, prompt_no: PromptNo, out: str) -> Generator[None, str, None]:
         trace_no = self._hook.hook.current_trace_no()
         trace_args = self._hook.hook.current_trace_args()
 
