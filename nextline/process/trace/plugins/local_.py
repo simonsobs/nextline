@@ -17,6 +17,15 @@ if TYPE_CHECKING:
 
 
 class LocalTraceFunc:
+    '''A plugin that executes local trace functions.
+
+    It calls different trace functions for each trace number. If a trace
+    function doesn't exist for a trace number, this plugin creates a new one by
+    calling the hook `create_local_trace_func`.
+
+    A trace number is assigned to each async task or thread by another plugin.
+    '''
+
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
@@ -29,11 +38,19 @@ class LocalTraceFunc:
         return local_trace_func(frame, event, arg)
 
     def _create(self) -> TraceFunc:
+        '''The factory of the default dict.'''
         trace = self._hook.hook.create_local_trace_func()
         return TraceCallContext(trace=trace, hook=self._hook)
 
 
 class TraceCallHandler:
+    '''A plugin that keeps the trace call arguments during trace calls.
+
+    This plugin collect the trace call arguments when the context manager hook
+    `trace_call` is entered. It responds to the first result only hooks
+    `is_on_trace_call` and `current_trace_args`.
+    '''
+
     def __init__(self) -> None:
         self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
         self._traces_on_call: Set[TraceNo] = set()
@@ -66,6 +83,13 @@ class TraceCallHandler:
 
 
 def TraceCallContext(trace: TraceFunc, hook: PluginManager) -> TraceFunc:
+    '''Return a trace func that calls the `trace` in the context manager hook `trace_call`.
+
+    When the returned trace function is called, it enters the context manager
+    hook `trace_call` with the trace call arguments before calling the `trace`
+    function. It exits the context manager after the `trace` function returns.
+    '''
+
     def _context(frame, event, arg):
         return hook.with_.trace_call(trace_args=(frame, event, arg))
 
