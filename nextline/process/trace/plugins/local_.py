@@ -14,7 +14,7 @@ from nextline.process.pdb.proxy import WithContext, instantiate_pdb
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
-from nextline.types import TraceNo
+from nextline.types import PromptNo, TraceNo
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
@@ -115,21 +115,27 @@ class Callback:
         return self._hook.with_.cmdloop()
 
     def prompt(self, text: str) -> str:
-        trace_no = self._hook.hook.current_trace_no()
         prompt_no = self._prompt_no_counter()
         self._logger.debug(f'PromptNo: {prompt_no}')
-        queue = self._command_queue_map[trace_no]
         with (p := self._hook.with_.prompt(prompt_no=prompt_no, out=text)):
-            while True:
-                command, prompt_no_, trace_no_ = queue.get()
-                try:
-                    assert trace_no_ == trace_no
-                except AssertionError:
-                    msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
-                    self._logger.exception(msg)
-                    raise
-                if prompt_no_ == prompt_no:
-                    break
-                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+            command = self._get_command(prompt_no=prompt_no)
             p.gen.send(command)
         return command
+
+    def _get_command(self, prompt_no: PromptNo) -> str:
+        trace_no = self._hook.hook.current_trace_no()
+        self._logger.debug(f'PromptNo: {prompt_no}')
+        queue = self._command_queue_map[trace_no]
+
+        while True:
+            command, prompt_no_, trace_no_ = queue.get()
+            try:
+                assert trace_no_ == trace_no
+            except AssertionError:
+                msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
+                self._logger.exception(msg)
+                raise
+            if not prompt_no_ == prompt_no:
+                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+                continue
+            return command
