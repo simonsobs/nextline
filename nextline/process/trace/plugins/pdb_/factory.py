@@ -7,9 +7,10 @@ from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter
 from nextline.process.exc import NotOnTraceCall
-from nextline.process.pdb.custom import CustomizedPdb
-from nextline.process.pdb.stream import PromptFuncType, StdInOut
 from nextline.process.trace.spec import hookimpl
+
+from .custom import CustomizedPdb
+from .stream import PromptFuncType, StdInOut
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
