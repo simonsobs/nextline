@@ -26,17 +26,15 @@ if TYPE_CHECKING:
 class LocalTraceFunc:
     def __init__(self) -> None:
         self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
+        self._logger = getLogger(__name__)
 
     @hookimpl
     def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
         self._hook = hook
         self._command_queue_map = command_queue_map
 
-        self._prompt_func = PromptFunc(
-            hook=self._hook,
-            command_queue_map=self._command_queue_map,
-        )
         self._cmdloop_hook = CmdloopHook(hook=self._hook)
+        self._prompt_func = PromptFunc(hook=self._hook)
 
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
@@ -68,6 +66,25 @@ class LocalTraceFunc:
         #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
+
+    @hookimpl
+    def prompt(self, prompt_no: PromptNo) -> str:
+        trace_no = self._hook.hook.current_trace_no()
+        self._logger.debug(f'PromptNo: {prompt_no}')
+        queue = self._command_queue_map[trace_no]
+
+        while True:
+            command, prompt_no_, trace_no_ = queue.get()
+            try:
+                assert trace_no_ == trace_no
+            except AssertionError:
+                msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
+                self._logger.exception(msg)
+                raise
+            if not prompt_no_ == prompt_no:
+                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+                continue
+            return command
 
 
 class TraceCallHandler:
@@ -118,7 +135,7 @@ def CmdloopHook(hook: PluginManager):
     return cmdloop
 
 
-def PromptFunc(hook: PluginManager, command_queue_map: CommandQueueMap):
+def PromptFunc(hook: PluginManager):
 
     counter = PromptNoCounter(1)
     logger = getLogger(__name__)
@@ -127,26 +144,10 @@ def PromptFunc(hook: PluginManager, command_queue_map: CommandQueueMap):
         prompt_no = counter()
         logger.debug(f'PromptNo: {prompt_no}')
         with (context := hook.with_.on_prompt(prompt_no=prompt_no, text=text)):
-            command = _get_command(prompt_no=prompt_no)
+            command = hook.hook.prompt(prompt_no=prompt_no, text=text)
+            if command is None:
+                logger.warning(f'command is None: {command!r}')
             context.gen.send(command)
         return command
-
-    def _get_command(prompt_no: PromptNo) -> str:
-        trace_no = hook.hook.current_trace_no()
-        logger.debug(f'PromptNo: {prompt_no}')
-        queue = command_queue_map[trace_no]
-
-        while True:
-            command, prompt_no_, trace_no_ = queue.get()
-            try:
-                assert trace_no_ == trace_no
-            except AssertionError:
-                msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
-                logger.exception(msg)
-                raise
-            if not prompt_no_ == prompt_no:
-                logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
-                continue
-            return command
 
     return _prompt_func

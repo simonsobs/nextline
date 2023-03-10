@@ -125,6 +125,11 @@ def on_prompt(prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
     yield
 
 
+@hookspec(firstresult=True)
+def prompt(prompt_no: PromptNo, text: str) -> Optional[str]:
+    pass
+
+
 @hookspec
 def stdout(trace_no: TraceNo, line: str) -> None:
     pass
