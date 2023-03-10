@@ -92,11 +92,8 @@ class TraceCallHandler:
 
 
 def TraceCallContext(trace: TraceFunc, hook: PluginManager) -> TraceFunc:
-    @contextmanager
     def _context(frame, event, arg):
-        trace_args = (frame, event, arg)
-        with hook.with_.trace_call(trace_args=trace_args):
-            yield
+        return hook.with_.trace_call(trace_args=(frame, event, arg))
 
     return WithContext(trace, context=_context)
 
