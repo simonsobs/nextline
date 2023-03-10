@@ -4,7 +4,7 @@ from logging import getLogger
 from pdb import Pdb
 from typing import IO, Callable, ContextManager
 
-from nextline.process.exc import TraceNotCalled
+from nextline.process.exc import NotOnTraceCall
 
 
 class CustomizedPdb(Pdb):
@@ -50,7 +50,7 @@ class CustomizedPdb(Pdb):
         try:
             with self._cmdloop_hook():
                 super().cmdloop(intro=intro)
-        except TraceNotCalled:
+        except NotOnTraceCall:
             logger = getLogger(__name__)
             logger.exception('')
 

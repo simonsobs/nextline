@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, DefaultDict, Dict, Optional, Set
 from apluggy import PluginManager, contextmanager
 
 from nextline.count import PromptNoCounter
-from nextline.process.exc import TraceNotCalled
+from nextline.process.exc import NotOnTraceCall
 from nextline.process.pdb.proxy import WithContext, instantiate_pdb
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
@@ -111,7 +111,7 @@ class Callback:
 
     def cmdloop(self):
         if not self._hook.hook.is_on_trace_call():
-            raise TraceNotCalled
+            raise NotOnTraceCall
         return self._hook.with_.cmdloop()
 
     def prompt(self, text: str) -> str:

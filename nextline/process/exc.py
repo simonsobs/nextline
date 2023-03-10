@@ -1,4 +1,4 @@
-class TraceNotCalled(RuntimeError):
+class NotOnTraceCall(RuntimeError):
     '''Pdb.cmdloop() was called without Callback.trace_call() being called first.
 
     This error can happen when sys.settrace() is called by Pdb, which will remove
