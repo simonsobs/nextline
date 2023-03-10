@@ -7,7 +7,7 @@ from logging import getLogger
 from threading import Thread
 from typing import Generator, Iterable, Optional, Set
 
-from apluggy import contextmanager
+from apluggy import PluginManager, contextmanager
 
 from nextline.process.trace.spec import hookimpl
 from nextline.process.trace.types import TraceArgs
@@ -52,6 +52,10 @@ class FilerByModule:
         self._traced_tasks_and_threads: Set[Task | Thread] = set()
         self._logger = getLogger(__name__)
 
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._hook = hook
+
     @hookimpl(trylast=True)
     def filter(self, trace_args: TraceArgs) -> bool | None:
 
@@ -82,7 +86,8 @@ class FilerByModule:
 
     @hookimpl
     @contextmanager
-    def cmdloop(self, trace_args: TraceArgs) -> Generator[None, str, None]:
+    def cmdloop(self) -> Generator[None, str, None]:
+        trace_args = self._hook.hook.current_trace_args()
         self._add(trace_args)
         yield
 

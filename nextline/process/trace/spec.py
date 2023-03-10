@@ -113,7 +113,7 @@ def current_trace_args() -> Optional[TraceArgs]:
 
 @hookspec
 @contextmanager
-def cmdloop(trace_no: TraceNo, trace_args: TraceArgs):
+def cmdloop():
     pass
 
 
