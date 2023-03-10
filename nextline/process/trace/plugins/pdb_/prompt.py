@@ -11,6 +11,8 @@ from nextline.types import PromptNo, TraceNo
 
 
 class Prompt:
+    '''A plugin that responds to the hook prompt() with commands from a queue.'''
+
     def __init__(self) -> None:
         self._logger = getLogger(__name__)
 
