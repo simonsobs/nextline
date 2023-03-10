@@ -36,6 +36,33 @@ class PdbInstanceFactory:
         return pdb.trace_dispatch
 
 
+def CmdloopHook(hook: PluginManager):
+    def cmdloop():
+        if not hook.hook.is_on_trace_call():
+            raise NotOnTraceCall
+        return hook.with_.cmdloop()
+
+    return cmdloop
+
+
+def PromptFunc(hook: PluginManager) -> PromptFuncType:
+
+    counter = PromptNoCounter(1)
+    logger = getLogger(__name__)
+
+    def _prompt_func(text: str) -> str:
+        prompt_no = counter()
+        logger.debug(f'PromptNo: {prompt_no}')
+        with (context := hook.with_.on_prompt(prompt_no=prompt_no, text=text)):
+            command = hook.hook.prompt(prompt_no=prompt_no, text=text)
+            if command is None:
+                logger.warning(f'command is None: {command!r}')
+            context.gen.send(command)
+        return command
+
+    return _prompt_func
+
+
 class Prompt:
     def __init__(self) -> None:
         self._logger = getLogger(__name__)
@@ -71,30 +98,3 @@ class Prompt:
                 self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
                 continue
             return command
-
-
-def CmdloopHook(hook: PluginManager):
-    def cmdloop():
-        if not hook.hook.is_on_trace_call():
-            raise NotOnTraceCall
-        return hook.with_.cmdloop()
-
-    return cmdloop
-
-
-def PromptFunc(hook: PluginManager) -> PromptFuncType:
-
-    counter = PromptNoCounter(1)
-    logger = getLogger(__name__)
-
-    def _prompt_func(text: str) -> str:
-        prompt_no = counter()
-        logger.debug(f'PromptNo: {prompt_no}')
-        with (context := hook.with_.on_prompt(prompt_no=prompt_no, text=text)):
-            command = hook.hook.prompt(prompt_no=prompt_no, text=text)
-            if command is None:
-                logger.warning(f'command is None: {command!r}')
-            context.gen.send(command)
-        return command
-
-    return _prompt_func
