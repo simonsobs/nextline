@@ -55,8 +55,6 @@ def LocalTraceFuncFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
         stdio.prompt_end = pdb.prompt
 
         trace = TraceCallContext(trace=pdb.trace_dispatch, hook=hook)
-        # TODO: Add a test. The tests pass without the above line.  Without it,
-        #       the arrow in the web UI does not move when the Pdb is "continuing."
 
         return trace
 

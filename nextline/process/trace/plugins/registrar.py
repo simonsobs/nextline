@@ -114,6 +114,9 @@ class PromptInfoRegistrar:
             # TODO: Sending a prompt info with "open=False" for now so that the
             #       arrow in the web UI moves when the Pdb is "continuing."
 
+            # TODO: Add a test. Currently, the tests pass without sending this
+            #       prompt info.
+
             prompt_info = PromptInfo(
                 run_no=self._run_no,
                 trace_no=trace_no,
