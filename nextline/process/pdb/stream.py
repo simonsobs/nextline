@@ -5,7 +5,7 @@ from logging import getLogger
 from typing import Optional, Protocol
 
 
-class PromptFunc(Protocol):
+class PromptFuncType(Protocol):
     '''Prompt the user with text for a command.'''
 
     def __call__(self, text: str) -> str:
@@ -42,7 +42,7 @@ class StdInOut(TextIOWrapper):
     '''
 
     def __init__(
-        self, prompt_func: PromptFunc, prompt_end: Optional[str] = None
+        self, prompt_func: PromptFuncType, prompt_end: Optional[str] = None
     ) -> None:
 
         # To be matched to the end of prompt text if not None.
