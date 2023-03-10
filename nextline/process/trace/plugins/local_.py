@@ -27,15 +27,17 @@ class LocalTraceFunc:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
-
-        factory = LocalTraceFuncFactory(hook=hook)
-        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(factory)
+        self._factory = LocalTraceFuncFactory(hook=hook)
+        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
         trace_no = self._hook.hook.current_trace_no()
         local_trace_func = self._map[trace_no]
         return local_trace_func(frame, event, arg)
+
+    def _create(self) -> TraceFunc:
+        return TraceCallContext(trace=self._factory(), hook=self._hook)
 
 
 def LocalTraceFuncFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
@@ -54,9 +56,7 @@ def LocalTraceFuncFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
         )
         stdio.prompt_end = pdb.prompt
 
-        trace = TraceCallContext(trace=pdb.trace_dispatch, hook=hook)
-
-        return trace
+        return pdb.trace_dispatch
 
     return _factory
 
