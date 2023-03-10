@@ -17,7 +17,7 @@ from nextline.process.trace.types import TraceArgs
 from nextline.process.types import CommandQueueMap
 from nextline.types import PromptNo, TraceNo
 
-from .proxy import WithContext
+from .with_ import WithContext
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
