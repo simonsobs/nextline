@@ -121,11 +121,11 @@ def CmdloopHook(hook: PluginManager):
 
 def PromptFunc(hook: PluginManager, command_queue_map: CommandQueueMap):
 
-    prompt_no_counter = PromptNoCounter(1)
+    counter = PromptNoCounter(1)
     logger = getLogger(__name__)
 
-    def prompt(text: str) -> str:
-        prompt_no = prompt_no_counter()
+    def _prompt_func(text: str) -> str:
+        prompt_no = counter()
         logger.debug(f'PromptNo: {prompt_no}')
         with (p := hook.with_.prompt(prompt_no=prompt_no, out=text)):
             command = _get_command(prompt_no=prompt_no)
@@ -150,4 +150,4 @@ def PromptFunc(hook: PluginManager, command_queue_map: CommandQueueMap):
                 continue
             return command
 
-    return prompt
+    return _prompt_func
