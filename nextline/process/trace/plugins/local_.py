@@ -27,7 +27,7 @@ class LocalTraceFunc:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
-        self._factory = LocalTraceFuncFactory(hook=hook)
+        self._factory = PdbInstanceFactory(hook=hook)
         self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
 
     @hookimpl
@@ -40,7 +40,7 @@ class LocalTraceFunc:
         return TraceCallContext(trace=self._factory(), hook=self._hook)
 
 
-def LocalTraceFuncFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
+def PdbInstanceFactory(hook: PluginManager) -> Callable[[], TraceFunc]:
 
     cmdloop_hook = CmdloopHook(hook=hook)
     prompt_func = PromptFunc(hook=hook)
