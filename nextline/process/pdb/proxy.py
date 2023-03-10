@@ -9,7 +9,7 @@ from .stream import StdInOut
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.trace.plugins.local_ import Callback
+    from nextline.process.trace.plugins.local_ import PromptFunc
 
 
 def WithContext(
@@ -34,7 +34,7 @@ def WithContext(
     return _global_trace
 
 
-def instantiate_pdb(callback: Callback):
+def instantiate_pdb(callback: PromptFunc):
     '''Create a new Pdb instance with callback hooked and return its trace function.'''
 
     stdio = StdInOut(prompt_func=callback.prompt)

@@ -31,7 +31,7 @@ class LocalTraceFunc:
         self._hook = hook
         self._command_queue_map = command_queue_map
 
-        self._callback = Callback(
+        self._prompt_func = PromptFunc(
             hook=self._hook,
             command_queue_map=self._command_queue_map,
         )
@@ -53,7 +53,7 @@ class LocalTraceFunc:
 
     def _create(self) -> TraceFunc:
 
-        stdio = StdInOut(prompt_func=self._callback)
+        stdio = StdInOut(prompt_func=self._prompt_func)
 
         pdb = CustomizedPdb(
             cmdloop_hook=self._cmdloop_hook,
@@ -119,7 +119,7 @@ def CmdloopHook(hook: PluginManager):
     return cmdloop
 
 
-def Callback(hook: PluginManager, command_queue_map: CommandQueueMap):
+def PromptFunc(hook: PluginManager, command_queue_map: CommandQueueMap):
 
     prompt_no_counter = PromptNoCounter(1)
     logger = getLogger(__name__)
