@@ -83,7 +83,7 @@ def build_hook(
     hook.register(TaskOrThreadToTraceMapper(), name='task_or_thread_to_trace_mapper')
     hook.register(TaskAndThreadKeeper(), name='task_and_thread_keeper')
 
-    hook.register(FilerByModule(), name='add_module_to_trace')
+    hook.register(FilerByModule(), name='filter_by_module')
     hook.register(FilterLambda(), name='filter_lambda')
     hook.register(FilterByModuleName(), name='filter_by_module_name')
 
