@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from types import FrameType
-from typing import TYPE_CHECKING, DefaultDict, Dict, Optional, Set
+from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager, contextmanager
 
@@ -29,7 +29,8 @@ class LocalTraceFunc:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
-        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(self._create)
+        factory = Factory(hook)
+        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(factory)
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
@@ -37,14 +38,20 @@ class LocalTraceFunc:
         local_trace_func = self._map[trace_no]
         return local_trace_func(frame, event, arg)
 
-    def _create(self) -> TraceFunc:
-        '''The factory of the default dict.'''
-        trace = self._hook.hook.create_local_trace_func()
+
+def Factory(hook: PluginManager) -> Callable[[], TraceFunc]:
+    '''Return a function that creates a local trace function.'''
+
+    def _factory() -> TraceFunc:
+        trace = hook.hook.create_local_trace_func()
 
         def _context(frame, event, arg):
-            return self._hook.with_.trace_call(trace_args=(frame, event, arg))
+            '''A "with" block in which "trace" is called.'''
+            return hook.with_.trace_call(trace_args=(frame, event, arg))
 
         return WithContext(trace, context=_context)
+
+    return _factory
 
 
 class TraceCallHandler:
