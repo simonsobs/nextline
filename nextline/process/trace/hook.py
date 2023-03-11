@@ -69,7 +69,6 @@ def build_hook(
     registrar = RegistrarProxy(queue=queue_registry)
 
     hook.register(StdoutRegistrar(), name='stdout')
-    hook.register(FilerByModule(), name='add_module_to_trace')
     hook.register(TraceInfoRegistrar(), name='trace_info')
     hook.register(PromptInfoRegistrar(), name='prompt_info')
     hook.register(TraceNumbersRegistrar(), name='trace_numbers')
@@ -84,6 +83,7 @@ def build_hook(
     hook.register(TaskOrThreadToTraceMapper(), name='task_or_thread_to_trace_mapper')
     hook.register(TaskAndThreadKeeper(), name='task_and_thread_keeper')
 
+    hook.register(FilerByModule(), name='add_module_to_trace')
     hook.register(FilterLambda(), name='filter_lambda')
     hook.register(FilterByModuleName(), name='filter_by_module_name')
 
