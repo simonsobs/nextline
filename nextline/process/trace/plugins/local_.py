@@ -40,7 +40,11 @@ class LocalTraceFunc:
     def _create(self) -> TraceFunc:
         '''The factory of the default dict.'''
         trace = self._hook.hook.create_local_trace_func()
-        return TraceCallContext(trace=trace, hook=self._hook)
+
+        def _context(frame, event, arg):
+            return self._hook.with_.trace_call(trace_args=(frame, event, arg))
+
+        return WithContext(trace, context=_context)
 
 
 class TraceCallHandler:
