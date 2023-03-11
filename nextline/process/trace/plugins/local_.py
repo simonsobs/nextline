@@ -91,17 +91,3 @@ class TraceCallHandler:
     def current_trace_args(self) -> Optional[TraceArgs]:
         trace_no = self._hook.hook.current_trace_no()
         return self._trace_args_map.get(trace_no)
-
-
-def TraceCallContext(trace: TraceFunc, hook: PluginManager) -> TraceFunc:
-    '''Return a trace func that calls the `trace` in the context manager hook `trace_call`.
-
-    When the returned trace function is called, it enters the context manager
-    hook `trace_call` with the trace call arguments before calling the `trace`
-    function. It exits the context manager after the `trace` function returns.
-    '''
-
-    def _context(frame, event, arg):
-        return hook.with_.trace_call(trace_args=(frame, event, arg))
-
-    return WithContext(trace, context=_context)
