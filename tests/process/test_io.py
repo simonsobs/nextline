@@ -9,7 +9,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from nextline.process.io import peek_stdout_by_key
+from nextline.process.trace.plugins.peek import peek_stdout_by_key
 from nextline.utils import current_task_or_thread
 
 
