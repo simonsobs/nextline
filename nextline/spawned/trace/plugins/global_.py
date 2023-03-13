@@ -103,7 +103,7 @@ class TaskOrThreadToTraceMapper:
         trace_no = self._counter()
         self._logger.info(f'{self.__class__.__name__} start: trace_no={trace_no}')
         self._map[current_task_or_thread()] = trace_no
-        self._hook.hook.trace_start(trace_no=trace_no)
+        self._hook.hook.on_start_trace(trace_no=trace_no)
 
     @hookimpl
     def task_or_thread_end(self, task_or_thread: Task | Thread):

@@ -21,7 +21,7 @@ class TraceNumbersRegistrar:
         self._trace_nos: Tuple[TraceNo, ...] = ()
 
     @hookimpl
-    def trace_start(self, trace_no: TraceNo):
+    def on_start_trace(self, trace_no: TraceNo):
         self._trace_nos = self._trace_nos + (trace_no,)
         self._registrar.put_trace_nos(self._trace_nos)
 
@@ -42,7 +42,7 @@ class TraceInfoRegistrar:
         self._trace_info_map: Dict[TraceNo, TraceInfo] = {}
 
     @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
+    def on_start_trace(self, trace_no: TraceNo) -> None:
         assert trace_no == self._hook.hook.current_trace_no()
         thread_no = self._hook.hook.current_thread_no()
         task_no = self._hook.hook.current_task_no()
@@ -80,7 +80,7 @@ class PromptInfoRegistrar:
         self._registrar = registrar
 
     @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
+    def on_start_trace(self, trace_no: TraceNo) -> None:
 
         # TODO: Putting a prompt info for now because otherwise tests get stuck
         # sometimes for an unknown reason. Need to investigate

@@ -16,7 +16,7 @@ class PeekStdout:
         self._hook = hook
 
     @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
+    def on_start_trace(self, trace_no: TraceNo) -> None:
         assert trace_no == self._key_factory()
 
     @hookimpl

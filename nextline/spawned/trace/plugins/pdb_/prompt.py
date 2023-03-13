@@ -22,7 +22,7 @@ class Prompt:
         self._command_queue_map = command_queue_map
 
     @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
+    def on_start_trace(self, trace_no: TraceNo) -> None:
         self._command_queue_map[trace_no] = Queue()
 
     @hookimpl
