@@ -26,7 +26,7 @@ class Prompt:
         self._command_queue_map[trace_no] = Queue()
 
     @hookimpl
-    def trace_end(self, trace_no: TraceNo) -> None:
+    def on_end_trace(self, trace_no: TraceNo) -> None:
         del self._command_queue_map[trace_no]
 
     @hookimpl

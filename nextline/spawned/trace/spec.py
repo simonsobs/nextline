@@ -97,7 +97,7 @@ def current_trace_no() -> TraceNo | None:
 
 
 @hookspec
-def trace_end(trace_no: TraceNo) -> None:
+def on_end_trace(trace_no: TraceNo) -> None:
     pass
 
 

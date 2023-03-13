@@ -26,7 +26,7 @@ class TraceNumbersRegistrar:
         self._registrar.put_trace_nos(self._trace_nos)
 
     @hookimpl
-    def trace_end(self, trace_no: TraceNo):
+    def on_end_trace(self, trace_no: TraceNo):
         nosl = list(self._trace_nos)
         nosl.remove(trace_no)
         self._trace_nos = tuple(nosl)
@@ -59,7 +59,7 @@ class TraceInfoRegistrar:
         self._registrar.put_trace_info(trace_info)
 
     @hookimpl
-    def trace_end(self, trace_no: TraceNo) -> None:
+    def on_end_trace(self, trace_no: TraceNo) -> None:
         trace_info = self._trace_info_map.pop(trace_no)
         trace_info_end = dataclasses.replace(
             trace_info,
@@ -93,7 +93,7 @@ class PromptInfoRegistrar:
         self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
 
     @hookimpl
-    def trace_end(self, trace_no: TraceNo) -> None:
+    def on_end_trace(self, trace_no: TraceNo) -> None:
         self._registrar.end_prompt_info_for_trace(trace_no)
 
     @hookimpl
