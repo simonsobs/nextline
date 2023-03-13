@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from logging import getLogger
 
 from apluggy import PluginManager
 
@@ -89,6 +90,11 @@ def build_hook(
     hook.register(FilterByModuleName)
 
     hook.register(GlobalTraceFunc)
+
+    logger = getLogger(__name__)
+    plugin_names = (f'{n!r}' for n, p in hook.list_name_plugin() if p)
+    msg = f'Loaded plugins: {",".join(plugin_names)}.'
+    logger.info(msg)
 
     hook.hook.init(
         hook=hook,
