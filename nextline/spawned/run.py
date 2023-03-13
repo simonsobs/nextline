@@ -11,13 +11,23 @@ from nextline.types import RunNo
 from . import script
 from .call import sys_trace
 from .trace import TraceFunc, build_hook
-from .types import CommandQueueMap, QueueCommands, QueueRegistry, RunArg, RunResult
+from .types import (
+    CommandQueueMap,
+    QueueCommands,
+    QueueOut,
+    QueueRegistry,
+    RunArg,
+    RunResult,
+)
 
 _T = TypeVar('_T')
 
 
 def run_(
-    run_arg: RunArg, q_commands: QueueCommands, q_registry: QueueRegistry
+    run_arg: RunArg,
+    q_commands: QueueCommands,
+    q_registry: QueueRegistry,
+    queue_out: QueueOut,
 ) -> RunResult:
 
     run_no = run_arg['run_no']

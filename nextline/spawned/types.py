@@ -16,6 +16,8 @@ CommandQueueMap: TypeAlias = MutableMapping[
     TraceNo, 'Queue[Tuple[PdbCommand, PromptNo, TraceNo]]'
 ]
 
+QueueOut: TypeAlias = 'Queue[Any]'
+
 
 class RunArg(TypedDict):
     run_no: RunNo

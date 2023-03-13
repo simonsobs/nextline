@@ -5,7 +5,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from nextline.spawned import RunArg, main, set_queues
+from nextline.spawned import (
+    QueueCommands,
+    QueueOut,
+    QueueRegistry,
+    RunArg,
+    main,
+    set_queues,
+)
 from nextline.types import RunNo
 
 
@@ -27,8 +34,10 @@ def test_one(
 
 
 @pytest.fixture
-def call_set_queues(q_registrar, q_commands):
-    set_queues(q_commands, q_registrar)
+def call_set_queues(
+    q_registrar: QueueRegistry, q_commands: QueueCommands, queue_out: QueueOut
+):
+    set_queues(q_commands, q_registrar, queue_out)
     yield
 
 
@@ -61,7 +70,7 @@ def run_arg(statement: str) -> RunArg:
 
 
 @pytest.fixture
-def q_registrar():
+def q_registrar() -> QueueRegistry:
     return queue.Queue()
 
 
@@ -104,6 +113,10 @@ def statement_params(request):
 
 
 @pytest.fixture
-def q_commands():
-    y = queue.Queue()
-    return y
+def q_commands() -> QueueCommands:
+    return queue.Queue()
+
+
+@pytest.fixture
+def queue_out() -> QueueOut:
+    return queue.Queue()
