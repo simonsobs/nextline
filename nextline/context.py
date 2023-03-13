@@ -8,10 +8,10 @@ from typing import Any, Optional
 
 from tblib import pickling_support
 
-from . import process
+from . import spawned
 from .count import RunNoCounter
-from .process import QueueCommands, QueueRegistry, RunArg, RunResult
 from .registrar import Registrar
+from .spawned import QueueCommands, QueueRegistry, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
 
@@ -39,12 +39,12 @@ class Resource:
         self.registrar = Registrar(self.registry, self._q_registry)
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
-        func = partial(process.main, run_arg)
+        func = partial(spawned.main, run_arg)
         self.q_commands = self._mp_context.Queue()
         initializer = partial(
             _call_all,
             self._mp_logging.initializer,
-            partial(process.set_queues, self.q_commands, self._q_registry),
+            partial(spawned.set_queues, self.q_commands, self._q_registry),
         )
         executor_factory = partial(
             ProcessPoolExecutor,

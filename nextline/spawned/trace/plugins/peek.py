@@ -5,7 +5,7 @@ from typing import Any, Callable, DefaultDict, TypeVar
 
 from apluggy import PluginManager
 
-from nextline.process.trace.spec import hookimpl
+from nextline.spawned.trace.spec import hookimpl
 from nextline.types import TraceNo
 from nextline.utils import peek_stdout
 

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.process.types import CommandQueueMap
+from nextline.spawned.types import CommandQueueMap
 from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 from .types import TraceArgs
@@ -16,7 +16,7 @@ from .types import TraceArgs
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.process.trace.plugins.registrar import RegistrarProxy
+    from nextline.spawned.trace.plugins.registrar import RegistrarProxy
 
 PROJECT_NAME = 'nextline_process_callback'
 

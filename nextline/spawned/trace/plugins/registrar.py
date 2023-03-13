@@ -8,9 +8,9 @@ from typing import Callable, Dict, Generator, Tuple
 
 from apluggy import PluginManager, contextmanager
 
-from nextline.process.trace.spec import hookimpl
-from nextline.process.trace.types import TraceArgs
-from nextline.process.types import QueueRegistry
+from nextline.spawned.trace.spec import hookimpl
+from nextline.spawned.trace.types import TraceArgs
+from nextline.spawned.types import QueueRegistry
 from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
 
 

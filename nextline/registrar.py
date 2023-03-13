@@ -14,7 +14,7 @@ from .types import RunInfo, RunNo
 from .utils import PubSub, to_thread
 
 if TYPE_CHECKING:
-    from .process.run import QueueRegistry
+    from .spawned.run import QueueRegistry
 
 SCRIPT_FILE_NAME = "<string>"
 

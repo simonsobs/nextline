@@ -4,7 +4,7 @@ from logging import getLogger
 from pdb import Pdb
 from typing import IO, Callable, ContextManager
 
-from nextline.process.exc import NotOnTraceCall
+from nextline.spawned.exc import NotOnTraceCall
 
 
 class CustomizedPdb(Pdb):

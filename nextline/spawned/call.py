@@ -40,12 +40,12 @@ def sys_trace(trace_func: TraceFunc, thread: Optional[bool] = True):
     Trace the callable.
     >>> with sys_trace(trace_func):
     ...     callable()
-    trace_func(): nextline.process.call.callable() # call
-    trace_func(): nextline.process.call.callable() # line
+    trace_func(): nextline.spawned.call.callable() # call
+    trace_func(): nextline.spawned.call.callable() # line
     callable()
-    trace_func(): nextline.process.call.callable() # return
+    trace_func(): nextline.spawned.call.callable() # return
     trace_func(): contextlib.__exit__() # call
-    trace_func(): nextline.process.call.sys_trace() # call
+    trace_func(): nextline.spawned.call.sys_trace() # call
 
 
     The callable is traced.

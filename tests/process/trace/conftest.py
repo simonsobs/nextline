@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.process.call import sys_trace
+from nextline.spawned.call import sys_trace
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401

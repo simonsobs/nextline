@@ -5,8 +5,8 @@ from logging import getLogger
 
 from apluggy import PluginManager
 
-from nextline.process.call import sys_trace
-from nextline.process.types import CommandQueueMap, QueueRegistry
+from nextline.spawned.call import sys_trace
+from nextline.spawned.types import CommandQueueMap, QueueRegistry
 from nextline.types import RunNo
 
 from . import spec
