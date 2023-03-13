@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.types import CommandQueueMap
+from nextline.spawned.types import CommandQueueMap, QueueOut
 from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 from .types import TraceArgs
@@ -32,6 +32,7 @@ def init(
     registrar: RegistrarProxy,
     command_queue_map: CommandQueueMap,
     modules_to_skip: Collection[str],
+    queue_out: QueueOut,
 ) -> None:
     pass
 

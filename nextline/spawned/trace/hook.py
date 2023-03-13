@@ -6,7 +6,7 @@ from logging import getLogger
 from apluggy import PluginManager
 
 from nextline.spawned.call import sys_trace
-from nextline.spawned.types import CommandQueueMap, QueueRegistry
+from nextline.spawned.types import CommandQueueMap, QueueRegistry, QueueOut
 from nextline.types import RunNo
 
 from . import spec
@@ -61,6 +61,7 @@ def build_hook(
     run_no: RunNo,
     queue_registry: QueueRegistry,
     command_queue_map: CommandQueueMap,
+    queue_out: QueueOut,
 ) -> PluginManager:
     '''Return a plugin manager with the plugins registered.'''
 
@@ -102,6 +103,7 @@ def build_hook(
         registrar=registrar,
         command_queue_map=command_queue_map,
         modules_to_skip=MODULES_TO_SKIP,
+        queue_out=queue_out,
     )
 
     return hook

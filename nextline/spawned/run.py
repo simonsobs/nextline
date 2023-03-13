@@ -42,7 +42,7 @@ def run_(
 
     func = script.compose(code)
 
-    return run_with_trace(run_no, func, q_commands, q_registry)
+    return run_with_trace(run_no, func, q_commands, q_registry, queue_out)
 
 
 def run_with_trace(
@@ -50,12 +50,13 @@ def run_with_trace(
     func: Callable[[], Any],
     q_commands: QueueCommands,
     q_registry: QueueRegistry,
+    queue_out: QueueOut,
 ) -> RunResult:
 
     ret: Any = None
     exc: BaseException | None = None
 
-    with _trace(run_no, q_commands, q_registry) as trace:
+    with _trace(run_no, q_commands, q_registry, queue_out) as trace:
         with sys_trace(trace_func=trace):
             try:
                 ret = func()
@@ -75,7 +76,12 @@ def run_with_trace(
 
 
 @contextmanager
-def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
+def _trace(
+    run_no: RunNo,
+    q_commands: QueueCommands,
+    q_registry: QueueRegistry,
+    queue_out: QueueOut,
+):
 
     command_queue_map: CommandQueueMap = {}
 
@@ -83,6 +89,7 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, q_registry: QueueRegistry):
         run_no=run_no,
         queue_registry=q_registry,
         command_queue_map=command_queue_map,
+        queue_out=queue_out,
     )
 
     with TraceFunc(hook=hook) as trace_func:
