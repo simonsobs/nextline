@@ -15,26 +15,26 @@ class PeekStdout:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
-    def _stdout(self, trace_no: TraceNo, line: str):
-        self._hook.hook.stdout(trace_no=trace_no, line=line)
-
     @hookimpl
     def trace_start(self, trace_no: TraceNo) -> None:
         assert trace_no == self._key_factory()
 
-    def _key_factory(self) -> TraceNo | None:
-        return self._hook.hook.current_trace_no()
-
     @hookimpl
     def start(self) -> None:
         self._peek = peek_stdout_by_key(
-            key_factory=self._key_factory, callback=self._stdout
+            key_factory=self._key_factory, callback=self._callback
         )
         self._peek.__enter__()
 
     @hookimpl
     def close(self, exc_type=None, exc_value=None, traceback=None) -> None:
         self._peek.__exit__(exc_type, exc_value, traceback)
+
+    def _key_factory(self) -> TraceNo | None:
+        return self._hook.hook.current_trace_no()
+
+    def _callback(self, trace_no: TraceNo, line: str):
+        self._hook.hook.stdout(trace_no=trace_no, line=line)
 
 
 _T = TypeVar('_T')
