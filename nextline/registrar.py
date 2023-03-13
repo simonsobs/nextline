@@ -5,16 +5,14 @@ import dataclasses
 import datetime
 from threading import Thread
 from typing import MutableMapping  # noqa F401
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from typing_extensions import TypeAlias
 
+from .spawned.types import QueueRegistry
 from .types import TraceInfo  # noqa F401
 from .types import RunInfo, RunNo
 from .utils import PubSub, to_thread
-
-if TYPE_CHECKING:
-    from .spawned.run import QueueRegistry
 
 SCRIPT_FILE_NAME = "<string>"
 
