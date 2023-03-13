@@ -68,26 +68,27 @@ def build_hook(
 
     registrar = RegistrarProxy(queue=queue_registry)
 
-    hook.register(StdoutRegistrar(), name='stdout')
-    hook.register(TraceInfoRegistrar(), name='trace_info')
-    hook.register(PromptInfoRegistrar(), name='prompt_info')
-    hook.register(TraceNumbersRegistrar(), name='trace_numbers')
-    hook.register(PeekStdout(), name='peek_stdout')
+    hook.register(StdoutRegistrar)
+    hook.register(TraceInfoRegistrar)
+    hook.register(PromptInfoRegistrar)
+    hook.register(TraceNumbersRegistrar)
 
-    hook.register(Prompt(), name='prompt')
-    hook.register(PdbInstanceFactory(), name='pdb_instance_factory')
+    hook.register(PeekStdout)
 
-    hook.register(TraceCallHandler(), name='trace_call_handler')
-    hook.register(LocalTraceFunc(), name='local_trace_func')
+    hook.register(Prompt)
+    hook.register(PdbInstanceFactory)
 
-    hook.register(TaskOrThreadToTraceMapper(), name='task_or_thread_to_trace_mapper')
-    hook.register(TaskAndThreadKeeper(), name='task_and_thread_keeper')
+    hook.register(TraceCallHandler)
+    hook.register(LocalTraceFunc)
 
-    hook.register(FilerByModule(), name='filter_by_module')
-    hook.register(FilterLambda(), name='filter_lambda')
-    hook.register(FilterByModuleName(), name='filter_by_module_name')
+    hook.register(TaskOrThreadToTraceMapper)
+    hook.register(TaskAndThreadKeeper)
 
-    hook.register(GlobalTraceFunc(), name='global_trace_func')
+    hook.register(FilerByModule)
+    hook.register(FilterLambda)
+    hook.register(FilterByModuleName)
+
+    hook.register(GlobalTraceFunc)
 
     hook.hook.init(
         hook=hook,
