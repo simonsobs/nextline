@@ -1,3 +1,5 @@
+'''Code used in the sub-processes in which the Nextline user code is run.
+'''
 from __future__ import annotations
 
 __all__ = [
