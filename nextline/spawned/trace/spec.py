@@ -137,7 +137,7 @@ def prompt(prompt_no: PromptNo, text: str) -> Optional[str]:
 
 
 @hookspec
-def stdout(trace_no: TraceNo, line: str) -> None:
+def on_write_stdout(trace_no: TraceNo, line: str) -> None:
     pass
 
 

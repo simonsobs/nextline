@@ -177,7 +177,7 @@ class StdoutRegistrar:
         self._registrar = registrar
 
     @hookimpl
-    def stdout(self, trace_no: TraceNo, line: str):
+    def on_write_stdout(self, trace_no: TraceNo, line: str):
         stdout_info = StdoutInfo(
             run_no=self._run_no,
             trace_no=trace_no,

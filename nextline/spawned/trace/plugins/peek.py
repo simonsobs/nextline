@@ -34,7 +34,7 @@ class PeekStdout:
         return self._hook.hook.current_trace_no()
 
     def _callback(self, trace_no: TraceNo, line: str):
-        self._hook.hook.stdout(trace_no=trace_no, line=line)
+        self._hook.hook.on_write_stdout(trace_no=trace_no, line=line)
 
 
 _T = TypeVar('_T')
