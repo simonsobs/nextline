@@ -90,7 +90,14 @@ class Registrar:
         )
         await self._registry.publish("run_info", self._run_info)
 
+        run_no = self._run_info.run_no
+        await self._hook.ahook.on_start_run(run_no=run_no)
+
     async def run_end(self, result: Optional[str], exception: Optional[str]) -> None:
+
+        run_no = self._run_info.run_no
+        await self._hook.ahook.on_end_run(run_no=run_no)
+
         await self._end_traces()
         self._run_info = dataclasses.replace(
             self._run_info,
