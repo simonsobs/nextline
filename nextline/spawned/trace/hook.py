@@ -6,7 +6,7 @@ from logging import getLogger
 from apluggy import PluginManager
 
 from nextline.spawned.call import sys_trace
-from nextline.spawned.types import CommandQueueMap, QueueRegistry, QueueOut
+from nextline.spawned.types import CommandQueueMap, QueueOut, QueueRegistry
 from nextline.types import RunNo
 
 from . import spec
@@ -21,6 +21,7 @@ from .plugins import (
     Prompt,
     PromptInfoRegistrar,
     RegistrarProxy,
+    Repeater,
     StdoutRegistrar,
     TaskAndThreadKeeper,
     TaskOrThreadToTraceMapper,
@@ -74,6 +75,8 @@ def build_hook(
     hook.register(TraceInfoRegistrar)
     hook.register(PromptInfoRegistrar)
     hook.register(TraceNumbersRegistrar)
+
+    hook.register(Repeater)
 
     hook.register(PeekStdout)
 

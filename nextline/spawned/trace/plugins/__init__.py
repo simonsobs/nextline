@@ -15,6 +15,7 @@ __all__ = [
     'StdoutRegistrar',
     'TraceInfoRegistrar',
     'TraceNumbersRegistrar',
+    'Repeater',
 ]
 
 
@@ -30,3 +31,4 @@ from .registrar import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
+from .repeat import Repeater

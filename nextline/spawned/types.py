@@ -16,7 +16,18 @@ CommandQueueMap: TypeAlias = MutableMapping[
     TraceNo, 'Queue[Tuple[PdbCommand, PromptNo, TraceNo]]'
 ]
 
-QueueOut: TypeAlias = 'Queue[Any]'
+
+@dataclass
+class Event:
+    pass
+
+
+@dataclass
+class OnStartTrace(Event):
+    trace_no: TraceNo
+
+
+QueueOut: TypeAlias = 'Queue[Event]'
 
 
 class RunArg(TypedDict):
