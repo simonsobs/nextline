@@ -2,6 +2,7 @@ from typing import Optional
 
 from apluggy import PluginManager
 
+from nextline.spawned import OnEndTrace, OnStartTrace
 from nextline.spec import hookimpl
 from nextline.types import RunNo
 from nextline.utils.pubsub.broker import PubSub
@@ -26,3 +27,11 @@ class TraceNumbersRegistrar:
     async def on_end_run(self, run_no: RunNo) -> None:
         assert self._run_no == run_no
         self._run_no = None
+
+    @hookimpl
+    async def on_start_trace(self, event: OnStartTrace) -> None:
+        print(event)
+
+    @hookimpl
+    async def on_end_trace(self, event: OnEndTrace) -> None:
+        print(event)

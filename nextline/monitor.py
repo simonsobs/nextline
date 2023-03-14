@@ -2,6 +2,8 @@ import asyncio
 
 from apluggy import PluginManager
 
+from nextline.spawned import Event, OnEndTrace, OnStartTrace
+
 from .spawned import QueueOut
 from .utils import to_thread
 
@@ -22,4 +24,11 @@ class Monitor:
 
     async def _monitor(self) -> None:
         while (event := await to_thread(self._queue.get)) is not None:
-            print(event)
+            await self._on_event(event)
+
+    async def _on_event(self, event: Event) -> None:
+        # print(event)
+        if isinstance(event, OnStartTrace):
+            await self._hook.ahook.on_start_trace(event=event)
+        elif isinstance(event, OnEndTrace):
+            await self._hook.ahook.on_end_trace(event=event)
