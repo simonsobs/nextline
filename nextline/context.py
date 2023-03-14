@@ -40,7 +40,7 @@ class Resource:
         self._mp_context = mp.get_context('spawn')
         self._q_registry: QueueRegistry = self._mp_context.Queue()
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
-        self.registrar = Registrar(self.registry, self._q_registry)
+        self.registrar = Registrar(self.registry, self._q_registry, self._hook)
         self._queue_out: QueueOut = self._mp_context.Queue()
         self._monitor = Monitor(self._hook, self._queue_out)
 

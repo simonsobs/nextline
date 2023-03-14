@@ -7,6 +7,7 @@ from threading import Thread
 from typing import MutableMapping  # noqa F401
 from typing import Optional
 
+from apluggy import PluginManager
 from typing_extensions import TypeAlias
 
 from .spawned.types import QueueRegistry
@@ -22,7 +23,8 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(self, registry: PubSub, queue: QueueRegistry):
+    def __init__(self, registry: PubSub, queue: QueueRegistry, hook: PluginManager):
+        self._hook = hook
         self._registry = registry
         self._queue = queue
         self._trace_info_map: TraceInfoMap = {}
