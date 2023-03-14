@@ -10,6 +10,7 @@ from tblib import pickling_support
 
 from . import spawned
 from .count import RunNoCounter
+from .monitor import Monitor
 from .registrar import Registrar
 from .spawned import QueueCommands, QueueOut, QueueRegistry, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
@@ -38,6 +39,7 @@ class Resource:
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
         self.registrar = Registrar(self.registry, self._q_registry)
         self._queue_out: QueueOut = self._mp_context.Queue()
+        self._monitor = Monitor(self._queue_out)
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
         func = partial(spawned.main, run_arg)
@@ -60,11 +62,13 @@ class Resource:
     async def open(self):
         await self._mp_logging.open()
         await self.registrar.open()
+        await self._monitor.open()
 
     async def close(self):
         await self.registrar.close()
         await self._mp_logging.close()
         await self.registry.close()
+        await self._monitor.close()
 
 
 class Context:
