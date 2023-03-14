@@ -10,5 +10,4 @@ def build_hook() -> PluginManager:
 
     hook.register(TraceNumbersRegistrar)
 
-    hook.hook.init(hook=hook)
     return hook
