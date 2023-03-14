@@ -72,7 +72,7 @@ def on_start_task_or_thread() -> None:
 
 
 @hookspec
-def task_or_thread_end(task_or_thread: Task | Thread):
+def on_end_task_or_thread(task_or_thread: Task | Thread):
     pass
 
 

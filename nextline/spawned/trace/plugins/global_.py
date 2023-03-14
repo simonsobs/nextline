@@ -68,7 +68,7 @@ class TaskAndThreadKeeper:
     def _on_end(self, ending: Task | Thread):
         # The "ending" is not the "current" unless it is the main thread.
         self._logger.info(f'{self.__class__.__name__}._on_end: {ending}')
-        self._hook.hook.task_or_thread_end(task_or_thread=ending)
+        self._hook.hook.on_end_task_or_thread(task_or_thread=ending)
 
     @hookimpl
     def current_thread_no(self) -> ThreadNo:
@@ -106,7 +106,7 @@ class TaskOrThreadToTraceMapper:
         self._hook.hook.on_start_trace(trace_no=trace_no)
 
     @hookimpl
-    def task_or_thread_end(self, task_or_thread: Task | Thread):
+    def on_end_task_or_thread(self, task_or_thread: Task | Thread):
         trace_no = self._map[task_or_thread]
         self._hook.hook.on_end_trace(trace_no=trace_no)
         self._logger.info(f'{self.__class__.__name__} end: trace_no={trace_no}')
