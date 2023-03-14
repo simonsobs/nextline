@@ -63,7 +63,7 @@ class TaskAndThreadKeeper:
         else:
             self._callback.register(current)
         self._counter()  # increment the counter
-        self._hook.hook.task_or_thread_start()
+        self._hook.hook.on_start_task_or_thread()
 
     def _on_end(self, ending: Task | Thread):
         # The "ending" is not the "current" unless it is the main thread.
@@ -99,7 +99,7 @@ class TaskOrThreadToTraceMapper:
         self._hook = hook
 
     @hookimpl
-    def task_or_thread_start(self) -> None:
+    def on_start_task_or_thread(self) -> None:
         trace_no = self._counter()
         self._logger.info(f'{self.__class__.__name__} start: trace_no={trace_no}')
         self._map[current_task_or_thread()] = trace_no

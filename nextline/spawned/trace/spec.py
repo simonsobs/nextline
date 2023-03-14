@@ -67,7 +67,7 @@ def create_local_trace_func() -> Optional[TraceFunc]:
 
 
 @hookspec
-def task_or_thread_start() -> None:
+def on_start_task_or_thread() -> None:
     pass
 
 
