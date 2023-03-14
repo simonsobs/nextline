@@ -44,7 +44,7 @@ class Resource:
         self._queue_out: QueueOut = self._mp_context.Queue()
         self._monitor = Monitor(self._hook, self._queue_out)
 
-        self._hook.hook.init(hook=self._hook)
+        self._hook.hook.init(hook=self._hook, registry=self.registry)
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
         func = partial(spawned.main, run_arg)

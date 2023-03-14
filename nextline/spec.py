@@ -13,6 +13,7 @@ from nextline.spawned import (
     OnWriteStdout,
 )
 from nextline.types import RunNo
+from nextline.utils.pubsub.broker import PubSub
 
 PROJECT_NAME = 'nextline_callback'
 
@@ -22,7 +23,7 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 
 @hookspec
-def init(hook: PluginManager) -> None:
+def init(hook: PluginManager, registry: PubSub) -> None:
     pass
 
 

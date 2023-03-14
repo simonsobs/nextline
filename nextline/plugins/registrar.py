@@ -4,6 +4,7 @@ from apluggy import PluginManager
 
 from nextline.spec import hookimpl
 from nextline.types import RunNo
+from nextline.utils.pubsub.broker import PubSub
 
 # from rich import print
 
@@ -13,8 +14,9 @@ class TraceNumbersRegistrar:
         self._run_no: Optional[RunNo] = None
 
     @hookimpl
-    def init(self, hook: PluginManager):
+    def init(self, hook: PluginManager, registry: PubSub) -> None:
         self._hook = hook
+        self._registry = registry
 
     @hookimpl
     async def on_start_run(self, run_no: RunNo) -> None:
