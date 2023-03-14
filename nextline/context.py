@@ -6,10 +6,12 @@ from functools import partial
 from logging import getLogger
 from typing import Any, Optional
 
+from apluggy import PluginManager
 from tblib import pickling_support
 
 from . import spawned
 from .count import RunNoCounter
+from .hook import build_hook
 from .monitor import Monitor
 from .registrar import Registrar
 from .spawned import QueueCommands, QueueOut, QueueRegistry, RunArg, RunResult
@@ -31,7 +33,8 @@ def _call_all(*funcs) -> None:
 
 
 class Resource:
-    def __init__(self) -> None:
+    def __init__(self, hook: PluginManager) -> None:
+        self._hook = hook
         self.registry = PubSub[Any, Any]()
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
@@ -39,7 +42,7 @@ class Resource:
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
         self.registrar = Registrar(self.registry, self._q_registry)
         self._queue_out: QueueOut = self._mp_context.Queue()
-        self._monitor = Monitor(self._queue_out)
+        self._monitor = Monitor(self._hook, self._queue_out)
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
         func = partial(spawned.main, run_arg)
@@ -73,7 +76,8 @@ class Resource:
 
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
-        self._resource = Resource()
+        self._hook = build_hook()
+        self._resource = Resource(hook=self._hook)
         self.registry = self._resource.registry
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
@@ -87,6 +91,7 @@ class Context:
         self._q_commands: QueueCommands | None = None
 
     async def start(self):
+        await self._hook.ahook.start()
         await self._resource.open()
         await self._registrar.script_change(
             script=self._run_arg['statement'], filename=self._run_arg['filename']
@@ -97,6 +102,7 @@ class Context:
 
     async def shutdown(self):
         await self._resource.close()
+        await self._hook.ahook.close()
 
     async def initialize(self) -> None:
         self._run_arg['run_no'] = self._run_no_count()

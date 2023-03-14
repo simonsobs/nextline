@@ -1,15 +1,16 @@
-from __future__ import annotations
-
 import asyncio
 
-from rich import print
+from apluggy import PluginManager
 
 from .spawned import QueueOut
 from .utils import to_thread
 
+# from rich import print
+
 
 class Monitor:
-    def __init__(self, queue: QueueOut):
+    def __init__(self, hook: PluginManager, queue: QueueOut):
+        self._hook = hook
         self._queue = queue
 
     async def open(self):
