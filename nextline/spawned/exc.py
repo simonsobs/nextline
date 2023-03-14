@@ -1,5 +1,5 @@
 class NotOnTraceCall(RuntimeError):
-    '''Pdb.cmdloop() was called without Callback.trace_call() being called first.
+    '''Pdb.cmdloop() was called without the hook on_trace_call() being called first.
 
     This error can happen when sys.settrace() is called by Pdb, which will remove
     Nextline and Pdb is directly called by the system trace.

@@ -47,7 +47,7 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunc]:
 
         def _context(frame, event, arg):
             '''A "with" block in which "trace" is called.'''
-            return hook.with_.trace_call(trace_args=(frame, event, arg))
+            return hook.with_.on_trace_call(trace_args=(frame, event, arg))
 
         return WithContext(trace, context=_context)
 
@@ -58,7 +58,7 @@ class TraceCallHandler:
     '''A plugin that keeps the trace call arguments during trace calls.
 
     This plugin collect the trace call arguments when the context manager hook
-    `trace_call` is entered. It responds to the first result only hooks
+    `on_trace_call` is entered. It responds to the first result only hooks
     `is_on_trace_call` and `current_trace_args`.
     '''
 
@@ -72,7 +72,7 @@ class TraceCallHandler:
 
     @hookimpl
     @contextmanager
-    def trace_call(self, trace_args: TraceArgs):
+    def on_trace_call(self, trace_args: TraceArgs):
         trace_no = self._hook.hook.current_trace_no()
         self._traces_on_call.add(trace_no)
         self._trace_args_map[trace_no] = trace_args

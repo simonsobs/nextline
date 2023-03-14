@@ -98,7 +98,7 @@ class PromptInfoRegistrar:
 
     @hookimpl
     @contextmanager
-    def trace_call(self, trace_args: TraceArgs):
+    def on_trace_call(self, trace_args: TraceArgs):
         trace_no = self._hook.hook.current_trace_no()
 
         try:
