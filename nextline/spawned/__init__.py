@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __all__ = [
+    'Event',
     'OnEndCmdloop',
     'OnEndPrompt',
     'OnEndTrace',
@@ -24,6 +25,7 @@ __all__ = [
 
 from .run import run_
 from .types import (
+    Event,
     OnEndCmdloop,
     OnEndPrompt,
     OnEndTrace,
