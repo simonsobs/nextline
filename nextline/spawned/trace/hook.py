@@ -19,7 +19,6 @@ from .plugins import (
     PdbInstanceFactory,
     PeekStdout,
     Prompt,
-    PromptInfoRegistrar,
     RegistrarProxy,
     Repeater,
     StdoutRegistrar,
@@ -70,7 +69,6 @@ def build_hook(
     registrar = RegistrarProxy(queue=queue_registry)
 
     hook.register(StdoutRegistrar)
-    hook.register(PromptInfoRegistrar)
 
     hook.register(Repeater)
 

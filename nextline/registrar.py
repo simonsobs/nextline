@@ -62,6 +62,7 @@ class Registrar:
             #     )
             #     await self._registry.publish('trace_info', trace_info)
         # print({k: v._last_item for k, v in self._registry._queue.items()})
+        pass
 
     async def script_change(self, script: str, filename: str) -> None:
         await self._registry.publish("statement", script)
@@ -94,7 +95,7 @@ class Registrar:
 
     async def run_end(self, result: Optional[str], exception: Optional[str]) -> None:
 
-        await self._end_traces()
+        # await self._end_traces()
 
         run_no = self._run_info.run_no
         await self._hook.ahook.on_end_run(run_no=run_no)

@@ -1,118 +1,12 @@
 from __future__ import annotations
 
-import dataclasses
 import datetime
 import os
-from types import FrameType
-from typing import Callable, Dict, Generator, Tuple
-
-from apluggy import PluginManager, contextmanager
+from typing import Callable, Dict, Tuple
 
 from nextline.spawned.trace.spec import hookimpl
-from nextline.spawned.trace.types import TraceArgs
 from nextline.spawned.types import QueueRegistry
-from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
-
-
-class PromptInfoRegistrar:
-    def __init__(self) -> None:
-        self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}
-
-    @hookimpl
-    def init(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):
-        self._hook = hook
-        self._run_no = run_no
-        self._registrar = registrar
-
-    @hookimpl
-    def on_start_trace(self, trace_no: TraceNo) -> None:
-
-        # TODO: Putting a prompt info for now because otherwise tests get stuck
-        # sometimes for an unknown reason. Need to investigate
-        prompt_info = PromptInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            prompt_no=PromptNo(-1),
-            open=False,
-        )
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
-    @hookimpl
-    def on_end_trace(self, trace_no: TraceNo) -> None:
-        self._registrar.end_prompt_info_for_trace(trace_no)
-
-    @hookimpl
-    @contextmanager
-    def on_trace_call(self, trace_args: TraceArgs):
-        trace_no = self._hook.hook.current_trace_no()
-
-        try:
-            yield
-        finally:
-            frame, event, _ = trace_args
-            file_name = _to_canonic(frame.f_code.co_filename)
-            line_no = frame.f_lineno
-
-            if frame is not self._last_prompt_frame_map.get(trace_no):
-                return
-
-            # TODO: Sending a prompt info with "open=False" for now so that the
-            #       arrow in the web UI moves when the Pdb is "continuing."
-
-            # TODO: Add a test. Currently, the tests pass without sending this
-            #       prompt info.
-
-            prompt_info = PromptInfo(
-                run_no=self._run_no,
-                trace_no=trace_no,
-                prompt_no=PromptNo(-1),
-                open=False,
-                event=event,
-                file_name=file_name,
-                line_no=line_no,
-                trace_call_end=True,
-            )
-            self._registrar.put_prompt_info(prompt_info)
-            self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
-    @hookimpl
-    @contextmanager
-    def on_prompt(self, prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
-        trace_no = self._hook.hook.current_trace_no()
-        trace_args = self._hook.hook.current_trace_args()
-
-        frame, event, _ = trace_args
-        file_name = _to_canonic(frame.f_code.co_filename)
-        line_no = frame.f_lineno
-        prompt_info = PromptInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            prompt_no=prompt_no,
-            open=True,
-            event=event,
-            file_name=file_name,
-            line_no=line_no,
-            stdout=text,
-            started_at=datetime.datetime.utcnow(),
-        )
-        self._registrar.put_prompt_info(prompt_info)
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info)
-
-        self._last_prompt_frame_map[trace_no] = frame
-
-        # Yield twice: once to receive from send(), and once to exit.
-        # https://stackoverflow.com/a/68304565/7309855
-        command = yield
-        yield
-
-        prompt_info_end = dataclasses.replace(
-            prompt_info,
-            open=False,
-            command=command,
-            ended_at=datetime.datetime.utcnow(),
-        )
-        self._registrar.put_prompt_info(prompt_info_end)
-        self._registrar.put_prompt_info_for_trace(trace_no, prompt_info_end)
+from nextline.types import PromptInfo, RunNo, StdoutInfo, TraceInfo, TraceNo
 
 
 class StdoutRegistrar:
