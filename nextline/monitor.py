@@ -1,4 +1,5 @@
 import asyncio
+import time
 from logging import getLogger
 
 from apluggy import PluginManager
@@ -20,7 +21,11 @@ class Monitor:
     async def open(self):
         self._task = asyncio.create_task(self._monitor())
 
-    async def close(self):
+    async def close(self) -> None:
+        up_to = 0.05
+        start = time.process_time()
+        while not self._queue.empty() and time.process_time() - start < up_to:
+            await asyncio.sleep(0)
         await to_thread(self._queue.put, None)
         await self._task
 

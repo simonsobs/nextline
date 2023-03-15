@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import asyncio
 import multiprocessing as mp
-import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
@@ -65,10 +63,6 @@ class Resource:
         return await run_in_process(func, executor_factory)
 
     async def finish(self):
-        up_to = 0.05
-        start = time.process_time()
-        while not self._queue_out.empty() and time.process_time() - start < up_to:
-            await asyncio.sleep(0)
         await self._monitor.close()
 
     async def open(self):
