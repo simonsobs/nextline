@@ -27,12 +27,6 @@ class Registrar:
         self._registry = registry
         self._trace_info_map: TraceInfoMap = {}
 
-    async def open(self):
-        pass
-
-    async def close(self):
-        pass
-
     async def script_change(self, script: str, filename: str) -> None:
         await self._registry.publish("statement", script)
         await self._registry.publish("script_file_name", filename)

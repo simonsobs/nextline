@@ -74,11 +74,9 @@ class Resource:
 
     async def open(self):
         await self._mp_logging.open()
-        await self.registrar.open()
         await self._monitor.open()
 
     async def close(self):
-        await self.registrar.close()
         await self._mp_logging.close()
         await self.registry.close()
         await self._monitor.close()
