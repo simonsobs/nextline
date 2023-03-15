@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from nextline.spawned import (
+    OnStartPrompt,
     QueueCommands,
     QueueOut,
     QueueRegistry,
@@ -42,25 +43,19 @@ def call_set_queues(
 
 
 @pytest.fixture
-def task_send_commands(q_registrar, q_commands):
+def task_send_commands(queue_out, q_commands):
     with ThreadPoolExecutor(max_workers=1) as executor:
-        fut = executor.submit(respond_prompt, q_registrar, q_commands)
+        fut = executor.submit(respond_prompt, queue_out, q_commands)
         yield
-        q_registrar.put(None)
+        queue_out.put(None)
         fut.result()
 
 
-def respond_prompt(q_registrar, q_commands):
-    while (m := q_registrar.get()) is not None:
-        key, value, _ = m
-        if key != "prompt_info":
+def respond_prompt(queue_out, q_commands):
+    while (event := queue_out.get()) is not None:
+        if not isinstance(event, OnStartPrompt):
             continue
-        prompt_info = value
-        if prompt_info is None:
-            continue
-        if not prompt_info.open:
-            continue
-        q_commands.put(("next", prompt_info.prompt_no, prompt_info.trace_no))
+        q_commands.put(('next', event.prompt_no, event.trace_no))
 
 
 @pytest.fixture
