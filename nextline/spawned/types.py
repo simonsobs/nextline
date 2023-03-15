@@ -11,7 +11,6 @@ from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
-QueueRegistry: TypeAlias = "Queue[Tuple[str, Any, bool]]"
 
 CommandQueueMap: TypeAlias = MutableMapping[
     TraceNo, 'Queue[Tuple[PdbCommand, PromptNo, TraceNo]]'

@@ -11,24 +11,12 @@ from nextline.types import RunNo
 from . import script
 from .call import sys_trace
 from .trace import TraceFunc, build_hook
-from .types import (
-    CommandQueueMap,
-    QueueCommands,
-    QueueOut,
-    QueueRegistry,
-    RunArg,
-    RunResult,
-)
+from .types import CommandQueueMap, QueueCommands, QueueOut, RunArg, RunResult
 
 _T = TypeVar('_T')
 
 
-def run_(
-    run_arg: RunArg,
-    q_commands: QueueCommands,
-    q_registry: QueueRegistry,
-    queue_out: QueueOut,
-) -> RunResult:
+def run_(run_arg: RunArg, q_commands: QueueCommands, queue_out: QueueOut) -> RunResult:
 
     run_no = run_arg['run_no']
 
@@ -42,21 +30,20 @@ def run_(
 
     func = script.compose(code)
 
-    return run_with_trace(run_no, func, q_commands, q_registry, queue_out)
+    return run_with_trace(run_no, func, q_commands, queue_out)
 
 
 def run_with_trace(
     run_no: RunNo,
     func: Callable[[], Any],
     q_commands: QueueCommands,
-    q_registry: QueueRegistry,
     queue_out: QueueOut,
 ) -> RunResult:
 
     ret: Any = None
     exc: BaseException | None = None
 
-    with _trace(run_no, q_commands, q_registry, queue_out) as trace:
+    with _trace(run_no, q_commands, queue_out) as trace:
         with sys_trace(trace_func=trace):
             try:
                 ret = func()
@@ -76,20 +63,12 @@ def run_with_trace(
 
 
 @contextmanager
-def _trace(
-    run_no: RunNo,
-    q_commands: QueueCommands,
-    q_registry: QueueRegistry,
-    queue_out: QueueOut,
-):
+def _trace(run_no: RunNo, q_commands: QueueCommands, queue_out: QueueOut):
 
     command_queue_map: CommandQueueMap = {}
 
     hook = build_hook(
-        run_no=run_no,
-        queue_registry=q_registry,
-        command_queue_map=command_queue_map,
-        queue_out=queue_out,
+        run_no=run_no, command_queue_map=command_queue_map, queue_out=queue_out
     )
 
     with TraceFunc(hook=hook) as trace_func:

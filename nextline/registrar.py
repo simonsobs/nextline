@@ -10,10 +10,9 @@ from typing import Optional
 from apluggy import PluginManager
 from typing_extensions import TypeAlias
 
-from .spawned.types import QueueRegistry
 from .types import TraceInfo  # noqa F401
 from .types import RunInfo, RunNo
-from .utils import PubSub, to_thread
+from .utils import PubSub
 
 SCRIPT_FILE_NAME = "<string>"
 
@@ -23,45 +22,15 @@ TraceInfoMap: TypeAlias = "MutableMapping[int, TraceInfo]"
 
 
 class Registrar:
-    def __init__(self, registry: PubSub, queue: QueueRegistry, hook: PluginManager):
+    def __init__(self, registry: PubSub, hook: PluginManager):
         self._hook = hook
         self._registry = registry
-        self._queue = queue
         self._trace_info_map: TraceInfoMap = {}
 
     async def open(self):
-        self._task = asyncio.create_task(self._relay())
+        pass
 
     async def close(self):
-        await to_thread(self._queue.put, None)
-        await self._task
-
-    async def _relay(self) -> None:
-        while (m := await to_thread(self._queue.get)) is not None:
-            key, value, close = m
-            if close:
-                await self._registry.end(key)
-                continue
-            if key == 'trace_info':
-                assert isinstance(value, TraceInfo)
-                self._trace_info_map[value.trace_no] = value
-            await self._registry.publish(key, value)
-
-    async def _end_traces(self) -> None:
-        # In case the process is terminated or killed.
-        for trace_no in self._registry.latest('trace_nos'):
-            key = f'prompt_info_{trace_no}'
-            if key in self._registry._queue:
-                await self._registry.end(key)
-            # trace_info = self._trace_info_map[trace_no]
-            # if trace_info.state == "running":
-            #     trace_info = dataclasses.replace(
-            #         trace_info,
-            #         state="finished",
-            #         ended_at=datetime.datetime.utcnow(),
-            #     )
-            #     await self._registry.publish('trace_info', trace_info)
-        # print({k: v._last_item for k, v in self._registry._queue.items()})
         pass
 
     async def script_change(self, script: str, filename: str) -> None:
@@ -94,8 +63,6 @@ class Registrar:
         await self._hook.ahook.on_start_run(run_no=run_no)
 
     async def run_end(self, result: Optional[str], exception: Optional[str]) -> None:
-
-        # await self._end_traces()
 
         run_no = self._run_info.run_no
         await self._hook.ahook.on_end_run(run_no=run_no)

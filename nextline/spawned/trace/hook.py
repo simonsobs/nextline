@@ -6,7 +6,7 @@ from logging import getLogger
 from apluggy import PluginManager
 
 from nextline.spawned.call import sys_trace
-from nextline.spawned.types import CommandQueueMap, QueueOut, QueueRegistry
+from nextline.spawned.types import CommandQueueMap, QueueOut
 from nextline.types import RunNo
 
 from . import spec
@@ -54,10 +54,7 @@ MODULES_TO_SKIP = {
 
 
 def build_hook(
-    run_no: RunNo,
-    queue_registry: QueueRegistry,
-    command_queue_map: CommandQueueMap,
-    queue_out: QueueOut,
+    run_no: RunNo, command_queue_map: CommandQueueMap, queue_out: QueueOut
 ) -> PluginManager:
     '''Return a plugin manager with the plugins registered.'''
 

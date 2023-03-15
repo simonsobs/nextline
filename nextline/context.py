@@ -16,7 +16,7 @@ from .count import RunNoCounter
 from .hook import build_hook
 from .monitor import Monitor
 from .registrar import Registrar
-from .spawned import QueueCommands, QueueOut, QueueRegistry, RunArg, RunResult
+from .spawned import QueueCommands, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
 
@@ -40,9 +40,8 @@ class Resource:
         self.registry = PubSub[Any, Any]()
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
-        self._q_registry: QueueRegistry = self._mp_context.Queue()
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
-        self.registrar = Registrar(self.registry, self._q_registry, self._hook)
+        self.registrar = Registrar(self.registry, self._hook)
         self._queue_out: QueueOut = self._mp_context.Queue()
         self._monitor = Monitor(self._hook, self._queue_out)
 
@@ -57,9 +56,7 @@ class Resource:
         initializer = partial(
             _call_all,
             self._mp_logging.initializer,
-            partial(
-                spawned.set_queues, self.q_commands, self._q_registry, self._queue_out
-            ),
+            partial(spawned.set_queues, self.q_commands, self._queue_out),
         )
         executor_factory = partial(
             ProcessPoolExecutor,

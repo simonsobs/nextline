@@ -3,9 +3,9 @@ from apluggy import PluginManager
 from . import spec
 from .plugins import (
     PromptInfoRegistrar,
+    StdoutRegistrar,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
-    StdoutRegistrar,
 )
 
 

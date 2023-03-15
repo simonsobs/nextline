@@ -9,7 +9,6 @@ from nextline.spawned import (
     OnStartPrompt,
     QueueCommands,
     QueueOut,
-    QueueRegistry,
     RunArg,
     main,
     set_queues,
@@ -35,10 +34,8 @@ def test_one(
 
 
 @pytest.fixture
-def call_set_queues(
-    q_registrar: QueueRegistry, q_commands: QueueCommands, queue_out: QueueOut
-):
-    set_queues(q_commands, q_registrar, queue_out)
+def call_set_queues(q_commands: QueueCommands, queue_out: QueueOut):
+    set_queues(q_commands, queue_out)
     yield
 
 
@@ -62,11 +59,6 @@ def respond_prompt(queue_out, q_commands):
 def run_arg(statement: str) -> RunArg:
     y = RunArg(run_no=RunNo(1), statement=statement, filename="<string>")
     return y
-
-
-@pytest.fixture
-def q_registrar() -> QueueRegistry:
-    return queue.Queue()
 
 
 @pytest.fixture
