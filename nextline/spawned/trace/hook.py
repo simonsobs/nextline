@@ -26,7 +26,6 @@ from .plugins import (
     TaskAndThreadKeeper,
     TaskOrThreadToTraceMapper,
     TraceCallHandler,
-    TraceInfoRegistrar,
 )
 
 MODULES_TO_SKIP = {
@@ -71,7 +70,6 @@ def build_hook(
     registrar = RegistrarProxy(queue=queue_registry)
 
     hook.register(StdoutRegistrar)
-    hook.register(TraceInfoRegistrar)
     hook.register(PromptInfoRegistrar)
 
     hook.register(Repeater)

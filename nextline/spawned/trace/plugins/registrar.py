@@ -14,42 +14,6 @@ from nextline.spawned.types import QueueRegistry
 from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
 
 
-class TraceInfoRegistrar:
-    @hookimpl
-    def init(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):
-        self._hook = hook
-        self._run_no = run_no
-        self._registrar = registrar
-        self._trace_info_map: Dict[TraceNo, TraceInfo] = {}
-
-    @hookimpl
-    def on_start_trace(self, trace_no: TraceNo) -> None:
-        assert trace_no == self._hook.hook.current_trace_no()
-        thread_no = self._hook.hook.current_thread_no()
-        task_no = self._hook.hook.current_task_no()
-
-        trace_info = TraceInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            thread_no=thread_no,
-            task_no=task_no,
-            state="running",
-            started_at=datetime.datetime.utcnow(),
-        )
-        self._trace_info_map[trace_no] = trace_info
-        self._registrar.put_trace_info(trace_info)
-
-    @hookimpl
-    def on_end_trace(self, trace_no: TraceNo) -> None:
-        trace_info = self._trace_info_map.pop(trace_no)
-        trace_info_end = dataclasses.replace(
-            trace_info,
-            state='finished',
-            ended_at=datetime.datetime.utcnow(),
-        )
-        self._registrar.put_trace_info(trace_info_end)
-
-
 class PromptInfoRegistrar:
     def __init__(self) -> None:
         self._last_prompt_frame_map: Dict[TraceNo, FrameType] = {}

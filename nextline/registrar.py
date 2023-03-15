@@ -53,14 +53,14 @@ class Registrar:
             key = f'prompt_info_{trace_no}'
             if key in self._registry._queue:
                 await self._registry.end(key)
-            trace_info = self._trace_info_map[trace_no]
-            if trace_info.state == "running":
-                trace_info = dataclasses.replace(
-                    trace_info,
-                    state="finished",
-                    ended_at=datetime.datetime.utcnow(),
-                )
-                await self._registry.publish('trace_info', trace_info)
+            # trace_info = self._trace_info_map[trace_no]
+            # if trace_info.state == "running":
+            #     trace_info = dataclasses.replace(
+            #         trace_info,
+            #         state="finished",
+            #         ended_at=datetime.datetime.utcnow(),
+            #     )
+            #     await self._registry.publish('trace_info', trace_info)
         # print({k: v._last_item for k, v in self._registry._queue.items()})
 
     async def script_change(self, script: str, filename: str) -> None:

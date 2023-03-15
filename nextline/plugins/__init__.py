@@ -1,3 +1,6 @@
-__all__ = ['TraceNumbersRegistrar']
+__all__ = [
+    'TraceInfoRegistrar',
+    'TraceNumbersRegistrar',
+]
 
-from .registrar import TraceNumbersRegistrar
+from .registrar import TraceInfoRegistrar, TraceNumbersRegistrar
