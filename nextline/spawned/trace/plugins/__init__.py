@@ -11,7 +11,6 @@ __all__ = [
     'Prompt',
     'PeekStdout',
     'RegistrarProxy',
-    'StdoutRegistrar',
     'Repeater',
 ]
 
@@ -21,5 +20,5 @@ from .global_ import GlobalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMa
 from .local_ import LocalTraceFunc, TraceCallHandler
 from .pdb_ import PdbInstanceFactory, Prompt
 from .peek import PeekStdout
-from .registrar import RegistrarProxy, StdoutRegistrar
+from .registrar import RegistrarProxy
 from .repeat import Repeater

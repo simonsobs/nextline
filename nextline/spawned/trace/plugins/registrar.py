@@ -1,29 +1,10 @@
 from __future__ import annotations
 
-import datetime
 import os
 from typing import Callable, Dict, Tuple
 
-from nextline.spawned.trace.spec import hookimpl
 from nextline.spawned.types import QueueRegistry
-from nextline.types import PromptInfo, RunNo, StdoutInfo, TraceInfo, TraceNo
-
-
-class StdoutRegistrar:
-    @hookimpl
-    def init(self, run_no: RunNo, registrar: RegistrarProxy):
-        self._run_no = run_no
-        self._registrar = registrar
-
-    @hookimpl
-    def on_write_stdout(self, trace_no: TraceNo, line: str):
-        stdout_info = StdoutInfo(
-            run_no=self._run_no,
-            trace_no=trace_no,
-            text=line,
-            written_at=datetime.datetime.utcnow(),
-        )
-        self._registrar.put_stdout_info(stdout_info)
+from nextline.types import PromptInfo, StdoutInfo, TraceInfo, TraceNo
 
 
 class RegistrarProxy:

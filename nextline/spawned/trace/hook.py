@@ -21,7 +21,6 @@ from .plugins import (
     Prompt,
     RegistrarProxy,
     Repeater,
-    StdoutRegistrar,
     TaskAndThreadKeeper,
     TaskOrThreadToTraceMapper,
     TraceCallHandler,
@@ -67,8 +66,6 @@ def build_hook(
     hook.add_hookspecs(spec)
 
     registrar = RegistrarProxy(queue=queue_registry)
-
-    hook.register(StdoutRegistrar)
 
     hook.register(Repeater)
 
