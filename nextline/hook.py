@@ -1,21 +1,15 @@
 from apluggy import PluginManager
 
-from . import spec
-from .plugins import (
-    PromptInfoRegistrar,
-    StdoutRegistrar,
-    TraceInfoRegistrar,
-    TraceNumbersRegistrar,
-)
+from . import plugins, spec
 
 
 def build_hook() -> PluginManager:
     hook = PluginManager(spec.PROJECT_NAME)
     hook.add_hookspecs(spec)
 
-    hook.register(StdoutRegistrar)
-    hook.register(PromptInfoRegistrar)
-    hook.register(TraceInfoRegistrar)
-    hook.register(TraceNumbersRegistrar)
+    hook.register(plugins.StdoutRegistrar)
+    hook.register(plugins.PromptInfoRegistrar)
+    hook.register(plugins.TraceInfoRegistrar)
+    hook.register(plugins.TraceNumbersRegistrar)
 
     return hook
