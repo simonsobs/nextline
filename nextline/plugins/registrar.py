@@ -1,7 +1,6 @@
 import asyncio
 import dataclasses
 import datetime
-import time
 from logging import getLogger
 from typing import Dict, Optional, Set, Tuple
 
@@ -43,12 +42,6 @@ class TraceNumbersRegistrar:
         assert self._run_no == run_no
         self._run_no = None
 
-        up_to = 0.01
-        start = time.process_time()
-        while self._trace_nos and time.process_time() - start < up_to:
-            # on_end_trace() has not been called yet for all traces
-            await asyncio.sleep(0)
-
         self._trace_nos = ()
         await self._registry.publish('trace_nos', self._trace_nos)
 
@@ -65,7 +58,6 @@ class TraceNumbersRegistrar:
         try:
             nosl.remove(trace_no)
         except ValueError:
-            # on_end_run() might have already been called
             return
         self._trace_nos = tuple(nosl)
         await self._registry.publish('trace_nos', self._trace_nos)
@@ -90,12 +82,6 @@ class TraceInfoRegistrar:
     async def on_end_run(self, run_no: RunNo) -> None:
         assert self._run_no == run_no
         self._run_no = None
-
-        up_to = 0.05
-        start = time.process_time()
-        while self._trace_info_map and time.process_time() - start < up_to:
-            # on_end_trace() has not been called yet for all traces
-            await asyncio.sleep(0)
 
         while self._trace_info_map:
             # the process might have been killed.
@@ -165,12 +151,6 @@ class PromptInfoRegistrar:
     @hookimpl
     async def on_end_run(self, run_no: RunNo) -> None:
         assert self._run_no == run_no
-
-        up_to = 0.05
-        start = time.process_time()
-        while self._keys and time.process_time() - start < up_to:
-            # on_end_trace() has not been called yet for all traces
-            await asyncio.sleep(0)
 
         async with self._lock:
             while self._keys:
