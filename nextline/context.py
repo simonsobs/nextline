@@ -51,7 +51,6 @@ class Resource:
         # if the process is killed.
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
-        func = partial(spawned.main, run_arg)
         self.q_commands = self._mp_context.Queue()
         initializer = partial(
             _call_all,
@@ -64,6 +63,7 @@ class Resource:
             mp_context=self._mp_context,
             initializer=initializer,
         )
+        func = partial(spawned.main, run_arg)
         return await run_in_process(func, executor_factory)
 
     async def finish(self):
