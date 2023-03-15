@@ -16,7 +16,6 @@ from .types import TraceArgs
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.spawned.trace.plugins.registrar import RegistrarProxy
 
 PROJECT_NAME = 'nextline_process_callback'
 
@@ -29,7 +28,6 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 def init(
     hook: PluginManager,
     run_no: RunNo,
-    registrar: RegistrarProxy,
     command_queue_map: CommandQueueMap,
     modules_to_skip: Collection[str],
     queue_out: QueueOut,

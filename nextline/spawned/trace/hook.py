@@ -19,7 +19,6 @@ from .plugins import (
     PdbInstanceFactory,
     PeekStdout,
     Prompt,
-    RegistrarProxy,
     Repeater,
     TaskAndThreadKeeper,
     TaskOrThreadToTraceMapper,
@@ -65,8 +64,6 @@ def build_hook(
     hook = PluginManager(spec.PROJECT_NAME)
     hook.add_hookspecs(spec)
 
-    registrar = RegistrarProxy(queue=queue_registry)
-
     hook.register(Repeater)
 
     hook.register(PeekStdout)
@@ -94,7 +91,6 @@ def build_hook(
     hook.hook.init(
         hook=hook,
         run_no=run_no,
-        registrar=registrar,
         command_queue_map=command_queue_map,
         modules_to_skip=MODULES_TO_SKIP,
         queue_out=queue_out,
