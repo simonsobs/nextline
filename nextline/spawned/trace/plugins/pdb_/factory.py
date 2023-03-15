@@ -58,7 +58,7 @@ def CmdloopHook(hook: PluginManager):
     def cmdloop():
         if not hook.hook.is_on_trace_call():
             raise NotOnTraceCall
-        return hook.with_.cmdloop()
+        return hook.with_.on_cmdloop()
 
     return cmdloop
 

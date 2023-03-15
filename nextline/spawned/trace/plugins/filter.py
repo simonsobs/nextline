@@ -86,7 +86,7 @@ class FilerByModule:
 
     @hookimpl
     @contextmanager
-    def cmdloop(self) -> Generator[None, str, None]:
+    def on_cmdloop(self) -> Generator[None, str, None]:
         trace_args = self._hook.hook.current_trace_args()
         self._add(trace_args)
         yield

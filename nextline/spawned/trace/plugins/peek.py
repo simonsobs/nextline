@@ -16,7 +16,7 @@ class PeekStdout:
         self._hook = hook
 
     @hookimpl
-    def trace_start(self, trace_no: TraceNo) -> None:
+    def on_start_trace(self, trace_no: TraceNo) -> None:
         assert trace_no == self._key_factory()
 
     @hookimpl
@@ -34,7 +34,7 @@ class PeekStdout:
         return self._hook.hook.current_trace_no()
 
     def _callback(self, trace_no: TraceNo, line: str):
-        self._hook.hook.stdout(trace_no=trace_no, line=line)
+        self._hook.hook.on_write_stdout(trace_no=trace_no, line=line)
 
 
 _T = TypeVar('_T')

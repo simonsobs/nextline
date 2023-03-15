@@ -1,33 +1,13 @@
-from __future__ import annotations
-
 from contextlib import contextmanager
 from logging import getLogger
 
 from apluggy import PluginManager
 
 from nextline.spawned.call import sys_trace
-from nextline.spawned.types import CommandQueueMap, QueueRegistry
+from nextline.spawned.types import CommandQueueMap, QueueOut
 from nextline.types import RunNo
 
-from . import spec
-from .plugins import (
-    FilerByModule,
-    FilterByModuleName,
-    FilterLambda,
-    GlobalTraceFunc,
-    LocalTraceFunc,
-    PdbInstanceFactory,
-    PeekStdout,
-    Prompt,
-    PromptInfoRegistrar,
-    RegistrarProxy,
-    StdoutRegistrar,
-    TaskAndThreadKeeper,
-    TaskOrThreadToTraceMapper,
-    TraceCallHandler,
-    TraceInfoRegistrar,
-    TraceNumbersRegistrar,
-)
+from . import plugins, spec
 
 MODULES_TO_SKIP = {
     'multiprocessing.*',
@@ -58,38 +38,25 @@ MODULES_TO_SKIP = {
 
 
 def build_hook(
-    run_no: RunNo,
-    queue_registry: QueueRegistry,
-    command_queue_map: CommandQueueMap,
+    run_no: RunNo, command_queue_map: CommandQueueMap, queue_out: QueueOut
 ) -> PluginManager:
     '''Return a plugin manager with the plugins registered.'''
 
     hook = PluginManager(spec.PROJECT_NAME)
     hook.add_hookspecs(spec)
 
-    registrar = RegistrarProxy(queue=queue_registry)
-
-    hook.register(StdoutRegistrar)
-    hook.register(TraceInfoRegistrar)
-    hook.register(PromptInfoRegistrar)
-    hook.register(TraceNumbersRegistrar)
-
-    hook.register(PeekStdout)
-
-    hook.register(Prompt)
-    hook.register(PdbInstanceFactory)
-
-    hook.register(TraceCallHandler)
-    hook.register(LocalTraceFunc)
-
-    hook.register(TaskOrThreadToTraceMapper)
-    hook.register(TaskAndThreadKeeper)
-
-    hook.register(FilerByModule)
-    hook.register(FilterLambda)
-    hook.register(FilterByModuleName)
-
-    hook.register(GlobalTraceFunc)
+    hook.register(plugins.Repeater)
+    hook.register(plugins.PeekStdout)
+    hook.register(plugins.Prompt)
+    hook.register(plugins.PdbInstanceFactory)
+    hook.register(plugins.TraceCallHandler)
+    hook.register(plugins.LocalTraceFunc)
+    hook.register(plugins.TaskOrThreadToTraceMapper)
+    hook.register(plugins.TaskAndThreadKeeper)
+    hook.register(plugins.FilerByModule)
+    hook.register(plugins.FilterLambda)
+    hook.register(plugins.FilterByModuleName)
+    hook.register(plugins.GlobalTraceFunc)
 
     logger = getLogger(__name__)
     plugin_names = (f'{n!r}' for n, p in hook.list_name_plugin() if p)
@@ -99,9 +66,9 @@ def build_hook(
     hook.hook.init(
         hook=hook,
         run_no=run_no,
-        registrar=registrar,
         command_queue_map=command_queue_map,
         modules_to_skip=MODULES_TO_SKIP,
+        queue_out=queue_out,
     )
 
     return hook

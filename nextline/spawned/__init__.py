@@ -3,8 +3,18 @@
 from __future__ import annotations
 
 __all__ = [
+    'Event',
+    'OnEndCmdloop',
+    'OnEndPrompt',
+    'OnEndTrace',
+    'OnEndTraceCall',
+    'OnStartCmdloop',
+    'OnStartPrompt',
+    'OnStartTrace',
+    'OnStartTraceCall',
+    'OnWriteStdout',
     'QueueCommands',
-    'QueueRegistry',
+    'QueueOut',
     'RunArg',
     'RunResult',
     'set_queues',
@@ -12,22 +22,35 @@ __all__ = [
 ]
 
 
+from .events import (
+    Event,
+    OnEndCmdloop,
+    OnEndPrompt,
+    OnEndTrace,
+    OnEndTraceCall,
+    OnStartCmdloop,
+    OnStartPrompt,
+    OnStartTrace,
+    OnStartTraceCall,
+    OnWriteStdout,
+)
 from .run import run_
-from .types import QueueCommands, QueueRegistry, RunArg, RunResult
+from .types import QueueCommands, QueueOut, RunArg, RunResult
 
 _q_commands: QueueCommands | None = None
-_q_registry: QueueRegistry | None = None
+
+_queue_out: QueueOut | None = None
 
 
-def set_queues(q_commands: QueueCommands, q_registry: QueueRegistry) -> None:
+def set_queues(q_commands: QueueCommands, queue_out: QueueOut) -> None:
     '''Initializer of ProcessPoolExecutor that receives the queues.'''
-    global _q_commands, _q_registry
+    global _q_commands, _queue_out
     _q_commands = q_commands
-    _q_registry = q_registry
+    _queue_out = queue_out
 
 
 def main(run_arg: RunArg) -> RunResult:
     '''The function to be submitted to ProcessPoolExecutor.'''
-    assert _q_registry
     assert _q_commands
-    return run_(run_arg, _q_commands, _q_registry)
+    assert _queue_out
+    return run_(run_arg, _q_commands, _queue_out)

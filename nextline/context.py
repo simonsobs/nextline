@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+import asyncio
 import multiprocessing as mp
+import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
 from typing import Any, Optional
 
+from apluggy import PluginManager
 from tblib import pickling_support
 
 from . import spawned
 from .count import RunNoCounter
+from .hook import build_hook
+from .monitor import Monitor
 from .registrar import Registrar
-from .spawned import QueueCommands, QueueRegistry, RunArg, RunResult
+from .spawned import QueueCommands, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
 
@@ -30,13 +35,20 @@ def _call_all(*funcs) -> None:
 
 
 class Resource:
-    def __init__(self) -> None:
+    def __init__(self, hook: PluginManager) -> None:
+        self._hook = hook
         self.registry = PubSub[Any, Any]()
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
-        self._q_registry: QueueRegistry = self._mp_context.Queue()
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
-        self.registrar = Registrar(self.registry, self._q_registry)
+        self.registrar = Registrar(self.registry, self._hook)
+        self._queue_out: QueueOut = self._mp_context.Queue()
+        self._monitor = Monitor(self._hook, self._queue_out)
+
+        self._hook.hook.init(hook=self._hook, registry=self.registry)
+
+        # TODO: Recreate self._queue_out for each run because it might be broken
+        # if the process is killed.
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
         func = partial(spawned.main, run_arg)
@@ -44,7 +56,7 @@ class Resource:
         initializer = partial(
             _call_all,
             self._mp_logging.initializer,
-            partial(spawned.set_queues, self.q_commands, self._q_registry),
+            partial(spawned.set_queues, self.q_commands, self._queue_out),
         )
         executor_factory = partial(
             ProcessPoolExecutor,
@@ -54,19 +66,26 @@ class Resource:
         )
         return await run_in_process(func, executor_factory)
 
+    async def wait_until_queue_out_empty(self):
+        up_to = 0.05
+        start = time.process_time()
+        while not self._queue_out.empty() and time.process_time() - start < up_to:
+            await asyncio.sleep(0)
+
     async def open(self):
         await self._mp_logging.open()
-        await self.registrar.open()
+        await self._monitor.open()
 
     async def close(self):
-        await self.registrar.close()
         await self._mp_logging.close()
         await self.registry.close()
+        await self._monitor.close()
 
 
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
-        self._resource = Resource()
+        self._hook = build_hook()
+        self._resource = Resource(hook=self._hook)
         self.registry = self._resource.registry
         self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
@@ -80,6 +99,7 @@ class Context:
         self._q_commands: QueueCommands | None = None
 
     async def start(self):
+        await self._hook.ahook.start()
         await self._resource.open()
         await self._registrar.script_change(
             script=self._run_arg['statement'], filename=self._run_arg['filename']
@@ -90,6 +110,7 @@ class Context:
 
     async def shutdown(self):
         await self._resource.close()
+        await self._hook.ahook.close()
 
     async def initialize(self) -> None:
         self._run_arg['run_no'] = self._run_no_count()
@@ -146,6 +167,8 @@ class Context:
         if ret.raised:
             logger = getLogger(__name__)
             logger.exception(ret.raised)
+
+        await self._resource.wait_until_queue_out_empty()
 
         await self._registrar.run_end(
             result=self._run_result.fmt_ret,

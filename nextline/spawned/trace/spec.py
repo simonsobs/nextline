@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.types import CommandQueueMap
+from nextline.spawned.types import CommandQueueMap, QueueOut
 from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 from .types import TraceArgs
@@ -16,7 +16,6 @@ from .types import TraceArgs
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
-    from nextline.spawned.trace.plugins.registrar import RegistrarProxy
 
 PROJECT_NAME = 'nextline_process_callback'
 
@@ -29,9 +28,9 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 def init(
     hook: PluginManager,
     run_no: RunNo,
-    registrar: RegistrarProxy,
     command_queue_map: CommandQueueMap,
     modules_to_skip: Collection[str],
+    queue_out: QueueOut,
 ) -> None:
     pass
 
@@ -66,17 +65,17 @@ def create_local_trace_func() -> Optional[TraceFunc]:
 
 
 @hookspec
-def task_or_thread_start() -> None:
+def on_start_task_or_thread() -> None:
     pass
 
 
 @hookspec
-def task_or_thread_end(task_or_thread: Task | Thread):
+def on_end_task_or_thread(task_or_thread: Task | Thread):
     pass
 
 
 @hookspec
-def trace_start(trace_no: TraceNo) -> None:
+def on_start_trace(trace_no: TraceNo) -> None:
     pass
 
 
@@ -96,13 +95,13 @@ def current_trace_no() -> TraceNo | None:
 
 
 @hookspec
-def trace_end(trace_no: TraceNo) -> None:
+def on_end_trace(trace_no: TraceNo) -> None:
     pass
 
 
 @hookspec
 @contextmanager
-def trace_call(trace_args: TraceArgs):
+def on_trace_call(trace_args: TraceArgs):
     pass
 
 
@@ -118,7 +117,7 @@ def current_trace_args() -> Optional[TraceArgs]:
 
 @hookspec
 @contextmanager
-def cmdloop():
+def on_cmdloop():
     pass
 
 
@@ -136,7 +135,7 @@ def prompt(prompt_no: PromptNo, text: str) -> Optional[str]:
 
 
 @hookspec
-def stdout(trace_no: TraceNo, line: str) -> None:
+def on_write_stdout(trace_no: TraceNo, line: str) -> None:
     pass
 
 
