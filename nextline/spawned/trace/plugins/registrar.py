@@ -14,25 +14,6 @@ from nextline.spawned.types import QueueRegistry
 from nextline.types import PromptInfo, PromptNo, RunNo, StdoutInfo, TraceInfo, TraceNo
 
 
-class TraceNumbersRegistrar:
-    @hookimpl
-    def init(self, registrar: RegistrarProxy):
-        self._registrar = registrar
-        self._trace_nos: Tuple[TraceNo, ...] = ()
-
-    @hookimpl
-    def on_start_trace(self, trace_no: TraceNo):
-        self._trace_nos = self._trace_nos + (trace_no,)
-        self._registrar.put_trace_nos(self._trace_nos)
-
-    @hookimpl
-    def on_end_trace(self, trace_no: TraceNo):
-        nosl = list(self._trace_nos)
-        nosl.remove(trace_no)
-        self._trace_nos = tuple(nosl)
-        self._registrar.put_trace_nos(self._trace_nos)
-
-
 class TraceInfoRegistrar:
     @hookimpl
     def init(self, hook: PluginManager, run_no: RunNo, registrar: RegistrarProxy):

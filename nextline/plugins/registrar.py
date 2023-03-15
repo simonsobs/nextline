@@ -1,10 +1,12 @@
-from typing import Optional
+import asyncio
+from typing import Optional, Tuple
+import time
 
 from apluggy import PluginManager
 
 from nextline.spawned import OnEndTrace, OnStartTrace
 from nextline.spec import hookimpl
-from nextline.types import RunNo
+from nextline.types import RunNo, TraceNo
 from nextline.utils.pubsub.broker import PubSub
 
 # from rich import print
@@ -13,6 +15,7 @@ from nextline.utils.pubsub.broker import PubSub
 class TraceNumbersRegistrar:
     def __init__(self) -> None:
         self._run_no: Optional[RunNo] = None
+        self._trace_nos: Tuple[TraceNo, ...] = ()
 
     @hookimpl
     def init(self, hook: PluginManager, registry: PubSub) -> None:
@@ -22,16 +25,36 @@ class TraceNumbersRegistrar:
     @hookimpl
     async def on_start_run(self, run_no: RunNo) -> None:
         self._run_no = run_no
+        self._trace_nos = ()
 
     @hookimpl
     async def on_end_run(self, run_no: RunNo) -> None:
         assert self._run_no == run_no
         self._run_no = None
 
+        up_to = 0.01
+        start = time.process_time()
+        while self._trace_nos and time.process_time() - start < up_to:
+            # on_end_trace() has not been called yet for all traces
+            await asyncio.sleep(0)
+
+        self._trace_nos = ()
+        await self._registry.publish('trace_nos', self._trace_nos)
+
     @hookimpl
     async def on_start_trace(self, event: OnStartTrace) -> None:
-        print(event)
+        trace_no = event.trace_no
+        self._trace_nos = self._trace_nos + (trace_no,)
+        await self._registry.publish('trace_nos', self._trace_nos)
 
     @hookimpl
     async def on_end_trace(self, event: OnEndTrace) -> None:
-        print(event)
+        trace_no = event.trace_no
+        nosl = list(self._trace_nos)
+        try:
+            nosl.remove(trace_no)
+        except ValueError:
+            # on_end_run() might have already been called
+            return
+        self._trace_nos = tuple(nosl)
+        await self._registry.publish('trace_nos', self._trace_nos)

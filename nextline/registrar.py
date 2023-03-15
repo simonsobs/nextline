@@ -61,7 +61,6 @@ class Registrar:
                     ended_at=datetime.datetime.utcnow(),
                 )
                 await self._registry.publish('trace_info', trace_info)
-        await self._registry.publish('trace_nos', tuple())
         # print({k: v._last_item for k, v in self._registry._queue.items()})
 
     async def script_change(self, script: str, filename: str) -> None:

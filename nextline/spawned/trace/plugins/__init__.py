@@ -14,7 +14,6 @@ __all__ = [
     'RegistrarProxy',
     'StdoutRegistrar',
     'TraceInfoRegistrar',
-    'TraceNumbersRegistrar',
     'Repeater',
 ]
 
@@ -29,6 +28,5 @@ from .registrar import (
     RegistrarProxy,
     StdoutRegistrar,
     TraceInfoRegistrar,
-    TraceNumbersRegistrar,
 )
 from .repeat import Repeater

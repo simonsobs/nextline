@@ -27,7 +27,6 @@ from .plugins import (
     TaskOrThreadToTraceMapper,
     TraceCallHandler,
     TraceInfoRegistrar,
-    TraceNumbersRegistrar,
 )
 
 MODULES_TO_SKIP = {
@@ -74,7 +73,6 @@ def build_hook(
     hook.register(StdoutRegistrar)
     hook.register(TraceInfoRegistrar)
     hook.register(PromptInfoRegistrar)
-    hook.register(TraceNumbersRegistrar)
 
     hook.register(Repeater)
 
