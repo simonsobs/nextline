@@ -45,6 +45,9 @@ class Resource:
         self._monitor = Monitor(self._hook, self._queue_out)
 
         self._hook.hook.init(hook=self._hook, registry=self.registry)
+        
+        # TODO: Recreate self._queue_out for each run because it might be broken
+        # if the process is killed.
 
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
         func = partial(spawned.main, run_arg)
