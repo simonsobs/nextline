@@ -1,4 +1,3 @@
-import datetime
 import json
 import traceback
 from dataclasses import dataclass, field
@@ -7,7 +6,9 @@ from typing import Any, MutableMapping, Optional, Tuple, TypedDict
 
 from typing_extensions import TypeAlias
 
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, RunNo, TraceNo
+
+from .events import Event
 
 PdbCommand: TypeAlias = str
 QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
@@ -15,76 +16,6 @@ QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
 CommandQueueMap: TypeAlias = MutableMapping[
     TraceNo, 'Queue[Tuple[PdbCommand, PromptNo, TraceNo]]'
 ]
-
-
-@dataclass
-class Event:
-    pass
-
-
-@dataclass
-class OnStartTrace(Event):
-    started_at: datetime.datetime
-    trace_no: TraceNo
-    thread_no: ThreadNo
-    task_no: Optional[TaskNo]
-
-
-@dataclass
-class OnEndTrace(Event):
-    ended_at: datetime.datetime
-    trace_no: TraceNo
-
-
-@dataclass
-class OnStartTraceCall(Event):
-    started_at: datetime.datetime
-    trace_no: TraceNo
-    file_name: str
-    line_no: int
-    frame_object_id: int
-    call_event: str
-
-
-@dataclass
-class OnEndTraceCall(Event):
-    ended_at: datetime.datetime
-    trace_no: TraceNo
-
-
-@dataclass
-class OnStartCmdloop(Event):
-    started_at: datetime.datetime
-    trace_no: TraceNo
-
-
-@dataclass
-class OnEndCmdloop(Event):
-    ended_at: datetime.datetime
-    trace_no: TraceNo
-
-
-@dataclass
-class OnStartPrompt(Event):
-    started_at: datetime.datetime
-    trace_no: TraceNo
-    prompt_no: PromptNo
-    prompt_text: str
-
-
-@dataclass
-class OnEndPrompt(Event):
-    ended_at: datetime.datetime
-    trace_no: TraceNo
-    prompt_no: PromptNo
-    command: str
-
-
-@dataclass
-class OnWriteStdout(Event):
-    written_at: datetime.datetime
-    trace_no: TraceNo
-    text: str
 
 
 QueueOut: TypeAlias = 'Queue[Event]'

@@ -4,9 +4,7 @@ from typing import Callable, Dict, Generator
 
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.trace.spec import hookimpl
-from nextline.spawned.trace.types import TraceArgs
-from nextline.spawned.types import (
+from nextline.spawned.events import (
     OnEndCmdloop,
     OnEndPrompt,
     OnEndTrace,
@@ -16,8 +14,10 @@ from nextline.spawned.types import (
     OnStartTrace,
     OnStartTraceCall,
     OnWriteStdout,
-    QueueOut,
 )
+from nextline.spawned.trace.spec import hookimpl
+from nextline.spawned.trace.types import TraceArgs
+from nextline.spawned.types import QueueOut
 from nextline.types import PromptNo, TraceNo
 
 

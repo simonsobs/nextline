@@ -22,8 +22,7 @@ __all__ = [
 ]
 
 
-from .run import run_
-from .types import (
+from .events import (
     Event,
     OnEndCmdloop,
     OnEndPrompt,
@@ -34,11 +33,9 @@ from .types import (
     OnStartTrace,
     OnStartTraceCall,
     OnWriteStdout,
-    QueueCommands,
-    QueueOut,
-    RunArg,
-    RunResult,
 )
+from .run import run_
+from .types import QueueCommands, QueueOut, RunArg, RunResult
 
 _q_commands: QueueCommands | None = None
 
