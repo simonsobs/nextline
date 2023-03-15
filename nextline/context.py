@@ -42,15 +42,13 @@ class Resource:
         self._mp_context = mp.get_context('spawn')
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
         self.registrar = Registrar(self.registry, self._hook)
-        self._queue_out: QueueOut = self._mp_context.Queue()
-        self._monitor = Monitor(self._hook, self._queue_out)
 
         self._hook.hook.init(hook=self._hook, registry=self.registry)
 
-        # TODO: Recreate self._queue_out for each run because it might be broken
-        # if the process is killed.
-
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
+        self._queue_out: QueueOut = self._mp_context.Queue()
+        self._monitor = Monitor(self._hook, self._queue_out)
+        await self._monitor.open()
         self.q_commands = self._mp_context.Queue()
         initializer = partial(
             _call_all,
@@ -71,15 +69,14 @@ class Resource:
         start = time.process_time()
         while not self._queue_out.empty() and time.process_time() - start < up_to:
             await asyncio.sleep(0)
+        await self._monitor.close()
 
     async def open(self):
         await self._mp_logging.open()
-        await self._monitor.open()
 
     async def close(self):
         await self._mp_logging.close()
         await self.registry.close()
-        await self._monitor.close()
 
 
 class Context:
