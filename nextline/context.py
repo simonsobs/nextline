@@ -66,7 +66,7 @@ class Resource:
         )
         return await run_in_process(func, executor_factory)
 
-    async def wait_until_queue_out_empty(self):
+    async def finish(self):
         up_to = 0.05
         start = time.process_time()
         while not self._queue_out.empty() and time.process_time() - start < up_to:
@@ -168,7 +168,7 @@ class Context:
             logger = getLogger(__name__)
             logger.exception(ret.raised)
 
-        await self._resource.wait_until_queue_out_empty()
+        await self._resource.finish()
 
         await self._registrar.run_end(
             result=self._run_result.fmt_ret,
