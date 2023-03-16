@@ -21,9 +21,6 @@ class Registrar:
     async def state_change(self, state_name: str) -> None:
         await self._registry.publish("state_name", state_name)
 
-    async def state_initialized(self, run_no: int) -> None:
-        await self._registry.publish("run_no", run_no)
-
     async def run_initialized(self, run_no: RunNo) -> None:
         await self._hook.ahook.on_initialize_run(run_no=run_no)
 

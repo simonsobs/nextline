@@ -106,7 +106,6 @@ class Context:
     async def initialize(self) -> None:
         self._run_arg['run_no'] = self._run_no_count()
         self._run_result = None
-        await self._registrar.state_initialized(self._run_arg['run_no'])
         await self._registrar.run_initialized(self._run_arg['run_no'])
 
     async def reset(
