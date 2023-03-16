@@ -39,8 +39,6 @@ class Resource:
         self._mp_context = mp.get_context('spawn')
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
 
-        self._hook.hook.init(hook=self._hook, registry=self.registry)
-
     async def run(self, run_arg: RunArg) -> Running[RunResult]:
         self._queue_out: QueueOut = self._mp_context.Queue()
         self._monitor = Monitor(self._hook, self._queue_out)
@@ -76,6 +74,7 @@ class Context:
         self._hook = build_hook()
         self._resource = Resource(hook=self._hook)
         self.registry = self._resource.registry
+        self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
         self._run_arg = RunArg(
