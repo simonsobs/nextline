@@ -116,12 +116,11 @@ class Context:
         if run_no_start_from is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self) -> Running:
+    async def run(self) -> None:
         self._running = await self._resource.run(self._run_arg)
         self._q_commands = self._resource.q_commands
         assert self._q_commands
         await self._hook.ahook.on_start_run()
-        return self._running
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
