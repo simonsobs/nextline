@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
-PROJECT_NAME = 'nextline_process_callback'
+PROJECT_NAME = 'nextline_spawned'
 
 
 hookspec = pluggy.HookspecMarker(PROJECT_NAME)
