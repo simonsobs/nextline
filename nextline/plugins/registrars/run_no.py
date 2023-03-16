@@ -11,4 +11,3 @@ class RunNoRegistrar:
     @hookimpl
     async def on_initialize_run(self, run_no: RunNo) -> None:
         await self._registry.publish('run_no', run_no)
-        pass
