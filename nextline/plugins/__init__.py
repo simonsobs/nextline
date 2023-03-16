@@ -1,5 +1,6 @@
 __all__ = [
     'PromptInfoRegistrar',
+    'RunInfoRegistrar',
     'StdoutRegistrar',
     'TraceInfoRegistrar',
     'TraceNumbersRegistrar',
@@ -7,6 +8,7 @@ __all__ = [
 
 from .registrars import (
     PromptInfoRegistrar,
+    RunInfoRegistrar,
     StdoutRegistrar,
     TraceInfoRegistrar,
     TraceNumbersRegistrar,

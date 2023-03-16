@@ -11,5 +11,6 @@ def build_hook() -> PluginManager:
     hook.register(plugins.PromptInfoRegistrar)
     hook.register(plugins.TraceInfoRegistrar)
     hook.register(plugins.TraceNumbersRegistrar)
+    hook.register(plugins.RunInfoRegistrar)
 
     return hook
