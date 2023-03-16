@@ -34,7 +34,6 @@ def _call_all(*funcs) -> None:
 class Resource:
     def __init__(self, hook: PluginManager) -> None:
         self._hook = hook
-        self.registry = PubSub[Any, Any]()
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
@@ -66,14 +65,13 @@ class Resource:
 
     async def close(self):
         await self._mp_logging.close()
-        await self.registry.close()
 
 
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._hook = build_hook()
         self._resource = Resource(hook=self._hook)
-        self.registry = self._resource.registry
+        self.registry = PubSub[Any, Any]()
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
@@ -97,6 +95,7 @@ class Context:
 
     async def shutdown(self):
         await self._resource.close()
+        await self.registry.close()
         await self._hook.ahook.close()
 
     async def initialize(self) -> None:
