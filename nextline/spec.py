@@ -1,17 +1,7 @@
 import apluggy as pluggy
 from apluggy import PluginManager
 
-from nextline.spawned import (
-    OnEndCmdloop,
-    OnEndPrompt,
-    OnEndTrace,
-    OnEndTraceCall,
-    OnStartCmdloop,
-    OnStartPrompt,
-    OnStartTrace,
-    OnStartTraceCall,
-    OnWriteStdout,
-)
+from nextline import spawned
 from nextline.types import RunNo
 from nextline.utils.pubsub.broker import PubSub
 
@@ -58,45 +48,45 @@ async def on_end_run(run_no: RunNo) -> None:
 
 
 @hookspec
-async def on_start_trace(event: OnStartTrace) -> None:
+async def on_start_trace(event: spawned.OnStartTrace) -> None:
     pass
 
 
 @hookspec
-async def on_end_trace(event: OnEndTrace) -> None:
+async def on_end_trace(event: spawned.OnEndTrace) -> None:
     pass
 
 
 @hookspec
-async def on_start_trace_call(event: OnStartTraceCall) -> None:
+async def on_start_trace_call(event: spawned.OnStartTraceCall) -> None:
     pass
 
 
 @hookspec
-async def on_end_trace_call(event: OnEndTraceCall) -> None:
+async def on_end_trace_call(event: spawned.OnEndTraceCall) -> None:
     pass
 
 
 @hookspec
-async def on_start_cmdloop(event: OnStartCmdloop) -> None:
+async def on_start_cmdloop(event: spawned.OnStartCmdloop) -> None:
     pass
 
 
 @hookspec
-async def on_end_cmdloop(event: OnEndCmdloop) -> None:
+async def on_end_cmdloop(event: spawned.OnEndCmdloop) -> None:
     pass
 
 
 @hookspec
-async def on_start_prompt(event: OnStartPrompt) -> None:
+async def on_start_prompt(event: spawned.OnStartPrompt) -> None:
     pass
 
 
 @hookspec
-async def on_end_prompt(event: OnEndPrompt) -> None:
+async def on_end_prompt(event: spawned.OnEndPrompt) -> None:
     pass
 
 
 @hookspec
-async def on_write_stdout(event: OnWriteStdout) -> None:
+async def on_write_stdout(event: spawned.OnWriteStdout) -> None:
     pass
