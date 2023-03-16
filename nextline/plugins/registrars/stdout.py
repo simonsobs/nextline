@@ -1,7 +1,5 @@
 from typing import Optional
 
-from apluggy import PluginManager
-
 from nextline.spawned import OnWriteStdout
 from nextline.spec import hookimpl
 from nextline.types import RunNo, StdoutInfo
@@ -13,8 +11,7 @@ class StdoutRegistrar:
         self._run_no: Optional[RunNo] = None
 
     @hookimpl
-    def init(self, hook: PluginManager, registry: PubSub) -> None:
-        self._hook = hook
+    def init(self, registry: PubSub) -> None:
         self._registry = registry
 
     @hookimpl

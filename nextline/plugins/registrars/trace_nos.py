@@ -1,7 +1,5 @@
 from typing import Optional, Tuple
 
-from apluggy import PluginManager
-
 from nextline.spawned import OnEndTrace, OnStartTrace
 from nextline.spec import hookimpl
 from nextline.types import RunNo, TraceNo
@@ -14,8 +12,7 @@ class TraceNumbersRegistrar:
         self._trace_nos: Tuple[TraceNo, ...] = ()
 
     @hookimpl
-    def init(self, hook: PluginManager, registry: PubSub) -> None:
-        self._hook = hook
+    def init(self, registry: PubSub) -> None:
         self._registry = registry
 
     @hookimpl

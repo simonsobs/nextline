@@ -2,8 +2,6 @@ import dataclasses
 import datetime
 from typing import Dict, Optional
 
-from apluggy import PluginManager
-
 from nextline.spawned import OnEndTrace, OnStartTrace
 from nextline.spec import hookimpl
 from nextline.types import RunNo, TraceInfo, TraceNo
@@ -16,8 +14,7 @@ class TraceInfoRegistrar:
         self._trace_info_map: Dict[TraceNo, TraceInfo] = {}
 
     @hookimpl
-    def init(self, hook: PluginManager, registry: PubSub) -> None:
-        self._hook = hook
+    def init(self, registry: PubSub) -> None:
         self._registry = registry
 
     @hookimpl

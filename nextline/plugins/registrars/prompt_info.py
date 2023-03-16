@@ -3,8 +3,6 @@ import dataclasses
 from logging import getLogger
 from typing import Dict, Optional, Set
 
-from apluggy import PluginManager
-
 from nextline.spawned import (
     OnEndPrompt,
     OnEndTrace,
@@ -28,8 +26,7 @@ class PromptInfoRegistrar:
         self._logger = getLogger(__name__)
 
     @hookimpl
-    def init(self, hook: PluginManager, registry: PubSub) -> None:
-        self._hook = hook
+    def init(self, registry: PubSub) -> None:
         self._registry = registry
 
     @hookimpl
