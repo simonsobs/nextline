@@ -47,7 +47,7 @@ class Registrar:
             state="initialized",
             script=self._registry.latest("statement"),
         )
-        await self._registry.publish("run_info", self._run_info)
+        # await self._registry.publish("run_info", self._run_info)
 
         await self._hook.ahook.on_initialize_run(run_no=run_no)
 
@@ -57,7 +57,7 @@ class Registrar:
             state="running",
             started_at=datetime.datetime.utcnow(),
         )
-        await self._registry.publish("run_info", self._run_info)
+        # await self._registry.publish("run_info", self._run_info)
 
         run_no = self._run_info.run_no
         await self._hook.ahook.on_start_run(run_no=run_no)
@@ -77,4 +77,4 @@ class Registrar:
             ended_at=datetime.datetime.utcnow(),
         )
         # TODO: check if run_no matches
-        await self._registry.publish("run_info", self._run_info)
+        # await self._registry.publish("run_info", self._run_info)
