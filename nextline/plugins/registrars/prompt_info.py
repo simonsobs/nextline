@@ -38,7 +38,7 @@ class PromptInfoRegistrar:
         pass
 
     @hookimpl
-    async def on_start_run(self, run_no: RunNo) -> None:
+    async def on_initialize_run(self, run_no: RunNo) -> None:
         self._run_no = run_no
         self._last_prompt_frame_map.clear()
         self._trace_call_map.clear()

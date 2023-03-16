@@ -21,7 +21,7 @@ class TraceInfoRegistrar:
         self._registry = registry
 
     @hookimpl
-    async def on_start_run(self, run_no: RunNo) -> None:
+    async def on_initialize_run(self, run_no: RunNo) -> None:
         self._run_no = run_no
         self._trace_info_map = {}
 
