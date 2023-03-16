@@ -13,7 +13,6 @@ from . import spawned
 from .count import RunNoCounter
 from .hook import build_hook
 from .monitor import Monitor
-from .registrar import Registrar
 from .spawned import QueueCommands, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
@@ -39,7 +38,6 @@ class Resource:
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
-        self.registrar = Registrar(self._hook)
 
         self._hook.hook.init(hook=self._hook, registry=self.registry)
 
@@ -78,7 +76,6 @@ class Context:
         self._hook = build_hook()
         self._resource = Resource(hook=self._hook)
         self.registry = self._resource.registry
-        self._registrar = self._resource.registrar
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
         self._run_arg = RunArg(
@@ -92,12 +89,12 @@ class Context:
     async def start(self):
         await self._hook.ahook.start()
         await self._resource.open()
-        await self._registrar.script_change(
+        await self._hook.ahook.on_change_script(
             script=self._run_arg['statement'], filename=self._run_arg['filename']
         )
 
     async def state_change(self, state_name: str):
-        await self._registrar.state_change(state_name)
+        await self._hook.ahook.on_change_state(state_name=state_name)
 
     async def shutdown(self):
         await self._resource.close()
@@ -106,7 +103,7 @@ class Context:
     async def initialize(self) -> None:
         self._run_arg['run_no'] = self._run_no_count()
         self._run_result = None
-        await self._registrar.run_initialized(self._run_arg['run_no'])
+        await self._hook.ahook.on_initialize_run(run_no=self._run_arg['run_no'])
 
     async def reset(
         self,
@@ -115,7 +112,7 @@ class Context:
     ):
         if statement:
             self._run_arg['statement'] = statement
-            await self._registrar.script_change(
+            await self._hook.ahook.on_change_script(
                 script=statement, filename=self._run_arg['filename']
             )
         if run_no_start_from is not None:
@@ -125,7 +122,7 @@ class Context:
         self._running = await self._resource.run(self._run_arg)
         self._q_commands = self._resource.q_commands
         assert self._q_commands
-        await self._registrar.run_start()
+        await self._hook.ahook.on_start_run()
         return self._running
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
@@ -160,7 +157,7 @@ class Context:
 
         await self._resource.finish()
 
-        await self._registrar.run_end(run_result=self._run_result)
+        await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def result(self) -> Any:
         assert self._run_result
