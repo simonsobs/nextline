@@ -30,6 +30,8 @@ class Registrar:
     async def script_change(self, script: str, filename: str) -> None:
         await self._registry.publish("statement", script)
         await self._registry.publish("script_file_name", filename)
+        
+        await self._hook.ahook.on_change_script(script=script, filename=filename)
 
     async def state_change(self, state_name: str) -> None:
         await self._registry.publish("state_name", state_name)
