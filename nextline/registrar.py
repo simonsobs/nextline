@@ -3,19 +3,13 @@ from apluggy import PluginManager
 from nextline.spawned import RunResult
 
 from .types import RunNo
-from .utils import PubSub
-
-SCRIPT_FILE_NAME = "<string>"
 
 
 class Registrar:
-    def __init__(self, registry: PubSub, hook: PluginManager):
+    def __init__(self, hook: PluginManager):
         self._hook = hook
-        self._registry = registry
 
     async def script_change(self, script: str, filename: str) -> None:
-        await self._registry.publish("statement", script)
-        await self._registry.publish("script_file_name", filename)
         await self._hook.ahook.on_change_script(script=script, filename=filename)
 
     async def state_change(self, state_name: str) -> None:

@@ -39,7 +39,7 @@ class Resource:
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
-        self.registrar = Registrar(self.registry, self._hook)
+        self.registrar = Registrar(self._hook)
 
         self._hook.hook.init(hook=self._hook, registry=self.registry)
 
