@@ -25,13 +25,10 @@ class Registrar:
         await self._registry.publish("run_no", run_no)
 
     async def run_initialized(self, run_no: RunNo) -> None:
-        self._run_no = run_no
         await self._hook.ahook.on_initialize_run(run_no=run_no)
 
     async def run_start(self) -> None:
-        run_no = self._run_no
-        await self._hook.ahook.on_start_run(run_no=run_no)
+        await self._hook.ahook.on_start_run()
 
     async def run_end(self, run_result: RunResult) -> None:
-        run_no = self._run_no
-        await self._hook.ahook.on_end_run(run_no=run_no, run_result=run_result)
+        await self._hook.ahook.on_end_run(run_result=run_result)

@@ -26,10 +26,7 @@ class TraceInfoRegistrar:
         self._trace_info_map = {}
 
     @hookimpl
-    async def on_end_run(self, run_no: RunNo) -> None:
-        assert self._run_no == run_no
-        self._run_no = None
-
+    async def on_end_run(self) -> None:
         while self._trace_info_map:
             # the process might have been killed.
             _, trace_info = self._trace_info_map.popitem()
@@ -39,6 +36,7 @@ class TraceInfoRegistrar:
                 ended_at=datetime.datetime.utcnow(),
             )
             await self._registry.publish('trace_info', trace_info_end)
+        self._run_no = None
 
     @hookimpl
     async def on_start_trace(self, event: OnStartTrace) -> None:

@@ -34,8 +34,7 @@ class RunInfoRegistrar:
         await self._registry.publish('run_info', self._run_info)
 
     @hookimpl
-    async def on_start_run(self, run_no: RunNo) -> None:
-        assert self._run_no == run_no
+    async def on_start_run(self) -> None:
         assert self._run_info is not None
         self._run_info = dataclasses.replace(
             self._run_info,
@@ -45,8 +44,7 @@ class RunInfoRegistrar:
         await self._registry.publish('run_info', self._run_info)
 
     @hookimpl
-    async def on_end_run(self, run_no: RunNo, run_result: spawned.RunResult) -> None:
-        assert self._run_no == run_no
+    async def on_end_run(self, run_result: spawned.RunResult) -> None:
         assert self._run_info is not None
 
         self._run_info = dataclasses.replace(

@@ -23,8 +23,7 @@ class StdoutRegistrar:
         self._trace_nos = ()
 
     @hookimpl
-    async def on_end_run(self, run_no: RunNo) -> None:
-        assert self._run_no == run_no
+    async def on_end_run(self) -> None:
         self._run_no = None
 
     @hookimpl

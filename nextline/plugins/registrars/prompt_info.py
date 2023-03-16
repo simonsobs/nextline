@@ -46,9 +46,7 @@ class PromptInfoRegistrar:
         self._keys.clear()
 
     @hookimpl
-    async def on_end_run(self, run_no: RunNo) -> None:
-        assert self._run_no == run_no
-
+    async def on_end_run(self) -> None:
         async with self._lock:
             while self._keys:
                 # the process might have been killed.
