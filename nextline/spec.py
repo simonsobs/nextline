@@ -38,6 +38,11 @@ async def close(exc_type=None, exc_value=None, traceback=None) -> None:
 
 
 @hookspec
+async def on_initialize_run(run_no: RunNo) -> None:
+    pass
+
+
+@hookspec
 async def on_start_run(run_no: RunNo) -> None:
     pass
 
