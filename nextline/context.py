@@ -164,6 +164,7 @@ class Context:
         await self._registrar.run_end(
             result=self._run_result.fmt_ret,
             exception=self._run_result.fmt_exc,
+            run_result=self._run_result,
         )
 
     def result(self) -> Any:

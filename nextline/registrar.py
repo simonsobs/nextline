@@ -10,6 +10,8 @@ from typing import Optional
 from apluggy import PluginManager
 from typing_extensions import TypeAlias
 
+from nextline.spawned import RunResult
+
 from .types import TraceInfo  # noqa F401
 from .types import RunInfo, RunNo
 from .utils import PubSub
@@ -30,7 +32,7 @@ class Registrar:
     async def script_change(self, script: str, filename: str) -> None:
         await self._registry.publish("statement", script)
         await self._registry.publish("script_file_name", filename)
-        
+
         await self._hook.ahook.on_change_script(script=script, filename=filename)
 
     async def state_change(self, state_name: str) -> None:
@@ -60,10 +62,12 @@ class Registrar:
         run_no = self._run_info.run_no
         await self._hook.ahook.on_start_run(run_no=run_no)
 
-    async def run_end(self, result: Optional[str], exception: Optional[str]) -> None:
+    async def run_end(
+        self, result: Optional[str], exception: Optional[str], run_result: RunResult
+    ) -> None:
 
         run_no = self._run_info.run_no
-        await self._hook.ahook.on_end_run(run_no=run_no)
+        await self._hook.ahook.on_end_run(run_no=run_no, run_result=run_result)
 
         self._run_info = dataclasses.replace(
             self._run_info,

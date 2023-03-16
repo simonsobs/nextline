@@ -43,7 +43,7 @@ async def on_start_run(run_no: RunNo) -> None:
 
 
 @hookspec
-async def on_end_run(run_no: RunNo) -> None:
+async def on_end_run(run_no: RunNo, run_result: spawned.RunResult) -> None:
     pass
 
 
