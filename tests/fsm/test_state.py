@@ -70,17 +70,17 @@ async def test_signals(context: Mock) -> None:
 
     context.reset_mock()
 
-    obj.interrupt()
+    await obj.interrupt()
     expected_calls = [call.interrupt()]
     assert expected_calls == context.method_calls
     context.reset_mock()
 
-    obj.terminate()
+    await obj.terminate()
     expected_calls = [call.terminate()]
     assert expected_calls == context.method_calls
     context.reset_mock()
 
-    obj.kill()
+    await obj.kill()
     expected_calls = [call.kill()]
     assert expected_calls == context.method_calls
     context.reset_mock()
@@ -96,13 +96,13 @@ async def test_signals_raised(context: Mock) -> None:
         assert obj.state == state  # type: ignore
 
         with pytest.raises(AssertionError):
-            obj.interrupt()
+            await obj.interrupt()
 
         with pytest.raises(AssertionError):
-            obj.terminate()
+            await obj.terminate()
 
         with pytest.raises(AssertionError):
-            obj.kill()
+            await obj.kill()
 
 
 class MockException(BaseException):

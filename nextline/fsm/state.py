@@ -41,15 +41,15 @@ class Machine:
         assert self.is_running()  # type: ignore
         self._context.send_pdb_command(command, prompt_no, trace_no)
 
-    def interrupt(self) -> None:
+    async def interrupt(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.interrupt()
 
-    def terminate(self) -> None:
+    async def terminate(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.terminate()
 
-    def kill(self) -> None:
+    async def kill(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.kill()
 
