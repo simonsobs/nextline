@@ -20,7 +20,7 @@ from .funcs import replace_with_bool
 
 
 async def test_run(nextline: Nextline, statement: str):
-    assert nextline.state == "initialized"
+    assert nextline.state == 'initialized'
 
     await asyncio.gather(
         assert_subscriptions(nextline, statement),
@@ -28,7 +28,7 @@ async def test_run(nextline: Nextline, statement: str):
         run(nextline),
     )
 
-    assert nextline.state == "closed"
+    assert nextline.state == 'closed'
 
 
 async def assert_subscriptions(nextline: Nextline, statement: str):
@@ -44,13 +44,13 @@ async def assert_subscriptions(nextline: Nextline, statement: str):
 
 async def assert_subscribe_state(nextline: Nextline):
     expected = [
-        "initialized",
-        "running",
-        "finished",
-        "initialized",
-        "running",
-        "finished",
-        "closed",
+        'initialized',
+        'running',
+        'finished',
+        'initialized',
+        'running',
+        'finished',
+        'closed',
     ]
     actual = [s async for s in nextline.subscribe_state()]
     assert actual == expected
@@ -65,45 +65,47 @@ async def assert_subscribe_run_no(nextline: Nextline):
 async def assert_subscribe_run_info(nextline: Nextline, statement: str):
 
     replace: partial[RunInfo] = partial(
-        replace_with_bool, fields=("started_at", "ended_at")
+        replace_with_bool, fields=('started_at', 'ended_at')
     )
 
     expected_list = deque(
         [
             info := RunInfo(
                 run_no=RunNo(1),
-                state="initialized",
+                state='initialized',
                 script=statement,
                 result=None,
                 exception=None,
             ),
             info := dataclasses.replace(
                 info,
-                state="running",
+                state='running',
                 started_at=datetime.datetime.utcnow(),
             ),
             dataclasses.replace(
                 info,
-                state="finished",
-                result="null",
+                state='finished',
+                result='null',
+                exception='',
                 ended_at=datetime.datetime.utcnow(),
             ),
             info := RunInfo(
                 run_no=RunNo(2),
-                state="initialized",
+                state='initialized',
                 script=statement,
                 result=None,
                 exception=None,
             ),
             info := dataclasses.replace(
                 info,
-                state="running",
+                state='running',
                 started_at=datetime.datetime.utcnow(),
             ),
             dataclasses.replace(
                 info,
-                state="finished",
-                result="null",
+                state='finished',
+                result='null',
+                exception='',
                 ended_at=datetime.datetime.utcnow(),
             ),
         ]
@@ -119,15 +121,15 @@ async def assert_subscribe_run_info(nextline: Nextline, statement: str):
 async def assert_subscribe_trace_info(nextline: Nextline):
     results = [s async for s in nextline.subscribe_trace_info()]
     assert {1, 2} == {r.run_no for r in results}
-    assert {"running": 10, "finished": 10} == Counter(r.state for r in results)
+    assert {'running': 10, 'finished': 10} == Counter(r.state for r in results)
 
     groupby_state_ = groupby(
-        sorted(results, key=attrgetter("state")),
-        attrgetter("state"),
+        sorted(results, key=attrgetter('state')),
+        attrgetter('state'),
     )
     groupby_state = {k: list(v) for k, v in groupby_state_}
-    running = groupby_state["running"]
-    finished = groupby_state["finished"]
+    running = groupby_state['running']
+    finished = groupby_state['finished']
 
     assert {1, 2, 3, 4, 5} == {r.trace_no for r in running}
     assert {1, 2, 3, 4, 5} == {r.trace_no for r in finished}
@@ -162,7 +164,7 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     actual = Counter(r.open for r in results)
     assert actual == expected
 
-    expected = {"line": 306, "return": 44, "call": 22, "exception": 10}
+    expected = {'line': 306, 'return': 44, 'call': 22, 'exception': 10}
     actual = Counter(r.event for r in results)
     assert actual == expected
 
@@ -178,7 +180,7 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
     actual = Counter(r.stdout is not None for r in results)
     assert actual == expected
 
-    expected = {None: 266, "next": 112, "step": 4}
+    expected = {None: 266, 'next': 112, 'step': 4}
     actual = Counter(r.command for r in results)
     assert actual == expected
 
@@ -201,7 +203,7 @@ async def assert_subscribe_stdout(nextline: Nextline):
 
     r0 = results[0]
     assert 1 == r0.trace_no
-    assert "here!\n" == r0.text
+    assert 'here!\n' == r0.text
     assert r0.written_at
 
 
@@ -225,18 +227,15 @@ async def control_execution(nextline: Nextline):
         ids = set(ids_)
         new_ids, prev_ids = ids - prev_ids, ids  # type: ignore
 
-        tasks = {
-            asyncio.create_task(control_trace(nextline, id_))
-            for id_ in new_ids
-        }
+        tasks = {asyncio.create_task(control_trace(nextline, id_)) for id_ in new_ids}
         _, pending = await agen.asend(tasks)  # type: ignore
 
     await asyncio.gather(*pending)
 
 
 async def control_trace(nextline: Nextline, trace_no):
-    # print(f"control_trace({trace_no})")
-    file_name = ""
+    # print(f'control_trace({trace_no})')
+    file_name = ''
     async for s in nextline.subscribe_prompt_info_for(trace_no):
         # await asyncio.sleep(0.01)
         if not s.open:
@@ -246,8 +245,8 @@ async def control_trace(nextline: Nextline, trace_no):
             assert s.file_name
             file_name = s.file_name
             assert nextline.get_source(file_name)
-        command = "next"
-        if s.event == "line":
+        command = 'next'
+        if s.event == 'line':
             line = nextline.get_source_line(
                 line_no=s.line_no,
                 file_name=s.file_name,
@@ -258,15 +257,15 @@ async def control_trace(nextline: Nextline, trace_no):
 
 
 def find_command(line: str) -> Optional[str]:
-    """The Pdb command indicated in a comment
+    '''The Pdb command indicated in a comment
 
-    For example, returns "step" for the line "func()  # step"
-    """
+    For example, returns 'step' for the line 'func()  # step'
+    '''
     import re
 
     if not (comment := extract_comment(line)):
         return None
-    regex = re.compile(r"^# +(\w+) *$")
+    regex = re.compile(r'^# +(\w+) *$')
     match = regex.search(comment)
     if match:
         return match.group(1)
@@ -279,9 +278,7 @@ def extract_comment(line: str) -> Optional[str]:
 
     comments = [
         val
-        for type, val, *_ in tokenize.generate_tokens(
-            io.StringIO(line).readline
-        )
+        for type, val, *_ in tokenize.generate_tokens(io.StringIO(line).readline)
         if type == tokenize.COMMENT
     ]
     if comments:
