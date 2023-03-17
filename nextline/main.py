@@ -91,13 +91,13 @@ class Nextline:
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
         self._machine.send_pdb_command(command, prompt_no, trace_no)
 
-    def interrupt(self) -> None:
+    async def interrupt(self) -> None:
         self._machine.interrupt()
 
-    def terminate(self) -> None:
+    async def terminate(self) -> None:
         self._machine.terminate()
 
-    def kill(self) -> None:
+    async def kill(self) -> None:
         self._machine.kill()
 
     def exception(self) -> Optional[BaseException]:

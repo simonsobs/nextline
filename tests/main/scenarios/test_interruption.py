@@ -94,7 +94,7 @@ async def control(nextline: Nextline):
         nextline.send_pdb_command('next', prompt_info.prompt_no, prompt_info.trace_no)
         if prompt_info.event == 'line' and prompt_info.line_no == 3:  # sleep()
             await asyncio.sleep(0.005)
-            nextline.interrupt()
+            await nextline.interrupt()
 
 
 @pytest.fixture

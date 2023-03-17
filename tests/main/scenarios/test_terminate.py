@@ -42,7 +42,7 @@ async def control(nextline: Nextline):
         )
         if prompt_info.event == "line" and prompt_info.line_no == 3:  # sleep()
             await asyncio.sleep(0.005)
-            nextline.terminate()
+            await nextline.terminate()
 
 
 @pytest.fixture
