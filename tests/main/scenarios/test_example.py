@@ -306,4 +306,4 @@ def monkey_patch_syspath(monkeypatch, script_dir):
 
 @pytest.fixture
 def script_dir():
-    return str(Path(__file__).resolve().parent)
+    return str(Path(__file__).resolve().parent / 'example')
