@@ -83,7 +83,7 @@ class Context:
         self._run_result: RunResult | None = None
         self._q_commands: QueueCommands | None = None
 
-    async def start(self):
+    async def start(self) -> None:
         await self._hook.ahook.start()
         await self._resource.open()
         await self._hook.ahook.on_change_script(
@@ -93,7 +93,7 @@ class Context:
     async def state_change(self, state_name: str):
         await self._hook.ahook.on_change_state(state_name=state_name)
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         await self._resource.close()
         await self.registry.close()
         await self._hook.ahook.close()
