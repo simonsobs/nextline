@@ -4,9 +4,9 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any, AsyncIterator, Callable, Optional, Tuple
 
-from apluggy import PluginManager
+from apluggy import PluginManager, asynccontextmanager
 from tblib import pickling_support
 
 from . import spawned
@@ -15,7 +15,7 @@ from .hook import build_hook
 from .monitor import Monitor
 from .spawned import QueueCommands, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
-from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
+from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process
 
 pickling_support.install()
 
@@ -31,61 +31,59 @@ def _call_all(*funcs) -> None:
         func()
 
 
-class Resource:
-    def __init__(self, hook: PluginManager) -> None:
-        self._hook = hook
-        self.q_commands: QueueCommands | None = None
-        self._mp_context = mp.get_context('spawn')
-        self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
+@asynccontextmanager
+async def run_with_resource(
+    hook: PluginManager, run_arg: RunArg
+) -> AsyncIterator[Tuple[Running[RunResult], Callable[[str, int, int], None]]]:
+    mp_context = mp.get_context('spawn')
+    queue_out: QueueOut = mp_context.Queue()
+    monitor = Monitor(hook, queue_out)
+    async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
+        async with monitor:
+            q_commands = mp_context.Queue()
+            initializer = partial(
+                _call_all,
+                mp_logging.initializer,
+                partial(spawned.set_queues, q_commands, queue_out),
+            )
+            executor_factory = partial(
+                ProcessPoolExecutor,
+                max_workers=1,
+                mp_context=mp_context,
+                initializer=initializer,
+            )
+            func = partial(spawned.main, run_arg)
+            running = await run_in_process(func, executor_factory)
+            send_pdb_command = SendPdbCommand(q_commands)
+            yield running, send_pdb_command
 
-    async def run(self, run_arg: RunArg) -> Running[RunResult]:
-        self._queue_out: QueueOut = self._mp_context.Queue()
-        self._monitor = Monitor(self._hook, self._queue_out)
-        await self._monitor.open()
-        self.q_commands = self._mp_context.Queue()
-        initializer = partial(
-            _call_all,
-            self._mp_logging.initializer,
-            partial(spawned.set_queues, self.q_commands, self._queue_out),
-        )
-        executor_factory = partial(
-            ProcessPoolExecutor,
-            max_workers=1,
-            mp_context=self._mp_context,
-            initializer=initializer,
-        )
-        func = partial(spawned.main, run_arg)
-        return await run_in_process(func, executor_factory)
 
-    async def finish(self):
-        await self._monitor.close()
+def SendPdbCommand(q_commands: QueueCommands) -> Callable[[str, int, int], None]:
+    def _send_pdb_command(command: str, prompt_no: int, trace_no: int) -> None:
+        logger = getLogger(__name__)
+        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
+        q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
 
-    async def open(self):
-        await self._mp_logging.open()
-
-    async def close(self):
-        await self._mp_logging.close()
+    return _send_pdb_command
 
 
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._hook = build_hook()
-        self._resource = Resource(hook=self._hook)
         self.registry = PubSub[Any, Any]()
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
+        self._send_pdb_command: Optional[Callable[[str, int, int], None]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
             filename=SCRIPT_FILE_NAME,
         )
         self._run_result: RunResult | None = None
-        self._q_commands: QueueCommands | None = None
 
     async def start(self) -> None:
         await self._hook.ahook.start()
-        await self._resource.open()
         await self._hook.ahook.on_change_script(
             script=self._run_arg['statement'], filename=self._run_arg['filename']
         )
@@ -94,7 +92,6 @@ class Context:
         await self._hook.ahook.on_change_state(state_name=state_name)
 
     async def shutdown(self) -> None:
-        await self._resource.close()
         await self.registry.close()
         await self._hook.ahook.close()
 
@@ -116,17 +113,33 @@ class Context:
         if run_no_start_from is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self) -> None:
-        self._running = await self._resource.run(self._run_arg)
-        self._q_commands = self._resource.q_commands
-        assert self._q_commands
-        await self._hook.ahook.on_start_run()
+    @asynccontextmanager
+    async def run(self) -> AsyncIterator[None]:
+        try:
+            async with run_with_resource(self._hook, self._run_arg) as (
+                running,
+                send_pdb_command,
+            ):
+                self._running = running
+                self._send_pdb_command = send_pdb_command
+                await self._hook.ahook.on_start_run()
+                yield
+                ret = await running
+                self._running = None
+                self._send_pdb_command = None
+        finally:
+            await self._finish(ret)
+
+    async def _finish(self, ret: Result[RunResult]) -> None:
+        self._run_result = ret.returned or RunResult(ret=None, exc=None)
+        if ret.raised:
+            logger = getLogger(__name__)
+            logger.exception(ret.raised)
+        await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
-        logger = getLogger(__name__)
-        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
-        if self._q_commands:
-            self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
+        if self._send_pdb_command:
+            self._send_pdb_command(command, prompt_no, trace_no)
 
     def interrupt(self) -> None:
         if self._running:
@@ -139,22 +152,6 @@ class Context:
     def kill(self) -> None:
         if self._running:
             self._running.kill()
-
-    async def finish(self) -> None:
-        assert self._running
-        ret = await self._running
-        self._q_commands = None
-        self._running = None
-
-        self._run_result = ret.returned or RunResult(ret=None, exc=None)
-
-        if ret.raised:
-            logger = getLogger(__name__)
-            logger.exception(ret.raised)
-
-        await self._resource.finish()
-
-        await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def result(self) -> Any:
         assert self._run_result

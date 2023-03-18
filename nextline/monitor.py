@@ -29,6 +29,14 @@ class Monitor:
         await to_thread(self._queue.put, None)
         await self._task
 
+    async def __aenter__(self):
+        await self.open()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        del exc_type, exc_value, traceback
+        await self.close()
+
     async def _monitor(self) -> None:
         while (event := await to_thread(self._queue.get)) is not None:
             await self._on_event(event)
