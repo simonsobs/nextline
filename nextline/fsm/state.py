@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Optional
 
 from transitions import EventData
@@ -29,13 +30,15 @@ class Machine:
         await self._context.initialize()
 
     async def on_enter_running(self, _: EventData) -> None:
+        self._event_finished = asyncio.Event()
         await self._context.run()
 
-    async def on_exit_running(self, _: EventData) -> None:
-        await self._context.finish()
-        # NOTE: Call context.finish() here rather than in on_enter_finished()
-        # because the state should be "running" until context.finish() returns.
-        # The on_enter_finished() callback is called after the state is changed.
+        async def run() -> None:
+            await self._context.finish()
+            await self.finish()  # type: ignore
+            self._event_finished.set()
+
+        self._task = asyncio.create_task(run())
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         assert self.is_running()  # type: ignore
@@ -52,6 +55,9 @@ class Machine:
     async def kill(self) -> None:
         assert self.is_running()  # type: ignore
         self._context.kill()
+
+    async def on_exit_finished(self, _: EventData) -> None:
+        await self._task
 
     def exception(self) -> Optional[BaseException]:
         assert self.is_finished()  # type: ignore
