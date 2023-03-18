@@ -40,14 +40,14 @@ class Resource:
 
     @asynccontextmanager
     async def run(self, run_arg: RunArg) -> AsyncIterator[Running[RunResult]]:
-        self._queue_out: QueueOut = self._mp_context.Queue()
-        self._monitor = Monitor(self._hook, self._queue_out)
-        async with self._monitor:
+        queue_out: QueueOut = self._mp_context.Queue()
+        monitor = Monitor(self._hook, queue_out)
+        async with monitor:
             self.q_commands = self._mp_context.Queue()
             initializer = partial(
                 _call_all,
                 self._mp_logging.initializer,
-                partial(spawned.set_queues, self.q_commands, self._queue_out),
+                partial(spawned.set_queues, self.q_commands, queue_out),
             )
             executor_factory = partial(
                 ProcessPoolExecutor,
