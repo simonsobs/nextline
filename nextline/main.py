@@ -92,13 +92,13 @@ class Nextline:
         self._machine.send_pdb_command(command, prompt_no, trace_no)
 
     async def interrupt(self) -> None:
-        await self._machine.interrupt()
+        await self._machine.interrupt()  # type: ignore
 
     async def terminate(self) -> None:
-        await self._machine.terminate()
+        await self._machine.terminate()  # type: ignore
 
     async def kill(self) -> None:
-        await self._machine.kill()
+        await self._machine.kill()  # type: ignore
 
     def exception(self) -> Optional[BaseException]:
         """Uncaught exception from the last run"""
