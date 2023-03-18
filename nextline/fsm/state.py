@@ -24,7 +24,7 @@ class Machine:
         return f'<{self.__class__.__name__} {self.state!r}>'
 
     async def after_state_change(self, event: EventData) -> None:
-        if event.event and event.event.name == 'interrupt':
+        if event.event and event.event.name in ('interrupt', 'terminate', 'kill'):
             return
         await self._context.state_change(self.state)  # type: ignore
 
@@ -49,12 +49,10 @@ class Machine:
     async def on_interrupt(self, _: EventData) -> None:
         self._context.interrupt()
 
-    async def terminate(self) -> None:
-        assert self.is_running()  # type: ignore
+    async def on_terminate(self, _: EventData) -> None:
         self._context.terminate()
 
-    async def kill(self) -> None:
-        assert self.is_running()  # type: ignore
+    async def on_kill(self, _: EventData) -> None:
         self._context.kill()
 
     async def on_exit_finished(self, _: EventData) -> None:

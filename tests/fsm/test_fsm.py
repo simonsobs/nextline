@@ -100,6 +100,8 @@ def st_paths(draw: st.DrawFn):
         'running': {
             'finish': {'dest': 'finished'},
             'interrupt': {'dest': 'running', 'before': 'on_interrupt'},
+            'terminate': {'dest': 'running', 'before': 'on_terminate'},
+            'kill': {'dest': 'running', 'before': 'on_kill'},
         },
         'finished': {
             'reset': {'dest': 'initialized', 'before': 'on_reset'},

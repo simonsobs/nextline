@@ -141,6 +141,18 @@ CONFIG = {
             'dest': None,
             'before': 'on_interrupt',
         },
+        {
+            'trigger': 'terminate',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_terminate',
+        },
+        {
+            'trigger': 'kill',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_kill',
+        },
     ],
     'initial': 'created',
     # 'queued': True,
