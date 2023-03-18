@@ -4,9 +4,9 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any, AsyncIterator, Optional
 
-from apluggy import PluginManager
+from apluggy import PluginManager, asynccontextmanager
 from tblib import pickling_support
 
 from . import spawned
@@ -15,7 +15,7 @@ from .hook import build_hook
 from .monitor import Monitor
 from .spawned import QueueCommands, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
-from .utils import MultiprocessingLogging, PubSub, Running, run_in_process
+from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process
 
 pickling_support.install()
 
@@ -116,11 +116,27 @@ class Context:
         if run_no_start_from is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
-    async def run(self) -> None:
+    @asynccontextmanager
+    async def run(self) -> AsyncIterator[None]:
         self._running = await self._resource.run(self._run_arg)
         self._q_commands = self._resource.q_commands
         assert self._q_commands
         await self._hook.ahook.on_start_run()
+        try:
+            yield
+        finally:
+            ret = await self._running
+            self._running = None
+            self._q_commands = None
+            await self._resource.finish()
+            await self._finish(ret)
+
+    async def _finish(self, ret: Result[RunResult]) -> None:
+        self._run_result = ret.returned or RunResult(ret=None, exc=None)
+        if ret.raised:
+            logger = getLogger(__name__)
+            logger.exception(ret.raised)
+        await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
@@ -139,22 +155,6 @@ class Context:
     def kill(self) -> None:
         if self._running:
             self._running.kill()
-
-    async def finish(self) -> None:
-        assert self._running
-        ret = await self._running
-        self._q_commands = None
-        self._running = None
-
-        self._run_result = ret.returned or RunResult(ret=None, exc=None)
-
-        if ret.raised:
-            logger = getLogger(__name__)
-            logger.exception(ret.raised)
-
-        await self._resource.finish()
-
-        await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def result(self) -> Any:
         assert self._run_result

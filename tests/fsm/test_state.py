@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, call
 
 import pytest
+from apluggy import asynccontextmanager
 from transitions import MachineError
 
 from nextline.context import Context
@@ -17,10 +18,12 @@ async def test_callbacks_transitions(context: AsyncMock) -> None:
 
     event = asyncio.Event()
 
-    async def finish():
+    @asynccontextmanager
+    async def run():
+        yield
         await event.wait()
 
-    context.finish.side_effect = finish
+    context.run.side_effect = run
 
     obj = Machine(context=context)
 
@@ -48,7 +51,7 @@ async def test_callbacks_transitions(context: AsyncMock) -> None:
         await obj.run()  # type: ignore
         assert obj.is_running()  # type: ignore
         await asyncio.sleep(0.001)
-        expected_calls = [call.run(), call.finish(), call.state_change('running')]
+        expected_calls = [call.run(), call.state_change('running')]
         assert expected_calls == context.method_calls
         context.reset_mock()
 
@@ -79,10 +82,12 @@ async def test_signals(context: AsyncMock) -> None:
 
     event = asyncio.Event()
 
-    async def finish():
+    @asynccontextmanager
+    async def run():
+        yield
         await event.wait()
 
-    context.finish.side_effect = finish
+    context.run.side_effect = run
 
     obj = Machine(context=context)
 

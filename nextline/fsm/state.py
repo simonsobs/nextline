@@ -36,9 +36,9 @@ class Machine:
         run_started = asyncio.Event()
 
         async def run() -> None:
-            await self._context.run()
-            run_started.set()
-            await self._context.finish()
+            async with self._context.run():
+                run_started.set()
+            # await self._context.finish()
             await self.finish()  # type: ignore
             self.run_finished.set()
 
