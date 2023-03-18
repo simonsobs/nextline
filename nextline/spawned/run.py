@@ -12,14 +12,12 @@ from . import script
 from .call import sys_trace
 from .commands import PdbCommand
 from .trace import TraceFunc, build_hook
-from .types import CommandQueueMap, QueueCommands, QueueIn, QueueOut, RunArg, RunResult
+from .types import CommandQueueMap, QueueIn, QueueOut, RunArg, RunResult
 
 _T = TypeVar('_T')
 
 
-def run_(
-    run_arg: RunArg, q_commands: QueueCommands, queue_in: QueueIn, queue_out: QueueOut
-) -> RunResult:
+def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
     run_no = run_arg['run_no']
 
@@ -33,13 +31,12 @@ def run_(
 
     func = script.compose(code)
 
-    return run_with_trace(run_no, func, q_commands, queue_in, queue_out)
+    return run_with_trace(run_no, func, queue_in, queue_out)
 
 
 def run_with_trace(
     run_no: RunNo,
     func: Callable[[], Any],
-    q_commands: QueueCommands,
     queue_in: QueueIn,
     queue_out: QueueOut,
 ) -> RunResult:

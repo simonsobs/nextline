@@ -41,11 +41,10 @@ async def run_with_resource(
     monitor = Monitor(hook, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
         async with monitor:
-            q_commands = mp_context.Queue()
             initializer = partial(
                 _call_all,
                 mp_logging.initializer,
-                partial(spawned.set_queues, q_commands, queue_in, queue_out),
+                partial(spawned.set_queues, queue_in, queue_out),
             )
             executor_factory = partial(
                 ProcessPoolExecutor,

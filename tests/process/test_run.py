@@ -8,7 +8,6 @@ import pytest
 from nextline.spawned import (
     OnStartPrompt,
     PdbCommand,
-    QueueCommands,
     QueueIn,
     QueueOut,
     RunArg,
@@ -36,8 +35,8 @@ def test_one(
 
 
 @pytest.fixture
-def call_set_queues(q_commands: QueueCommands, queue_in: QueueIn, queue_out: QueueOut):
-    set_queues(q_commands, queue_in, queue_out)
+def call_set_queues(queue_in: QueueIn, queue_out: QueueOut):
+    set_queues(queue_in, queue_out)
     yield
 
 
@@ -102,11 +101,6 @@ CODE_OBJECT = compile(SOURCE_ONE, "<string>", "exec")
 )
 def statement_params(request):
     return request.param
-
-
-@pytest.fixture
-def q_commands() -> QueueCommands:
-    return queue.Queue()
 
 
 @pytest.fixture
