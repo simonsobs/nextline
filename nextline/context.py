@@ -4,7 +4,7 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
-from typing import Any, AsyncIterator, Callable, Optional
+from typing import Any, AsyncIterator, Callable, Optional, Tuple
 
 from apluggy import PluginManager, asynccontextmanager
 from tblib import pickling_support
@@ -34,20 +34,21 @@ def _call_all(*funcs) -> None:
 class Resource:
     def __init__(self, hook: PluginManager) -> None:
         self._hook = hook
-        self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
 
     @asynccontextmanager
-    async def run(self, run_arg: RunArg) -> AsyncIterator[Running[RunResult]]:
+    async def run(
+        self, run_arg: RunArg
+    ) -> AsyncIterator[Tuple[Running[RunResult], Callable[[str, int, int], None]]]:
         queue_out: QueueOut = self._mp_context.Queue()
         monitor = Monitor(self._hook, queue_out)
         async with MultiprocessingLogging(mp_context=self._mp_context) as mp_logging:
             async with monitor:
-                self.q_commands = self._mp_context.Queue()
+                q_commands = self._mp_context.Queue()
                 initializer = partial(
                     _call_all,
                     mp_logging.initializer,
-                    partial(spawned.set_queues, self.q_commands, queue_out),
+                    partial(spawned.set_queues, q_commands, queue_out),
                 )
                 executor_factory = partial(
                     ProcessPoolExecutor,
@@ -56,7 +57,9 @@ class Resource:
                     initializer=initializer,
                 )
                 func = partial(spawned.main, run_arg)
-                yield await run_in_process(func, executor_factory)
+                running = await run_in_process(func, executor_factory)
+                send_pdb_command = SendPdbCommand(q_commands)
+                yield running, send_pdb_command
 
 
 def SendPdbCommand(q_commands: QueueCommands) -> Callable[[str, int, int], None]:
@@ -83,7 +86,6 @@ class Context:
             filename=SCRIPT_FILE_NAME,
         )
         self._run_result: RunResult | None = None
-        self._q_commands: QueueCommands | None = None
 
     async def start(self) -> None:
         await self._hook.ahook.start()
@@ -119,16 +121,13 @@ class Context:
     @asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
         try:
-            async with self._resource.run(self._run_arg) as running:
+            async with self._resource.run(self._run_arg) as (running, send_pdb_command):
                 self._running = running
-                self._q_commands = self._resource.q_commands
-                assert self._q_commands
-                self._send_pdb_command = SendPdbCommand(self._q_commands)
+                self._send_pdb_command = send_pdb_command
                 await self._hook.ahook.on_start_run()
                 yield
                 ret = await running
                 self._running = None
-                self._q_commands = None
                 self._send_pdb_command = None
         finally:
             await self._finish(ret)
