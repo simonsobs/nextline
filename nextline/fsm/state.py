@@ -33,14 +33,17 @@ class Machine:
 
     async def on_enter_running(self, _: EventData) -> None:
         self.run_finished = asyncio.Event()
-        await self._context.run()
+        run_started = asyncio.Event()
 
         async def run() -> None:
+            await self._context.run()
+            run_started.set()
             await self._context.finish()
             await self.finish()  # type: ignore
             self.run_finished.set()
 
         self._task = asyncio.create_task(run())
+        await run_started.wait()
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         assert self.is_running()  # type: ignore
