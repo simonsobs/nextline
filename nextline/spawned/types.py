@@ -8,16 +8,16 @@ from typing_extensions import TypeAlias
 
 from nextline.types import PromptNo, RunNo, TraceNo
 
+from .commands import Command
 from .events import Event
 
-PdbCommand: TypeAlias = str
-QueueCommands: TypeAlias = "Queue[Tuple[PdbCommand, PromptNo, TraceNo] | None]"
 
 CommandQueueMap: TypeAlias = MutableMapping[
-    TraceNo, 'Queue[Tuple[PdbCommand, PromptNo, TraceNo]]'
+    TraceNo, 'Queue[Tuple[str, PromptNo, TraceNo]]'
 ]
 
 
+QueueIn: TypeAlias = 'Queue[Command]'
 QueueOut: TypeAlias = 'Queue[Event]'
 
 

@@ -10,13 +10,14 @@ from nextline.types import RunNo
 
 from . import script
 from .call import sys_trace
+from .commands import PdbCommand
 from .trace import TraceFunc, build_hook
-from .types import CommandQueueMap, QueueCommands, QueueOut, RunArg, RunResult
+from .types import CommandQueueMap, QueueIn, QueueOut, RunArg, RunResult
 
 _T = TypeVar('_T')
 
 
-def run_(run_arg: RunArg, q_commands: QueueCommands, queue_out: QueueOut) -> RunResult:
+def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
     run_no = run_arg['run_no']
 
@@ -30,20 +31,20 @@ def run_(run_arg: RunArg, q_commands: QueueCommands, queue_out: QueueOut) -> Run
 
     func = script.compose(code)
 
-    return run_with_trace(run_no, func, q_commands, queue_out)
+    return run_with_trace(run_no, func, queue_in, queue_out)
 
 
 def run_with_trace(
     run_no: RunNo,
     func: Callable[[], Any],
-    q_commands: QueueCommands,
+    queue_in: QueueIn,
     queue_out: QueueOut,
 ) -> RunResult:
 
     ret: Any = None
     exc: BaseException | None = None
 
-    with _trace(run_no, q_commands, queue_out) as trace:
+    with _trace(run_no, queue_in, queue_out) as trace:
         with sys_trace(trace_func=trace):
             try:
                 ret = func()
@@ -63,7 +64,7 @@ def run_with_trace(
 
 
 @contextmanager
-def _trace(run_no: RunNo, q_commands: QueueCommands, queue_out: QueueOut):
+def _trace(run_no: RunNo, queue_in: QueueIn, queue_out: QueueOut):
 
     command_queue_map: CommandQueueMap = {}
 
@@ -72,7 +73,7 @@ def _trace(run_no: RunNo, q_commands: QueueCommands, queue_out: QueueOut):
     )
 
     with TraceFunc(hook=hook) as trace_func:
-        with relay_commands(q_commands, command_queue_map):
+        with relay_commands(queue_in, command_queue_map):
             yield trace_func
 
 
@@ -83,23 +84,25 @@ def _compile(code: CodeType | str, filename: str) -> CodeType:
 
 
 @contextmanager
-def relay_commands(q_commands: QueueCommands, command_queue_map: CommandQueueMap):
+def relay_commands(queue_in: QueueIn, command_queue_map: CommandQueueMap):
     '''Pass the Pdb commands from the main process to the Pdb instances.'''
     logger = getLogger(__name__)
 
     def fn() -> None:
-        assert q_commands
-        while m := q_commands.get():
-            logger.debug(f'q_commands.get() -> {m!r}')
-            command, prompt_no, trace_no = m
-            command_queue_map[trace_no].put(m)
+        assert queue_in
+        while msg := queue_in.get():
+            logger.debug(f'queue_in.get() -> {msg!r}')
+            if isinstance(msg, PdbCommand):
+                command_queue_map[msg.trace_no].put(
+                    (msg.command, msg.prompt_no, msg.trace_no)
+                )
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(try_again_on_error, fn)  # type: ignore
         try:
             yield
         finally:
-            q_commands.put(None)
+            queue_in.put(None)  # type: ignore
             future.result()
 
 

@@ -7,7 +7,8 @@ import pytest
 
 from nextline.spawned import (
     OnStartPrompt,
-    QueueCommands,
+    PdbCommand,
+    QueueIn,
     QueueOut,
     RunArg,
     main,
@@ -34,25 +35,28 @@ def test_one(
 
 
 @pytest.fixture
-def call_set_queues(q_commands: QueueCommands, queue_out: QueueOut):
-    set_queues(q_commands, queue_out)
+def call_set_queues(queue_in: QueueIn, queue_out: QueueOut):
+    set_queues(queue_in, queue_out)
     yield
 
 
 @pytest.fixture
-def task_send_commands(queue_out, q_commands):
+def task_send_commands(queue_in: QueueIn, queue_out: QueueOut):
     with ThreadPoolExecutor(max_workers=1) as executor:
-        fut = executor.submit(respond_prompt, queue_out, q_commands)
+        fut = executor.submit(respond_prompt, queue_in, queue_out)
         yield
-        queue_out.put(None)
+        queue_out.put(None)  # type: ignore
         fut.result()
 
 
-def respond_prompt(queue_out, q_commands):
+def respond_prompt(queue_in: QueueIn, queue_out: QueueOut):
     while (event := queue_out.get()) is not None:
         if not isinstance(event, OnStartPrompt):
             continue
-        q_commands.put(('next', event.prompt_no, event.trace_no))
+        command = PdbCommand(
+            trace_no=event.trace_no, command='next', prompt_no=event.prompt_no
+        )
+        queue_in.put(command)
 
 
 @pytest.fixture
@@ -100,7 +104,7 @@ def statement_params(request):
 
 
 @pytest.fixture
-def q_commands() -> QueueCommands:
+def queue_in() -> QueueIn:
     return queue.Queue()
 
 
