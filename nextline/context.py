@@ -42,24 +42,21 @@ class Resource:
     async def run(self, run_arg: RunArg) -> AsyncIterator[Running[RunResult]]:
         self._queue_out: QueueOut = self._mp_context.Queue()
         self._monitor = Monitor(self._hook, self._queue_out)
-        await self._monitor.open()
-        self.q_commands = self._mp_context.Queue()
-        initializer = partial(
-            _call_all,
-            self._mp_logging.initializer,
-            partial(spawned.set_queues, self.q_commands, self._queue_out),
-        )
-        executor_factory = partial(
-            ProcessPoolExecutor,
-            max_workers=1,
-            mp_context=self._mp_context,
-            initializer=initializer,
-        )
-        func = partial(spawned.main, run_arg)
-        try:
+        async with self._monitor:
+            self.q_commands = self._mp_context.Queue()
+            initializer = partial(
+                _call_all,
+                self._mp_logging.initializer,
+                partial(spawned.set_queues, self.q_commands, self._queue_out),
+            )
+            executor_factory = partial(
+                ProcessPoolExecutor,
+                max_workers=1,
+                mp_context=self._mp_context,
+                initializer=initializer,
+            )
+            func = partial(spawned.main, run_arg)
             yield await run_in_process(func, executor_factory)
-        finally:
-            await self._monitor.close()
 
     async def open(self):
         await self._mp_logging.open()
