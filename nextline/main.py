@@ -84,7 +84,7 @@ class Nextline:
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
         await self._machine.run()  # type: ignore
-        await self._machine.finish()  # type: ignore
+        await self._machine.run_finished.wait()
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
@@ -92,13 +92,13 @@ class Nextline:
         self._machine.send_pdb_command(command, prompt_no, trace_no)
 
     async def interrupt(self) -> None:
-        await self._machine.interrupt()
+        await self._machine.interrupt()  # type: ignore
 
     async def terminate(self) -> None:
-        await self._machine.terminate()
+        await self._machine.terminate()  # type: ignore
 
     async def kill(self) -> None:
-        await self._machine.kill()
+        await self._machine.kill()  # type: ignore
 
     def exception(self) -> Optional[BaseException]:
         """Uncaught exception from the last run"""

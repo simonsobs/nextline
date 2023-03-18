@@ -26,7 +26,14 @@ def test_restore_from_markup():
     machine = build_state_machine(model=None, markup=True)
     assert isinstance(machine.markup, dict)
     markup = deepcopy(machine.markup)
+
     del markup['models']
+
+    # add missing 'dest' for internal transitions
+    for transition in markup['transitions']:
+        if 'dest' not in transition:
+            transition['dest'] = None
+
     rebuild = MarkupMachine(model=None, **markup)
     assert rebuild.markup == machine.markup
 
@@ -90,7 +97,12 @@ def st_paths(draw: st.DrawFn):
             'reset': {'dest': 'initialized', 'before': 'on_reset'},
             'close': {'dest': 'closed'},
         },
-        'running': {'finish': {'dest': 'finished'}},
+        'running': {
+            'finish': {'dest': 'finished'},
+            'interrupt': {'dest': 'running', 'before': 'on_interrupt'},
+            'terminate': {'dest': 'running', 'before': 'on_terminate'},
+            'kill': {'dest': 'running', 'before': 'on_kill'},
+        },
         'finished': {
             'reset': {'dest': 'initialized', 'before': 'on_reset'},
             'close': {'dest': 'closed'},

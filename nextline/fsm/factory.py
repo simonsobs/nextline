@@ -135,9 +135,27 @@ CONFIG = {
             'dest': 'initialized',
             'before': 'on_reset',
         },
+        {
+            'trigger': 'interrupt',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_interrupt',
+        },
+        {
+            'trigger': 'terminate',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_terminate',
+        },
+        {
+            'trigger': 'kill',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_kill',
+        },
     ],
     'initial': 'created',
-    'queued': True,
+    # 'queued': True,
     'send_event': True,
     # 'ignore_invalid_triggers': True,
 }
