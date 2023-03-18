@@ -8,6 +8,7 @@ import pytest
 from nextline.spawned import (
     OnStartPrompt,
     QueueCommands,
+    QueueIn,
     QueueOut,
     RunArg,
     main,
@@ -34,8 +35,8 @@ def test_one(
 
 
 @pytest.fixture
-def call_set_queues(q_commands: QueueCommands, queue_out: QueueOut):
-    set_queues(q_commands, queue_out)
+def call_set_queues(q_commands: QueueCommands, queue_in: QueueIn, queue_out: QueueOut):
+    set_queues(q_commands, queue_in, queue_out)
     yield
 
 
@@ -101,6 +102,11 @@ def statement_params(request):
 
 @pytest.fixture
 def q_commands() -> QueueCommands:
+    return queue.Queue()
+
+
+@pytest.fixture
+def queue_in() -> QueueIn:
     return queue.Queue()
 
 

@@ -13,7 +13,7 @@ from . import spawned
 from .count import RunNoCounter
 from .hook import build_hook
 from .monitor import Monitor
-from .spawned import QueueCommands, QueueOut, RunArg, RunResult
+from .spawned import QueueCommands, QueueIn, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process
 
@@ -36,6 +36,7 @@ async def run_with_resource(
     hook: PluginManager, run_arg: RunArg
 ) -> AsyncIterator[Tuple[Running[RunResult], Callable[[str, int, int], None]]]:
     mp_context = mp.get_context('spawn')
+    queue_in: QueueIn = mp_context.Queue()
     queue_out: QueueOut = mp_context.Queue()
     monitor = Monitor(hook, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
@@ -44,7 +45,7 @@ async def run_with_resource(
             initializer = partial(
                 _call_all,
                 mp_logging.initializer,
-                partial(spawned.set_queues, q_commands, queue_out),
+                partial(spawned.set_queues, q_commands, queue_in, queue_out),
             )
             executor_factory = partial(
                 ProcessPoolExecutor,
