@@ -137,7 +137,7 @@ CONFIG = {
         },
     ],
     'initial': 'created',
-    'queued': True,
+    # 'queued': True,
     'send_event': True,
     # 'ignore_invalid_triggers': True,
 }
