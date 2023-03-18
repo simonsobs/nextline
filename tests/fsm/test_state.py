@@ -53,7 +53,7 @@ async def test_callbacks_transitions(context: AsyncMock) -> None:
         context.reset_mock()
 
         event.set()
-        await obj._event_finished.wait()
+        await obj.run_finished.wait()
 
         assert obj.is_finished()  # type: ignore
         expected_calls = [call.state_change('finished')]
@@ -107,7 +107,7 @@ async def test_signals(context: AsyncMock) -> None:
     context.reset_mock()
 
     event.set()
-    await obj._event_finished.wait()
+    await obj.run_finished.wait()
 
     await obj.close()  # type: ignore
 

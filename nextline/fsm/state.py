@@ -32,13 +32,13 @@ class Machine:
         await self._context.initialize()
 
     async def on_enter_running(self, _: EventData) -> None:
-        self._event_finished = asyncio.Event()
+        self.run_finished = asyncio.Event()
         await self._context.run()
 
         async def run() -> None:
             await self._context.finish()
             await self.finish()  # type: ignore
-            self._event_finished.set()
+            self.run_finished.set()
 
         self._task = asyncio.create_task(run())
 
