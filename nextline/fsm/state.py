@@ -23,7 +23,9 @@ class Machine:
         # e.g., "<Machine 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
-    async def after_state_change(self, _: EventData) -> None:
+    async def after_state_change(self, event: EventData) -> None:
+        if event.event and event.event.name == 'interrupt':
+            return
         await self._context.state_change(self.state)  # type: ignore
 
     async def on_enter_initialized(self, _: EventData) -> None:
@@ -44,8 +46,7 @@ class Machine:
         assert self.is_running()  # type: ignore
         self._context.send_pdb_command(command, prompt_no, trace_no)
 
-    async def interrupt(self) -> None:
-        assert self.is_running()  # type: ignore
+    async def on_interrupt(self, _: EventData) -> None:
         self._context.interrupt()
 
     async def terminate(self) -> None:

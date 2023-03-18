@@ -135,6 +135,12 @@ CONFIG = {
             'dest': 'initialized',
             'before': 'on_reset',
         },
+        {
+            'trigger': 'interrupt',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_interrupt',
+        },
     ],
     'initial': 'created',
     # 'queued': True,

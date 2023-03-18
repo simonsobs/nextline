@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, call
 
 import pytest
+from transitions import MachineError
 
 from nextline.context import Context
 from nextline.fsm.state import Machine
@@ -90,7 +91,7 @@ async def test_signals(context: AsyncMock) -> None:
 
     context.reset_mock()
 
-    await obj.interrupt()
+    await obj.interrupt()  # type: ignore
     expected_calls = [call.interrupt()]
     assert expected_calls == context.method_calls
     context.reset_mock()
@@ -120,8 +121,8 @@ async def test_signals_raised(context: AsyncMock) -> None:
         obj._machine.set_state(state)
         assert obj.state == state  # type: ignore
 
-        with pytest.raises(AssertionError):
-            await obj.interrupt()
+        with pytest.raises(MachineError):
+            await obj.interrupt()  # type: ignore
 
         with pytest.raises(AssertionError):
             await obj.terminate()
