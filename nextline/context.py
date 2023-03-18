@@ -36,33 +36,27 @@ class Resource:
         self._hook = hook
         self.q_commands: QueueCommands | None = None
         self._mp_context = mp.get_context('spawn')
-        self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
 
     @asynccontextmanager
     async def run(self, run_arg: RunArg) -> AsyncIterator[Running[RunResult]]:
         queue_out: QueueOut = self._mp_context.Queue()
         monitor = Monitor(self._hook, queue_out)
-        async with monitor:
-            self.q_commands = self._mp_context.Queue()
-            initializer = partial(
-                _call_all,
-                self._mp_logging.initializer,
-                partial(spawned.set_queues, self.q_commands, queue_out),
-            )
-            executor_factory = partial(
-                ProcessPoolExecutor,
-                max_workers=1,
-                mp_context=self._mp_context,
-                initializer=initializer,
-            )
-            func = partial(spawned.main, run_arg)
-            yield await run_in_process(func, executor_factory)
-
-    async def open(self):
-        await self._mp_logging.open()
-
-    async def close(self):
-        await self._mp_logging.close()
+        async with MultiprocessingLogging(mp_context=self._mp_context) as mp_logging:
+            async with monitor:
+                self.q_commands = self._mp_context.Queue()
+                initializer = partial(
+                    _call_all,
+                    mp_logging.initializer,
+                    partial(spawned.set_queues, self.q_commands, queue_out),
+                )
+                executor_factory = partial(
+                    ProcessPoolExecutor,
+                    max_workers=1,
+                    mp_context=self._mp_context,
+                    initializer=initializer,
+                )
+                func = partial(spawned.main, run_arg)
+                yield await run_in_process(func, executor_factory)
 
 
 class Context:
@@ -83,7 +77,6 @@ class Context:
 
     async def start(self) -> None:
         await self._hook.ahook.start()
-        await self._resource.open()
         await self._hook.ahook.on_change_script(
             script=self._run_arg['statement'], filename=self._run_arg['filename']
         )
@@ -92,7 +85,6 @@ class Context:
         await self._hook.ahook.on_change_state(state_name=state_name)
 
     async def shutdown(self) -> None:
-        await self._resource.close()
         await self.registry.close()
         await self._hook.ahook.close()
 
