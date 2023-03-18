@@ -4,7 +4,7 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncIterator, Callable, Optional
 
 from apluggy import PluginManager, asynccontextmanager
 from tblib import pickling_support
@@ -59,6 +59,15 @@ class Resource:
                 yield await run_in_process(func, executor_factory)
 
 
+def SendPdbCommand(q_commands: QueueCommands) -> Callable[[str, int, int], None]:
+    def _send_pdb_command(command: str, prompt_no: int, trace_no: int) -> None:
+        logger = getLogger(__name__)
+        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
+        q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
+
+    return _send_pdb_command
+
+
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._hook = build_hook()
@@ -67,6 +76,7 @@ class Context:
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
+        self._send_pdb_command: Optional[Callable[[str, int, int], None]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -113,11 +123,13 @@ class Context:
                 self._running = running
                 self._q_commands = self._resource.q_commands
                 assert self._q_commands
+                self._send_pdb_command = SendPdbCommand(self._q_commands)
                 await self._hook.ahook.on_start_run()
                 yield
                 ret = await running
                 self._running = None
                 self._q_commands = None
+                self._send_pdb_command = None
         finally:
             await self._finish(ret)
 
@@ -129,10 +141,8 @@ class Context:
         await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
-        logger = getLogger(__name__)
-        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
-        if self._q_commands:
-            self._q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
+        if self._send_pdb_command:
+            self._send_pdb_command(command, prompt_no, trace_no)
 
     def interrupt(self) -> None:
         if self._running:
