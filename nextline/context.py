@@ -38,7 +38,8 @@ class Resource:
         self._mp_context = mp.get_context('spawn')
         self._mp_logging = MultiprocessingLogging(mp_context=self._mp_context)
 
-    async def run(self, run_arg: RunArg) -> Running[RunResult]:
+    @asynccontextmanager
+    async def run(self, run_arg: RunArg) -> AsyncIterator[Running[RunResult]]:
         self._queue_out: QueueOut = self._mp_context.Queue()
         self._monitor = Monitor(self._hook, self._queue_out)
         await self._monitor.open()
@@ -55,10 +56,10 @@ class Resource:
             initializer=initializer,
         )
         func = partial(spawned.main, run_arg)
-        return await run_in_process(func, executor_factory)
-
-    async def finish(self):
-        await self._monitor.close()
+        try:
+            yield await run_in_process(func, executor_factory)
+        finally:
+            await self._monitor.close()
 
     async def open(self):
         await self._mp_logging.open()
@@ -118,17 +119,17 @@ class Context:
 
     @asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
-        self._running = await self._resource.run(self._run_arg)
-        self._q_commands = self._resource.q_commands
-        assert self._q_commands
-        await self._hook.ahook.on_start_run()
         try:
-            yield
+            async with self._resource.run(self._run_arg) as running:
+                self._running = running
+                self._q_commands = self._resource.q_commands
+                assert self._q_commands
+                await self._hook.ahook.on_start_run()
+                yield
+                ret = await running
+                self._running = None
+                self._q_commands = None
         finally:
-            ret = await self._running
-            self._running = None
-            self._q_commands = None
-            await self._resource.finish()
             await self._finish(ret)
 
     async def _finish(self, ret: Result[RunResult]) -> None:
