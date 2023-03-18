@@ -13,7 +13,7 @@ from . import spawned
 from .count import RunNoCounter
 from .hook import build_hook
 from .monitor import Monitor
-from .spawned import QueueCommands, QueueIn, QueueOut, RunArg, RunResult
+from .spawned import PdbCommand, QueueIn, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process
 
@@ -55,15 +55,20 @@ async def run_with_resource(
             )
             func = partial(spawned.main, run_arg)
             running = await run_in_process(func, executor_factory)
-            send_pdb_command = SendPdbCommand(q_commands)
+            send_pdb_command = SendPdbCommand(queue_in)
             yield running, send_pdb_command
 
 
-def SendPdbCommand(q_commands: QueueCommands) -> Callable[[str, int, int], None]:
+def SendPdbCommand(queue_in: QueueIn) -> Callable[[str, int, int], None]:
     def _send_pdb_command(command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
-        q_commands.put((command, PromptNo(prompt_no), TraceNo(trace_no)))
+        item = PdbCommand(
+            trace_no=TraceNo(trace_no),
+            prompt_no=PromptNo(prompt_no),
+            command=command,
+        )
+        queue_in.put(item)
 
     return _send_pdb_command
 

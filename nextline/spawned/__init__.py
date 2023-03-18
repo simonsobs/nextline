@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __all__ = [
+    'PdbCommand',
     'Event',
     'OnEndCmdloop',
     'OnEndPrompt',
@@ -23,6 +24,7 @@ __all__ = [
 ]
 
 
+from .commands import PdbCommand
 from .events import (
     Event,
     OnEndCmdloop,
