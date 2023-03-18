@@ -31,35 +31,31 @@ def _call_all(*funcs) -> None:
         func()
 
 
-class Resource:
-    def __init__(self, hook: PluginManager) -> None:
-        self._hook = hook
-        self._mp_context = mp.get_context('spawn')
-
-    @asynccontextmanager
-    async def run(
-        self, run_arg: RunArg
-    ) -> AsyncIterator[Tuple[Running[RunResult], Callable[[str, int, int], None]]]:
-        queue_out: QueueOut = self._mp_context.Queue()
-        monitor = Monitor(self._hook, queue_out)
-        async with MultiprocessingLogging(mp_context=self._mp_context) as mp_logging:
-            async with monitor:
-                q_commands = self._mp_context.Queue()
-                initializer = partial(
-                    _call_all,
-                    mp_logging.initializer,
-                    partial(spawned.set_queues, q_commands, queue_out),
-                )
-                executor_factory = partial(
-                    ProcessPoolExecutor,
-                    max_workers=1,
-                    mp_context=self._mp_context,
-                    initializer=initializer,
-                )
-                func = partial(spawned.main, run_arg)
-                running = await run_in_process(func, executor_factory)
-                send_pdb_command = SendPdbCommand(q_commands)
-                yield running, send_pdb_command
+@asynccontextmanager
+async def run_with_resource(
+    hook: PluginManager, run_arg: RunArg
+) -> AsyncIterator[Tuple[Running[RunResult], Callable[[str, int, int], None]]]:
+    mp_context = mp.get_context('spawn')
+    queue_out: QueueOut = mp_context.Queue()
+    monitor = Monitor(hook, queue_out)
+    async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
+        async with monitor:
+            q_commands = mp_context.Queue()
+            initializer = partial(
+                _call_all,
+                mp_logging.initializer,
+                partial(spawned.set_queues, q_commands, queue_out),
+            )
+            executor_factory = partial(
+                ProcessPoolExecutor,
+                max_workers=1,
+                mp_context=mp_context,
+                initializer=initializer,
+            )
+            func = partial(spawned.main, run_arg)
+            running = await run_in_process(func, executor_factory)
+            send_pdb_command = SendPdbCommand(q_commands)
+            yield running, send_pdb_command
 
 
 def SendPdbCommand(q_commands: QueueCommands) -> Callable[[str, int, int], None]:
@@ -74,7 +70,6 @@ def SendPdbCommand(q_commands: QueueCommands) -> Callable[[str, int, int], None]
 class Context:
     def __init__(self, run_no_start_from: int, statement: str):
         self._hook = build_hook()
-        self._resource = Resource(hook=self._hook)
         self.registry = PubSub[Any, Any]()
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
@@ -121,7 +116,10 @@ class Context:
     @asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
         try:
-            async with self._resource.run(self._run_arg) as (running, send_pdb_command):
+            async with run_with_resource(self._hook, self._run_arg) as (
+                running,
+                send_pdb_command,
+            ):
                 self._running = running
                 self._send_pdb_command = send_pdb_command
                 await self._hook.ahook.on_start_run()
