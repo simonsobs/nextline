@@ -39,7 +39,6 @@ from .events import (
 from .run import run_
 from .types import QueueIn, QueueOut, RunArg, RunResult
 
-
 _queue_in: QueueIn | None = None
 _queue_out: QueueOut | None = None
 

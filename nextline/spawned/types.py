@@ -11,7 +11,6 @@ from nextline.types import PromptNo, RunNo, TraceNo
 from .commands import Command
 from .events import Event
 
-
 CommandQueueMap: TypeAlias = MutableMapping[
     TraceNo, 'Queue[Tuple[str, PromptNo, TraceNo]]'
 ]
