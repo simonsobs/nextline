@@ -31,7 +31,7 @@ def test_one(
         with pytest.raises(expected_exception):
             raise result.exc
     else:
-        result.exc is None
+        assert result.exc is None
 
 
 @pytest.fixture
