@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from logging import getLogger
-from types import FrameType
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterator, Optional
 
-from apluggy import PluginManager
+from apluggy import PluginManager, contextmanager
 
 from .plugin import spec
 
@@ -15,14 +14,15 @@ if TYPE_CHECKING:
 assert spec.PROJECT_NAME  # used in the doctest
 
 
-class TraceFunc:
-    '''The trace function of Nextline to be set by sys.settrace().
+@contextmanager
+def TraceFunc(hook: PluginManager) -> Iterator[TraceFunction]:
+    '''Yield the trace function of Nextline to be set by sys.settrace().
 
     Python docs: sys.settrace():
     https://docs.python.org/3/library/sys.html#sys.settrace
 
-    This class only calls a hook function. The actual trace function is
-    implemented in plugins.
+    This yielded function only calls a hook function. The actual trace function
+    is implemented in plugins.
 
     Example:
 
@@ -49,23 +49,18 @@ class TraceFunc:
 
     '''
 
-    def __init__(self, hook: PluginManager):
-        self._hook = hook
-        self._logger = getLogger(__name__)
+    logger = getLogger(__name__)
 
-    def __call__(self, frame: FrameType, event, arg) -> Optional[TraceFunction]:
+    def _trace_func(frame, event, arg) -> Optional[TraceFunction]:
         try:
-            return self._hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
+            return hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
         except BaseException:
-            self._logger.exception('')
+            logger.exception('')
             raise
 
-    def __enter__(self):
-        self._context = self._hook.with_.context()
-        self._context.__enter__()
-        self._logger.info(f'{self.__class__.__name__}: started the hook')
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._context.__exit__(exc_type, exc_value, traceback)
-        self._logger.info(f'{self.__class__.__name__}: closed the hook')
+    with hook.with_.context():
+        logger.info(f'{TraceFunc.__name__}: started the hook')
+        try:
+            yield _trace_func
+        finally:
+            logger.info(f'{TraceFunc.__name__}: closing the hook')
