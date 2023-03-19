@@ -2,7 +2,7 @@ import json
 import traceback
 from dataclasses import dataclass, field
 from queue import Queue
-from typing import Any, Optional, TypedDict
+from typing import Any, Optional
 
 from typing_extensions import TypeAlias
 
@@ -15,7 +15,8 @@ QueueIn: TypeAlias = 'Queue[Command]'
 QueueOut: TypeAlias = 'Queue[Event]'
 
 
-class RunArg(TypedDict):
+@dataclass
+class RunArg:
     run_no: RunNo
     statement: str
     filename: str

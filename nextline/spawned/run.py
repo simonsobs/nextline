@@ -13,10 +13,10 @@ from .types import QueueIn, QueueOut, RunArg, RunResult
 
 def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
-    run_no = run_arg['run_no']
+    run_no = run_arg.run_no
 
-    statement = run_arg['statement']
-    filename = run_arg['filename']
+    statement = run_arg.statement
+    filename = run_arg.filename
 
     try:
         code = compile(statement, filename, 'exec')
