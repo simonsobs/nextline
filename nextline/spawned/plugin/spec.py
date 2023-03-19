@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.types import CommandQueueMap, QueueIn, QueueOut
+from nextline.spawned.types import QueueIn, QueueOut
 from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 
 from .types import TraceArgs
@@ -28,7 +28,6 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 def init(
     hook: PluginManager,
     run_no: RunNo,
-    command_queue_map: CommandQueueMap,
     modules_to_skip: Collection[str],
     queue_in: QueueIn,
     queue_out: QueueOut,

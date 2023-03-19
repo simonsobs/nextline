@@ -10,7 +10,7 @@ from . import script
 from .call import sys_trace
 from .plugin import build_hook
 from .trace import TraceFunc
-from .types import CommandQueueMap, QueueIn, QueueOut, RunArg, RunResult
+from .types import QueueIn, QueueOut, RunArg, RunResult
 
 
 def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
@@ -62,14 +62,7 @@ def run_with_trace(
 @contextmanager
 def _trace(run_no: RunNo, queue_in: QueueIn, queue_out: QueueOut):
 
-    command_queue_map: CommandQueueMap = {}
-
-    hook = build_hook(
-        run_no=run_no,
-        command_queue_map=command_queue_map,
-        queue_in=queue_in,
-        queue_out=queue_out,
-    )
+    hook = build_hook(run_no=run_no, queue_in=queue_in, queue_out=queue_out)
 
     with TraceFunc(hook=hook) as trace_func:
         yield trace_func

@@ -1,16 +1,21 @@
 from __future__ import annotations
-from concurrent.futures import ThreadPoolExecutor
 
+from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from queue import Queue
-from typing import Callable, Iterator, TypeVar
+from typing import Callable, Iterator, MutableMapping, Tuple, TypeVar
 
 from apluggy import PluginManager, contextmanager
-from nextline.spawned.commands import PdbCommand
+from typing_extensions import TypeAlias
 
+from nextline.spawned.commands import PdbCommand
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import CommandQueueMap, QueueIn
+from nextline.spawned.types import QueueIn
 from nextline.types import PromptNo, TraceNo
+
+CommandQueueMap: TypeAlias = MutableMapping[
+    TraceNo, 'Queue[Tuple[str, PromptNo, TraceNo]]'
+]
 
 
 class Prompt:
@@ -20,12 +25,10 @@ class Prompt:
         self._logger = getLogger(__name__)
 
     @hookimpl
-    def init(
-        self, hook: PluginManager, command_queue_map: CommandQueueMap, queue_in: QueueIn
-    ) -> None:
+    def init(self, hook: PluginManager, queue_in: QueueIn) -> None:
         self._hook = hook
         self._queue_in = queue_in
-        self._command_queue_map = command_queue_map
+        self._command_queue_map: CommandQueueMap = {}
 
     @hookimpl
     @contextmanager

@@ -2,19 +2,14 @@ import json
 import traceback
 from dataclasses import dataclass, field
 from queue import Queue
-from typing import Any, MutableMapping, Optional, Tuple, TypedDict
+from typing import Any, Optional, TypedDict
 
 from typing_extensions import TypeAlias
 
-from nextline.types import PromptNo, RunNo, TraceNo
+from nextline.types import RunNo
 
 from .commands import Command
 from .events import Event
-
-CommandQueueMap: TypeAlias = MutableMapping[
-    TraceNo, 'Queue[Tuple[str, PromptNo, TraceNo]]'
-]
-
 
 QueueIn: TypeAlias = 'Queue[Command]'
 QueueOut: TypeAlias = 'Queue[Event]'
