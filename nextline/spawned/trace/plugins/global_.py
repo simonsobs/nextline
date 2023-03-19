@@ -5,10 +5,10 @@ from asyncio import Task
 from logging import getLogger
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, MutableMapping, Optional
+from typing import TYPE_CHECKING, Iterator, MutableMapping, Optional
 from weakref import WeakKeyDictionary, WeakSet
 
-from apluggy import PluginManager
+from apluggy import PluginManager, contextmanager
 
 from nextline.count import TraceNoCounter
 from nextline.spawned.trace.spec import hookimpl
@@ -40,7 +40,6 @@ class TaskAndThreadKeeper:
     def __init__(self) -> None:
         self._set: WeakSet[Task | Thread] = WeakSet()
         self._counter = ThreadTaskIdComposer()
-        self._callback = ThreadTaskDoneCallback(done=self._on_end)
         self._main_thread: Optional[Thread] = None
         self._to_end: Optional[Thread] = None
         self._logger = getLogger(__name__)
@@ -48,6 +47,17 @@ class TaskAndThreadKeeper:
     @hookimpl
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
+
+    @hookimpl
+    @contextmanager
+    def context(self) -> Iterator[None]:
+        self._callback = ThreadTaskDoneCallback(done=self._on_end)
+        self._main_thread = threading.current_thread()
+        try:
+            yield
+        finally:
+            self._callback.close()
+            self._to_end and self._on_end(self._to_end)
 
     @hookimpl
     def filtered(self) -> None:
@@ -77,15 +87,6 @@ class TaskAndThreadKeeper:
     @hookimpl
     def current_task_no(self) -> Optional[TaskNo]:
         return self._counter().task_no
-
-    @hookimpl
-    def start(self) -> None:
-        self._main_thread = threading.current_thread()
-
-    @hookimpl
-    def close(self) -> None:
-        self._callback.close()
-        self._to_end and self._on_end(self._to_end)
 
 
 class TaskOrThreadToTraceMapper:

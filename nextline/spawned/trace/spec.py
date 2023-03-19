@@ -35,6 +35,12 @@ def init(
     pass
 
 
+@hookspec
+@contextmanager
+def context():
+    pass
+
+
 @hookspec(firstresult=True)
 def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunc]:
     pass
@@ -136,14 +142,4 @@ def prompt(prompt_no: PromptNo, text: str) -> Optional[str]:
 
 @hookspec
 def on_write_stdout(trace_no: TraceNo, line: str) -> None:
-    pass
-
-
-@hookspec
-def start() -> None:
-    pass
-
-
-@hookspec
-def close(exc_type=None, exc_value=None, traceback=None) -> None:
     pass

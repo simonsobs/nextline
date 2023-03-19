@@ -5,7 +5,7 @@ from asyncio import Task
 from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
-from typing import Generator, Iterable, Optional, Set
+from typing import Generator, Iterable, Iterator, Optional, Set
 
 from apluggy import PluginManager, contextmanager
 
@@ -56,6 +56,14 @@ class FilerByModule:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
+    @hookimpl
+    @contextmanager
+    def context(self) -> Iterator[None]:
+        self._entering_thread = threading.current_thread()
+        msg = f'{self.__class__.__name__}: entering thread {self._entering_thread}'
+        self._logger.info(msg)
+        yield
+
     @hookimpl(trylast=True)
     def filter(self, trace_args: TraceArgs) -> bool | None:
 
@@ -77,12 +85,6 @@ class FilerByModule:
 
         # Reject else.
         return True
-
-    @hookimpl
-    def start(self) -> None:
-        self._entering_thread = threading.current_thread()
-        msg = f'{self.__class__.__name__}: entering thread {self._entering_thread}'
-        self._logger.info(msg)
 
     @hookimpl
     @contextmanager

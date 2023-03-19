@@ -61,12 +61,11 @@ class TraceFunc:
             raise
 
     def __enter__(self):
-        self._hook.hook.start()
+        self._context = self._hook.with_.context()
+        self._context.__enter__()
         self._logger.info(f'{self.__class__.__name__}: started the hook')
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._hook.hook.close(
-            exc_type=exc_type, exc_value=exc_value, traceback=traceback
-        )
+        self._context.__exit__(exc_type, exc_value, traceback)
         self._logger.info(f'{self.__class__.__name__}: closed the hook')
