@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import queue
 from concurrent.futures import ThreadPoolExecutor
+from typing import Tuple
 
 import pytest
 
@@ -60,46 +61,46 @@ def respond_prompt(queue_in: QueueIn, queue_out: QueueOut):
 
 
 @pytest.fixture
-def run_arg(statement: str) -> RunArg:
-    y = RunArg(run_no=RunNo(1), statement=statement, filename="<string>")
-    return y
+def run_arg(run_arg_params) -> RunArg:
+    return run_arg_params[0]
 
 
 @pytest.fixture
-def statement(statement_params):
-    return statement_params[0]
+def expected_exception(run_arg_params):
+    return run_arg_params[1]
 
 
-@pytest.fixture
-def expected_exception(statement_params):
-    return statement_params[1]
-
-
-SOURCE_ONE = """
+SOURCE_ONE = '''
 import time
 time.sleep(0.001)
-""".strip()
+'''.strip()
 
-SOURCE_COMPILE_ERROR = """
+SOURCE_COMPILE_ERROR = '''
 def
-""".strip()
+'''.strip()
 
-SOURCE_RUNTIME_ERROR = """
+SOURCE_RUNTIME_ERROR = '''
 a
-""".strip()
+'''.strip()
 
-CODE_OBJECT = compile(SOURCE_ONE, "<string>", "exec")
+CODE_OBJECT = compile(SOURCE_ONE, '<string>', 'exec')
+
+params = [
+    (RunArg(run_no=RunNo(1), statement=SOURCE_ONE, filename='<string>'), None),
+    (
+        RunArg(run_no=RunNo(1), statement=SOURCE_COMPILE_ERROR, filename='<string>'),
+        SyntaxError,
+    ),
+    (
+        RunArg(run_no=RunNo(1), statement=SOURCE_RUNTIME_ERROR, filename='<string>'),
+        NameError,
+    ),
+    # (RunArg(run_no=RunNo(1), statement=CODE_OBJECT, filename='<string>'), None),
+]
 
 
-@pytest.fixture(
-    params=[
-        (SOURCE_ONE, None),
-        (SOURCE_COMPILE_ERROR, SyntaxError),
-        (SOURCE_RUNTIME_ERROR, NameError),
-        (CODE_OBJECT, None),
-    ]
-)
-def statement_params(request):
+@pytest.fixture(params=params)
+def run_arg_params(request) -> Tuple[RunArg, type[BaseException] | None]:
     return request.param
 
 
