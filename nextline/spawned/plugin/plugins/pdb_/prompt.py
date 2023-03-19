@@ -3,7 +3,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from queue import Queue
-from typing import Callable, Iterator, MutableMapping, Tuple, TypeVar
+from typing import Callable, Iterator, MutableMapping, TypeVar
 
 from apluggy import PluginManager, contextmanager
 from typing_extensions import TypeAlias
@@ -13,9 +13,7 @@ from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import QueueIn
 from nextline.types import PromptNo, TraceNo
 
-CommandQueueMap: TypeAlias = MutableMapping[
-    TraceNo, 'Queue[Tuple[str, PromptNo, TraceNo]]'
-]
+QueueMap: TypeAlias = MutableMapping[TraceNo, 'Queue[PdbCommand]']
 
 
 class Prompt:
@@ -28,44 +26,44 @@ class Prompt:
     def init(self, hook: PluginManager, queue_in: QueueIn) -> None:
         self._hook = hook
         self._queue_in = queue_in
-        self._command_queue_map: CommandQueueMap = {}
+        self._queue_map: QueueMap = {}
 
     @hookimpl
     @contextmanager
     def context(self) -> Iterator[None]:
-        with relay_commands(self._queue_in, self._command_queue_map):
+        with relay_commands(self._queue_in, self._queue_map):
             yield
 
     @hookimpl
     def on_start_trace(self, trace_no: TraceNo) -> None:
-        self._command_queue_map[trace_no] = Queue()
+        self._queue_map[trace_no] = Queue()
 
     @hookimpl
     def on_end_trace(self, trace_no: TraceNo) -> None:
-        del self._command_queue_map[trace_no]
+        del self._queue_map[trace_no]
 
     @hookimpl
     def prompt(self, prompt_no: PromptNo) -> str:
         trace_no = self._hook.hook.current_trace_no()
         self._logger.debug(f'PromptNo: {prompt_no}')
-        queue = self._command_queue_map[trace_no]
+        queue = self._queue_map[trace_no]
 
         while True:
-            command, prompt_no_, trace_no_ = queue.get()
+            pdb_command = queue.get()
             try:
-                assert trace_no_ == trace_no
+                assert pdb_command.trace_no == trace_no
             except AssertionError:
-                msg = f'TraceNo mismatch: {trace_no_} != {trace_no}'
+                msg = f'TraceNo mismatch: {pdb_command.trace_no} != {trace_no}'
                 self._logger.exception(msg)
                 raise
-            if not prompt_no_ == prompt_no:
-                self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
+            if not (n := pdb_command.prompt_no) == prompt_no:
+                self._logger.warning(f'PromptNo mismatch: {n} != {prompt_no}')
                 continue
-            return command
+            return pdb_command.command
 
 
 @contextmanager
-def relay_commands(queue_in: QueueIn, command_queue_map: CommandQueueMap):
+def relay_commands(queue_in: QueueIn, queue_map: QueueMap):
     '''Pass the Pdb commands from the main process to the Pdb instances.'''
     logger = getLogger(__name__)
 
@@ -74,9 +72,7 @@ def relay_commands(queue_in: QueueIn, command_queue_map: CommandQueueMap):
         while msg := queue_in.get():
             logger.debug(f'queue_in.get() -> {msg!r}')
             if isinstance(msg, PdbCommand):
-                command_queue_map[msg.trace_no].put(
-                    (msg.command, msg.prompt_no, msg.trace_no)
-                )
+                queue_map[msg.trace_no].put(msg)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(try_again_on_error, fn)  # type: ignore
