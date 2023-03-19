@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from types import CodeType
 from typing import Any, Callable
 
 from nextline.types import RunNo
@@ -40,7 +38,9 @@ def run_with_trace(
     ret: Any = None
     exc: BaseException | None = None
 
-    with _trace(run_no, queue_in, queue_out) as trace:
+    hook = build_hook(run_no=run_no, queue_in=queue_in, queue_out=queue_out)
+
+    with TraceFunc(hook=hook) as trace:
         with sys_trace(trace_func=trace):
             try:
                 ret = func()
@@ -57,12 +57,3 @@ def run_with_trace(
         exc.__traceback__ = exc.__traceback__.tb_next
 
     return RunResult(ret=ret, exc=exc)
-
-
-@contextmanager
-def _trace(run_no: RunNo, queue_in: QueueIn, queue_out: QueueOut):
-
-    hook = build_hook(run_no=run_no, queue_in=queue_in, queue_out=queue_out)
-
-    with TraceFunc(hook=hook) as trace_func:
-        yield trace_func
