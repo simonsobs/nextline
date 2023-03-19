@@ -11,7 +11,8 @@ from nextline.types import RunNo
 from . import script
 from .call import sys_trace
 from .commands import PdbCommand
-from .plugin import TraceFunc, build_hook
+from .plugin import build_hook
+from .trace import TraceFunc
 from .types import CommandQueueMap, QueueIn, QueueOut, RunArg, RunResult
 
 _T = TypeVar('_T')

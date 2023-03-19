@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 
 from apluggy import PluginManager
 
-from . import spec
+from .plugin import spec
 
 if TYPE_CHECKING:
     from sys import TraceFunction  # type: ignore  # noqa: F401
