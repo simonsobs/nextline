@@ -1,12 +1,15 @@
 from __future__ import annotations
+from concurrent.futures import ThreadPoolExecutor
 
 from logging import getLogger
 from queue import Queue
+from typing import Callable, Iterator, TypeVar
 
-from apluggy import PluginManager
+from apluggy import PluginManager, contextmanager
+from nextline.spawned.commands import PdbCommand
 
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import CommandQueueMap
+from nextline.spawned.types import CommandQueueMap, QueueIn
 from nextline.types import PromptNo, TraceNo
 
 
@@ -17,9 +20,18 @@ class Prompt:
         self._logger = getLogger(__name__)
 
     @hookimpl
-    def init(self, hook: PluginManager, command_queue_map: CommandQueueMap) -> None:
+    def init(
+        self, hook: PluginManager, command_queue_map: CommandQueueMap, queue_in: QueueIn
+    ) -> None:
         self._hook = hook
+        self._queue_in = queue_in
         self._command_queue_map = command_queue_map
+
+    @hookimpl
+    @contextmanager
+    def context(self) -> Iterator[None]:
+        with relay_commands(self._queue_in, self._command_queue_map):
+            yield
 
     @hookimpl
     def on_start_trace(self, trace_no: TraceNo) -> None:
@@ -47,3 +59,41 @@ class Prompt:
                 self._logger.warning(f'PromptNo mismatch: {prompt_no_} != {prompt_no}')
                 continue
             return command
+
+
+@contextmanager
+def relay_commands(queue_in: QueueIn, command_queue_map: CommandQueueMap):
+    '''Pass the Pdb commands from the main process to the Pdb instances.'''
+    logger = getLogger(__name__)
+
+    def fn() -> None:
+        assert queue_in
+        while msg := queue_in.get():
+            logger.debug(f'queue_in.get() -> {msg!r}')
+            if isinstance(msg, PdbCommand):
+                command_queue_map[msg.trace_no].put(
+                    (msg.command, msg.prompt_no, msg.trace_no)
+                )
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(try_again_on_error, fn)  # type: ignore
+        try:
+            yield
+        finally:
+            queue_in.put(None)  # type: ignore
+            future.result()
+
+
+_T = TypeVar('_T')
+
+
+def try_again_on_error(func: Callable[[], _T]) -> _T:
+    '''Keep trying until the function succeeds without an exception.'''
+    while True:
+        try:
+            return func()
+        # except KeyboardInterrupt:
+        #     raise
+        except BaseException:
+            logger = getLogger(__name__)
+            logger.exception('')
