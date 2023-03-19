@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.trace.spec import hookimpl
-from nextline.spawned.trace.types import TraceArgs
+from nextline.spawned.plugin.spec import hookimpl
+from nextline.spawned.plugin.types import TraceArgs
 from nextline.types import TraceNo
 
 from .with_ import WithContext

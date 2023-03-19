@@ -7,7 +7,7 @@ from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter
 from nextline.spawned.exc import NotOnTraceCall
-from nextline.spawned.trace.spec import hookimpl
+from nextline.spawned.plugin.spec import hookimpl
 
 from .custom import CustomizedPdb
 from .stream import PromptFuncType, StdInOut

@@ -5,7 +5,7 @@ from queue import Queue
 
 from apluggy import PluginManager
 
-from nextline.spawned.trace.spec import hookimpl
+from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import CommandQueueMap
 from nextline.types import PromptNo, TraceNo
 

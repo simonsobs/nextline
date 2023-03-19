@@ -11,7 +11,7 @@ from weakref import WeakKeyDictionary, WeakSet
 from apluggy import PluginManager, contextmanager
 
 from nextline.count import TraceNoCounter
-from nextline.spawned.trace.spec import hookimpl
+from nextline.spawned.plugin.spec import hookimpl
 from nextline.types import TaskNo, ThreadNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,

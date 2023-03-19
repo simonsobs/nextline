@@ -6,8 +6,8 @@ import timeit
 
 import pytest
 
-from nextline.spawned.trace.hook import MODULES_TO_SKIP
-from nextline.spawned.trace.plugins import FilterByModuleName
+from nextline.spawned.plugin.hook import MODULES_TO_SKIP
+from nextline.spawned.plugin.plugins import FilterByModuleName
 from nextline.utils import profile_func
 
 
