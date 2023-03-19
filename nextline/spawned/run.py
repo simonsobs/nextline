@@ -21,7 +21,7 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
     filename = run_arg['filename']
 
     try:
-        code = _compile(statement, filename)
+        code = compile(statement, filename, 'exec')
     except BaseException as e:
         return RunResult(ret=None, exc=e)
 
@@ -66,9 +66,3 @@ def _trace(run_no: RunNo, queue_in: QueueIn, queue_out: QueueOut):
 
     with TraceFunc(hook=hook) as trace_func:
         yield trace_func
-
-
-def _compile(code: CodeType | str, filename: str) -> CodeType:
-    if isinstance(code, str):
-        return compile(code, filename, 'exec')
-    return code
