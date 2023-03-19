@@ -70,7 +70,10 @@ def _trace(run_no: RunNo, queue_in: QueueIn, queue_out: QueueOut):
     command_queue_map: CommandQueueMap = {}
 
     hook = build_hook(
-        run_no=run_no, command_queue_map=command_queue_map, queue_out=queue_out
+        run_no=run_no,
+        command_queue_map=command_queue_map,
+        queue_in=queue_in,
+        queue_out=queue_out,
     )
 
     with TraceFunc(hook=hook) as trace_func:
