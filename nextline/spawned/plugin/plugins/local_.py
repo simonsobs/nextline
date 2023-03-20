@@ -57,7 +57,7 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunc]:
 
             with hook.with_.on_trace_call(trace_args=(frame, event, arg)):
                 with catch({KeyboardInterrupt: _keyboard_interrupt}):
-                    # TODO: Using exceptiongroup.catch() for Python 3.8 and 3.9.
+                    # TODO: Using exceptiongroup.catch() for Python 3.8, 3.9, and 3.10.
                     #       Rewrite with except* for Python 3.11.
                     #       https://pypi.org/project/exceptiongroup/
 
