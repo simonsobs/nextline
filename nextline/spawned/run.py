@@ -10,7 +10,7 @@ from .call import sys_trace
 from .plugin import build_hook
 from .trace import TraceFunc
 from .types import QueueIn, QueueOut, RunArg, RunResult
-from .utils import to_canonic_path
+from .utils import WithContext, to_canonic_path
 
 
 def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
@@ -42,6 +42,15 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
         # remove this frame from the traceback.
         # Note: exc.__traceback__ is sys._getframe()
         exc.__traceback__ = exc.__traceback__.tb_next
+
+    if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
+        tb = exc.__traceback__
+        while tb.tb_next:
+            module = tb.tb_next.tb_frame.f_globals.get('__name__')
+            if module == WithContext.__module__:
+                tb.tb_next = None
+                break
+            tb = tb.tb_next
 
     return result
 
