@@ -60,7 +60,11 @@ timeout = 60
 addopts = "--doctest-modules"
 # doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE",]
 doctest_optionflags = ["ELLIPSIS"]
-norecursedirs = ["build", "tests/main/scenarios/example"]
+norecursedirs = [
+    "build",
+    "tests/main/scenarios/example",
+    "tests/spawned/run/example",
+]
 log_cli = false
 log_cli_level = "INFO"
 

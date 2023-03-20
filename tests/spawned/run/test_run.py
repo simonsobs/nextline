@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import queue
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from typing import Tuple
 
 import pytest
@@ -100,6 +101,13 @@ def func_err():
     1 / 0
 
 
+SCRIPT_DIR = Path(__file__).resolve().parent / 'example'
+SCRIPT_PATH = SCRIPT_DIR / 'script.py'
+assert SCRIPT_PATH.is_file()
+
+ERR_PATH = SCRIPT_DIR / 'err.py'
+assert ERR_PATH.is_file()
+
 params = [
     (RunArg(run_no=RunNo(1), statement=SRC_ONE, filename='<string>'), None, None),
     (
@@ -115,6 +123,8 @@ params = [
     (RunArg(run_no=RunNo(1), statement=CODE_OBJECT), None, None),
     (RunArg(run_no=RunNo(1), statement=func_one), 123, None),
     (RunArg(run_no=RunNo(1), statement=func_err), None, ZeroDivisionError),
+    (RunArg(run_no=RunNo(1), statement=str(SCRIPT_PATH)), None, None),
+    (RunArg(run_no=RunNo(1), statement=str(ERR_PATH)), None, NameError),
 ]
 
 
