@@ -53,7 +53,7 @@ class Repeater:
         started_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
         frame, call_event, call_arg = trace_args
-        file_name = _to_canonic(frame.f_code.co_filename)
+        file_name = to_canonic_path(frame.f_code.co_filename)
         line_no = frame.f_lineno
         event_start = OnStartTraceCall(
             started_at=started_at,
@@ -122,13 +122,13 @@ class Repeater:
         self._queue_out.put(event)
 
 
-def ToCanonic() -> Callable[[str], str]:
+def ToCanonicPath() -> Callable[[str], str]:
     # Based on Bdb.canonic()
     # https://github.com/python/cpython/blob/v3.10.5/Lib/bdb.py#L39-L54
 
     cache: Dict[str, str] = {}
 
-    def to_canonic(filename: str) -> str:
+    def _to_canonic_path(filename: str) -> str:
         if filename == "<" + filename[1:-1] + ">":
             return filename
         canonic = cache.get(filename)
@@ -138,7 +138,7 @@ def ToCanonic() -> Callable[[str], str]:
             cache[filename] = canonic
         return canonic
 
-    return to_canonic
+    return _to_canonic_path
 
 
-_to_canonic = ToCanonic()
+to_canonic_path = ToCanonicPath()
