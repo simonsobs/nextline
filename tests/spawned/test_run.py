@@ -19,17 +19,18 @@ from nextline.types import RunNo
 
 
 def test_one(
-    expected_exception,
     run_arg: RunArg,
+    expected_exc,
+    expected_ret,
     call_set_queues,
     task_send_commands,
 ):
     del call_set_queues, task_send_commands
     result = main(run_arg)
-    assert result.ret is None
-    if expected_exception:
+    assert result.ret == expected_ret
+    if expected_exc:
         assert result.exc
-        with pytest.raises(expected_exception):
+        with pytest.raises(expected_exc):
             raise result.exc
     else:
         assert result.exc is None
@@ -66,36 +67,54 @@ def run_arg(run_arg_params) -> RunArg:
 
 
 @pytest.fixture
-def expected_exception(run_arg_params):
+def expected_ret(run_arg_params):
     return run_arg_params[1]
 
 
-SOURCE_ONE = '''
+@pytest.fixture
+def expected_exc(run_arg_params):
+    return run_arg_params[2]
+
+
+SRC_ONE = '''
 import time
 time.sleep(0.001)
 '''.strip()
 
-SOURCE_COMPILE_ERROR = '''
+SRC_COMPILE_ERROR = '''
 def
 '''.strip()
 
-SOURCE_RUNTIME_ERROR = '''
+SRC_RUNTIME_ERROR = '''
 a
 '''.strip()
 
-CODE_OBJECT = compile(SOURCE_ONE, '<string>', 'exec')
+CODE_OBJECT = compile(SRC_ONE, '<string>', 'exec')
+
+
+def func_one():
+    return 123
+
+
+def func_err():
+    1 / 0
+
 
 params = [
-    (RunArg(run_no=RunNo(1), statement=SOURCE_ONE, filename='<string>'), None),
+    (RunArg(run_no=RunNo(1), statement=SRC_ONE, filename='<string>'), None, None),
     (
-        RunArg(run_no=RunNo(1), statement=SOURCE_COMPILE_ERROR, filename='<string>'),
+        RunArg(run_no=RunNo(1), statement=SRC_COMPILE_ERROR, filename='<string>'),
+        None,
         SyntaxError,
     ),
     (
-        RunArg(run_no=RunNo(1), statement=SOURCE_RUNTIME_ERROR, filename='<string>'),
+        RunArg(run_no=RunNo(1), statement=SRC_RUNTIME_ERROR, filename='<string>'),
+        None,
         NameError,
     ),
-    # (RunArg(run_no=RunNo(1), statement=CODE_OBJECT, filename='<string>'), None),
+    (RunArg(run_no=RunNo(1), statement=CODE_OBJECT), None, None),
+    (RunArg(run_no=RunNo(1), statement=func_one), 123, None),
+    (RunArg(run_no=RunNo(1), statement=func_err), None, ZeroDivisionError),
 ]
 
 
