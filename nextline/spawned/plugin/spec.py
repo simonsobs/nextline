@@ -8,11 +8,9 @@ from typing import Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.types import QueueIn, QueueOut
+from nextline.spawned.types import QueueIn, QueueOut, TraceArgs
 from nextline.spawned.types import TraceFunction as TraceFunc
 from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
-
-from .types import TraceArgs
 
 PROJECT_NAME = 'nextline_spawned'
 

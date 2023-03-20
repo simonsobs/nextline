@@ -8,7 +8,7 @@ from apluggy import PluginManager, contextmanager
 from exceptiongroup import BaseExceptionGroup, catch
 
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.plugin.types import TraceArgs
+from nextline.spawned.types import TraceArgs
 from nextline.spawned.types import TraceFunction as TraceFunc
 from nextline.spawned.utils import WithContext
 from nextline.types import TraceNo

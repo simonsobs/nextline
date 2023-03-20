@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Queue
 from types import CodeType, FrameType
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Tuple, Union
 
 from typing_extensions import TypeAlias
 
@@ -18,6 +18,8 @@ from .events import Event
 
 # NOTE: TraceFunction from sys does not work well.
 TraceFunction: TypeAlias = Callable[[FrameType, str, Any], "TraceFunction | None"]
+
+TraceArgs: TypeAlias = Tuple[FrameType, str, Any]
 
 QueueIn: TypeAlias = 'Queue[Command]'
 QueueOut: TypeAlias = 'Queue[Event]'
