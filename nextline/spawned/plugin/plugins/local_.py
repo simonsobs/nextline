@@ -5,6 +5,7 @@ from types import FrameType
 from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager, contextmanager
+from exceptiongroup import BaseExceptionGroup, catch
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.plugin.types import TraceArgs
@@ -44,9 +45,27 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunc]:
     def _factory() -> TraceFunc:
         trace = hook.hook.create_local_trace_func()
 
+        @contextmanager
         def _context(frame, event, arg):
             '''A "with" block in which "trace" is called.'''
-            return hook.with_.on_trace_call(trace_args=(frame, event, arg))
+
+            keyboard_interrupt_raised = False
+
+            def _keyboard_interrupt(exc: BaseExceptionGroup) -> None:
+                nonlocal keyboard_interrupt_raised
+                keyboard_interrupt_raised = True
+
+            with hook.with_.on_trace_call(trace_args=(frame, event, arg)):
+                with catch({KeyboardInterrupt: _keyboard_interrupt}):
+                    # TODO: Using exceptiongroup.catch() for Python 3.8 and 3.9.
+                    #       Rewrite with except* for Python 3.11.
+                    #       https://pypi.org/project/exceptiongroup/
+
+                    yield
+
+            if keyboard_interrupt_raised:
+                # Reraise after the "with" block so that gen.throw() is not called.
+                raise KeyboardInterrupt
 
         return WithContext(trace, context=_context)
 
