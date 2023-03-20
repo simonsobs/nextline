@@ -1,6 +1,5 @@
 import datetime
-import os
-from typing import Callable, Dict, Generator
+from typing import Generator
 
 from apluggy import PluginManager, contextmanager
 
@@ -18,6 +17,7 @@ from nextline.spawned.events import (
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.plugin.types import TraceArgs
 from nextline.spawned.types import QueueOut
+from nextline.spawned.utils import to_canonic_path
 from nextline.types import PromptNo, TraceNo
 
 
@@ -120,25 +120,3 @@ class Repeater:
             text=line,
         )
         self._queue_out.put(event)
-
-
-def ToCanonicPath() -> Callable[[str], str]:
-    # Based on Bdb.canonic()
-    # https://github.com/python/cpython/blob/v3.10.5/Lib/bdb.py#L39-L54
-
-    cache: Dict[str, str] = {}
-
-    def _to_canonic_path(filename: str) -> str:
-        if filename == "<" + filename[1:-1] + ">":
-            return filename
-        canonic = cache.get(filename)
-        if not canonic:
-            canonic = os.path.abspath(filename)
-            canonic = os.path.normcase(canonic)
-            cache[filename] = canonic
-        return canonic
-
-    return _to_canonic_path
-
-
-to_canonic_path = ToCanonicPath()
