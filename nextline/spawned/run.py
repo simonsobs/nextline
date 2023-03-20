@@ -49,6 +49,8 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
 
 
 def _from_path(path: Path) -> Callable[[], Any]:
+    # Read as a str and compile it as Pdb does.
+    # https://github.com/python/cpython/blob/v3.10.10/Lib/pdb.py#L1568-L1592
     statement = path.read_text()
     code = compile(statement, str(path), 'exec')
     sys.path.insert(0, str(path.parent))
