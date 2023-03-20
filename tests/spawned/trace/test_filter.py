@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import Any, Callable, Optional
 from unittest.mock import Mock
 
 import pytest
 
+from nextline.spawned.types import TraceFunction as TraceFunc
+
 from . import module_a
 from .funcs import TraceSummary
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
 def Filter(

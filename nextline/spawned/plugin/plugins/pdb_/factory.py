@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from logging import getLogger
-from typing import TYPE_CHECKING
 
 from apluggy import PluginManager
 
 from nextline.count import PromptNoCounter
 from nextline.spawned.exc import NotOnTraceCall
 from nextline.spawned.plugin.spec import hookimpl
+from nextline.spawned.types import TraceFunction as TraceFunc
 
 from .custom import CustomizedPdb
 from .stream import PromptFuncType, StdInOut
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
 class PdbInstanceFactory:

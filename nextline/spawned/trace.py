@@ -1,15 +1,10 @@
-from __future__ import annotations
-
 from logging import getLogger
-from typing import TYPE_CHECKING, Iterator, Optional
+from typing import Iterator, Optional
 
 from apluggy import PluginManager, contextmanager
 
 from .plugin import spec
-
-if TYPE_CHECKING:
-    from sys import TraceFunction  # type: ignore  # noqa: F401
-
+from .types import TraceFunction
 
 assert spec.PROJECT_NAME  # used in the doctest
 

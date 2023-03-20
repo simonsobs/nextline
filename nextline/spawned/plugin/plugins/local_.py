@@ -2,18 +2,16 @@ from __future__ import annotations
 
 from collections import defaultdict
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional, Set
+from typing import Callable, DefaultDict, Dict, Optional, Set
 
 from apluggy import PluginManager, contextmanager
 from exceptiongroup import BaseExceptionGroup, catch
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.plugin.types import TraceArgs
+from nextline.spawned.types import TraceFunction as TraceFunc
 from nextline.spawned.utils import WithContext
 from nextline.types import TraceNo
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
 class LocalTraceFunc:

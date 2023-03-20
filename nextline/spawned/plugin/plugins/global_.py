@@ -5,22 +5,20 @@ from asyncio import Task
 from logging import getLogger
 from threading import Thread
 from types import FrameType
-from typing import TYPE_CHECKING, Iterator, MutableMapping, Optional
+from typing import Iterator, MutableMapping, Optional
 from weakref import WeakKeyDictionary, WeakSet
 
 from apluggy import PluginManager, contextmanager
 
 from nextline.count import TraceNoCounter
 from nextline.spawned.plugin.spec import hookimpl
+from nextline.spawned.types import TraceFunction as TraceFunc
 from nextline.types import TaskNo, ThreadNo, TraceNo
 from nextline.utils import (
     ThreadTaskDoneCallback,
     ThreadTaskIdComposer,
     current_task_or_thread,
 )
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 
 class GlobalTraceFunc:

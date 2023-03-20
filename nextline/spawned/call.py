@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 import sys
 import threading
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+from .types import TraceFunction as TraceFunc
 
 
 @contextmanager

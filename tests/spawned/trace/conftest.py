@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Set
+from typing import Any, Callable, Set
 from unittest.mock import Mock
 
 import pytest
 
 from nextline.spawned.call import sys_trace
-
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+from nextline.spawned.types import TraceFunction as TraceFunc
 
 from .funcs import TraceSummary, summarize_trace_calls
 

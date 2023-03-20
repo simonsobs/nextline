@@ -3,7 +3,7 @@ import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Queue
-from types import CodeType
+from types import CodeType, FrameType
 from typing import Any, Callable, Optional, Union
 
 from typing_extensions import TypeAlias
@@ -12,6 +12,12 @@ from nextline.types import RunNo
 
 from .commands import Command
 from .events import Event
+
+# if TYPE_CHECKING:
+#     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+
+# NOTE: TraceFunction from sys does not work well.
+TraceFunction: TypeAlias = Callable[[FrameType, str, Any], "TraceFunction | None"]
 
 QueueIn: TypeAlias = 'Queue[Command]'
 QueueOut: TypeAlias = 'Queue[Event]'

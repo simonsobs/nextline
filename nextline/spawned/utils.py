@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import os
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, ContextManager, Dict, Optional
+from typing import Any, Callable, ContextManager, Dict, Optional
 
-if TYPE_CHECKING:
-    from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
+from .types import TraceFunction as TraceFunc
 
 
 def WithContext(
