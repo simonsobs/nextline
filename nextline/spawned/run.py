@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from types import CodeType
 from typing import Any, Callable
 
@@ -10,6 +12,7 @@ from .call import sys_trace
 from .plugin import build_hook
 from .trace import TraceFunc
 from .types import QueueIn, QueueOut, RunArg, RunResult
+from .utils import to_canonic_path
 
 
 def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
@@ -26,15 +29,30 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
     # TODO: Rewrite with a match statement for Python 3.10
     statement = run_arg.statement
     filename = run_arg.filename
-    if isinstance(statement, str) and filename is not None:
+
+    if isinstance(statement, str):
+        if (path := Path(to_canonic_path(statement))).is_file():
+            statement = path
+
+    if isinstance(statement, str):
+        assert filename is not None
         code = compile(statement, filename, 'exec')
         return script.compose(code)
+    elif isinstance(statement, Path):
+        return _from_path(statement)
     elif isinstance(statement, CodeType):
         return script.compose(statement)
     elif callable(statement):
         return statement
     else:
         raise TypeError(f'statement: {statement!r}')
+
+
+def _from_path(path: Path) -> Callable[[], Any]:
+    statement = path.read_text()
+    code = compile(statement, str(path), 'exec')
+    sys.path.insert(0, str(path.parent))
+    return script.compose(code)
 
 
 def run_with_trace(

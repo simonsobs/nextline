@@ -1,6 +1,7 @@
 import json
 import traceback
 from dataclasses import dataclass, field
+from pathlib import Path
 from queue import Queue
 from types import CodeType
 from typing import Any, Callable, Optional, Union
@@ -19,7 +20,7 @@ QueueOut: TypeAlias = 'Queue[Event]'
 @dataclass
 class RunArg:
     run_no: RunNo
-    statement: Union[str, CodeType, Callable[[], Any], None]
+    statement: Union[str, Path, CodeType, Callable[[], Any], None]
     filename: Optional[str] = None
 
 
