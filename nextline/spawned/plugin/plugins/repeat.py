@@ -65,11 +65,12 @@ class Repeater:
         )
         self._queue_out.put(event_start)
 
-        yield
-
-        ended_at = datetime.datetime.utcnow()
-        event_end = OnEndTraceCall(ended_at=ended_at, trace_no=trace_no)
-        self._queue_out.put(event_end)
+        try:
+            yield
+        finally:
+            ended_at = datetime.datetime.utcnow()
+            event_end = OnEndTraceCall(ended_at=ended_at, trace_no=trace_no)
+            self._queue_out.put(event_end)
 
     @hookimpl
     @contextmanager
@@ -79,11 +80,12 @@ class Repeater:
         event_start = OnStartCmdloop(started_at=started_at, trace_no=trace_no)
         self._queue_out.put(event_start)
 
-        yield
-
-        ended_at = datetime.datetime.utcnow()
-        event_end = OnEndCmdloop(ended_at=ended_at, trace_no=trace_no)
-        self._queue_out.put(event_end)
+        try:
+            yield
+        finally:
+            ended_at = datetime.datetime.utcnow()
+            event_end = OnEndCmdloop(ended_at=ended_at, trace_no=trace_no)
+            self._queue_out.put(event_end)
 
     @hookimpl
     @contextmanager
@@ -98,17 +100,20 @@ class Repeater:
         )
         self._queue_out.put(event_start)
 
-        command = yield
-        yield
+        command = ''
 
-        ended_at = datetime.datetime.utcnow()
-        event_end = OnEndPrompt(
-            ended_at=ended_at,
-            trace_no=trace_no,
-            prompt_no=prompt_no,
-            command=command,
-        )
-        self._queue_out.put(event_end)
+        try:
+            command = yield
+            yield
+        finally:
+            ended_at = datetime.datetime.utcnow()
+            event_end = OnEndPrompt(
+                ended_at=ended_at,
+                trace_no=trace_no,
+                prompt_no=prompt_no,
+                command=command,
+            )
+            self._queue_out.put(event_end)
 
     @hookimpl
     def on_write_stdout(self, trace_no: TraceNo, line: str):
