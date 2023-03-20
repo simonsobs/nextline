@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import CodeType
 from typing import Any, Callable
-
 
 from . import script
 from .call import sys_trace
