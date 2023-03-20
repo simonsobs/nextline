@@ -5,7 +5,6 @@ import sys
 from types import CodeType
 from typing import Any, Callable
 
-from nextline.types import RunNo
 
 from . import script
 from .call import sys_trace
@@ -16,13 +15,36 @@ from .utils import to_canonic_path
 
 
 def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
+
+    result = RunResult(ret=None, exc=None)
+
     try:
         func = _compose_callable(run_arg)
     except BaseException as e:
-        return RunResult(ret=None, exc=e)
+        result.exc = e
+        return result
 
     run_no = run_arg.run_no
-    return run_with_trace(run_no, func, queue_in, queue_out)
+    hook = build_hook(run_no=run_no, queue_in=queue_in, queue_out=queue_out)
+
+    with TraceFunc(hook=hook) as trace:
+        with sys_trace(trace_func=trace):
+            try:
+                result.ret = func()
+            except BaseException as e:
+                result.exc = e
+
+    # NOTE: How to print the exception in the same way as the interpreter.
+    # import traceback
+    # traceback.print_exception(type(exc), exc, exc.__traceback__)
+
+    exc = result.exc
+    if exc and exc.__traceback__:
+        # remove this frame from the traceback.
+        # Note: exc.__traceback__ is sys._getframe()
+        exc.__traceback__ = exc.__traceback__.tb_next
+
+    return result
 
 
 def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
@@ -55,34 +77,3 @@ def _from_path(path: Path) -> Callable[[], Any]:
     code = compile(statement, str(path), 'exec')
     sys.path.insert(0, str(path.parent))
     return script.compose(code)
-
-
-def run_with_trace(
-    run_no: RunNo,
-    func: Callable[[], Any],
-    queue_in: QueueIn,
-    queue_out: QueueOut,
-) -> RunResult:
-
-    ret: Any = None
-    exc: BaseException | None = None
-
-    hook = build_hook(run_no=run_no, queue_in=queue_in, queue_out=queue_out)
-
-    with TraceFunc(hook=hook) as trace:
-        with sys_trace(trace_func=trace):
-            try:
-                ret = func()
-            except BaseException as e:
-                exc = e
-
-    # NOTE: How to print the exception in the same way as the interpreter.
-    # import traceback
-    # traceback.print_exception(type(exc), exc, exc.__traceback__)
-
-    if exc and exc.__traceback__:
-        # remove this frame from the traceback.
-        # Note: exc.__traceback__ is sys._getframe()
-        exc.__traceback__ = exc.__traceback__.tb_next
-
-    return RunResult(ret=ret, exc=exc)
