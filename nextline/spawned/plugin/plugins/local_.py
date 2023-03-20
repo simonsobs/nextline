@@ -8,9 +8,8 @@ from apluggy import PluginManager, contextmanager
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.plugin.types import TraceArgs
+from nextline.spawned.utils import WithContext
 from nextline.types import TraceNo
-
-from .with_ import WithContext
 
 if TYPE_CHECKING:
     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
