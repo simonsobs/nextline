@@ -4,8 +4,7 @@ from logging import getLogger
 from apluggy import PluginManager
 
 from nextline.spawned.call import sys_trace
-from nextline.spawned.types import QueueIn, QueueOut
-from nextline.types import RunNo
+from nextline.spawned.types import QueueIn, QueueOut, RunArg
 
 from . import plugins, spec
 
@@ -38,7 +37,7 @@ MODULES_TO_SKIP = {
 
 
 def build_hook(
-    run_no: RunNo,
+    run_arg: RunArg,
     queue_in: QueueIn,
     queue_out: QueueOut,
 ) -> PluginManager:
@@ -67,7 +66,7 @@ def build_hook(
 
     hook.hook.init(
         hook=hook,
-        run_no=run_no,
+        run_arg=run_arg,
         modules_to_skip=MODULES_TO_SKIP,
         queue_in=queue_in,
         queue_out=queue_out,

@@ -8,9 +8,9 @@ from typing import Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.types import QueueIn, QueueOut, TraceArgs
+from nextline.spawned.types import QueueIn, QueueOut, RunArg, TraceArgs
 from nextline.spawned.types import TraceFunction as TraceFunc
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 
 PROJECT_NAME = 'nextline_spawned'
 
@@ -22,7 +22,7 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 @hookspec
 def init(
     hook: PluginManager,
-    run_no: RunNo,
+    run_arg: RunArg,
     modules_to_skip: Collection[str],
     queue_in: QueueIn,
     queue_out: QueueOut,

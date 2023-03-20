@@ -23,8 +23,7 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
         result.exc = e
         return result
 
-    run_no = run_arg.run_no
-    hook = build_hook(run_no=run_no, queue_in=queue_in, queue_out=queue_out)
+    hook = build_hook(run_arg=run_arg, queue_in=queue_in, queue_out=queue_out)
 
     with TraceFunc(hook=hook) as trace:
         with sys_trace(trace_func=trace):
