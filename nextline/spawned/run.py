@@ -19,7 +19,8 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
         result.exc = e
         return result
 
-    with TraceFunc(hook=hook) as trace:
+    with hook.with_.context():
+        trace = TraceFunc(hook=hook)
         with sys_trace(trace_func=trace):
             try:
                 result.ret = func()
