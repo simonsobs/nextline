@@ -16,13 +16,14 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
     hook = build_hook(run_arg=run_arg, queue_in=queue_in, queue_out=queue_out)
 
-    try:
-        func = hook.hook.compose_callable()
-    except BaseException as e:
-        result.exc = e
-        return result
-
     with hook.with_.context():
+
+        try:
+            func = hook.hook.compose_callable()
+        except BaseException as e:
+            result.exc = e
+            return result
+
         trace = TraceFunc(hook=hook)
         with sys_trace(trace_func=trace):
             try:
