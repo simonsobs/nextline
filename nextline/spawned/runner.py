@@ -19,28 +19,28 @@ def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
         try:
             func = hook.hook.compose_callable()
-        except BaseException as e:
-            result.exc = e
+        except BaseException as exc:
+            result.exc = exc
             return result
 
         trace_func = hook.hook.create_trace_func()
 
-        with sys_trace(trace_func=trace_func):
-            try:
+        try:
+            with sys_trace(trace_func=trace_func):
                 result.ret = func()
-            except BaseException as e:
-                result.exc = e
+        except BaseException as exc:
+            if exc.__traceback__:
+                # remove this frame from the traceback.
+                if exc.__traceback__.tb_frame is inspect.currentframe():
+                    exc.__traceback__ = exc.__traceback__.tb_next
+                else:
+                    logger.warning('The first frame is not the current frame.')
 
-        exc = result.exc
-        if exc and exc.__traceback__:
-            # remove this frame from the traceback.
-            if exc.__traceback__.tb_frame is inspect.currentframe():
-                exc.__traceback__ = exc.__traceback__.tb_next
-            else:
-                logger.warning('The first frame is not the current frame.')
+            result.exc = exc
 
-        if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
-            tb = exc.__traceback__
+        exc_ = result.exc
+        if exc_ and exc_.__traceback__ and isinstance(exc_, KeyboardInterrupt):
+            tb = exc_.__traceback__
             while tb.tb_next:
                 module = tb.tb_next.tb_frame.f_globals.get('__name__')
                 if module == WithContext.__module__:
