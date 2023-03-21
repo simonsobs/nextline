@@ -1,11 +1,11 @@
 __all__ = [
     'CallableComposer',
+    'TaskAndThreadKeeper',
+    'TaskOrThreadToTraceMapper',
     'FilerByModule',
     'FilterByModuleName',
     'FilterLambda',
     'GlobalTraceFunc',
-    'TaskAndThreadKeeper',
-    'TaskOrThreadToTraceMapper',
     'LocalTraceFunc',
     'TraceCallHandler',
     'PdbInstanceFactory',
@@ -16,8 +16,9 @@ __all__ = [
 
 
 from .compose import CallableComposer
+from .concurrency import TaskAndThreadKeeper, TaskOrThreadToTraceMapper
 from .filter import FilerByModule, FilterByModuleName, FilterLambda
-from .global_ import GlobalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMapper
+from .global_ import GlobalTraceFunc
 from .local_ import LocalTraceFunc, TraceCallHandler
 from .pdb_ import PdbInstanceFactory, Prompt
 from .peek import PeekStdout
