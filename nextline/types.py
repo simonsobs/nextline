@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dataclasses
 import datetime
 from typing import NewType, Optional
@@ -14,7 +12,7 @@ PromptNo = NewType("PromptNo", int)
 @dataclasses.dataclass(frozen=True)
 class ThreadTaskId:
     thread_no: ThreadNo
-    task_no: TaskNo | None
+    task_no: Optional[TaskNo]
 
 
 @dataclasses.dataclass(frozen=True)
