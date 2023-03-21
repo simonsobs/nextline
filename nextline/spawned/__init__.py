@@ -22,6 +22,7 @@ __all__ = [
     'main',
 ]
 
+import traceback
 
 from .commands import PdbCommand
 from .events import (
@@ -54,4 +55,8 @@ def main(run_arg: RunArg) -> RunResult:
     '''The function to be submitted to ProcessPoolExecutor.'''
     assert _queue_in
     assert _queue_out
-    return run_(run_arg, _queue_in, _queue_out)
+    try:
+        return run_(run_arg, _queue_in, _queue_out)
+    except BaseException:
+        traceback.print_exc()
+        raise
