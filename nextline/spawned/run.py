@@ -26,10 +26,6 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
             except BaseException as e:
                 result.exc = e
 
-    # NOTE: How to print the exception in the same way as the interpreter.
-    # import traceback
-    # traceback.print_exception(type(exc), exc, exc.__traceback__)
-
     exc = result.exc
     if exc and exc.__traceback__:
         # remove this frame from the traceback.
