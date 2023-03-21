@@ -10,13 +10,13 @@ from .utils import WithContext
 
 def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
-    result = RunResult(ret=None, exc=None)
+    logger = getLogger(__name__)
 
     hook = build_hook(run_arg=run_arg, queue_in=queue_in, queue_out=queue_out)
 
-    logger = getLogger(__name__)
-
     with hook.with_.context():
+
+        result = RunResult(ret=None, exc=None)
 
         try:
             func = hook.hook.compose_callable()
