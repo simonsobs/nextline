@@ -1,6 +1,6 @@
 import pytest
 
-from nextline.spawned import script
+from nextline.spawned.plugin.plugins import _script
 
 SOURCE = """
 x = 0
@@ -9,12 +9,12 @@ x = 0
 
 def test_code():
     code = compile(SOURCE, "<string>", "exec")
-    func = script.compose(code)
+    func = _script.compose(code)
     func()
 
 
 def test_str():
-    func = script.compose(SOURCE)
+    func = _script.compose(SOURCE)
     func()
 
 
@@ -26,12 +26,12 @@ print(__name__)
 def test_module_name(capsys):
     # Use stdout to receive data from code
     code = compile(SOURCE_MODULE_NAME, "<string>", "exec")
-    func = script.compose(code)
+    func = _script.compose(code)
     func()
     actual = capsys.readouterr().out.strip()
     # with capsys.disabled():
     #     print(actual)
-    expected = script.__name__
+    expected = _script.__name__
     assert expected == actual
 
 
@@ -48,7 +48,7 @@ def test_import():
     https://github.com/simonsobs/nextline/issues/7
     """
     code = compile(SOURCE_IMPORT, "<string>", "exec")
-    func = script.compose(code)
+    func = _script.compose(code)
     func()
 
 

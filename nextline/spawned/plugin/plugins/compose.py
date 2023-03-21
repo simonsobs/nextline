@@ -3,10 +3,11 @@ from pathlib import Path
 from types import CodeType
 from typing import Any, Callable
 
-from nextline.spawned import script
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import RunArg
 from nextline.spawned.utils import to_canonic_path
+
+from . import _script
 
 
 class CallableComposer:
@@ -31,11 +32,11 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
     if isinstance(statement, str):
         assert filename is not None
         code = compile(statement, filename, 'exec')
-        return script.compose(code)
+        return _script.compose(code)
     elif isinstance(statement, Path):
         return _from_path(statement)
     elif isinstance(statement, CodeType):
-        return script.compose(statement)
+        return _script.compose(statement)
     elif callable(statement):
         return statement
     else:
@@ -48,4 +49,4 @@ def _from_path(path: Path) -> Callable[[], Any]:
     statement = path.read_text()
     code = compile(statement, str(path), 'exec')
     sys.path.insert(0, str(path.parent))
-    return script.compose(code)
+    return _script.compose(code)
