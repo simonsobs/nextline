@@ -37,7 +37,7 @@ from .events import (
     OnStartTraceCall,
     OnWriteStdout,
 )
-from .run import run_
+from .runner import run_
 from .types import QueueIn, QueueOut, RunArg, RunResult
 
 _queue_in: QueueIn | None = None
