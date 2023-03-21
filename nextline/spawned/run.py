@@ -1,3 +1,5 @@
+import inspect
+
 from .call import sys_trace
 from .plugin import build_hook
 from .trace import TraceFunc
@@ -31,8 +33,8 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
     exc = result.exc
     if exc and exc.__traceback__:
         # remove this frame from the traceback.
-        # Note: exc.__traceback__ is sys._getframe()
-        exc.__traceback__ = exc.__traceback__.tb_next
+        if exc.__traceback__.tb_frame is inspect.currentframe():
+            exc.__traceback__ = exc.__traceback__.tb_next
 
     if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
         tb = exc.__traceback__
