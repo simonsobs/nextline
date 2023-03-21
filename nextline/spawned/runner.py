@@ -10,37 +10,27 @@ from .types import QueueIn, QueueOut, RunArg, RunResult
 
 
 def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
-
     hook = build_hook(run_arg=run_arg, queue_in=queue_in, queue_out=queue_out)
-
     with hook.with_.context():
-
         result = _compile_and_run(hook=hook)
-
         hook.hook.finalize_run_result(run_result=result)
-
         return result
 
 
 def _compile_and_run(hook: PluginManager) -> RunResult:
-
     try:
         func = hook.hook.compose_callable()
     except BaseException as exc:
         _remove_frame(exc=exc, frame=inspect.currentframe())
         return RunResult(ret=None, exc=exc)
-
     trace_func = hook.hook.create_trace_func()
-
-    result = RunResult(ret=None, exc=None)
     try:
         with sys_trace(trace_func=trace_func):
-            result.ret = func()
+            ret = func()
+        return RunResult(ret=ret, exc=None)
     except BaseException as exc:
         _remove_frame(exc=exc, frame=inspect.currentframe())
-        result.exc = exc
-
-    return result
+        return RunResult(ret=None, exc=exc)
 
 
 def _remove_frame(exc: BaseException, frame: Optional[FrameType]) -> None:
