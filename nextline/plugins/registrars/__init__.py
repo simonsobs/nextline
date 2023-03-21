@@ -1,5 +1,6 @@
 __all__ = [
     'PromptInfoRegistrar',
+    'PromptNoticeRegistrar',
     'RunInfoRegistrar',
     'RunNoRegistrar',
     'ScriptRegistrar',
@@ -10,6 +11,7 @@ __all__ = [
 ]
 
 from .prompt_info import PromptInfoRegistrar
+from .prompt_notice import PromptNoticeRegistrar
 from .run_info import RunInfoRegistrar
 from .run_no import RunNoRegistrar
 from .script import ScriptRegistrar

@@ -7,7 +7,7 @@ from typing import Any, AsyncIterator, Optional, Tuple
 
 from .context import Context
 from .fsm import Machine
-from .types import PromptInfo, RunInfo, StdoutInfo, TraceInfo
+from .types import PromptInfo, PromptNotice, RunInfo, StdoutInfo, TraceInfo
 from .utils import merge_aiters
 
 
@@ -170,6 +170,10 @@ class Nextline:
 
     def subscribe_trace_info(self) -> AsyncIterator[TraceInfo]:
         return self.subscribe("trace_info")
+
+    def prompts(self) -> AsyncIterator[PromptNotice]:
+        '''Yield for each prompt. Return when the run ends.'''
+        return self.subscribe('prompt_notice')
 
     def subscribe_prompt_info(self) -> AsyncIterator[PromptInfo]:
         return self.subscribe("prompt_info")

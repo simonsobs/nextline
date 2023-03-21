@@ -54,6 +54,18 @@ class PromptInfo:
 
 
 @dataclasses.dataclass(frozen=True)
+class PromptNotice:
+    started_at: datetime.datetime
+    run_no: RunNo
+    trace_no: TraceNo
+    prompt_no: PromptNo
+    prompt_text: str
+    event: str
+    file_name: str
+    line_no: int
+
+
+@dataclasses.dataclass(frozen=True)
 class StdoutInfo:
     run_no: RunNo
     trace_no: TraceNo
