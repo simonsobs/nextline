@@ -53,7 +53,6 @@ async def test_one() -> None:
         await task
 
 
-@pytest.mark.skip(reason='it blocks')
 async def test_timeout(machine: Mock):
     async def close():
         await asyncio.sleep(5)
