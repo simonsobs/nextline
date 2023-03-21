@@ -58,6 +58,7 @@ def build_hook(
     hook.register(plugins.FilterLambda)
     hook.register(plugins.FilterByModuleName)
     hook.register(plugins.GlobalTraceFunc)
+    hook.register(plugins.CallableComposer)
 
     logger = getLogger(__name__)
     plugin_names = (f'{n!r}' for n, p in hook.list_name_plugin() if p)

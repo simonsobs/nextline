@@ -3,7 +3,7 @@ from __future__ import annotations
 from asyncio import Task
 from threading import Thread
 from types import FrameType
-from typing import Collection, Generator, Optional
+from typing import Any, Callable, Collection, Generator, Optional
 
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
@@ -33,6 +33,11 @@ def init(
 @hookspec
 @contextmanager
 def context():
+    pass
+
+
+@hookspec(firstresult=True)
+def compose_callable() -> Optional[Callable[[], Any]]:
     pass
 
 

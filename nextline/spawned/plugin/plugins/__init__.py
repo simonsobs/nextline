@@ -1,4 +1,5 @@
 __all__ = [
+    'CallableComposer',
     'FilerByModule',
     'FilterByModuleName',
     'FilterLambda',
@@ -14,6 +15,7 @@ __all__ = [
 ]
 
 
+from .compose import CallableComposer
 from .filter import FilerByModule, FilterByModuleName, FilterLambda
 from .global_ import GlobalTraceFunc, TaskAndThreadKeeper, TaskOrThreadToTraceMapper
 from .local_ import LocalTraceFunc, TraceCallHandler
