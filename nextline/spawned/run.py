@@ -1,9 +1,12 @@
 import inspect
+from logging import getLogger
+from typing import Optional
+
+from apluggy import PluginManager
 
 from .call import sys_trace
 from .plugin import build_hook
-from .trace import TraceFunc
-from .types import QueueIn, QueueOut, RunArg, RunResult
+from .types import QueueIn, QueueOut, RunArg, RunResult, TraceFunction
 from .utils import WithContext
 
 
@@ -43,3 +46,17 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
             tb = tb.tb_next
 
     return result
+
+
+def TraceFunc(hook: PluginManager) -> TraceFunction:
+    '''Return the trace function of Nextline to be set by sys.settrace().'''
+
+    def _trace_func(frame, event, arg) -> Optional[TraceFunction]:
+        try:
+            return hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
+        except BaseException:
+            logger = getLogger(__name__)
+            logger.exception('')
+            raise
+
+    return _trace_func
