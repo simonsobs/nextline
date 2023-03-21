@@ -7,7 +7,7 @@ from apluggy import PluginManager
 from nextline.count import PromptNoCounter
 from nextline.spawned.exc import NotOnTraceCall
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import TraceFunction as TraceFunc
+from nextline.spawned.types import TraceFunction
 
 from .custom import CustomizedPdb
 from .stream import PromptFuncType, StdInOut
@@ -28,7 +28,7 @@ class PdbInstanceFactory:
         self._factory = Factory(hook=hook)
 
     @hookimpl
-    def create_local_trace_func(self) -> TraceFunc:
+    def create_local_trace_func(self) -> TraceFunction:
         return self._factory()
 
 

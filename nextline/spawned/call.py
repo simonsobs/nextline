@@ -3,11 +3,11 @@ import threading
 from contextlib import contextmanager
 from typing import Optional
 
-from .types import TraceFunction as TraceFunc
+from .types import TraceFunction
 
 
 @contextmanager
-def sys_trace(trace_func: TraceFunc, thread: Optional[bool] = True):
+def sys_trace(trace_func: TraceFunction, thread: Optional[bool] = True):
     '''Trace callables in the context and all threads created during the context.
 
     Notes

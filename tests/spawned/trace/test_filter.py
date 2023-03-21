@@ -6,18 +6,18 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.spawned.types import TraceFunction as TraceFunc
+from nextline.spawned.types import TraceFunction
 
 from . import module_a
 from .funcs import TraceSummary
 
 
 def Filter(
-    trace: TraceFunc, filter: Callable[[FrameType, str, Any], bool]
-) -> TraceFunc:
+    trace: TraceFunction, filter: Callable[[FrameType, str, Any], bool]
+) -> TraceFunction:
     '''Skip if the filter returns False.'''
 
-    def _trace(frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def _trace(frame: FrameType, event, arg) -> Optional[TraceFunction]:
         if filter(frame, event, arg):
             return trace(frame, event, arg)
         return None
@@ -25,7 +25,7 @@ def Filter(
     return _trace
 
 
-def FilterLambda(trace: TraceFunc) -> TraceFunc:
+def FilterLambda(trace: TraceFunction) -> TraceFunction:
     '''An example filter'''
 
     def filter(frame: FrameType, event, arg) -> bool:

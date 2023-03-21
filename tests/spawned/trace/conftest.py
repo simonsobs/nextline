@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 from nextline.spawned.call import sys_trace
-from nextline.spawned.types import TraceFunction as TraceFunc
+from nextline.spawned.types import TraceFunction
 
 from .funcs import TraceSummary, summarize_trace_calls
 
@@ -95,7 +95,7 @@ def func() -> Callable[[], Any]:
 
 
 @pytest.fixture()
-def wrap_target_trace_func(target_trace_func: TraceFunc) -> Mock:
+def wrap_target_trace_func(target_trace_func: TraceFunction) -> Mock:
     '''A mock object wrapping the trace function under test to collect trace calls.'''
     wrap = Mock(wraps=target_trace_func)
 

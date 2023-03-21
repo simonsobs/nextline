@@ -8,8 +8,7 @@ from apluggy import PluginManager, contextmanager
 from exceptiongroup import BaseExceptionGroup, catch
 
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import TraceArgs
-from nextline.spawned.types import TraceFunction as TraceFunc
+from nextline.spawned.types import TraceArgs, TraceFunction
 from nextline.spawned.utils import WithContext
 from nextline.types import TraceNo
 
@@ -28,19 +27,19 @@ class LocalTraceFunc:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
         factory = Factory(hook)
-        self._map: DefaultDict[TraceNo, TraceFunc] = defaultdict(factory)
+        self._map: DefaultDict[TraceNo, TraceFunction] = defaultdict(factory)
 
     @hookimpl
-    def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunction]:
         trace_no = self._hook.hook.current_trace_no()
         local_trace_func = self._map[trace_no]
         return local_trace_func(frame, event, arg)
 
 
-def Factory(hook: PluginManager) -> Callable[[], TraceFunc]:
+def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
     '''Return a function that creates a local trace function.'''
 
-    def _factory() -> TraceFunc:
+    def _factory() -> TraceFunction:
         trace = hook.hook.create_local_trace_func()
 
         @contextmanager

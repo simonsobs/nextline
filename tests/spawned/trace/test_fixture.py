@@ -4,12 +4,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from nextline.spawned.types import TraceFunction as TraceFunc
+from nextline.spawned.types import TraceFunction
 
 
 def test_wrap_target_trace_func(
-    target_trace_func: Mock | TraceFunc,
-    wrap_target_trace_func: Mock | TraceFunc,
+    target_trace_func: Mock | TraceFunction,
+    wrap_target_trace_func: Mock | TraceFunction,
 ):
     arg = (Mock(), "", None)
     if target_trace_func is target_trace_func(*arg):
