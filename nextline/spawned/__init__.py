@@ -37,7 +37,7 @@ from .events import (
     OnStartTraceCall,
     OnWriteStdout,
 )
-from .runner import run_
+from .runner import run
 from .types import QueueIn, QueueOut, RunArg, RunResult
 
 _queue_in: QueueIn | None = None
@@ -56,7 +56,7 @@ def main(run_arg: RunArg) -> RunResult:
     assert _queue_in
     assert _queue_out
     try:
-        return run_(run_arg, _queue_in, _queue_out)
+        return run(run_arg, _queue_in, _queue_out)
     except BaseException:
         traceback.print_exc()
         raise

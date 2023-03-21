@@ -8,7 +8,7 @@ from .types import QueueIn, QueueOut, RunArg, RunResult, TraceFunction
 from .utils import WithContext
 
 
-def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
+def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
     logger = getLogger(__name__)
 
