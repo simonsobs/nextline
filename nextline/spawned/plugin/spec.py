@@ -8,7 +8,14 @@ from typing import Any, Callable, Collection, Generator, Optional
 import apluggy as pluggy
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.types import QueueIn, QueueOut, RunArg, TraceArgs, TraceFunction
+from nextline.spawned.types import (
+    QueueIn,
+    QueueOut,
+    RunArg,
+    RunResult,
+    TraceArgs,
+    TraceFunction,
+)
 from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 
 PROJECT_NAME = 'nextline_spawned'
@@ -42,6 +49,11 @@ def compose_callable() -> Optional[Callable[[], Any]]:
 
 @hookspec(firstresult=True)
 def create_trace_func() -> Optional[TraceFunction]:
+    pass
+
+
+@hookspec
+def finalize_run_result(run_result: RunResult) -> None:
     pass
 
 

@@ -4,7 +4,6 @@ from logging import getLogger
 from .call import sys_trace
 from .plugin import build_hook
 from .types import QueueIn, QueueOut, RunArg, RunResult
-from .utils import WithContext
 
 
 def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
@@ -38,14 +37,6 @@ def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
             result.exc = exc
 
-        exc_ = result.exc
-        if exc_ and exc_.__traceback__ and isinstance(exc_, KeyboardInterrupt):
-            tb = exc_.__traceback__
-            while tb.tb_next:
-                module = tb.tb_next.tb_frame.f_globals.get('__name__')
-                if module == WithContext.__module__:
-                    tb.tb_next = None
-                    break
-                tb = tb.tb_next
+        hook.hook.finalize_run_result(run_result=result)
 
         return result
