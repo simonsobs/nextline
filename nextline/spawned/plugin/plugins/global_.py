@@ -1,10 +1,9 @@
-from types import FrameType
 from typing import Optional
 
 from apluggy import PluginManager
 
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import TraceFunction as TraceFunc
+from nextline.spawned.types import TraceFunction
 
 
 class GlobalTraceFunc:
@@ -13,7 +12,7 @@ class GlobalTraceFunc:
         self._hook = hook
 
     @hookimpl
-    def global_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunc]:
+    def global_trace_func(self, frame, event, arg) -> Optional[TraceFunction]:
         if self._hook.hook.filter(trace_args=(frame, event, arg)):
             return None
         self._hook.hook.filtered(trace_args=(frame, event, arg))
