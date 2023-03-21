@@ -36,19 +36,19 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
             except BaseException as e:
                 result.exc = e
 
-    exc = result.exc
-    if exc and exc.__traceback__:
-        # remove this frame from the traceback.
-        if exc.__traceback__.tb_frame is inspect.currentframe():
-            exc.__traceback__ = exc.__traceback__.tb_next
+        exc = result.exc
+        if exc and exc.__traceback__:
+            # remove this frame from the traceback.
+            if exc.__traceback__.tb_frame is inspect.currentframe():
+                exc.__traceback__ = exc.__traceback__.tb_next
 
-    if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
-        tb = exc.__traceback__
-        while tb.tb_next:
-            module = tb.tb_next.tb_frame.f_globals.get('__name__')
-            if module == WithContext.__module__:
-                tb.tb_next = None
-                break
-            tb = tb.tb_next
+        if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
+            tb = exc.__traceback__
+            while tb.tb_next:
+                module = tb.tb_next.tb_frame.f_globals.get('__name__')
+                if module == WithContext.__module__:
+                    tb.tb_next = None
+                    break
+                tb = tb.tb_next
 
-    return result
+        return result
