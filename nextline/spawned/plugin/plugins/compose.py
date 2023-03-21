@@ -33,6 +33,7 @@ class CallableComposer:
             if module == __name__:
                 is_compiled_here = True
             if not tb.tb_next and is_compiled_here:
+                # NOTE: tb.tb_next is None. No traceback for SyntaxError.
                 exc.__traceback__ = tb.tb_next
             tb = tb.tb_next
 
