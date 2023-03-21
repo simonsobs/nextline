@@ -1,9 +1,30 @@
+from logging import getLogger
 from typing import Optional
 
 from apluggy import PluginManager
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import TraceFunction
+
+
+class TraceFuncCreator:
+    @hookimpl
+    def init(self, hook: PluginManager) -> None:
+        self._hook = hook
+        self._logger = getLogger(__name__)
+
+    @hookimpl
+    def create_trace_func(self) -> TraceFunction:
+        def _trace_func(frame, event, arg) -> Optional[TraceFunction]:
+            try:
+                return self._hook.hook.global_trace_func(
+                    frame=frame, event=event, arg=arg
+                )
+            except BaseException:
+                self._logger.exception('')
+                raise
+
+        return _trace_func
 
 
 class GlobalTraceFunc:

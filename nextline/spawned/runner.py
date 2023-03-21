@@ -1,10 +1,9 @@
 import inspect
 from logging import getLogger
-from typing import Optional
 
 from .call import sys_trace
 from .plugin import build_hook
-from .types import QueueIn, QueueOut, RunArg, RunResult, TraceFunction
+from .types import QueueIn, QueueOut, RunArg, RunResult
 from .utils import WithContext
 
 
@@ -24,12 +23,7 @@ def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
             result.exc = e
             return result
 
-        def trace_func(frame, event, arg) -> Optional[TraceFunction]:
-            try:
-                return hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
-            except BaseException:
-                logger.exception('')
-                raise
+        trace_func = hook.hook.create_trace_func()
 
         with sys_trace(trace_func=trace_func):
             try:

@@ -29,6 +29,7 @@ def build_hook(
     hook.register(plugins.FilterLambda)
     hook.register(plugins.FilterByModuleName)
     hook.register(plugins.GlobalTraceFunc)
+    hook.register(plugins.TraceFuncCreator)
     hook.register(plugins.CallableComposer)
 
     logger = getLogger(__name__)

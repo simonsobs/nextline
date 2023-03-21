@@ -41,6 +41,11 @@ def compose_callable() -> Optional[Callable[[], Any]]:
 
 
 @hookspec(firstresult=True)
+def create_trace_func() -> Optional[TraceFunction]:
+    pass
+
+
+@hookspec(firstresult=True)
 def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunction]:
     pass
 
