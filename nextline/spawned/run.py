@@ -14,6 +14,8 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
 
     hook = build_hook(run_arg=run_arg, queue_in=queue_in, queue_out=queue_out)
 
+    logger = getLogger(__name__)
+
     with hook.with_.context():
 
         try:
@@ -26,7 +28,6 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
             try:
                 return hook.hook.global_trace_func(frame=frame, event=event, arg=arg)
             except BaseException:
-                logger = getLogger(__name__)
                 logger.exception('')
                 raise
 
@@ -41,6 +42,8 @@ def run_(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
             # remove this frame from the traceback.
             if exc.__traceback__.tb_frame is inspect.currentframe():
                 exc.__traceback__ = exc.__traceback__.tb_next
+            else:
+                logger.warning('The first frame is not the current frame.')
 
         if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
             tb = exc.__traceback__
