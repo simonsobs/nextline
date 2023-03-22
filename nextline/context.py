@@ -4,7 +4,9 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import getLogger
-from typing import Any, AsyncIterator, Callable, Optional, Tuple
+from pathlib import Path
+from types import CodeType
+from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
 
 from apluggy import PluginManager, asynccontextmanager
 from tblib import pickling_support
@@ -73,7 +75,11 @@ def SendPdbCommand(queue_in: QueueIn) -> Callable[[str, int, int], None]:
 
 
 class Context:
-    def __init__(self, run_no_start_from: int, statement: str):
+    def __init__(
+        self,
+        run_no_start_from: int,
+        statement: Union[str, Path, CodeType, Callable[[], Any]],
+    ):
         self._hook = build_hook()
         self.registry = PubSub[Any, Any]()
         self._hook.hook.init(hook=self._hook, registry=self.registry)
@@ -107,10 +113,10 @@ class Context:
 
     async def reset(
         self,
-        statement: Optional[str] = None,
+        statement: Union[str, Path, CodeType, Callable[[], Any], None],
         run_no_start_from: Optional[int] = None,
     ):
-        if statement:
+        if statement is not None:
             self._run_arg.statement = statement
             await self._hook.ahook.on_change_script(
                 script=statement, filename=self._run_arg.filename

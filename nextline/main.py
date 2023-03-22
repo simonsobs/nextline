@@ -1,7 +1,10 @@
 import asyncio
 import linecache
+import reprlib
 from logging import getLogger
-from typing import Any, AsyncIterator, Optional, Tuple
+from pathlib import Path
+from types import CodeType
+from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
 
 from apluggy import asynccontextmanager
 
@@ -20,8 +23,12 @@ class Nextline:
 
     Parameters
     ----------
-    statement : str
-        A Python code as a string
+    statement : str or Path or CodeType or Callable[[], Any]
+        Typically, a Python code as a str. However, if a statement is a str
+        that is a path to an existing file, it is considered as a path to a
+        Python script. A Path object is also considered as a path to a Python
+        script. Alternatively, a statement can be a CodeType object or a
+        callable with no arguments. A statement must be picklable.
     run_no_start_from : int, optional
         The first run number. The default is 1.
     timeout_on_exit : float, optional
@@ -32,14 +39,14 @@ class Nextline:
 
     def __init__(
         self,
-        statement: str,
+        statement: Union[str, Path, CodeType, Callable[[], Any]],
         run_no_start_from: int = 1,
         timeout_on_exit: float = 3,
     ):
 
         logger = getLogger(__name__)
-        logger.debug(f"statement starts with {statement[:25]!r}")
-        logger.debug(f"The next run number will be {run_no_start_from}")
+        logger.debug(f'statement: {reprlib.repr(statement)}')
+        logger.debug(f"The run number starts from {run_no_start_from}")
 
         self._context = Context(
             run_no_start_from=run_no_start_from,
@@ -117,7 +124,7 @@ class Nextline:
 
     async def reset(
         self,
-        statement: Optional[str] = None,
+        statement: Union[str, Path, CodeType, Callable[[], Any], None] = None,
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""

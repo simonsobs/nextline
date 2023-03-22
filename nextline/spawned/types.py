@@ -28,7 +28,7 @@ QueueOut: TypeAlias = 'Queue[Event]'
 @dataclass
 class RunArg:
     run_no: RunNo
-    statement: Union[str, Path, CodeType, Callable[[], Any], None]
+    statement: Union[str, Path, CodeType, Callable[[], Any]]
     filename: Optional[str] = None
 
 
