@@ -44,19 +44,19 @@ async def run_with_resource(
     send_command = SendCommand(queue_in)
     monitor = Monitor(hook, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
+        initializer = partial(
+            _call_all,
+            mp_logging.initializer,
+            partial(spawned.set_queues, queue_in, queue_out),
+        )
+        executor_factory = partial(
+            ProcessPoolExecutor,
+            max_workers=1,
+            mp_context=mp_context,
+            initializer=initializer,
+        )
+        func = partial(spawned.main, run_arg)
         async with monitor:
-            initializer = partial(
-                _call_all,
-                mp_logging.initializer,
-                partial(spawned.set_queues, queue_in, queue_out),
-            )
-            executor_factory = partial(
-                ProcessPoolExecutor,
-                max_workers=1,
-                mp_context=mp_context,
-                initializer=initializer,
-            )
-            func = partial(spawned.main, run_arg)
             running = await run_in_process(func, executor_factory)
             yield running, send_command
 
