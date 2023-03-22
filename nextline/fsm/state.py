@@ -46,7 +46,7 @@ class Machine:
         self._task = asyncio.create_task(run())
         await run_started.wait()
 
-    def send_command(self, command: Command) -> None:
+    async def send_command(self, command: Command) -> None:
         assert self.is_running()  # type: ignore
         self._context.send_command(command)
 

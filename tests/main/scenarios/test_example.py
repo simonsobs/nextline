@@ -254,7 +254,7 @@ async def control_trace(nextline: Nextline, trace_no):
                 file_name=s.file_name,
             )
             command = find_command(line) or command
-        nextline.send_pdb_command(command, s.prompt_no, trace_no)
+        await nextline.send_pdb_command(command, s.prompt_no, trace_no)
         # await asyncio.sleep(0.01)
 
 

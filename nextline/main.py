@@ -109,7 +109,7 @@ class Nextline:
         finally:
             await self._machine.run_finished.wait()
 
-    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+    async def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
         item = PdbCommand(
@@ -117,7 +117,7 @@ class Nextline:
             prompt_no=PromptNo(prompt_no),
             command=command,
         )
-        self._machine.send_command(item)
+        await self._machine.send_command(item)
 
     async def interrupt(self) -> None:
         await self._machine.interrupt()  # type: ignore
