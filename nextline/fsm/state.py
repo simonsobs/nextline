@@ -4,6 +4,7 @@ from typing import Any, Optional
 from transitions import EventData
 
 from nextline.context import Context
+from nextline.spawned import Command
 
 from .factory import build_state_machine
 
@@ -45,9 +46,9 @@ class Machine:
         self._task = asyncio.create_task(run())
         await run_started.wait()
 
-    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+    def send_pdb_command(self, command: Command) -> None:
         assert self.is_running()  # type: ignore
-        self._context.send_pdb_command(command, prompt_no, trace_no)
+        self._context.send_pdb_command(command)
 
     async def on_interrupt(self, _: EventData) -> None:
         self._context.interrupt()

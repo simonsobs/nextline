@@ -10,7 +10,16 @@ from apluggy import asynccontextmanager
 
 from .context import Context
 from .fsm import Machine
-from .types import PromptInfo, PromptNotice, RunInfo, StdoutInfo, TraceInfo
+from .spawned import PdbCommand
+from .types import (
+    PromptInfo,
+    PromptNo,
+    PromptNotice,
+    RunInfo,
+    StdoutInfo,
+    TraceInfo,
+    TraceNo,
+)
 from .utils import merge_aiters
 
 
@@ -103,7 +112,12 @@ class Nextline:
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
-        self._machine.send_pdb_command(command, prompt_no, trace_no)
+        item = PdbCommand(
+            trace_no=TraceNo(trace_no),
+            prompt_no=PromptNo(prompt_no),
+            command=command,
+        )
+        self._machine.send_pdb_command(item)
 
     async def interrupt(self) -> None:
         await self._machine.interrupt()  # type: ignore

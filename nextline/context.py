@@ -15,8 +15,8 @@ from . import spawned
 from .count import RunNoCounter
 from .monitor import Monitor
 from .plugin import build_hook
-from .spawned import PdbCommand, QueueIn, QueueOut, RunArg, RunResult
-from .types import PromptNo, RunNo, TraceNo
+from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
+from .types import RunNo
 from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process
 
 pickling_support.install()
@@ -36,7 +36,7 @@ def _call_all(*funcs) -> None:
 @asynccontextmanager
 async def run_with_resource(
     hook: PluginManager, run_arg: RunArg
-) -> AsyncIterator[Tuple[Running[RunResult], Callable[[str, int, int], None]]]:
+) -> AsyncIterator[Tuple[Running[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')
     queue_in: QueueIn = mp_context.Queue()
     queue_out: QueueOut = mp_context.Queue()
@@ -60,16 +60,11 @@ async def run_with_resource(
             yield running, send_pdb_command
 
 
-def SendPdbCommand(queue_in: QueueIn) -> Callable[[str, int, int], None]:
-    def _send_pdb_command(command: str, prompt_no: int, trace_no: int) -> None:
+def SendPdbCommand(queue_in: QueueIn) -> Callable[[Command], None]:
+    def _send_pdb_command(command: Command) -> None:
         logger = getLogger(__name__)
-        logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
-        item = PdbCommand(
-            trace_no=TraceNo(trace_no),
-            prompt_no=PromptNo(prompt_no),
-            command=command,
-        )
-        queue_in.put(item)
+        logger.debug(f'send_pdb_command({command!r}')
+        queue_in.put(command)
 
     return _send_pdb_command
 
@@ -85,7 +80,7 @@ class Context:
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
-        self._send_pdb_command: Optional[Callable[[str, int, int], None]] = None
+        self._send_pdb_command: Optional[Callable[[Command], None]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -148,9 +143,9 @@ class Context:
             logger.exception(ret.raised)
         await self._hook.ahook.on_end_run(run_result=self._run_result)
 
-    def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+    def send_pdb_command(self, command: Command) -> None:
         if self._send_pdb_command:
-            self._send_pdb_command(command, prompt_no, trace_no)
+            self._send_pdb_command(command)
 
     def interrupt(self) -> None:
         if self._running:
