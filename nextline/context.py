@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
+from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
 from pathlib import Path
 from types import CodeType
 from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
 
-from apluggy import PluginManager, asynccontextmanager
+from apluggy import PluginManager
 from tblib import pickling_support
 
 from . import spawned
