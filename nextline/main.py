@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import linecache
 from logging import getLogger
@@ -88,7 +86,7 @@ class Nextline:
         await self._machine.run()  # type: ignore
 
     @asynccontextmanager
-    async def run_session(self) -> AsyncIterator[Nextline]:
+    async def run_session(self) -> AsyncIterator['Nextline']:
         await self._machine.run()  # type: ignore
         try:
             yield self
