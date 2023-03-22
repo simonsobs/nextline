@@ -40,7 +40,6 @@ class Machine:
         async def run() -> None:
             async with self._context.run():
                 run_started.set()
-            # await self._context.finish()
             await self.finish()  # type: ignore
             self.run_finished.set()
 
