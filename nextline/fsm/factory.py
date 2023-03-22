@@ -17,7 +17,7 @@ reset() |    '-------------'   |
         |------'   |           |
         |          v           |
         |    .-------------.   |
-        |    |   Running   |   |
+        |    |   Running   |---.
         |    '-------------'   |
         |          | finish()  |
         |          |           |
@@ -129,6 +129,12 @@ CONFIG = {
         ['run', 'initialized', 'running'],
         ['finish', 'running', 'finished'],
         ['close', ['created', 'initialized', 'finished'], 'closed'],
+        {
+            'trigger': 'close',
+            'source': ['running'],
+            'dest': 'closed',
+            'before': 'wait',
+        },
         {
             'trigger': 'reset',
             'source': ['initialized', 'finished'],

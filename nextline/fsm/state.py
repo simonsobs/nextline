@@ -58,6 +58,9 @@ class Machine:
     async def on_kill(self, _: EventData) -> None:
         self._context.kill()
 
+    async def wait(self, _: EventData) -> None:
+        await self.run_finished.wait()
+
     async def on_exit_finished(self, _: EventData) -> None:
         await self._task
 
