@@ -142,6 +142,12 @@ CONFIG = {
             'before': 'on_reset',
         },
         {
+            'trigger': 'send_command',
+            'source': ['running'],
+            'dest': None,
+            'before': 'on_send_command',
+        },
+        {
             'trigger': 'interrupt',
             'source': ['running'],
             'dest': None,

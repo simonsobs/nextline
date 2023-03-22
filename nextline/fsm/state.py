@@ -25,7 +25,8 @@ class Machine:
         return f'<{self.__class__.__name__} {self.state!r}>'
 
     async def after_state_change(self, event: EventData) -> None:
-        if event.event and event.event.name in ('interrupt', 'terminate', 'kill'):
+        if not (event.transition and event.transition.dest):
+            # internal transition
             return
         await self._context.state_change(self.state)  # type: ignore
 
@@ -46,8 +47,9 @@ class Machine:
         self._task = asyncio.create_task(run())
         await run_started.wait()
 
-    async def send_command(self, command: Command) -> None:
-        assert self.is_running()  # type: ignore
+    async def on_send_command(self, event: EventData) -> None:
+        command, *_ = event.args
+        assert isinstance(command, Command)
         self._context.send_command(command)
 
     async def on_interrupt(self, _: EventData) -> None:

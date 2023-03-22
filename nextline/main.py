@@ -117,7 +117,7 @@ class Nextline:
             prompt_no=PromptNo(prompt_no),
             command=command,
         )
-        await self._machine.send_command(item)
+        await self._machine.send_command(item)  # type: ignore
 
     async def interrupt(self) -> None:
         await self._machine.interrupt()  # type: ignore
