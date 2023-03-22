@@ -56,17 +56,17 @@ async def run_with_resource(
             )
             func = partial(spawned.main, run_arg)
             running = await run_in_process(func, executor_factory)
-            send_pdb_command = SendPdbCommand(queue_in)
-            yield running, send_pdb_command
+            send_command = SendCommand(queue_in)
+            yield running, send_command
 
 
-def SendPdbCommand(queue_in: QueueIn) -> Callable[[Command], None]:
-    def _send_pdb_command(command: Command) -> None:
+def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
+    def _send_command(command: Command) -> None:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}')
         queue_in.put(command)
 
-    return _send_pdb_command
+    return _send_command
 
 
 class Context:
@@ -80,7 +80,7 @@ class Context:
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
         self._running: Optional[Running[RunResult]] = None
-        self._send_pdb_command: Optional[Callable[[Command], None]] = None
+        self._send_command: Optional[Callable[[Command], None]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -124,15 +124,15 @@ class Context:
         try:
             async with run_with_resource(self._hook, self._run_arg) as (
                 running,
-                send_pdb_command,
+                send_command,
             ):
                 self._running = running
-                self._send_pdb_command = send_pdb_command
+                self._send_command = send_command
                 await self._hook.ahook.on_start_run()
                 yield
                 ret = await running
                 self._running = None
-                self._send_pdb_command = None
+                self._send_command = None
         finally:
             await self._finish(ret)
 
@@ -143,9 +143,9 @@ class Context:
             logger.exception(ret.raised)
         await self._hook.ahook.on_end_run(run_result=self._run_result)
 
-    def send_pdb_command(self, command: Command) -> None:
-        if self._send_pdb_command:
-            self._send_pdb_command(command)
+    def send_command(self, command: Command) -> None:
+        if self._send_command:
+            self._send_command(command)
 
     def interrupt(self) -> None:
         if self._running:

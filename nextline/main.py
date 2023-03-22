@@ -117,7 +117,7 @@ class Nextline:
             prompt_no=PromptNo(prompt_no),
             command=command,
         )
-        self._machine.send_pdb_command(item)
+        self._machine.send_command(item)
 
     async def interrupt(self) -> None:
         await self._machine.interrupt()  # type: ignore
