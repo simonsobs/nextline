@@ -109,7 +109,9 @@ class Nextline:
         finally:
             await self._machine.run_finished.wait()
 
-    async def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
+    async def send_pdb_command(
+        self, command: str, prompt_no: int, trace_no: int
+    ) -> None:
         logger = getLogger(__name__)
         logger.debug(f'send_pdb_command({command!r}, {prompt_no!r}, {trace_no!r})')
         item = PdbCommand(
