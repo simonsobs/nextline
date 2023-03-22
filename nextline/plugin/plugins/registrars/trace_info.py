@@ -2,8 +2,8 @@ import dataclasses
 import datetime
 from typing import Dict, Optional
 
+from nextline.plugin.spec import hookimpl
 from nextline.spawned import OnEndTrace, OnStartTrace
-from nextline.spec import hookimpl
 from nextline.types import RunNo, TraceInfo, TraceNo
 from nextline.utils.pubsub.broker import PubSub
 

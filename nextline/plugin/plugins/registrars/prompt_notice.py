@@ -1,8 +1,8 @@
 from logging import getLogger
 from typing import Dict, Optional
 
+from nextline.plugin.spec import hookimpl
 from nextline.spawned import OnEndTraceCall, OnStartPrompt, OnStartTraceCall
-from nextline.spec import hookimpl
 from nextline.types import PromptNotice, RunNo, TraceNo
 from nextline.utils.pubsub.broker import PubSub
 

@@ -11,8 +11,8 @@ from tblib import pickling_support
 
 from . import spawned
 from .count import RunNoCounter
-from .hook import build_hook
 from .monitor import Monitor
+from .plugin import build_hook
 from .spawned import PdbCommand, QueueIn, QueueOut, RunArg, RunResult
 from .types import PromptNo, RunNo, TraceNo
 from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process

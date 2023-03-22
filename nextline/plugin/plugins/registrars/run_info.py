@@ -3,7 +3,7 @@ import datetime
 from typing import Optional
 
 from nextline import spawned
-from nextline.spec import hookimpl
+from nextline.plugin.spec import hookimpl
 from nextline.types import RunInfo, RunNo
 from nextline.utils.pubsub.broker import PubSub
 

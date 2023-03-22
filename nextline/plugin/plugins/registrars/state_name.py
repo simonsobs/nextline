@@ -1,4 +1,4 @@
-from nextline.spec import hookimpl
+from nextline.plugin.spec import hookimpl
 from nextline.utils.pubsub.broker import PubSub
 
 

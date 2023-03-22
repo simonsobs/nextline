@@ -3,6 +3,7 @@ import dataclasses
 from logging import getLogger
 from typing import Dict, Optional, Set
 
+from nextline.plugin.spec import hookimpl
 from nextline.spawned import (
     OnEndPrompt,
     OnEndTrace,
@@ -11,7 +12,6 @@ from nextline.spawned import (
     OnStartTrace,
     OnStartTraceCall,
 )
-from nextline.spec import hookimpl
 from nextline.types import PromptInfo, PromptNo, RunNo, TraceNo
 from nextline.utils.pubsub.broker import PubSub
 
