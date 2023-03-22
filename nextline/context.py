@@ -41,6 +41,7 @@ async def run_with_resource(
     mp_context = mp.get_context('spawn')
     queue_in: QueueIn = mp_context.Queue()
     queue_out: QueueOut = mp_context.Queue()
+    send_command = SendCommand(queue_in)
     monitor = Monitor(hook, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
         async with monitor:
@@ -57,7 +58,6 @@ async def run_with_resource(
             )
             func = partial(spawned.main, run_arg)
             running = await run_in_process(func, executor_factory)
-            send_command = SendCommand(queue_in)
             yield running, send_command
 
 
@@ -123,10 +123,8 @@ class Context:
     @asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
         try:
-            async with run_with_resource(self._hook, self._run_arg) as (
-                running,
-                send_command,
-            ):
+            con = run_with_resource(self._hook, self._run_arg)
+            async with con as (running, send_command):
                 self._running = running
                 self._send_command = send_command
                 await self._hook.ahook.on_start_run()
