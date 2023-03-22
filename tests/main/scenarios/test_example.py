@@ -209,11 +209,13 @@ async def assert_subscribe_stdout(nextline: Nextline):
 
 async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
-    await nextline.run()
+    async with nextline.run_session():
+        pass
     nextline.exception()
     nextline.result()
     await nextline.reset()
-    await nextline.run()
+    async with nextline.run_session():
+        pass
     nextline.exception()
     nextline.result()
     await nextline.close()

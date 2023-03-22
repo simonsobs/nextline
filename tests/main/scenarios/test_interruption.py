@@ -78,7 +78,8 @@ async def assert_subscribe_run_info(nextline: Nextline, statement: str):
 
 async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
-    await nextline.run()
+    async with nextline.run_session():
+        pass
     exc = nextline.exception()
     assert exc
     assert exc.__traceback__  # tblib

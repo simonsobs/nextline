@@ -86,15 +86,14 @@ class Nextline:
     async def run(self) -> None:
         """Execute the script and wait until it exits"""
         await self._machine.run()  # type: ignore
-        await self._machine.run_finished.wait()
 
     @asynccontextmanager
     async def run_session(self) -> AsyncIterator[Nextline]:
-        task = asyncio.create_task(self.run())
+        await self._machine.run()  # type: ignore
         try:
             yield self
         finally:
-            await task
+            await self._machine.run_finished.wait()
 
     def send_pdb_command(self, command: str, prompt_no: int, trace_no: int) -> None:
         logger = getLogger(__name__)
