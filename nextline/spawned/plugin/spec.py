@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 from asyncio import Task
 from threading import Thread
 from types import FrameType
-from typing import Any, Callable, Collection, Generator, Optional
+from typing import Any, Callable, Collection, Generator, Optional, Union
 
-import apluggy as pluggy
-from apluggy import PluginManager, contextmanager
+import apluggy
 
 from nextline.spawned.types import (
     QueueIn,
@@ -21,13 +18,13 @@ from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
 PROJECT_NAME = 'nextline_spawned'
 
 
-hookspec = pluggy.HookspecMarker(PROJECT_NAME)
-hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
+hookspec = apluggy.HookspecMarker(PROJECT_NAME)
+hookimpl = apluggy.HookimplMarker(PROJECT_NAME)
 
 
 @hookspec
 def init(
-    hook: PluginManager,
+    hook: apluggy.PluginManager,
     run_arg: RunArg,
     modules_to_skip: Collection[str],
     queue_in: QueueIn,
@@ -37,7 +34,7 @@ def init(
 
 
 @hookspec
-@contextmanager
+@apluggy.contextmanager
 def context():
     pass
 
@@ -63,7 +60,7 @@ def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunction]:
 
 
 @hookspec(firstresult=True)
-def filter(trace_args: TraceArgs) -> bool | None:
+def filter(trace_args: TraceArgs) -> Optional[bool]:
     '''True to reject, False to accept, None to pass to the next hook implementation.
 
     Accepted if no hook implementation returns True or False.
@@ -92,7 +89,7 @@ def on_start_task_or_thread() -> None:
 
 
 @hookspec
-def on_end_task_or_thread(task_or_thread: Task | Thread):
+def on_end_task_or_thread(task_or_thread: Union[Task, Thread]):
     pass
 
 
@@ -102,17 +99,17 @@ def on_start_trace(trace_no: TraceNo) -> None:
 
 
 @hookspec(firstresult=True)
-def current_thread_no() -> ThreadNo | None:
+def current_thread_no() -> Optional[ThreadNo]:
     pass
 
 
 @hookspec(firstresult=True)
-def current_task_no() -> TaskNo | None:
+def current_task_no() -> Optional[TaskNo]:
     pass
 
 
 @hookspec(firstresult=True)
-def current_trace_no() -> TraceNo | None:
+def current_trace_no() -> Optional[TraceNo]:
     pass
 
 
@@ -122,7 +119,7 @@ def on_end_trace(trace_no: TraceNo) -> None:
 
 
 @hookspec
-@contextmanager
+@apluggy.contextmanager
 def on_trace_call(trace_args: TraceArgs):
     pass
 
@@ -138,13 +135,13 @@ def current_trace_args() -> Optional[TraceArgs]:
 
 
 @hookspec
-@contextmanager
+@apluggy.contextmanager
 def on_cmdloop():
     pass
 
 
 @hookspec
-@contextmanager
+@apluggy.contextmanager
 def on_prompt(prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
     # Receive the command by gen.send().
     command = yield  # noqa: F841
