@@ -1,6 +1,4 @@
-__all__ = [
-    'build_hook',
-]
+__all__ = ['Hook']
 
 
-from .hook import build_hook
+from .hook import Hook

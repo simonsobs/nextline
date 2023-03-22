@@ -7,11 +7,7 @@ from nextline.spawned.types import QueueIn, QueueOut, RunArg
 from . import plugins, skip, spec
 
 
-def build_hook(
-    run_arg: RunArg,
-    queue_in: QueueIn,
-    queue_out: QueueOut,
-) -> PluginManager:
+def Hook(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> PluginManager:
     '''Return a plugin manager with the plugins registered.'''
 
     hook = PluginManager(spec.PROJECT_NAME)
