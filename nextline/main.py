@@ -61,6 +61,7 @@ class Nextline:
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
+        self._machine = Machine(self._context)
         self._timeout_on_exit = timeout_on_exit
         self._registry = self._context.registry
 
@@ -74,7 +75,6 @@ class Nextline:
             return
         self._started = True
         await self._context.start()
-        self._machine = Machine(self._context)
         await self._machine.initialize()  # type: ignore
 
     def __repr__(self):
