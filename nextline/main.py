@@ -8,7 +8,6 @@ from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
 
 from apluggy import asynccontextmanager
 
-from .context import Context
 from .fsm import Machine
 from .spawned import PdbCommand
 from .types import (
@@ -57,13 +56,12 @@ class Nextline:
         logger.debug(f'statement: {reprlib.repr(statement)}')
         logger.debug(f"The run number starts from {run_no_start_from}")
 
-        self._context = Context(
+        self._machine = Machine(
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
-        self._machine = Machine(self._context)
         self._timeout_on_exit = timeout_on_exit
-        self._registry = self._context.registry
+        self._registry = self._machine.registry
 
         self._started = False
         self._closed = False
@@ -74,7 +72,6 @@ class Nextline:
         if self._started:
             return
         self._started = True
-        await self._context.start()
         await self._machine.initialize()  # type: ignore
 
     def __repr__(self):
@@ -87,7 +84,6 @@ class Nextline:
             return
         self._closed = True
         await self._machine.close()  # type: ignore
-        await self._context.shutdown()
 
     async def __aenter__(self):
         await self.start()

@@ -1,5 +1,7 @@
 import asyncio
-from typing import Any, Optional
+from pathlib import Path
+from types import CodeType
+from typing import Any, Callable, Optional, Union
 
 from transitions import EventData
 
@@ -12,8 +14,16 @@ from .factory import build_state_machine
 class Machine:
     '''The finite state machine of the nextline states.'''
 
-    def __init__(self, context: Context):
-        self._context = context
+    def __init__(
+        self,
+        run_no_start_from: int,
+        statement: Union[str, Path, CodeType, Callable[[], Any]],
+    ):
+        self._context = Context(
+            run_no_start_from=run_no_start_from,
+            statement=statement,
+        )
+        self.registry = self._context.registry
 
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
@@ -29,6 +39,9 @@ class Machine:
             # internal transition
             return
         await self._context.state_change(self.state)  # type: ignore
+
+    async def on_exit_created(self, _: EventData) -> None:
+        await self._context.start()
 
     async def on_enter_initialized(self, _: EventData) -> None:
         await self._context.initialize()
@@ -76,6 +89,7 @@ class Machine:
 
     async def on_enter_closed(self, _: EventData) -> None:
         await self._context.close()
+        await self._context.shutdown()
 
     async def on_reset(self, event: EventData) -> None:
         await self._context.reset(*event.args, **event.kwargs)
