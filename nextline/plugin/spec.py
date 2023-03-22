@@ -5,7 +5,7 @@ from nextline import spawned
 from nextline.types import RunNo
 from nextline.utils.pubsub.broker import PubSub
 
-PROJECT_NAME = 'nextline_callback'
+PROJECT_NAME = 'nextline_main'
 
 
 hookspec = pluggy.HookspecMarker(PROJECT_NAME)
