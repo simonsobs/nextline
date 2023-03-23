@@ -51,11 +51,12 @@ class Machine:
         run_started = asyncio.Event()
 
         async def run() -> None:
-            async with self._context.run() as (running, send_command):
+            async with (c := self._context.run()) as (running, send_command):
                 self._running = running
                 self._send_command = send_command
-                print(running, send_command)
                 run_started.set()
+                self._exited = await running
+                await c.gen.asend(self._exited)
             await self.finish()  # type: ignore
             self.run_finished.set()
 

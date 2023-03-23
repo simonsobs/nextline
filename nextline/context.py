@@ -130,10 +130,10 @@ class Context:
             con = run_with_resource(self._hook, self._run_arg)
             async with con as (running, send_command):
                 await self._hook.ahook.on_start_run()
-                yield running, send_command
-                exited = await running
+                exited = yield running, send_command
+                yield  # type: ignore
         finally:
-            await self._finish(exited)
+            await self._finish(exited)  # type: ignore
 
     async def _finish(self, exited: ExitedProcess[RunResult]) -> None:
         self._run_result = exited.returned or RunResult(ret=None, exc=None)
