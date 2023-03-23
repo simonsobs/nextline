@@ -26,7 +26,7 @@ def _call_all(*funcs) -> None:
 
 
 @asynccontextmanager
-async def run_with_resource(
+async def run_session(
     hook: apluggy.PluginManager, run_arg: RunArg
 ) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')

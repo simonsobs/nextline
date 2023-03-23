@@ -7,7 +7,7 @@ from tblib import pickling_support
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import Command, RunArg, RunResult
 
-from .spawn import run_with_resource
+from .spawn import run_session
 
 pickling_support.install()
 
@@ -24,8 +24,7 @@ class RunSession:
     @hookimpl
     @apluggy.asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
-        con = run_with_resource(self._hook, self._run_arg)
-        async with con as (running, send_command):
+        async with run_session(self._hook, self._run_arg) as (running, send_command):
             await self._hook.ahook.on_start_run()
             self._running = running
             self._send_command = send_command
