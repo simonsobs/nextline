@@ -12,15 +12,8 @@ from tblib import pickling_support
 
 from . import spawned
 from .monitor import Monitor
-from .plugin import build_hook
 from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from .utils import (
-    ExitedProcess,
-    MultiprocessingLogging,
-    PubSub,
-    RunningProcess,
-    run_in_process,
-)
+from .utils import ExitedProcess, MultiprocessingLogging, RunningProcess, run_in_process
 
 pickling_support.install()
 
@@ -71,19 +64,8 @@ def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
 
 
 class Context:
-    def __init__(
-        self,
-        registry: PubSub[Any, Any],
-        run_no_start_from: int,
-        statement: Union[str, Path, CodeType, Callable[[], Any]],
-    ):
-        self._hook = build_hook()
-        self._hook.hook.init(
-            hook=self._hook,
-            registry=registry,
-            run_no_start_from=run_no_start_from,
-            statement=statement,
-        )
+    def __init__(self, hook: PluginManager):
+        self._hook = hook
 
     async def start(self) -> None:
         await self._hook.ahook.start()

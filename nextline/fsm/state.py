@@ -6,6 +6,7 @@ from typing import Any, Callable, Optional, Union
 from transitions import EventData
 
 from nextline.context import Context
+from nextline.plugin import build_hook
 from nextline.spawned import Command, RunResult
 from nextline.utils.pubsub.broker import PubSub
 
@@ -21,12 +22,14 @@ class Machine:
         statement: Union[str, Path, CodeType, Callable[[], Any]],
     ):
         self.registry = PubSub[Any, Any]()
-        self._context = Context(
+        self._hook = build_hook()
+        self._hook.hook.init(
+            hook=self._hook,
             registry=self.registry,
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
-        # self.registry = self._context.registry
+        self._context = Context(hook=self._hook)
 
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
