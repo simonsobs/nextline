@@ -8,7 +8,6 @@ from transitions import MachineError
 from nextline.context import Context
 from nextline.fsm.state import Machine
 
-
 pytestmark = pytest.mark.skip
 
 
@@ -180,4 +179,5 @@ async def test_results_raised(context: AsyncMock) -> None:
 @pytest.fixture
 def context() -> AsyncMock:
     y = AsyncMock(spec=Context)
+    y.registry = AsyncMock()
     return y
