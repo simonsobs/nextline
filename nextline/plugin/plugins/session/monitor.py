@@ -6,8 +6,8 @@ from apluggy import PluginManager
 
 from nextline import spawned
 
-from .spawned import QueueOut
-from .utils import to_thread
+from ....spawned import QueueOut
+from ....utils import to_thread
 
 # from rich import print
 

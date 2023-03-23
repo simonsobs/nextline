@@ -9,9 +9,10 @@ import apluggy
 from tblib import pickling_support
 
 from nextline import spawned
-from nextline.monitor import Monitor
 from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
 from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
+
+from .monitor import Monitor
 
 pickling_support.install()
 
