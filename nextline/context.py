@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
@@ -93,7 +91,7 @@ class Context:
             statement=statement,
             filename=SCRIPT_FILE_NAME,
         )
-        self._run_result: RunResult | None = None
+        self._run_result: Optional[RunResult] = None
 
     async def start(self) -> None:
         await self._hook.ahook.start()
