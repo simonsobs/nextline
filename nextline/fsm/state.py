@@ -76,7 +76,10 @@ class Machine:
     async def on_kill(self, _: EventData) -> None:
         self._running.kill()
 
-    async def wait(self, _: EventData) -> None:
+    async def on_close_while_running(self, _: EventData) -> None:
+        await self.run_finished.wait()
+
+    async def wait(self) -> None:
         await self.run_finished.wait()
 
     async def on_exit_finished(self, _: EventData) -> None:
