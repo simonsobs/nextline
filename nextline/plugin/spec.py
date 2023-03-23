@@ -98,7 +98,7 @@ async def on_initialize_run(run_arg: spawned.RunArg) -> None:
 
 @hookspec
 async def on_start_run(
-    running: RunningProcess[spawned.RunResult],
+    running_process: RunningProcess[spawned.RunResult],
     send_command: Callable[[spawned.Command], None],
 ) -> None:
     pass

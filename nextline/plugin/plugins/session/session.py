@@ -27,7 +27,7 @@ class RunSession:
     async def run(self) -> AsyncIterator[None]:
         async with run_session(self._hook, self._run_arg) as (running, send_command):
             await self._hook.ahook.on_start_run(
-                running=running, send_command=send_command
+                running_process=running, send_command=send_command
             )
             yield
             exited = await running
@@ -48,9 +48,8 @@ class RunSession:
 
 class Signal:
     @hookimpl
-    async def on_start_run(self, running: RunningProcess[RunResult]) -> None:
-        self._running = running
-        print(f'Running {running.process}')
+    async def on_start_run(self, running_process: RunningProcess[RunResult]) -> None:
+        self._running = running_process
 
     @hookimpl
     async def interrupt(self) -> None:
