@@ -18,7 +18,13 @@ from .monitor import Monitor
 from .plugin import build_hook
 from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
 from .types import RunNo
-from .utils import MultiprocessingLogging, PubSub, Result, Running, run_in_process
+from .utils import (
+    MultiprocessingLogging,
+    PubSub,
+    Result,
+    RunningProcess,
+    run_in_process,
+)
 
 pickling_support.install()
 
@@ -37,7 +43,7 @@ def _call_all(*funcs) -> None:
 @asynccontextmanager
 async def run_with_resource(
     hook: PluginManager, run_arg: RunArg
-) -> AsyncIterator[Tuple[Running[RunResult], Callable[[Command], None]]]:
+) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')
     queue_in: QueueIn = mp_context.Queue()
     queue_out: QueueOut = mp_context.Queue()
@@ -80,7 +86,7 @@ class Context:
         self.registry = PubSub[Any, Any]()
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._running: Optional[Running[RunResult]] = None
+        self._running: Optional[RunningProcess[RunResult]] = None
         self._send_command: Optional[Callable[[Command], None]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),

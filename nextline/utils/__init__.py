@@ -16,7 +16,7 @@ __all__ = [
     'PubSubItem',
     'ExecutorFactory',
     'Result',
-    'Running',
+    'RunningProcess',
     'run_in_process',
     'ExcThread',
     'ThreadTaskIdComposer',
@@ -29,6 +29,6 @@ from .path import match_any
 from .peek import peek_stderr, peek_stdout, peek_textio
 from .profile import profile_func
 from .pubsub import PubSub, PubSubItem
-from .run import ExecutorFactory, Result, Running, run_in_process
+from .run import ExecutorFactory, Result, RunningProcess, run_in_process
 from .thread_exception import ExcThread
 from .thread_task_id import ThreadTaskIdComposer
