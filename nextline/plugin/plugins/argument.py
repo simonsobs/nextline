@@ -11,9 +11,6 @@ SCRIPT_FILE_NAME = "<string>"
 
 
 class RunArgComposer:
-    def __init__(self) -> None:
-        pass
-
     @hookimpl
     def init(
         self,
