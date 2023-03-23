@@ -19,9 +19,9 @@ from .plugin import build_hook
 from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
 from .types import RunNo
 from .utils import (
+    ExitedProcess,
     MultiprocessingLogging,
     PubSub,
-    Result,
     RunningProcess,
     run_in_process,
 )
@@ -135,17 +135,17 @@ class Context:
                 self._send_command = send_command
                 await self._hook.ahook.on_start_run()
                 yield
-                ret = await running
+                exited = await running
                 self._running = None
                 self._send_command = None
         finally:
-            await self._finish(ret)
+            await self._finish(exited)
 
-    async def _finish(self, ret: Result[RunResult]) -> None:
-        self._run_result = ret.returned or RunResult(ret=None, exc=None)
-        if ret.raised:
+    async def _finish(self, exited: ExitedProcess[RunResult]) -> None:
+        self._run_result = exited.returned or RunResult(ret=None, exc=None)
+        if exited.raised:
             logger = getLogger(__name__)
-            logger.exception(ret.raised)
+            logger.exception(exited.raised)
         await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     def send_command(self, command: Command) -> None:

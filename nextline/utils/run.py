@@ -18,8 +18,8 @@ _T = TypeVar("_T")
 
 
 @dataclass
-class Result(Generic[_T]):
-    '''An object returned by Running after the process has exited.'''
+class ExitedProcess(Generic[_T]):
+    '''An object returned by RunningProcess after the process has exited.'''
 
     returned: _T | None
     raised: BaseException | None
@@ -82,12 +82,12 @@ class RunningProcess(Generic[_T]):
     def kill(self) -> None:
         self.process.kill()
 
-    def __await__(self) -> Generator[None, None, Result[_T]]:
+    def __await__(self) -> Generator[None, None, ExitedProcess[_T]]:
         # "yield from" in "__await__": https://stackoverflow.com/a/48261042/7309855
         ret, exc = yield from self._task.__await__()
         process_exited_at = datetime.now(timezone.utc)
         self._log_exited(process_exited_at)
-        return Result(
+        return ExitedProcess(
             returned=ret,
             raised=exc,
             process=self.process,
@@ -117,9 +117,9 @@ async def run_in_process(
     ...     running = await starting
     ...
     ...     # Wait for the process to finish.
-    ...     result = await running
+    ...     exited = await running
     ...
-    ...     return result.returned
+    ...     return exited.returned
 
     >>> asyncio.run(simple_example())
     8
