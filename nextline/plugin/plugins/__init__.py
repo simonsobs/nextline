@@ -14,6 +14,7 @@ from .registrars import (
     TraceNumbersRegistrar,
 )
 from .run_arg import RunArgComposer
+from .run_session import RunSession
 
 
 def register(hook: PluginManager) -> None:
@@ -27,3 +28,4 @@ def register(hook: PluginManager) -> None:
     hook.register(StateNameRegistrar)
     hook.register(ScriptRegistrar)
     hook.register(RunArgComposer)
+    hook.register(RunSession)

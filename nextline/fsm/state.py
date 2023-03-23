@@ -1,15 +1,12 @@
 import asyncio
-from logging import getLogger
 from pathlib import Path
 from types import CodeType
 from typing import Any, Callable, Optional, Union
 
 from transitions import EventData
 
-from nextline.context import run_with_resource
 from nextline.plugin import build_hook
-from nextline.spawned import Command, RunResult
-from nextline.utils import ExitedProcess
+from nextline.spawned import Command
 from nextline.utils.pubsub.broker import PubSub
 
 from .factory import build_state_machine
@@ -31,7 +28,6 @@ class Machine:
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
-        # self._context = Context(hook=self._hook)
 
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
@@ -60,24 +56,9 @@ class Machine:
         self.run_finished = asyncio.Event()
         run_started = asyncio.Event()
 
-        async def _finish(exited: ExitedProcess[RunResult]) -> None:
-            run_result = exited.returned or RunResult(ret=None, exc=None)
-            if exited.raised:
-                logger = getLogger(__name__)
-                logger.exception(exited.raised)
-            await self._hook.ahook.on_end_run(run_result=run_result)
-
         async def run() -> None:
-            con = run_with_resource(self._hook, self._run_arg)
-            async with con as (running, send_command):
-                await self._hook.ahook.on_start_run()
-                self._running = running
-                self._send_command = send_command
+            async with self._hook.awith.run():
                 run_started.set()
-                exited = await running
-                self._exited = exited
-                self._run_result = exited.returned or RunResult(ret=None, exc=None)
-            await _finish(exited)
             await self.finish()  # type: ignore
             self.run_finished.set()
 
@@ -85,16 +66,16 @@ class Machine:
         await run_started.wait()
 
     async def send_command(self, command: Command) -> None:
-        self._send_command(command)
+        await self._hook.ahook.send_command(command=command)
 
     async def interrupt(self) -> None:
-        self._running.interrupt()
+        await self._hook.ahook.interrupt()
 
     async def terminate(self) -> None:
-        self._running.terminate()
+        await self._hook.ahook.terminate()
 
     async def kill(self) -> None:
-        self._running.kill()
+        await self._hook.ahook.kill()
 
     async def on_close_while_running(self, _: EventData) -> None:
         await self.run_finished.wait()
@@ -106,10 +87,10 @@ class Machine:
         await self._task
 
     def exception(self) -> Optional[BaseException]:
-        return self._run_result.exc
+        return self._hook.hook.exception()
 
     def result(self) -> Any:
-        return self._run_result.result()
+        return self._hook.hook.result()
 
     async def on_enter_closed(self, _: EventData) -> None:
         await self.registry.close()
