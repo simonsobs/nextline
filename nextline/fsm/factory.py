@@ -133,7 +133,7 @@ CONFIG = {
             'trigger': 'close',
             'source': ['running'],
             'dest': 'closed',
-            'before': 'wait',
+            'before': 'on_close_while_running',
         },
         {
             'trigger': 'reset',

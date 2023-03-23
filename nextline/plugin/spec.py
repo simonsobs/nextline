@@ -1,8 +1,12 @@
+from pathlib import Path
+from types import CodeType
+from typing import Any, Callable, Optional, Union
+
 import apluggy as pluggy
 from apluggy import PluginManager
 
 from nextline import spawned
-from nextline.types import RunNo
+from nextline.spawned import RunArg
 from nextline.utils.pubsub.broker import PubSub
 
 PROJECT_NAME = 'nextline_main'
@@ -13,7 +17,12 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 
 @hookspec
-def init(hook: PluginManager, registry: PubSub) -> None:
+def init(
+    hook: PluginManager,
+    registry: PubSub,
+    run_no_start_from: int,
+    statement: Union[str, Path, CodeType, Callable[[], Any]],
+) -> None:
     pass
 
 
@@ -37,8 +46,21 @@ async def on_change_script(script: str, filename: str) -> None:
     pass
 
 
+@hookspec(firstresult=True)
+def compose_run_arg() -> Optional[RunArg]:
+    pass
+
+
 @hookspec
-async def on_initialize_run(run_no: RunNo) -> None:
+async def reset(
+    run_no_start_from: int,
+    statement: Union[str, Path, CodeType, Callable[[], Any]],
+) -> None:
+    pass
+
+
+@hookspec
+async def on_initialize_run(run_arg: RunArg) -> None:
     pass
 
 

@@ -3,30 +3,17 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
-from pathlib import Path
-from types import CodeType
-from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
+from typing import AsyncIterator, Callable, Tuple
 
 from apluggy import PluginManager
 from tblib import pickling_support
 
 from . import spawned
-from .count import RunNoCounter
 from .monitor import Monitor
-from .plugin import build_hook
 from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from .types import RunNo
-from .utils import (
-    ExitedProcess,
-    MultiprocessingLogging,
-    PubSub,
-    RunningProcess,
-    run_in_process,
-)
+from .utils import MultiprocessingLogging, RunningProcess, run_in_process
 
 pickling_support.install()
-
-SCRIPT_FILE_NAME = "<string>"
 
 
 def _call_all(*funcs) -> None:
@@ -72,100 +59,3 @@ def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
         queue_in.put(command)
 
     return _send_command
-
-
-class Context:
-    def __init__(
-        self,
-        run_no_start_from: int,
-        statement: Union[str, Path, CodeType, Callable[[], Any]],
-    ):
-        self._hook = build_hook()
-        self.registry = PubSub[Any, Any]()
-        self._hook.hook.init(hook=self._hook, registry=self.registry)
-        self._run_no_count = RunNoCounter(run_no_start_from)
-        self._running: Optional[RunningProcess[RunResult]] = None
-        self._send_command: Optional[Callable[[Command], None]] = None
-        self._run_arg = RunArg(
-            run_no=RunNo(run_no_start_from - 1),
-            statement=statement,
-            filename=SCRIPT_FILE_NAME,
-        )
-        self._run_result: Optional[RunResult] = None
-
-    async def start(self) -> None:
-        await self._hook.ahook.start()
-        await self._hook.ahook.on_change_script(
-            script=self._run_arg.statement, filename=self._run_arg.filename
-        )
-
-    async def state_change(self, state_name: str):
-        await self._hook.ahook.on_change_state(state_name=state_name)
-
-    async def close(self):
-        await self.registry.close()
-        await self._hook.ahook.close()
-
-    async def initialize(self) -> None:
-        self._run_arg.run_no = self._run_no_count()
-        self._run_result = None
-        await self._hook.ahook.on_initialize_run(run_no=self._run_arg.run_no)
-
-    async def reset(
-        self,
-        statement: Union[str, Path, CodeType, Callable[[], Any], None],
-        run_no_start_from: Optional[int] = None,
-    ):
-        if statement is not None:
-            self._run_arg.statement = statement
-            await self._hook.ahook.on_change_script(
-                script=statement, filename=self._run_arg.filename
-            )
-        if run_no_start_from is not None:
-            self._run_no_count = RunNoCounter(run_no_start_from)
-
-    @asynccontextmanager
-    async def run(self) -> AsyncIterator[None]:
-        try:
-            con = run_with_resource(self._hook, self._run_arg)
-            async with con as (running, send_command):
-                self._running = running
-                self._send_command = send_command
-                await self._hook.ahook.on_start_run()
-                yield
-                exited = await running
-                self._running = None
-                self._send_command = None
-        finally:
-            await self._finish(exited)
-
-    async def _finish(self, exited: ExitedProcess[RunResult]) -> None:
-        self._run_result = exited.returned or RunResult(ret=None, exc=None)
-        if exited.raised:
-            logger = getLogger(__name__)
-            logger.exception(exited.raised)
-        await self._hook.ahook.on_end_run(run_result=self._run_result)
-
-    def send_command(self, command: Command) -> None:
-        if self._send_command:
-            self._send_command(command)
-
-    def interrupt(self) -> None:
-        if self._running:
-            self._running.interrupt()
-
-    def terminate(self) -> None:
-        if self._running:
-            self._running.terminate()
-
-    def kill(self) -> None:
-        if self._running:
-            self._running.kill()
-
-    def result(self) -> Any:
-        assert self._run_result
-        return self._run_result.result()
-
-    def exception(self) -> Optional[BaseException]:
-        assert self._run_result
-        return self._run_result.exc
