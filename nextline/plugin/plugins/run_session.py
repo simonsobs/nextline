@@ -3,17 +3,80 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
-from typing import AsyncIterator, Callable, Tuple
+from typing import Any, AsyncIterator, Callable, Optional, Tuple
 
-from apluggy import PluginManager
+import apluggy
 from tblib import pickling_support
 
 from nextline import spawned
 from nextline.monitor import Monitor
+from nextline.plugin.spec import hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
+from nextline.utils import (
+    ExitedProcess,
+    MultiprocessingLogging,
+    RunningProcess,
+    run_in_process,
+)
 
 pickling_support.install()
+
+
+class RunSession:
+    def __init__(self) -> None:
+        pass
+
+    @hookimpl
+    def init(self, hook: apluggy.PluginManager) -> None:
+        self._hook = hook
+
+    @hookimpl
+    async def on_initialize_run(self, run_arg: RunArg) -> None:
+        self._run_arg = run_arg
+
+    @hookimpl
+    @apluggy.asynccontextmanager
+    async def run(self) -> AsyncIterator[None]:
+        async def _finish(exited: ExitedProcess[RunResult]) -> None:
+            run_result = exited.returned or RunResult(ret=None, exc=None)
+            if exited.raised:
+                logger = getLogger(__name__)
+                logger.exception(exited.raised)
+            await self._hook.ahook.on_end_run(run_result=run_result)
+
+        con = run_with_resource(self._hook, self._run_arg)
+        async with con as (running, send_command):
+            await self._hook.ahook.on_start_run()
+            self._running = running
+            self._send_command = send_command
+            yield
+            exited = await running
+            self._run_result = exited.returned or RunResult(ret=None, exc=None)
+        await _finish(exited)
+
+    @hookimpl
+    async def send_command(self, command: Command) -> None:
+        self._send_command(command)
+
+    @hookimpl
+    async def interrupt(self) -> None:
+        self._running.interrupt()
+
+    @hookimpl
+    async def terminate(self) -> None:
+        self._running.terminate()
+
+    @hookimpl
+    async def kill(self) -> None:
+        self._running.kill()
+
+    @hookimpl
+    def exception(self) -> Optional[BaseException]:
+        return self._run_result.exc
+
+    @hookimpl
+    def result(self) -> Any:
+        return self._run_result.result()
 
 
 def _call_all(*funcs) -> None:
@@ -27,7 +90,7 @@ def _call_all(*funcs) -> None:
 
 @asynccontextmanager
 async def run_with_resource(
-    hook: PluginManager, run_arg: RunArg
+    hook: apluggy.PluginManager, run_arg: RunArg
 ) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')
     queue_in: QueueIn = mp_context.Queue()

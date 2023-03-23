@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, Union
 import apluggy
 
 from nextline import spawned
-from nextline.spawned import RunArg
+from nextline.spawned import Command, RunArg
 from nextline.utils.pubsub.broker import PubSub
 
 PROJECT_NAME = 'nextline_main'
@@ -47,6 +47,42 @@ async def on_change_script(script: str, filename: str) -> None:
 
 @hookspec(firstresult=True)
 def compose_run_arg() -> Optional[RunArg]:
+    pass
+
+
+@hookspec
+@apluggy.asynccontextmanager
+async def run():
+    yield
+
+
+@hookspec
+async def send_command(command: Command) -> None:
+    pass
+
+
+@hookspec
+async def interrupt() -> None:
+    pass
+
+
+@hookspec
+async def terminate() -> None:
+    pass
+
+
+@hookspec
+async def kill() -> None:
+    pass
+
+
+@hookspec(firstresult=True)
+def exception() -> Optional[BaseException]:
+    pass
+
+
+@hookspec(firstresult=True)
+def result() -> Any:
     pass
 
 
