@@ -12,12 +12,7 @@ from nextline import spawned
 from nextline.monitor import Monitor
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from nextline.utils import (
-    ExitedProcess,
-    MultiprocessingLogging,
-    RunningProcess,
-    run_in_process,
-)
+from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
 
 pickling_support.install()
 
@@ -34,13 +29,6 @@ class RunSession:
     @hookimpl
     @apluggy.asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
-        async def _finish(exited: ExitedProcess[RunResult]) -> None:
-            run_result = exited.returned or RunResult(ret=None, exc=None)
-            if exited.raised:
-                logger = getLogger(__name__)
-                logger.exception(exited.raised)
-            await self._hook.ahook.on_end_run(run_result=run_result)
-
         con = run_with_resource(self._hook, self._run_arg)
         async with con as (running, send_command):
             await self._hook.ahook.on_start_run()
@@ -48,8 +36,11 @@ class RunSession:
             self._send_command = send_command
             yield
             exited = await running
-            self._run_result = exited.returned or RunResult(ret=None, exc=None)
-        await _finish(exited)
+        if exited.raised:
+            logger = getLogger(__name__)
+            logger.exception(exited.raised)
+        self._run_result = exited.returned or RunResult(ret=None, exc=None)
+        await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     @hookimpl
     async def send_command(self, command: Command) -> None:
