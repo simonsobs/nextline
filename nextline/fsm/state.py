@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional, Union
 from transitions import EventData
 
 from nextline.context import Context
-from nextline.spawned import Command
+from nextline.spawned import Command, RunResult
 
 from .factory import build_state_machine
 
@@ -55,8 +55,10 @@ class Machine:
                 self._running = running
                 self._send_command = send_command
                 run_started.set()
-                self._exited = await running
-                await c.gen.asend(self._exited)
+                exited = await running
+                self._exited = exited
+                self._run_result = exited.returned or RunResult(ret=None, exc=None)
+                await c.gen.asend(exited)
             await self.finish()  # type: ignore
             self.run_finished.set()
 
@@ -87,12 +89,14 @@ class Machine:
         await self._task
 
     def exception(self) -> Optional[BaseException]:
-        assert self.is_finished()  # type: ignore
-        return self._context.exception()
+        return self._run_result.exc
+        # assert self.is_finished()  # type: ignore
+        # return self._context.exception()
 
     def result(self) -> Any:
-        assert self.is_finished()  # type: ignore
-        return self._context.result()
+        return self._run_result.result()
+        # assert self.is_finished()  # type: ignore
+        # return self._context.result()
 
     async def on_enter_closed(self, _: EventData) -> None:
         await self._context.close()

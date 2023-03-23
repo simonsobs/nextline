@@ -89,7 +89,6 @@ class Context:
             statement=statement,
             filename=SCRIPT_FILE_NAME,
         )
-        self._run_result: Optional[RunResult] = None
 
     async def start(self) -> None:
         await self._hook.ahook.start()
@@ -106,7 +105,6 @@ class Context:
 
     async def initialize(self) -> None:
         self._run_arg.run_no = self._run_no_count()
-        self._run_result = None
         await self._hook.ahook.on_initialize_run(run_no=self._run_arg.run_no)
 
     async def reset(
@@ -136,16 +134,8 @@ class Context:
             await self._finish(exited)  # type: ignore
 
     async def _finish(self, exited: ExitedProcess[RunResult]) -> None:
-        self._run_result = exited.returned or RunResult(ret=None, exc=None)
+        run_result = exited.returned or RunResult(ret=None, exc=None)
         if exited.raised:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
-        await self._hook.ahook.on_end_run(run_result=self._run_result)
-
-    def result(self) -> Any:
-        assert self._run_result
-        return self._run_result.result()
-
-    def exception(self) -> Optional[BaseException]:
-        assert self._run_result
-        return self._run_result.exc
+        await self._hook.ahook.on_end_run(run_result=run_result)
