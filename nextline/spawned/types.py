@@ -24,11 +24,13 @@ TraceArgs: TypeAlias = Tuple[FrameType, str, Any]
 QueueIn: TypeAlias = 'Queue[Command]'
 QueueOut: TypeAlias = 'Queue[Event]'
 
+Statement: TypeAlias = Union[str, Path, CodeType, Callable[[], Any]]
+
 
 @dataclass
 class RunArg:
     run_no: RunNo
-    statement: Union[str, Path, CodeType, Callable[[], Any]]
+    statement: Statement
     filename: Optional[str] = None
 
 

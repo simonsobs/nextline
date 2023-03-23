@@ -1,12 +1,10 @@
 import asyncio
-from pathlib import Path
-from types import CodeType
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional
 
 from transitions import EventData
 
 from nextline.plugin import build_hook
-from nextline.spawned import Command
+from nextline.spawned import Command, Statement
 from nextline.utils.pubsub.broker import PubSub
 
 from .factory import build_state_machine
@@ -15,11 +13,7 @@ from .factory import build_state_machine
 class Machine:
     '''The finite state machine of the nextline states.'''
 
-    def __init__(
-        self,
-        run_no_start_from: int,
-        statement: Union[str, Path, CodeType, Callable[[], Any]],
-    ):
+    def __init__(self, run_no_start_from: int, statement: Statement):
         self.registry = PubSub[Any, Any]()
         self._hook = build_hook()
         self._hook.hook.init(

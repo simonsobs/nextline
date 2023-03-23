@@ -1,12 +1,10 @@
-from pathlib import Path
-from types import CodeType
-from typing import Any, Callable, Optional, Union
+from typing import Optional
 
 from apluggy import PluginManager
 
 from nextline.count import RunNoCounter
 from nextline.plugin.spec import hookimpl
-from nextline.spawned import RunArg
+from nextline.spawned import RunArg, Statement
 from nextline.utils.pubsub.broker import PubSub
 
 SCRIPT_FILE_NAME = "<string>"
@@ -22,7 +20,7 @@ class RunArgComposer:
         hook: PluginManager,
         registry: PubSub,
         run_no_start_from: int,
-        statement: Union[str, Path, CodeType, Callable[[], Any]],
+        statement: Statement,
     ) -> None:
         self._hook = hook
         self._registry = registry
@@ -39,9 +37,7 @@ class RunArgComposer:
 
     @hookimpl
     async def reset(
-        self,
-        run_no_start_from: Optional[int],
-        statement: Union[str, Path, CodeType, Callable[[], Any], None],
+        self, run_no_start_from: Optional[int], statement: Optional[Statement]
     ) -> None:
         if statement is not None:
             self._statement = statement

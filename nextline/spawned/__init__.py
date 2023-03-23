@@ -19,6 +19,7 @@ __all__ = [
     'QueueOut',
     'RunArg',
     'RunResult',
+    'Statement',
     'set_queues',
     'main',
 ]
@@ -39,7 +40,7 @@ from .events import (
     OnWriteStdout,
 )
 from .runner import run
-from .types import QueueIn, QueueOut, RunArg, RunResult
+from .types import QueueIn, QueueOut, RunArg, RunResult, Statement
 
 _queue_in: QueueIn | None = None
 _queue_out: QueueOut | None = None
