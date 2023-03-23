@@ -8,10 +8,10 @@ from typing import AsyncIterator, Callable, Tuple
 from apluggy import PluginManager
 from tblib import pickling_support
 
-from . import spawned
-from .monitor import Monitor
-from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from .utils import MultiprocessingLogging, RunningProcess, run_in_process
+from nextline import spawned
+from nextline.monitor import Monitor
+from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
+from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
 
 pickling_support.install()
 

@@ -6,8 +6,8 @@ from typing import Any, Callable, Optional, Union
 
 from transitions import EventData
 
-from nextline.context import run_with_resource
 from nextline.plugin import build_hook
+from nextline.plugin.plugins.run_session import run_with_resource
 from nextline.spawned import Command, RunResult
 from nextline.utils import ExitedProcess
 from nextline.utils.pubsub.broker import PubSub
