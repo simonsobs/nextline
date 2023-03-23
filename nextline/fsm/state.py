@@ -7,6 +7,7 @@ from transitions import EventData
 
 from nextline.context import Context
 from nextline.spawned import Command, RunResult
+from nextline.utils.pubsub.broker import PubSub
 
 from .factory import build_state_machine
 
@@ -19,11 +20,13 @@ class Machine:
         run_no_start_from: int,
         statement: Union[str, Path, CodeType, Callable[[], Any]],
     ):
+        self.registry = PubSub[Any, Any]()
         self._context = Context(
+            registry=self.registry,
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
-        self.registry = self._context.registry
+        # self.registry = self._context.registry
 
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
@@ -95,6 +98,7 @@ class Machine:
         return self._run_result.result()
 
     async def on_enter_closed(self, _: EventData) -> None:
+        await self.registry.close()
         await self._context.close()
 
     async def on_reset(self, event: EventData) -> None:

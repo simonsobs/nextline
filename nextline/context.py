@@ -73,14 +73,14 @@ def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
 class Context:
     def __init__(
         self,
+        registry: PubSub[Any, Any],
         run_no_start_from: int,
         statement: Union[str, Path, CodeType, Callable[[], Any]],
     ):
         self._hook = build_hook()
-        self.registry = PubSub[Any, Any]()
         self._hook.hook.init(
             hook=self._hook,
-            registry=self.registry,
+            registry=registry,
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
@@ -92,7 +92,6 @@ class Context:
         await self._hook.ahook.on_change_state(state_name=state_name)
 
     async def close(self):
-        await self.registry.close()
         await self._hook.ahook.close()
 
     async def initialize(self) -> None:
