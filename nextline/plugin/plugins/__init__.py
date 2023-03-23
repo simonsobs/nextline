@@ -2,6 +2,7 @@ __all__ = ['register']
 
 from apluggy import PluginManager
 
+from .argument import RunArgComposer
 from .registrars import (
     PromptInfoRegistrar,
     PromptNoticeRegistrar,
@@ -13,7 +14,6 @@ from .registrars import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
-from .run_arg import RunArgComposer
 from .run_session import RunSession
 
 
