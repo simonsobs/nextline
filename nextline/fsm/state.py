@@ -84,18 +84,16 @@ class Machine:
         self._task = asyncio.create_task(run())
         await run_started.wait()
 
-    async def on_send_command(self, event: EventData) -> None:
-        command, *_ = event.args
-        assert isinstance(command, Command)
+    async def send_command(self, command: Command) -> None:
         self._send_command(command)
 
-    async def on_interrupt(self, _: EventData) -> None:
+    async def interrupt(self) -> None:
         self._running.interrupt()
 
-    async def on_terminate(self, _: EventData) -> None:
+    async def terminate(self) -> None:
         self._running.terminate()
 
-    async def on_kill(self, _: EventData) -> None:
+    async def kill(self) -> None:
         self._running.kill()
 
     async def on_close_while_running(self, _: EventData) -> None:

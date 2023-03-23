@@ -99,10 +99,6 @@ def st_paths(draw: st.DrawFn):
         },
         'running': {
             'finish': {'dest': 'finished'},
-            'send_command': {'dest': 'running', 'before': 'on_send_command'},
-            'interrupt': {'dest': 'running', 'before': 'on_interrupt'},
-            'terminate': {'dest': 'running', 'before': 'on_terminate'},
-            'kill': {'dest': 'running', 'before': 'on_kill'},
             'close': {'dest': 'closed', 'before': 'on_close_while_running'},
         },
         'finished': {
