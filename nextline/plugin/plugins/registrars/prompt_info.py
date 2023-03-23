@@ -11,6 +11,7 @@ from nextline.spawned import (
     OnStartPrompt,
     OnStartTrace,
     OnStartTraceCall,
+    RunArg,
 )
 from nextline.types import PromptInfo, PromptNo, RunNo, TraceNo
 from nextline.utils.pubsub.broker import PubSub
@@ -35,8 +36,8 @@ class PromptInfoRegistrar:
         pass
 
     @hookimpl
-    async def on_initialize_run(self, run_no: RunNo) -> None:
-        self._run_no = run_no
+    async def on_initialize_run(self, run_arg: RunArg) -> None:
+        self._run_no = run_arg.run_no
         self._last_prompt_frame_map.clear()
         self._trace_call_map.clear()
         self._prompt_info_map.clear()

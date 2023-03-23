@@ -4,6 +4,7 @@ from typing import Optional
 
 from nextline import spawned
 from nextline.plugin.spec import hookimpl
+from nextline.spawned import RunArg
 from nextline.types import RunInfo, RunNo
 from nextline.utils.pubsub.broker import PubSub
 
@@ -23,10 +24,10 @@ class RunInfoRegistrar:
         self._script = script
 
     @hookimpl
-    async def on_initialize_run(self, run_no: RunNo) -> None:
-        self._run_no = run_no
+    async def on_initialize_run(self, run_arg: RunArg) -> None:
+        self._run_no = run_arg.run_no
         self._run_info = RunInfo(
-            run_no=run_no, state='initialized', script=self._script
+            run_no=run_arg.run_no, state='initialized', script=self._script
         )
         await self._registry.publish('run_info', self._run_info)
 

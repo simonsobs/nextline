@@ -2,7 +2,7 @@ import apluggy as pluggy
 from apluggy import PluginManager
 
 from nextline import spawned
-from nextline.types import RunNo
+from nextline.spawned import RunArg
 from nextline.utils.pubsub.broker import PubSub
 
 PROJECT_NAME = 'nextline_main'
@@ -38,7 +38,7 @@ async def on_change_script(script: str, filename: str) -> None:
 
 
 @hookspec
-async def on_initialize_run(run_no: RunNo) -> None:
+async def on_initialize_run(run_arg: RunArg) -> None:
     pass
 
 

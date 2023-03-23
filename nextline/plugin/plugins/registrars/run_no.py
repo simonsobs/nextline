@@ -1,5 +1,5 @@
 from nextline.plugin.spec import hookimpl
-from nextline.types import RunNo
+from nextline.spawned import RunArg
 from nextline.utils.pubsub.broker import PubSub
 
 
@@ -9,5 +9,5 @@ class RunNoRegistrar:
         self._registry = registry
 
     @hookimpl
-    async def on_initialize_run(self, run_no: RunNo) -> None:
-        await self._registry.publish('run_no', run_no)
+    async def on_initialize_run(self, run_arg: RunArg) -> None:
+        await self._registry.publish('run_no', run_arg.run_no)

@@ -105,7 +105,7 @@ class Context:
 
     async def initialize(self) -> None:
         self._run_arg.run_no = self._run_no_count()
-        await self._hook.ahook.on_initialize_run(run_no=self._run_arg.run_no)
+        await self._hook.ahook.on_initialize_run(run_arg=self._run_arg)
 
     async def reset(
         self,
