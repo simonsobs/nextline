@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional
 import apluggy
 
 from nextline import spawned
-from nextline.utils import RunningProcess
+from nextline.utils import ExitedProcess, RunningProcess
 from nextline.utils.pubsub.broker import PubSub
 
 PROJECT_NAME = 'nextline_main'
@@ -105,7 +105,10 @@ async def on_start_run(
 
 
 @hookspec
-async def on_end_run(run_result: spawned.RunResult) -> None:
+async def on_end_run(
+    run_result: spawned.RunResult,
+    exited_process: ExitedProcess[spawned.RunResult],
+) -> None:
     pass
 
 

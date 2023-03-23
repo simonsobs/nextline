@@ -14,7 +14,7 @@ from .registrars import (
     TraceInfoRegistrar,
     TraceNumbersRegistrar,
 )
-from .session import CommandSender, RunSession, Signal
+from .session import CommandSender, Result, RunSession, Signal
 
 
 def register(hook: PluginManager) -> None:
@@ -28,6 +28,7 @@ def register(hook: PluginManager) -> None:
     hook.register(StateNameRegistrar)
     hook.register(ScriptRegistrar)
     hook.register(RunArgComposer)
+    hook.register(Result)
     hook.register(Signal)
     hook.register(CommandSender)
     hook.register(RunSession)

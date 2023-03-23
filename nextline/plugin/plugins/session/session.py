@@ -6,7 +6,7 @@ from tblib import pickling_support
 
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import Command, RunArg, RunResult
-from nextline.utils import RunningProcess
+from nextline.utils import ExitedProcess, RunningProcess
 
 from .spawn import run_session
 
@@ -25,25 +25,16 @@ class RunSession:
     @hookimpl
     @apluggy.asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
+        ahook = self._hook.ahook
         async with run_session(self._hook, self._run_arg) as (running, send_command):
-            await self._hook.ahook.on_start_run(
-                running_process=running, send_command=send_command
-            )
+            await ahook.on_start_run(running_process=running, send_command=send_command)
             yield
             exited = await running
         if exited.raised:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
         self._run_result = exited.returned or RunResult(ret=None, exc=None)
-        await self._hook.ahook.on_end_run(run_result=self._run_result)
-
-    @hookimpl
-    def exception(self) -> Optional[BaseException]:
-        return self._run_result.exc
-
-    @hookimpl
-    def result(self) -> Any:
-        return self._run_result.result()
+        await ahook.on_end_run(run_result=self._run_result, exited_process=exited)
 
 
 class Signal:
@@ -72,3 +63,17 @@ class CommandSender:
     @hookimpl
     async def send_command(self, command: Command) -> None:
         self._send_command(command)
+
+
+class Result:
+    @hookimpl
+    async def on_end_run(self, exited_process: ExitedProcess[RunResult]) -> None:
+        self._run_result = exited_process.returned or RunResult(ret=None, exc=None)
+
+    @hookimpl
+    def exception(self) -> Optional[BaseException]:
+        return self._run_result.exc
+
+    @hookimpl
+    def result(self) -> Any:
+        return self._run_result.result()
