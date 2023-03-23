@@ -1,8 +1,9 @@
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import apluggy
 
 from nextline import spawned
+from nextline.utils import RunningProcess
 from nextline.utils.pubsub.broker import PubSub
 
 PROJECT_NAME = 'nextline_main'
@@ -96,7 +97,10 @@ async def on_initialize_run(run_arg: spawned.RunArg) -> None:
 
 
 @hookspec
-async def on_start_run() -> None:
+async def on_start_run(
+    running: RunningProcess[spawned.RunResult],
+    send_command: Callable[[spawned.Command], None],
+) -> None:
     pass
 
 

@@ -1,3 +1,7 @@
-__all__ = ['RunSession']
+__all__ = [
+    'CommandSender',
+    'RunSession',
+    'Signal',
+]
 
-from .session import RunSession
+from .session import CommandSender, RunSession, Signal

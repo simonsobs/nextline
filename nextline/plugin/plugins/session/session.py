@@ -1,11 +1,12 @@
 from logging import getLogger
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncIterator, Callable, Optional
 
 import apluggy
 from tblib import pickling_support
 
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import Command, RunArg, RunResult
+from nextline.utils import RunningProcess
 
 from .spawn import run_session
 
@@ -25,9 +26,9 @@ class RunSession:
     @apluggy.asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
         async with run_session(self._hook, self._run_arg) as (running, send_command):
-            await self._hook.ahook.on_start_run()
-            self._running = running
-            self._send_command = send_command
+            await self._hook.ahook.on_start_run(
+                running=running, send_command=send_command
+            )
             yield
             exited = await running
         if exited.raised:
@@ -37,8 +38,19 @@ class RunSession:
         await self._hook.ahook.on_end_run(run_result=self._run_result)
 
     @hookimpl
-    async def send_command(self, command: Command) -> None:
-        self._send_command(command)
+    def exception(self) -> Optional[BaseException]:
+        return self._run_result.exc
+
+    @hookimpl
+    def result(self) -> Any:
+        return self._run_result.result()
+
+
+class Signal:
+    @hookimpl
+    async def on_start_run(self, running: RunningProcess[RunResult]) -> None:
+        self._running = running
+        print(f'Running {running.process}')
 
     @hookimpl
     async def interrupt(self) -> None:
@@ -52,10 +64,12 @@ class RunSession:
     async def kill(self) -> None:
         self._running.kill()
 
+
+class CommandSender:
     @hookimpl
-    def exception(self) -> Optional[BaseException]:
-        return self._run_result.exc
+    async def on_start_run(self, send_command: Callable[[Command], None]) -> None:
+        self._send_command = send_command
 
     @hookimpl
-    def result(self) -> Any:
-        return self._run_result.result()
+    async def send_command(self, command: Command) -> None:
+        self._send_command(command)
