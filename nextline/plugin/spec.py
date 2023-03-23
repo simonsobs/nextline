@@ -1,3 +1,7 @@
+from pathlib import Path
+from types import CodeType
+from typing import Any, Callable, Optional, Union
+
 import apluggy as pluggy
 from apluggy import PluginManager
 
@@ -13,7 +17,12 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 
 @hookspec
-def init(hook: PluginManager, registry: PubSub) -> None:
+def init(
+    hook: PluginManager,
+    registry: PubSub,
+    run_no_start_from: int,
+    statement: Union[str, Path, CodeType, Callable[[], Any]],
+) -> None:
     pass
 
 
@@ -34,6 +43,19 @@ async def on_change_state(state_name: str) -> None:
 
 @hookspec
 async def on_change_script(script: str, filename: str) -> None:
+    pass
+
+
+@hookspec(firstresult=True)
+def compose_run_arg() -> Optional[RunArg]:
+    pass
+
+
+@hookspec
+async def reset(
+    run_no_start_from: int,
+    statement: Union[str, Path, CodeType, Callable[[], Any]],
+) -> None:
     pass
 
 

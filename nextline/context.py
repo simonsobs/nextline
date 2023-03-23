@@ -11,11 +11,9 @@ from apluggy import PluginManager
 from tblib import pickling_support
 
 from . import spawned
-from .count import RunNoCounter
 from .monitor import Monitor
 from .plugin import build_hook
 from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from .types import RunNo
 from .utils import (
     ExitedProcess,
     MultiprocessingLogging,
@@ -25,8 +23,6 @@ from .utils import (
 )
 
 pickling_support.install()
-
-SCRIPT_FILE_NAME = "<string>"
 
 
 def _call_all(*funcs) -> None:
@@ -82,19 +78,15 @@ class Context:
     ):
         self._hook = build_hook()
         self.registry = PubSub[Any, Any]()
-        self._hook.hook.init(hook=self._hook, registry=self.registry)
-        self._run_no_count = RunNoCounter(run_no_start_from)
-        self._run_arg = RunArg(
-            run_no=RunNo(run_no_start_from - 1),
+        self._hook.hook.init(
+            hook=self._hook,
+            registry=self.registry,
+            run_no_start_from=run_no_start_from,
             statement=statement,
-            filename=SCRIPT_FILE_NAME,
         )
 
     async def start(self) -> None:
         await self._hook.ahook.start()
-        await self._hook.ahook.on_change_script(
-            script=self._run_arg.statement, filename=self._run_arg.filename
-        )
 
     async def state_change(self, state_name: str):
         await self._hook.ahook.on_change_state(state_name=state_name)
@@ -104,7 +96,7 @@ class Context:
         await self._hook.ahook.close()
 
     async def initialize(self) -> None:
-        self._run_arg.run_no = self._run_no_count()
+        self._run_arg = self._hook.hook.compose_run_arg()
         await self._hook.ahook.on_initialize_run(run_arg=self._run_arg)
 
     async def reset(
@@ -112,13 +104,10 @@ class Context:
         statement: Union[str, Path, CodeType, Callable[[], Any], None],
         run_no_start_from: Optional[int] = None,
     ):
-        if statement is not None:
-            self._run_arg.statement = statement
-            await self._hook.ahook.on_change_script(
-                script=statement, filename=self._run_arg.filename
-            )
-        if run_no_start_from is not None:
-            self._run_no_count = RunNoCounter(run_no_start_from)
+        await self._hook.ahook.reset(
+            run_no_start_from=run_no_start_from,
+            statement=statement,
+        )
 
     @asynccontextmanager
     async def run(
