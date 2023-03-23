@@ -34,6 +34,14 @@ async def close(exc_type=None, exc_value=None, traceback=None) -> None:
 
 
 @hookspec
+async def reset(
+    run_no_start_from: Optional[int],
+    statement: Optional[spawned.Statement],
+) -> None:
+    pass
+
+
+@hookspec
 async def on_change_state(state_name: str) -> None:
     pass
 
@@ -49,13 +57,21 @@ def compose_run_arg() -> Optional[spawned.RunArg]:
 
 
 @hookspec
+async def on_initialize_run(run_arg: spawned.RunArg) -> None:
+    pass
+
+
+@hookspec
 @apluggy.asynccontextmanager
 async def run():
     yield
 
 
 @hookspec
-async def send_command(command: spawned.Command) -> None:
+async def on_start_run(
+    running_process: RunningProcess[spawned.RunResult],
+    send_command: Callable[[spawned.Command], None],
+) -> None:
     pass
 
 
@@ -74,6 +90,16 @@ async def kill() -> None:
     pass
 
 
+@hookspec
+async def send_command(command: spawned.Command) -> None:
+    pass
+
+
+@hookspec
+async def on_end_run(exited_process: ExitedProcess[spawned.RunResult]) -> None:
+    pass
+
+
 @hookspec(firstresult=True)
 def exception() -> Optional[BaseException]:
     pass
@@ -81,31 +107,6 @@ def exception() -> Optional[BaseException]:
 
 @hookspec(firstresult=True)
 def result() -> Any:
-    pass
-
-
-@hookspec
-async def reset(
-    run_no_start_from: Optional[int], statement: Optional[spawned.Statement]
-) -> None:
-    pass
-
-
-@hookspec
-async def on_initialize_run(run_arg: spawned.RunArg) -> None:
-    pass
-
-
-@hookspec
-async def on_start_run(
-    running_process: RunningProcess[spawned.RunResult],
-    send_command: Callable[[spawned.Command], None],
-) -> None:
-    pass
-
-
-@hookspec
-async def on_end_run(exited_process: ExitedProcess[spawned.RunResult]) -> None:
     pass
 
 
