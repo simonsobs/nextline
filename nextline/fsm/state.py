@@ -37,7 +37,6 @@ class Machine:
             # internal transition
             return
         await self._hook.ahook.on_change_state(state_name=self.state)  # type: ignore
-        # await self._context.state_change(self.state)  # type: ignore
 
     async def on_exit_created(self, _: EventData) -> None:
         await self._hook.ahook.start()
