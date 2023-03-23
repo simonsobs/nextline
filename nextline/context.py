@@ -11,7 +11,7 @@ from tblib import pickling_support
 from . import spawned
 from .monitor import Monitor
 from .spawned import Command, QueueIn, QueueOut, RunArg, RunResult
-from .utils import ExitedProcess, MultiprocessingLogging, RunningProcess, run_in_process
+from .utils import MultiprocessingLogging, RunningProcess, run_in_process
 
 pickling_support.install()
 
@@ -59,32 +59,3 @@ def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
         queue_in.put(command)
 
     return _send_command
-
-
-class Context:
-    def __init__(self, hook: PluginManager):
-        self._hook = hook
-
-    async def initialize(self) -> None:
-        self._run_arg = self._hook.hook.compose_run_arg()
-        await self._hook.ahook.on_initialize_run(run_arg=self._run_arg)
-
-    @asynccontextmanager
-    async def run(
-        self,
-    ) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
-        try:
-            con = run_with_resource(self._hook, self._run_arg)
-            async with con as (running, send_command):
-                await self._hook.ahook.on_start_run()
-                exited = yield running, send_command
-                yield  # type: ignore
-        finally:
-            await self._finish(exited)  # type: ignore
-
-    async def _finish(self, exited: ExitedProcess[RunResult]) -> None:
-        run_result = exited.returned or RunResult(ret=None, exc=None)
-        if exited.raised:
-            logger = getLogger(__name__)
-            logger.exception(exited.raised)
-        await self._hook.ahook.on_end_run(run_result=run_result)

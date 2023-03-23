@@ -1,13 +1,15 @@
 import asyncio
+from logging import getLogger
 from pathlib import Path
 from types import CodeType
 from typing import Any, Callable, Optional, Union
 
 from transitions import EventData
 
-from nextline.context import Context
+from nextline.context import run_with_resource
 from nextline.plugin import build_hook
 from nextline.spawned import Command, RunResult
+from nextline.utils import ExitedProcess
 from nextline.utils.pubsub.broker import PubSub
 
 from .factory import build_state_machine
@@ -29,7 +31,7 @@ class Machine:
             run_no_start_from=run_no_start_from,
             statement=statement,
         )
-        self._context = Context(hook=self._hook)
+        # self._context = Context(hook=self._hook)
 
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
@@ -48,25 +50,34 @@ class Machine:
         # await self._context.state_change(self.state)  # type: ignore
 
     async def on_exit_created(self, _: EventData) -> None:
-        # await self._context.start()
         await self._hook.ahook.start()
 
     async def on_enter_initialized(self, _: EventData) -> None:
-        await self._context.initialize()
+        self._run_arg = self._hook.hook.compose_run_arg()
+        await self._hook.ahook.on_initialize_run(run_arg=self._run_arg)
 
     async def on_enter_running(self, _: EventData) -> None:
         self.run_finished = asyncio.Event()
         run_started = asyncio.Event()
 
+        async def _finish(exited: ExitedProcess[RunResult]) -> None:
+            run_result = exited.returned or RunResult(ret=None, exc=None)
+            if exited.raised:
+                logger = getLogger(__name__)
+                logger.exception(exited.raised)
+            await self._hook.ahook.on_end_run(run_result=run_result)
+
         async def run() -> None:
-            async with (c := self._context.run()) as (running, send_command):
+            con = run_with_resource(self._hook, self._run_arg)
+            async with con as (running, send_command):
+                await self._hook.ahook.on_start_run()
                 self._running = running
                 self._send_command = send_command
                 run_started.set()
                 exited = await running
                 self._exited = exited
                 self._run_result = exited.returned or RunResult(ret=None, exc=None)
-                await c.gen.asend(exited)
+            await _finish(exited)
             await self.finish()  # type: ignore
             self.run_finished.set()
 
