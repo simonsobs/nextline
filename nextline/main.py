@@ -103,7 +103,7 @@ class Nextline:
         try:
             yield self
         finally:
-            await self._machine.run_finished.wait()
+            await self._machine.wait()
 
     async def send_pdb_command(
         self, command: str, prompt_no: int, trace_no: int
