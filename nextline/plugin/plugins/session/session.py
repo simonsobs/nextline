@@ -34,7 +34,7 @@ class RunSession:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
         self._run_result = exited.returned or RunResult(ret=None, exc=None)
-        await ahook.on_end_run(run_result=self._run_result, exited_process=exited)
+        await ahook.on_end_run(exited_process=exited)
 
 
 class Signal:

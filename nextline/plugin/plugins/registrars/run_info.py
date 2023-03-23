@@ -6,6 +6,7 @@ from nextline import spawned
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import RunArg
 from nextline.types import RunInfo, RunNo
+from nextline.utils import ExitedProcess
 from nextline.utils.pubsub.broker import PubSub
 
 
@@ -42,8 +43,11 @@ class RunInfoRegistrar:
         await self._registry.publish('run_info', self._run_info)
 
     @hookimpl
-    async def on_end_run(self, run_result: spawned.RunResult) -> None:
+    async def on_end_run(
+        self, exited_process: ExitedProcess[spawned.RunResult]
+    ) -> None:
         assert self._run_info is not None
+        run_result = exited_process.returned or spawned.RunResult(ret=None, exc=None)
 
         self._run_info = dataclasses.replace(
             self._run_info,

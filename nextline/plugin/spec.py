@@ -105,10 +105,7 @@ async def on_start_run(
 
 
 @hookspec
-async def on_end_run(
-    run_result: spawned.RunResult,
-    exited_process: ExitedProcess[spawned.RunResult],
-) -> None:
+async def on_end_run(exited_process: ExitedProcess[spawned.RunResult]) -> None:
     pass
 
 
