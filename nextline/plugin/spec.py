@@ -2,8 +2,7 @@ from pathlib import Path
 from types import CodeType
 from typing import Any, Callable, Optional, Union
 
-import apluggy as pluggy
-from apluggy import PluginManager
+import apluggy
 
 from nextline import spawned
 from nextline.spawned import RunArg
@@ -12,13 +11,13 @@ from nextline.utils.pubsub.broker import PubSub
 PROJECT_NAME = 'nextline_main'
 
 
-hookspec = pluggy.HookspecMarker(PROJECT_NAME)
-hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
+hookspec = apluggy.HookspecMarker(PROJECT_NAME)
+hookimpl = apluggy.HookimplMarker(PROJECT_NAME)
 
 
 @hookspec
 def init(
-    hook: PluginManager,
+    hook: apluggy.PluginManager,
     registry: PubSub,
     run_no_start_from: int,
     statement: Union[str, Path, CodeType, Callable[[], Any]],
