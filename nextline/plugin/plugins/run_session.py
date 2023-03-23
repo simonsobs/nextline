@@ -23,9 +23,6 @@ pickling_support.install()
 
 
 class RunSession:
-    def __init__(self) -> None:
-        pass
-
     @hookimpl
     def init(self, hook: apluggy.PluginManager) -> None:
         self._hook = hook
