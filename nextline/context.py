@@ -98,7 +98,7 @@ class Context:
     async def state_change(self, state_name: str):
         await self._hook.ahook.on_change_state(state_name=state_name)
 
-    async def shutdown(self) -> None:
+    async def close(self):
         await self.registry.close()
         await self._hook.ahook.close()
 
@@ -165,6 +165,3 @@ class Context:
     def exception(self) -> Optional[BaseException]:
         assert self._run_result
         return self._run_result.exc
-
-    async def close(self):
-        pass

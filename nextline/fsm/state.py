@@ -89,7 +89,6 @@ class Machine:
 
     async def on_enter_closed(self, _: EventData) -> None:
         await self._context.close()
-        await self._context.shutdown()
 
     async def on_reset(self, event: EventData) -> None:
         await self._context.reset(*event.args, **event.kwargs)
