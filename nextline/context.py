@@ -84,8 +84,6 @@ class Context:
         self.registry = PubSub[Any, Any]()
         self._hook.hook.init(hook=self._hook, registry=self.registry)
         self._run_no_count = RunNoCounter(run_no_start_from)
-        self._running: Optional[RunningProcess[RunResult]] = None
-        self._send_command: Optional[Callable[[Command], None]] = None
         self._run_arg = RunArg(
             run_no=RunNo(run_no_start_from - 1),
             statement=statement,
@@ -125,17 +123,15 @@ class Context:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
     @asynccontextmanager
-    async def run(self) -> AsyncIterator[None]:
+    async def run(
+        self,
+    ) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
         try:
             con = run_with_resource(self._hook, self._run_arg)
             async with con as (running, send_command):
-                self._running = running
-                self._send_command = send_command
                 await self._hook.ahook.on_start_run()
-                yield
+                yield running, send_command
                 exited = await running
-                self._running = None
-                self._send_command = None
         finally:
             await self._finish(exited)
 
@@ -145,22 +141,6 @@ class Context:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
         await self._hook.ahook.on_end_run(run_result=self._run_result)
-
-    def send_command(self, command: Command) -> None:
-        if self._send_command:
-            self._send_command(command)
-
-    def interrupt(self) -> None:
-        if self._running:
-            self._running.interrupt()
-
-    def terminate(self) -> None:
-        if self._running:
-            self._running.terminate()
-
-    def kill(self) -> None:
-        if self._running:
-            self._running.kill()
 
     def result(self) -> Any:
         assert self._run_result

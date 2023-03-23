@@ -51,7 +51,10 @@ class Machine:
         run_started = asyncio.Event()
 
         async def run() -> None:
-            async with self._context.run():
+            async with self._context.run() as (running, send_command):
+                self._running = running
+                self._send_command = send_command
+                print(running, send_command)
                 run_started.set()
             await self.finish()  # type: ignore
             self.run_finished.set()
@@ -62,16 +65,16 @@ class Machine:
     async def on_send_command(self, event: EventData) -> None:
         command, *_ = event.args
         assert isinstance(command, Command)
-        self._context.send_command(command)
+        self._send_command(command)
 
     async def on_interrupt(self, _: EventData) -> None:
-        self._context.interrupt()
+        self._running.interrupt()
 
     async def on_terminate(self, _: EventData) -> None:
-        self._context.terminate()
+        self._running.terminate()
 
     async def on_kill(self, _: EventData) -> None:
-        self._context.kill()
+        self._running.kill()
 
     async def wait(self, _: EventData) -> None:
         await self.run_finished.wait()
