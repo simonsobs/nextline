@@ -44,10 +44,12 @@ class Machine:
         if not (event.transition and event.transition.dest):
             # internal transition
             return
-        await self._context.state_change(self.state)  # type: ignore
+        await self._hook.ahook.on_change_state(state_name=self.state)  # type: ignore
+        # await self._context.state_change(self.state)  # type: ignore
 
     async def on_exit_created(self, _: EventData) -> None:
-        await self._context.start()
+        # await self._context.start()
+        await self._hook.ahook.start()
 
     async def on_enter_initialized(self, _: EventData) -> None:
         await self._context.initialize()
@@ -102,10 +104,11 @@ class Machine:
 
     async def on_enter_closed(self, _: EventData) -> None:
         await self.registry.close()
-        await self._context.close()
+        await self._hook.ahook.close()
 
     async def on_reset(self, event: EventData) -> None:
-        await self._context.reset(*event.args, **event.kwargs)
+        # TODO: Check the arguments
+        await self._hook.ahook.reset(*event.args, **event.kwargs)
 
     async def __aenter__(self):
         await self.initialize()

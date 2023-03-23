@@ -3,9 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
-from pathlib import Path
-from types import CodeType
-from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
+from typing import AsyncIterator, Callable, Tuple
 
 from apluggy import PluginManager
 from tblib import pickling_support
@@ -67,28 +65,9 @@ class Context:
     def __init__(self, hook: PluginManager):
         self._hook = hook
 
-    async def start(self) -> None:
-        await self._hook.ahook.start()
-
-    async def state_change(self, state_name: str):
-        await self._hook.ahook.on_change_state(state_name=state_name)
-
-    async def close(self):
-        await self._hook.ahook.close()
-
     async def initialize(self) -> None:
         self._run_arg = self._hook.hook.compose_run_arg()
         await self._hook.ahook.on_initialize_run(run_arg=self._run_arg)
-
-    async def reset(
-        self,
-        statement: Union[str, Path, CodeType, Callable[[], Any], None],
-        run_no_start_from: Optional[int] = None,
-    ):
-        await self._hook.ahook.reset(
-            run_no_start_from=run_no_start_from,
-            statement=statement,
-        )
 
     @asynccontextmanager
     async def run(
