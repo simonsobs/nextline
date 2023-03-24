@@ -23,7 +23,7 @@ from .utils import merge_aiters
 
 
 class Nextline:
-    """Nextline allows line-by-line execution of concurrent Python scripts
+    '''Nextline allows line-by-line execution of concurrent Python scripts
 
     Nextline supports concurrency with threading and asyncio. It uses multiple
     instances of Pdb, one for each thread and async task.
@@ -43,7 +43,7 @@ class Nextline:
         The timeout in seconds to wait for the nextline to exit from the "with"
         block. The default is 3.
 
-    """
+    '''
 
     def __init__(
         self,
@@ -66,7 +66,9 @@ class Nextline:
         self._started = False
         self._closed = False
 
-        # TODO: instantiate Machine here without the running asyncio loop
+    def __repr__(self):
+        # e.g., "<Nextline 'running'>"
+        return f'<{self.__class__.__name__} {self.state!r}>'
 
     async def start(self) -> None:
         if self._started:
@@ -74,12 +76,7 @@ class Nextline:
         self._started = True
         await self._machine.initialize()  # type: ignore
 
-    def __repr__(self):
-        # e.g., "<Nextline 'running'>"
-        return f"<{self.__class__.__name__} {self.state!r}>"
-
     async def close(self) -> None:
-        """End gracefully"""
         if self._closed:
             return
         self._closed = True
@@ -94,11 +91,12 @@ class Nextline:
         await asyncio.wait_for(self.close(), timeout=self._timeout_on_exit)
 
     async def run(self) -> None:
-        """Execute the script and wait until it exits"""
+        '''Start the script execution.'''
         await self._machine.run()  # type: ignore
 
     @asynccontextmanager
     async def run_session(self) -> AsyncIterator['Nextline']:
+        '''Yield when the script execution is started and exit when it has finished.'''
         await self._machine.run()  # type: ignore
         try:
             yield self
@@ -115,13 +113,13 @@ class Nextline:
             prompt_no=PromptNo(prompt_no),
             command=command,
         )
-        await self._machine.send_command(item)  # type: ignore
+        await self._machine.send_command(item)
 
     async def interrupt(self) -> None:
-        await self._machine.interrupt()  # type: ignore
+        await self._machine.interrupt()
 
     async def terminate(self) -> None:
-        await self._machine.terminate()  # type: ignore
+        await self._machine.terminate()
 
     async def kill(self) -> None:
         await self._machine.kill()  # type: ignore
@@ -131,7 +129,7 @@ class Nextline:
         return self._machine.exception()
 
     def result(self) -> Any:
-        """Return value of the last run. always None"""
+        '''Return value of the last run. None unless the statement is a callable.'''
         return self._machine.result()
 
     async def reset(
