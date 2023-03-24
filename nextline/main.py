@@ -1,12 +1,11 @@
 import asyncio
 import linecache
 import reprlib
+from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
 from types import CodeType
 from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
-
-from apluggy import asynccontextmanager
 
 from .fsm import Machine
 from .spawned import PdbCommand
