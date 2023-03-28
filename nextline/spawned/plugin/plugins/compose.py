@@ -1,7 +1,9 @@
+import errno
 import sys
+from logging import getLogger
 from pathlib import Path
 from types import CodeType
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import RunArg, RunResult
@@ -44,7 +46,7 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
     filename = run_arg.filename
 
     if isinstance(statement, str):
-        if (path := Path(to_canonic_path(statement))).is_file():
+        if (path := _to_path(statement)) is not None:
             statement = path
 
     if isinstance(statement, str):
@@ -59,6 +61,18 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
         return statement
     else:
         raise TypeError(f'statement: {statement!r}')
+
+
+def _to_path(statement: str) -> Optional[Path]:
+    try:
+        path = Path(to_canonic_path(statement))
+        return path if path.is_file() else None
+    except OSError as exc:
+        if exc.errno != errno.ENAMETOOLONG:
+            # TODO: Add a unit test
+            logger = getLogger(__name__)
+            logger.exception('')
+        return None
 
 
 def _from_path(path: Path) -> Callable[[], Any]:
