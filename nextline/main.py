@@ -31,11 +31,9 @@ class Nextline:
     Parameters
     ----------
     statement : str or Path or CodeType or Callable[[], Any]
-        Typically, a Python code as a str. However, if a statement is a str
-        that is a path to an existing file, it is considered as a path to a
-        Python script. A Path object is also considered as a path to a Python
-        script. Alternatively, a statement can be a CodeType object or a
-        callable with no arguments. A statement must be picklable.
+        A Python code as a str, a Path object that points to a Python script,
+        a CodeType object, or a callable with no arguments. It must be
+        picklable.
     run_no_start_from : int, optional
         The first run number. The default is 1.
     timeout_on_exit : float, optional

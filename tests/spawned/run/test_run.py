@@ -123,8 +123,8 @@ params = [
     (RunArg(run_no=RunNo(1), statement=CODE_OBJECT), None, None),
     (RunArg(run_no=RunNo(1), statement=func_one), 123, None),
     (RunArg(run_no=RunNo(1), statement=func_err), None, ZeroDivisionError),
-    (RunArg(run_no=RunNo(1), statement=str(SCRIPT_PATH)), None, None),
-    (RunArg(run_no=RunNo(1), statement=str(ERR_PATH)), None, NameError),
+    (RunArg(run_no=RunNo(1), statement=SCRIPT_PATH), None, None),
+    (RunArg(run_no=RunNo(1), statement=ERR_PATH), None, NameError),
 ]
 
 

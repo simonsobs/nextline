@@ -1,9 +1,7 @@
-import errno
 import sys
-from logging import getLogger
 from pathlib import Path
 from types import CodeType
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import RunArg, RunResult
@@ -46,10 +44,6 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
     filename = run_arg.filename
 
     if isinstance(statement, str):
-        if (path := _to_path(statement)) is not None:
-            statement = path
-
-    if isinstance(statement, str):
         assert filename is not None
         code = compile(statement, filename, 'exec')
         return _script.compose(code)
@@ -63,21 +57,10 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
         raise TypeError(f'statement: {statement!r}')
 
 
-def _to_path(statement: str) -> Optional[Path]:
-    try:
-        path = Path(to_canonic_path(statement))
-        return path if path.is_file() else None
-    except OSError as exc:
-        if exc.errno != errno.ENAMETOOLONG:
-            # TODO: Add a unit test
-            logger = getLogger(__name__)
-            logger.exception('')
-        return None
-
-
 def _from_path(path: Path) -> Callable[[], Any]:
     # Read as a str and compile it as Pdb does.
     # https://github.com/python/cpython/blob/v3.10.10/Lib/pdb.py#L1568-L1592
+    path = Path(to_canonic_path(str(path)))
     statement = path.read_text()
     code = compile(statement, str(path), 'exec')
     sys.path.insert(0, str(path.parent))
