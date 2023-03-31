@@ -16,9 +16,10 @@ def Hook(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> PluginManag
     plugins.register(hook)
 
     logger = getLogger(__name__)
-    plugin_names = (f'{n!r}' for n, p in hook.list_name_plugin() if p)
-    msg = f'Loaded plugins ({spec.PROJECT_NAME!r}): {",".join(plugin_names)}.'
-    logger.info(msg)
+
+    plugin_names = [n for n, p in hook.list_name_plugin() if p]
+    logger.info(f'Pluggy project name: {hook.project_name!r}')
+    logger.info(f'Loaded plugins: {plugin_names}')
 
     hook.hook.init(
         hook=hook,
