@@ -105,7 +105,10 @@ class Nextline:
             await self._machine.wait()
 
     async def run_and_continue(self) -> None:
-        '''Start the script execution and continue until the end.'''
+        '''Start the script execution in the non-interactive mode.
+
+        Returns when the run has started.
+        '''
         await self._continuous.run_and_continue()
 
     async def send_pdb_command(

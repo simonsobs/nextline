@@ -48,20 +48,26 @@ class Continuous:
                 self._tasks.clear()
                 self._tasks.update(pending)
 
-    async def run_and_continue(self):
-        task = asyncio.create_task(self._run_and_continue())
+    async def run_and_continue(self) -> None:
+        started = asyncio.Event()
+        task = asyncio.create_task(self._run_and_continue(started))
         self._tasks.add(task)
+        await started.wait()
 
     async def _run_and_continue(self):
+    async def _run_and_continue(self, started: asyncio.Event):
         await self._pubsub_enabled.publish(True)
         try:
             async with self._nextline.run_session():
+                # started.set()  # TODO: too early. need to investigate why
                 async for prompt in self._nextline.prompts():
                     await self._nextline.send_pdb_command(
                         command='continue',
                         prompt_no=prompt.prompt_no,
                         trace_no=prompt.trace_no,
                     )
+                    started.set()
+                started.set()  # ensure started is set even if no prompt is received
         finally:
             await self._pubsub_enabled.publish(False)
 
