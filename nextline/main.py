@@ -7,6 +7,7 @@ from pathlib import Path
 from types import CodeType
 from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
 
+from .continuous import Continuous
 from .fsm import Machine
 from .spawned import PdbCommand
 from .types import (
@@ -48,10 +49,11 @@ class Nextline:
         run_no_start_from: int = 1,
         timeout_on_exit: float = 3,
     ):
-
         logger = getLogger(__name__)
         logger.debug(f'statement: {reprlib.repr(statement)}')
         logger.debug(f"The run number starts from {run_no_start_from}")
+
+        self._continuous = Continuous(self)
 
         self._machine = Machine(
             run_no_start_from=run_no_start_from,
@@ -71,6 +73,7 @@ class Nextline:
         if self._started:
             return
         self._started = True
+        await self._continuous.start()
         await self._machine.initialize()  # type: ignore
 
     async def close(self) -> None:
@@ -78,6 +81,7 @@ class Nextline:
             return
         self._closed = True
         await self._machine.close()  # type: ignore
+        await self._continuous.close()
 
     async def __aenter__(self):
         await self.start()
@@ -99,6 +103,10 @@ class Nextline:
             yield self
         finally:
             await self._machine.wait()
+
+    async def run_and_continue(self) -> None:
+        '''Start the script execution and continue until the end.'''
+        await self._continuous.run_and_continue()
 
     async def send_pdb_command(
         self, command: str, prompt_no: int, trace_no: int
@@ -208,7 +216,6 @@ class Nextline:
     async def _subscribe_prompt_info_for(
         self, trace_no: int
     ) -> AsyncIterator[PromptInfo]:
-
         merged = merge_aiters(
             self.subscribe_prompt_info(),
             self.subscribe_trace_info(),
@@ -232,3 +239,10 @@ class Nextline:
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
         return self.subscribe("stdout", last=False)
+
+    @property
+    def continuous_enabled(self) -> bool:
+        return self._continuous.enabled
+
+    def subscribe_continuous_enabled(self) -> AsyncIterator[bool]:
+        return self._continuous.subscribe_enabled()
