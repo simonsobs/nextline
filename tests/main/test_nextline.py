@@ -35,13 +35,17 @@ async def test_one() -> None:
     async with Nextline(SOURCE) as nextline:
         async with nextline.run_session():
             async for prompt in nextline.prompts():
-                await nextline.send_pdb_command('continue', prompt.prompt_no, prompt.trace_no)
+                await nextline.send_pdb_command(
+                    'continue', prompt.prompt_no, prompt.trace_no
+                )
         nextline.exception()
         await nextline.reset()
         await nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
         async with nextline.run_session():
             async for prompt in nextline.prompts():
-                await nextline.send_pdb_command('continue', prompt.prompt_no, prompt.trace_no)
+                await nextline.send_pdb_command(
+                    'continue', prompt.prompt_no, prompt.trace_no
+                )
 
 
 async def test_timeout(machine: Mock):
@@ -63,4 +67,16 @@ async def machine(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     instance.exception = Mock()
     class_ = Mock(return_value=instance)
     monkeypatch.setattr(main, 'Machine', class_)
+    return instance
+
+
+@pytest.fixture(autouse=True)
+async def mock_continuous(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    from nextline import main
+
+    # instance = AsyncMock(spec=Model)
+    instance = AsyncMock()
+    instance.exception = Mock()
+    class_ = Mock(return_value=instance)
+    monkeypatch.setattr(main, 'Continuous', class_)
     return instance
