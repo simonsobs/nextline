@@ -35,13 +35,17 @@ async def test_one() -> None:
     async with Nextline(SOURCE) as nextline:
         async with nextline.run_session():
             async for prompt in nextline.prompts():
-                await nextline.send_pdb_command('continue', prompt.prompt_no, prompt.trace_no)
+                await nextline.send_pdb_command(
+                    'continue', prompt.prompt_no, prompt.trace_no
+                )
         nextline.exception()
         await nextline.reset()
         await nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
         async with nextline.run_session():
             async for prompt in nextline.prompts():
-                await nextline.send_pdb_command('continue', prompt.prompt_no, prompt.trace_no)
+                await nextline.send_pdb_command(
+                    'continue', prompt.prompt_no, prompt.trace_no
+                )
 
 
 async def test_timeout(machine: Mock):
