@@ -54,7 +54,9 @@ class Continuous:
         self._tasks.add(task)
         await started.wait()
 
-    async def _run_and_continue(self):
+    async def run_continue_and_wait(self, started: asyncio.Event):
+        await self._run_and_continue(started)
+
     async def _run_and_continue(self, started: asyncio.Event):
         await self._pubsub_enabled.publish(True)
         try:
