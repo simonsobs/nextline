@@ -64,3 +64,15 @@ async def machine(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     class_ = Mock(return_value=instance)
     monkeypatch.setattr(main, 'Machine', class_)
     return instance
+
+
+@pytest.fixture(autouse=True)
+async def mock_continuous(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    from nextline import main
+
+    # instance = AsyncMock(spec=Model)
+    instance = AsyncMock()
+    instance.exception = Mock()
+    class_ = Mock(return_value=instance)
+    monkeypatch.setattr(main, 'Continuous', class_)
+    return instance
