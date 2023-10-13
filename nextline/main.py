@@ -187,6 +187,13 @@ class Nextline:
     def subscribe_run_no(self) -> AsyncIterator[int]:
         return self.subscribe("run_no")
 
+    @property
+    def trace_ids(self) -> Tuple[int, ...]:
+        try:
+            return self.get("trace_nos")
+        except (KeyError, LookupError):
+            return ()
+
     def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int, ...]]:
         return self.subscribe("trace_nos")
 
