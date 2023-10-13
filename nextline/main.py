@@ -187,7 +187,7 @@ class Nextline:
     def subscribe_run_no(self) -> AsyncIterator[int]:
         return self.subscribe("run_no")
 
-    def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int]]:
+    def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int, ...]]:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name=None):
