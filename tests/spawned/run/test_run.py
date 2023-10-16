@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from io import TextIOWrapper
 from logging import getLogger
 from typing import Optional, Protocol

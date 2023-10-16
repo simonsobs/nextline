@@ -2,9 +2,6 @@
 
 The name of this module becomes the module name of the callable.
 """
-
-from __future__ import annotations
-
 from functools import partial
 from types import CodeType
 from typing import Callable

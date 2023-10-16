@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from asyncio import Task, current_task
 from collections import defaultdict
 from threading import Thread, current_thread

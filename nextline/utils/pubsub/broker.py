@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections import defaultdict
 from collections.abc import AsyncIterator
 from typing import Generic, Optional, TypeVar

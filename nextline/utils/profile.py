@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import cProfile
 import pstats
 from io import StringIO

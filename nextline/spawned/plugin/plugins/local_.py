@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections import defaultdict
 from types import FrameType
 from typing import Callable, Optional

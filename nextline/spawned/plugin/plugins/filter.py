@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import threading
 from asyncio import Task
 from collections.abc import Generator, Iterable, Iterator

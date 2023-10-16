@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from types import FrameType
 from typing import Any, Callable, Optional
 from unittest.mock import Mock

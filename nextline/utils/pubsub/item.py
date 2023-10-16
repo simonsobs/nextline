@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import enum
 from asyncio import Condition, Queue
 from collections.abc import AsyncIterator

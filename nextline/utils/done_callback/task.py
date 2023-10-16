@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import time
 from asyncio import Task, current_task, to_thread
 from typing import Any, Callable, Optional

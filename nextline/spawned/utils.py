@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from types import FrameType
 from typing import Any, Callable, ContextManager, Optional

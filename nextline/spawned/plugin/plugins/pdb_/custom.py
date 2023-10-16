@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from logging import getLogger
 from pdb import Pdb
 from typing import IO, Callable, ContextManager
