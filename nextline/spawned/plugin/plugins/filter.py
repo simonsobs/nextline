@@ -66,7 +66,6 @@ class FilerByModule:
 
     @hookimpl(trylast=True)
     def filter(self, trace_args: TraceArgs) -> bool | None:
-
         # Accept the first module in the main thread.
         if not self._first_module_added:
             if self._entering_thread == threading.current_thread():

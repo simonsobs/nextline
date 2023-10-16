@@ -40,7 +40,6 @@ async def assert_subscriptions(nextline: Nextline, statement: str):
 
 
 async def assert_subscribe_run_info(nextline: Nextline, statement: str):
-
     replace: partial[RunInfo] = partial(
         replace_with_bool, fields=('exception', 'started_at', 'ended_at')
     )

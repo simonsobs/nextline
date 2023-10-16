@@ -12,7 +12,6 @@ from nextline.utils import profile_func
 
 
 def test_timeit(plugin: FilterByModuleName):
-
     n_calls = 200_000
 
     thread_id = threading.current_thread().ident

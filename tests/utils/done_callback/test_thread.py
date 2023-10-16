@@ -80,12 +80,8 @@ def test_daemon(done: Done):
 
 @pytest.mark.parametrize("n_threads", [0, 1, 2, 5, 10])
 def test_multiple(n_threads: int, done: Done):
-
     with ThreadDoneCallback(done=done) as obj:
-
-        threads = {
-            ExcThread(target=target, args=(obj,)) for _ in range(n_threads)
-        }
+        threads = {ExcThread(target=target, args=(obj,)) for _ in range(n_threads)}
         for t in threads:
             t.start()
         time.sleep(0.005)

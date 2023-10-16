@@ -62,7 +62,6 @@ async def assert_subscribe_run_no(nextline: Nextline):
 
 
 async def assert_subscribe_run_info(nextline: Nextline, statement: str):
-
     replace: partial[RunInfo] = partial(
         replace_with_bool, fields=('started_at', 'ended_at')
     )

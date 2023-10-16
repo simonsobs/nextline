@@ -45,7 +45,6 @@ def test_graph():
 
 
 async def test_invalid_triggers() -> None:
-
     machine = build_state_machine(model=Machine.self_literal)
     await machine.initialize()
     await machine.run()
@@ -59,7 +58,6 @@ async def test_invalid_triggers() -> None:
 
 
 async def test_transitions_manual() -> None:
-
     # created -- initialize() --> initialized
     machine = build_state_machine(model=Machine.self_literal)
     machine.on_reset = AsyncMock()  # type: ignore
@@ -139,7 +137,6 @@ def st_paths(draw: st.DrawFn):
 
 @given(paths=st_paths())
 async def test_transitions_hypothesis(paths: List[Tuple[str, Dict[str, Any]]]):
-
     machine = build_state_machine(model=Machine.self_literal)
     assert machine.is_created()
 

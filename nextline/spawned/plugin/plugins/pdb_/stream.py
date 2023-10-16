@@ -44,7 +44,6 @@ class StdInOut(TextIOWrapper):
     def __init__(
         self, prompt_func: PromptFuncType, prompt_end: Optional[str] = None
     ) -> None:
-
         # To be matched to the end of prompt text if not None.
         self.prompt_end = prompt_end
 

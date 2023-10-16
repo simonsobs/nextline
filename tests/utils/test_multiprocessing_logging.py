@@ -29,13 +29,10 @@ async def test_multiprocessing_logging(
     mp_context = mp.get_context(mp_method) if mp_method else None
 
     with caplog.at_level(logging.DEBUG):
-
         async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
-
             with ProcessPoolExecutor(
                 mp_context=mp_context, initializer=mp_logging.initializer
             ) as executor:
-
                 fut = executor.submit(fn)
                 assert "foo" == fut.result()
 

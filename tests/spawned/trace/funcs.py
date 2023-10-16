@@ -87,9 +87,7 @@ def summarize_trace_calls(
     return ret
 
 
-def ordered_uniq_values(
-    dicts: Iterable[Mapping[str, str]], key: str
-) -> Iterator[str]:
+def ordered_uniq_values(dicts: Iterable[Mapping[str, str]], key: str) -> Iterator[str]:
     """List of unique values of dicts for the key
 
     Note: The order is preserved while consecutive duplicates are removed.

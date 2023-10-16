@@ -88,7 +88,6 @@ class PubSubItem(Generic[_T]):
     '''
 
     def __init__(self) -> None:
-
         self._qs_out: List[Queue[Tuple[int, _T | Literal[_M.END]]]] = []
         self._last_enumerated: Tuple[int, _T | Literal[_M.START] | Literal[_M.END]] = (
             -1,

@@ -93,7 +93,6 @@ async def test_register_arg(done: Done):
 
 @pytest.mark.parametrize("n_tasks", [0, 1, 2, 5, 10])
 async def test_multiple(n_tasks: int, done: Done):
-
     async with TaskDoneCallback(done=done) as obj:
         tasks = {asyncio.create_task(target(obj)) for _ in range(n_tasks)}
         await asyncio.gather(*tasks)

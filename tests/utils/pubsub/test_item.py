@@ -138,7 +138,6 @@ async def test_subscribe_after_close(items: Sequence[str]):
 
 @given(st.data())
 async def test_break(data: st.DataObject):
-
     items = tuple(data.draw(st.lists(st.text(), min_size=1, unique=True)))
     idx = data.draw(st.integers(0, len(items) - 1))
     at = items[idx]

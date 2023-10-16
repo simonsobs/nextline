@@ -38,7 +38,6 @@ async def assert_subscriptions(nextline: Nextline, statement: str):
 
 
 async def assert_subscribe_run_info(nextline: Nextline, statement: str):
-
     replace: partial[RunInfo] = partial(
         replace_with_bool, fields=('exception', 'started_at', 'ended_at')
     )
@@ -92,7 +91,9 @@ async def control(nextline: Nextline):
     async for prompt_info in nextline.subscribe_prompt_info():
         if not prompt_info.open:
             continue
-        await nextline.send_pdb_command('next', prompt_info.prompt_no, prompt_info.trace_no)
+        await nextline.send_pdb_command(
+            'next', prompt_info.prompt_no, prompt_info.trace_no
+        )
         if prompt_info.event == 'line' and prompt_info.line_no == 3:  # sleep()
             await asyncio.sleep(0.005)
             await nextline.interrupt()

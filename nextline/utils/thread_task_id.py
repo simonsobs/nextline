@@ -14,7 +14,6 @@ class ThreadTaskIdComposer:
     """Create ThreadTaskId objects with unique thread and async task numbers"""
 
     def __init__(self) -> None:
-
         self.thread_no_counter = ThreadNoCounter(1)
 
         self._map: MutableMapping[Thread | Task, ThreadTaskId] = WeakKeyDictionary()
@@ -74,7 +73,6 @@ class ThreadTaskIdComposer:
         return current_thread(), task
 
     def _compose(self, thread: Thread, task: Task | None) -> ThreadTaskId:
-
         thread_no = self._thread_no_map.get(thread)
         if not thread_no:
             thread_no = self.thread_no_counter()

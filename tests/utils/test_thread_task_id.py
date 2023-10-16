@@ -102,9 +102,7 @@ async def test_async_tasks(obj: IdComposer):
 
     obj.reset()
 
-    expected = ThreadTaskId(
-        ThreadNo(1), TaskNo(1)
-    )  # the old id is still there
+    expected = ThreadTaskId(ThreadNo(1), TaskNo(1))  # the old id is still there
     assert_call(obj, expected, True)
 
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))  # task no is reset to 1
@@ -163,9 +161,7 @@ async def test_async_asyncio_to_thread(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(2), None)
     await to_thread(partial(assert_call, obj, expected))
 
-    expected = ThreadTaskId(
-        ThreadNo(2), None
-    )  # to_thread uses the same thread
+    expected = ThreadTaskId(ThreadNo(2), None)  # to_thread uses the same thread
     await to_thread(partial(assert_call, obj, expected, True))
 
     obj.reset()
@@ -173,14 +169,10 @@ async def test_async_asyncio_to_thread(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected, True)
 
-    expected = ThreadTaskId(
-        ThreadNo(2), None
-    )  # to_thread uses the same thread
+    expected = ThreadTaskId(ThreadNo(2), None)  # to_thread uses the same thread
     await to_thread(partial(assert_call, obj, expected, True))
 
-    expected = ThreadTaskId(
-        ThreadNo(2), None
-    )  # to_thread uses the same thread
+    expected = ThreadTaskId(ThreadNo(2), None)  # to_thread uses the same thread
     await to_thread(partial(assert_call, obj, expected, True))
 
 
