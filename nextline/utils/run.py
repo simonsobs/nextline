@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
 from multiprocessing import Process
-from typing import Callable, Generator, Generic, Tuple, TypeVar
+from typing import Callable, Generator, Generic, TypeVar
 
 from typing_extensions import TypeAlias
 
@@ -34,7 +34,7 @@ class RunningProcess(Generic[_T]):
     def __init__(
         self,
         process: Process,
-        task: asyncio.Task[Tuple[_T | None, BaseException | None]],
+        task: asyncio.Task[tuple[_T | None, BaseException | None]],
     ):
         self.process = process
         self._task = task
@@ -132,7 +132,7 @@ async def run_in_process(
     process: Process | None = None
     event = asyncio.Event()
 
-    async def _run() -> Tuple[_T | None, BaseException | None]:
+    async def _run() -> tuple[_T | None, BaseException | None]:
         nonlocal process
 
         with executor_factory() as executor:

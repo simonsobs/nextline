@@ -1,6 +1,5 @@
 import asyncio
 from random import randint, random
-from typing import List, Set
 
 import pytest
 
@@ -17,8 +16,8 @@ async def test_one() -> None:
         delay = random() * 0.001
         await asyncio.sleep(delay)
 
-    all: Set[asyncio.Task] = set()
-    done: List[asyncio.Task] = []
+    all = set[asyncio.Task]()
+    done = list[asyncio.Task]()
 
     obj = agen_with_wait(agen())
     async for _ in obj:

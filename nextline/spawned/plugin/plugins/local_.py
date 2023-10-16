@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from types import FrameType
-from typing import Callable, DefaultDict, Dict, Optional, Set
+from typing import Callable, DefaultDict, Optional
 
 from apluggy import PluginManager, contextmanager
 from exceptiongroup import BaseExceptionGroup, catch
@@ -90,8 +90,8 @@ class TraceCallHandler:
     '''
 
     def __init__(self) -> None:
-        self._trace_args_map: Dict[TraceNo, TraceArgs] = {}
-        self._traces_on_call: Set[TraceNo] = set()
+        self._trace_args_map = dict[TraceNo, TraceArgs]()
+        self._traces_on_call = set[TraceNo]()
 
     @hookimpl
     def init(self, hook: PluginManager) -> None:

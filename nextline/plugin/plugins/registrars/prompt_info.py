@@ -1,7 +1,7 @@
 import asyncio
 import dataclasses
 from logging import getLogger
-from typing import Dict, Optional, Set
+from typing import Optional
 
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import (
@@ -20,10 +20,10 @@ from nextline.utils.pubsub.broker import PubSub
 class PromptInfoRegistrar:
     def __init__(self) -> None:
         self._run_no: Optional[RunNo] = None
-        self._last_prompt_frame_map: Dict[TraceNo, int] = {}
-        self._trace_call_map: Dict[TraceNo, OnStartTraceCall] = {}
-        self._prompt_info_map: Dict[PromptNo, PromptInfo] = {}
-        self._keys: Set[str] = set()
+        self._last_prompt_frame_map = dict[TraceNo, int]()
+        self._trace_call_map = dict[TraceNo, OnStartTraceCall]()
+        self._prompt_info_map = dict[PromptNo, PromptInfo]()
+        self._keys = set[str]()
         self._logger = getLogger(__name__)
 
     @hookimpl

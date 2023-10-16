@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Dict, Optional
+from typing import Optional
 
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import OnEndTraceCall, OnStartPrompt, OnStartTraceCall, RunArg
@@ -10,7 +10,7 @@ from nextline.utils.pubsub.broker import PubSub
 class PromptNoticeRegistrar:
     def __init__(self) -> None:
         self._run_no: Optional[RunNo] = None
-        self._trace_call_map: Dict[TraceNo, OnStartTraceCall] = {}
+        self._trace_call_map = dict[TraceNo, OnStartTraceCall]()
         self._logger = getLogger(__name__)
 
     @hookimpl

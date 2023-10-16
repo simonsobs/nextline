@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-from typing import Dict, Optional
+from typing import Optional
 
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import OnEndTrace, OnStartTrace, RunArg
@@ -11,7 +11,7 @@ from nextline.utils.pubsub.broker import PubSub
 class TraceInfoRegistrar:
     def __init__(self) -> None:
         self._run_no: Optional[RunNo] = None
-        self._trace_info_map: Dict[TraceNo, TraceInfo] = {}
+        self._trace_info_map = dict[TraceNo, TraceInfo]()
 
     @hookimpl
     def init(self, registry: PubSub) -> None:

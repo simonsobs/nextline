@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 from nextline.plugin.spec import hookimpl
 from nextline.spawned import OnEndTrace, OnStartTrace, RunArg
@@ -9,7 +9,7 @@ from nextline.utils.pubsub.broker import PubSub
 class TraceNumbersRegistrar:
     def __init__(self) -> None:
         self._run_no: Optional[RunNo] = None
-        self._trace_nos: Tuple[TraceNo, ...] = ()
+        self._trace_nos: tuple[TraceNo, ...] = ()
 
     @hookimpl
     def init(self, registry: PubSub) -> None:

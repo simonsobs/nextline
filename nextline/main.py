@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
 from types import CodeType
-from typing import Any, AsyncIterator, Callable, Optional, Tuple, Union
+from typing import Any, AsyncIterator, Callable, Optional, Union
 
 from .continuous import Continuous
 from .fsm import Machine
@@ -188,13 +188,13 @@ class Nextline:
         return self.subscribe("run_no")
 
     @property
-    def trace_ids(self) -> Tuple[int, ...]:
+    def trace_ids(self) -> tuple[int, ...]:
         try:
             return self.get("trace_nos")
         except (KeyError, LookupError):
             return ()
 
-    def subscribe_trace_ids(self) -> AsyncIterator[Tuple[int, ...]]:
+    def subscribe_trace_ids(self) -> AsyncIterator[tuple[int, ...]]:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name=None):

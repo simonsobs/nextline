@@ -3,7 +3,7 @@ from __future__ import annotations
 from asyncio import Task, current_task
 from collections import defaultdict
 from threading import Thread, current_thread
-from typing import Callable, DefaultDict, MutableMapping, Tuple
+from typing import Callable, DefaultDict, MutableMapping
 from weakref import WeakKeyDictionary
 
 from nextline.count import TaskNoCounter, ThreadNoCounter
@@ -65,7 +65,7 @@ class ThreadTaskIdComposer:
         self.thread_no_counter = ThreadNoCounter(1)
         self._task_no_counter_map.clear()
 
-    def _current_thread_task(self) -> Tuple[Thread, Task | None]:
+    def _current_thread_task(self) -> tuple[Thread, Task | None]:
         try:
             task = current_task()
         except RuntimeError:

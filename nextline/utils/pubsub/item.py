@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from asyncio import Condition, Queue
-from typing import AsyncIterator, Generic, List, Literal, Optional, Tuple, TypeVar
+from typing import AsyncIterator, Generic, Literal, Optional, TypeVar
 
 
 class _M(enum.Enum):
@@ -88,8 +88,8 @@ class PubSubItem(Generic[_T]):
     '''
 
     def __init__(self) -> None:
-        self._qs_out: List[Queue[Tuple[int, _T | Literal[_M.END]]]] = []
-        self._last_enumerated: Tuple[int, _T | Literal[_M.START] | Literal[_M.END]] = (
+        self._qs_out = list[Queue[tuple[int, _T | Literal[_M.END]]]]()
+        self._last_enumerated: tuple[int, _T | Literal[_M.START] | Literal[_M.END]] = (
             -1,
             _M.START,
         )
@@ -124,7 +124,7 @@ class PubSubItem(Generic[_T]):
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
         """
-        q: Queue[Tuple[int, _T | Literal[_M.END]]] = Queue()
+        q = Queue[tuple[int, _T | Literal[_M.END]]]()
 
         self._qs_out.append(q)
 

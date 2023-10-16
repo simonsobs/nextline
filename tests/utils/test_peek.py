@@ -1,5 +1,4 @@
 import sys
-from typing import List
 from unittest.mock import Mock, call
 
 import pytest
@@ -18,9 +17,9 @@ from nextline.utils import peek_stderr, peek_stdout
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_print(
     capsys: pytest.CaptureFixture,
-    msgs: List[str],
+    msgs: list[str],
     post_msg: str,
-    errs: List[str],
+    errs: list[str],
     post_err: str,
 ):
     capsys.readouterr()  # clear
@@ -59,8 +58,8 @@ def test_print(
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_yield(
     capsys: pytest.CaptureFixture,
-    msgs: List[str],
-    errs: List[str],
+    msgs: list[str],
+    errs: list[str],
 ):
     capsys.readouterr()  # clear
 

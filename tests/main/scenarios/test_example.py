@@ -8,7 +8,7 @@ from functools import partial
 from itertools import groupby
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Set
+from typing import Any, Optional, Sequence
 
 import pytest
 
@@ -149,7 +149,7 @@ async def assert_subscribe_prompt_info(nextline: Nextline):
 
     assert 382 == len(results)
 
-    expected: Dict[Any, int]
+    expected: dict[Any, int]
     actual: Counter[Any]
 
     expected = {1: 144, 2: 78, 3: 78, 4: 50, 5: 32}
@@ -220,7 +220,7 @@ async def run(nextline: Nextline):
 
 
 async def control_execution(nextline: Nextline):
-    prev_ids: Set[int] = set()
+    prev_ids = set[int]()
     agen = agen_with_wait(nextline.subscribe_trace_ids())
     pending: Sequence[asyncio.Future] = ()
     async for ids_ in agen:

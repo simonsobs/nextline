@@ -5,24 +5,14 @@ from itertools import groupby
 from keyword import iskeyword
 from operator import attrgetter, itemgetter
 from types import FrameType
-from typing import (
-    Any,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    Tuple,
-    TypedDict,
-)
+from typing import Any, Iterable, Iterator, Mapping, Optional, TypedDict
 from unittest.mock import Mock
 
 
 @dataclass
 class TracedScope:
-    module: List[str] = field(default_factory=list)
-    func: List[str] = field(default_factory=list)
+    module: list[str] = field(default_factory=list)
+    func: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -42,7 +32,7 @@ class _S(TypedDict):
 
 def summarize_trace_calls(
     mock_trace: Mock,
-    modules: Optional[Set[str]] = None,
+    modules: Optional[set[str]] = None,
 ) -> TraceSummary:
     """Traced modules and functions for each event"""
 
@@ -95,5 +85,5 @@ def ordered_uniq_values(dicts: Iterable[Mapping[str, str]], key: str) -> Iterato
     return (v for v, _ in groupby([d[key] for d in dicts]))
 
 
-def trace_call_args(trace: Mock) -> Iterator[Tuple[FrameType, str, Any]]:
+def trace_call_args(trace: Mock) -> Iterator[tuple[FrameType, str, Any]]:
     return map(attrgetter("args"), trace.call_args_list)

@@ -2,19 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import threading
-from typing import (
-    TYPE_CHECKING,
-    AsyncGenerator,
-    AsyncIterator,
-    Iterable,
-    Set,
-    Tuple,
-    TypeVar,
-)
-
-if TYPE_CHECKING:
-    from asyncio import Future, Task
-    from threading import Thread
+from asyncio import Future, Task
+from threading import Thread
+from typing import AsyncGenerator, AsyncIterator, Iterable, TypeVar
 
 
 def current_task_or_thread() -> Task | Thread:
@@ -32,14 +22,14 @@ T = TypeVar("T")
 async def agen_with_wait(
     agen: AsyncIterator[T],
 ) -> AsyncGenerator[
-    T | Tuple[Tuple[Future, ...], Tuple[Future, ...]], Iterable[Future]
+    T | tuple[tuple[Future, ...], tuple[Future, ...]], Iterable[Future]
 ]:
     """Yield from the agen while waiting for received tasks
 
     Used to raise an exception from tasks
     """
-    done: Set[Future] = set()
-    pending: Set[Future] = set()
+    done = set[Future]()
+    pending = set[Future]()
     anext = asyncio.ensure_future(agen.__anext__())
     while True:
         done_, pending_ = await asyncio.wait(
@@ -71,7 +61,7 @@ async def agen_with_wait(
 
 async def merge_aiters(
     *aiters: AsyncIterator[T],
-) -> AsyncIterator[Tuple[int, T]]:
+) -> AsyncIterator[tuple[int, T]]:
     aiter_map = {a: i for i, a in enumerate(aiters)}
     task_map = {asyncio.ensure_future(a.__anext__()): a for a in aiter_map.keys()}
     tasks = set(task_map.keys())

@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
-from typing import AsyncIterator, Callable, Tuple, cast
+from typing import AsyncIterator, Callable, cast
 
 import apluggy
 from tblib import pickling_support
@@ -29,7 +29,7 @@ def _call_all(*funcs) -> None:
 @asynccontextmanager
 async def run_session(
     hook: apluggy.PluginManager, run_arg: RunArg
-) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
+) -> AsyncIterator[tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())

@@ -3,7 +3,6 @@ from __future__ import annotations
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Tuple
 
 import pytest
 
@@ -129,7 +128,7 @@ params = [
 
 
 @pytest.fixture(params=params)
-def run_arg_params(request) -> Tuple[RunArg, type[BaseException] | None]:
+def run_arg_params(request) -> tuple[RunArg, type[BaseException] | None]:
     return request.param
 
 

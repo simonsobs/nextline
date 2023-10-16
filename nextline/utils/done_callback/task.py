@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from asyncio import Task, current_task, to_thread
-from typing import Any, Callable, List, Optional, Set
+from typing import Any, Callable, Optional
 
 
 class TaskDoneCallback:
@@ -21,8 +21,8 @@ class TaskDoneCallback:
 
     def __init__(self, done: Optional[Callable[[Task], Any]] = None):
         self._done = done
-        self._active: Set[Task] = set()
-        self._exceptions: List[BaseException] = []
+        self._active = set[Task]()
+        self._exceptions = list[BaseException]()
 
     def register(self, task: Optional[Task] = None) -> Task:
         """Add the current task by default, or the given task

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from types import FrameType
-from typing import Any, Callable, ContextManager, Dict, Optional
+from typing import Any, Callable, ContextManager, Optional
 
 from .types import TraceFunction
 
@@ -35,7 +35,7 @@ def ToCanonicPath() -> Callable[[str], str]:
     # Based on Bdb.canonic()
     # https://github.com/python/cpython/blob/v3.10.5/Lib/bdb.py#L39-L54
 
-    cache: Dict[str, str] = {}
+    cache = dict[str, str]()
 
     def _to_canonic_path(filename: str) -> str:
         if filename == "<" + filename[1:-1] + ">":
