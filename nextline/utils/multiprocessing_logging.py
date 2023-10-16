@@ -8,7 +8,7 @@ from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler
 from multiprocessing.context import BaseContext
 from queue import Queue
-from typing import Callable, Optional
+from typing import Callable, Optional, cast
 
 from .func import to_thread
 
@@ -79,7 +79,7 @@ class MultiprocessingLogging:
 
     def __init__(self, mp_context: Optional[BaseContext] = None) -> None:
         mp_context = mp_context or mp.get_context()
-        self._q: Queue[LogRecord | None] = mp_context.Queue()
+        self._q = cast(Queue[LogRecord | None], mp_context.Queue())
         self._initializer = partial(_initializer, self._q)
         self._task: asyncio.Task | None = None
 

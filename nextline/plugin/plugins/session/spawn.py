@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
-from typing import AsyncIterator, Callable, Tuple
+from typing import AsyncIterator, Callable, Tuple, cast
 
 import apluggy
 from tblib import pickling_support
@@ -31,8 +31,8 @@ async def run_session(
     hook: apluggy.PluginManager, run_arg: RunArg
 ) -> AsyncIterator[Tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')
-    queue_in: QueueIn = mp_context.Queue()
-    queue_out: QueueOut = mp_context.Queue()
+    queue_in = cast(QueueIn, mp_context.Queue())
+    queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
     monitor = Monitor(hook, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:

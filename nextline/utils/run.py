@@ -134,7 +134,6 @@ async def run_in_process(
 
     async def _run() -> Tuple[_T | None, BaseException | None]:
         nonlocal process
-        assert executor_factory
 
         with executor_factory() as executor:
             loop = asyncio.get_running_loop()

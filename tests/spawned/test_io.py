@@ -26,7 +26,7 @@ def test_one(capsys: pytest.CaptureFixture, data: st.DataObject):
 
     # exclude line breaks
     # https://hypothesis.works/articles/generating-the-right-data/
-    st_chars = st.characters(blacklist_categories=('Cc', 'Cs'))
+    st_chars = st.characters(blacklist_categories=['Cc', 'Cs'])
 
     # text to be printed per thread
     st_lines = st.lists(st.text(st_chars))

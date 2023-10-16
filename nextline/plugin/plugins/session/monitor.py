@@ -26,7 +26,7 @@ class Monitor:
         start = time.process_time()
         while not self._queue.empty() and time.process_time() - start < up_to:
             await asyncio.sleep(0)
-        await to_thread(self._queue.put, None)
+        await to_thread(self._queue.put, None)  # type: ignore
         await self._task
 
     async def __aenter__(self):
