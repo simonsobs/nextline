@@ -4,7 +4,7 @@ import threading
 from asyncio import Task
 from logging import getLogger
 from threading import Thread
-from typing import Iterator, MutableMapping, Optional
+from typing import Iterator, Optional
 from weakref import WeakKeyDictionary, WeakSet
 
 from apluggy import PluginManager, contextmanager
@@ -21,7 +21,7 @@ from nextline.utils import (
 
 class TaskAndThreadKeeper:
     def __init__(self) -> None:
-        self._set: WeakSet[Task | Thread] = WeakSet()
+        self._set = WeakSet[Task | Thread]()
         self._counter = ThreadTaskIdComposer()
         self._main_thread: Optional[Thread] = None
         self._to_end: Optional[Thread] = None
@@ -74,7 +74,7 @@ class TaskAndThreadKeeper:
 
 class TaskOrThreadToTraceMapper:
     def __init__(self) -> None:
-        self._map: MutableMapping[Task | Thread, TraceNo] = WeakKeyDictionary()
+        self._map = WeakKeyDictionary[Task | Thread, TraceNo]()
         self._counter = TraceNoCounter(1)
         self._logger = getLogger(__name__)
 

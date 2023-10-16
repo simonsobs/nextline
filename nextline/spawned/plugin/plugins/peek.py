@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Callable, DefaultDict, Iterator, TypeVar
+from typing import Any, Callable, Iterator, TypeVar
 
 from apluggy import PluginManager, contextmanager
 
@@ -45,7 +45,7 @@ def peek_stdout_by_key(
 
 
 def ReadLinesByKey(callback: Callable[[_T, str], Any]) -> Callable[[_T, str], Any]:
-    buffer: DefaultDict[_T, str] = defaultdict(str)
+    buffer = defaultdict[_T, str](str)
 
     def read_lines_by_key(key: _T, s: str) -> None:
         buffer[key] += s

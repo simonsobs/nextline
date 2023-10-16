@@ -3,7 +3,7 @@ from __future__ import annotations
 from asyncio import Task, current_task
 from collections import defaultdict
 from threading import Thread, current_thread
-from typing import Callable, DefaultDict, MutableMapping
+from typing import Callable
 from weakref import WeakKeyDictionary
 
 from nextline.count import TaskNoCounter, ThreadNoCounter
@@ -16,14 +16,12 @@ class ThreadTaskIdComposer:
     def __init__(self) -> None:
         self.thread_no_counter = ThreadNoCounter(1)
 
-        self._map: MutableMapping[Thread | Task, ThreadTaskId] = WeakKeyDictionary()
-
-        self._thread_no_map: MutableMapping[Thread, ThreadNo] = WeakKeyDictionary()
-        self._task_no_map: MutableMapping[Task, TaskNo] = WeakKeyDictionary()
-
-        self._task_no_counter_map: DefaultDict[
-            ThreadNo, Callable[[], TaskNo]
-        ] = defaultdict(lambda: TaskNoCounter(1))
+        self._map = WeakKeyDictionary[Thread | Task, ThreadTaskId]()
+        self._thread_no_map = WeakKeyDictionary[Thread, ThreadNo]()
+        self._task_no_map = WeakKeyDictionary[Task, TaskNo]()
+        self._task_no_counter_map = defaultdict[ThreadNo, Callable[[], TaskNo]](
+            lambda: TaskNoCounter(1)
+        )
 
     def __call__(self) -> ThreadTaskId:
         """ThreadTaskId with the current thread and async task numbers

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from types import FrameType
-from typing import Callable, DefaultDict, Optional
+from typing import Callable, Optional
 
 from apluggy import PluginManager, contextmanager
 from exceptiongroup import BaseExceptionGroup, catch
@@ -27,7 +27,7 @@ class LocalTraceFunc:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
         factory = Factory(hook)
-        self._map: DefaultDict[TraceNo, TraceFunction] = defaultdict(factory)
+        self._map = defaultdict[TraceNo, TraceFunction](factory)
 
     @hookimpl
     def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunction]:

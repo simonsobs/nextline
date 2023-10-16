@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import AsyncIterator, DefaultDict, Generic, Optional, TypeVar
+from typing import AsyncIterator, Generic, Optional, TypeVar
 
 from .item import PubSubItem
 
@@ -13,10 +13,7 @@ class PubSub(Generic[_KT, _VT]):
     """Asynchronous message broker of the publish-subscribe pattern"""
 
     def __init__(self) -> None:
-        self._queue: DefaultDict[
-            _KT,
-            PubSubItem[_VT],
-        ] = defaultdict(PubSubItem)
+        self._queue = defaultdict[_KT, PubSubItem[_VT]](PubSubItem)
 
     def subscribe(self, key: _KT, last: Optional[bool] = True) -> AsyncIterator[_VT]:
         """Async iterator that yields values for the key as they are published
