@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Set
+from typing import Any, Callable
 from unittest.mock import Mock
 
 import pytest
@@ -14,7 +14,7 @@ from .funcs import TraceSummary, summarize_trace_calls
 @pytest.fixture()
 def target(
     wrap_target_trace_func: Mock,
-    modules_in_summary: Set[str] | None,
+    modules_in_summary: set[str] | None,
     run_target,
 ) -> TraceSummary:
     '''Summary of the calls to the target trace function.
@@ -30,7 +30,7 @@ def target(
 @pytest.fixture()
 def probe(
     probe_trace_func: Mock,
-    modules_in_summary: Set[str] | None,
+    modules_in_summary: set[str] | None,
     run_target,
 ) -> TraceSummary:
     '''Summary of the calls to the probe trace function.
@@ -46,7 +46,7 @@ def probe(
 @pytest.fixture()
 def ref(
     ref_trace_func: Mock,
-    modules_in_summary: Set[str] | None,
+    modules_in_summary: set[str] | None,
     run_ref,
 ) -> TraceSummary:
     '''Summary of the calls to the reference trace function.
@@ -60,7 +60,7 @@ def ref(
 
 
 @pytest.fixture()
-def modules_in_summary() -> Set[str] | None:
+def modules_in_summary() -> set[str] | None:
     return None
 
 

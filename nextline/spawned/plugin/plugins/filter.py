@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import threading
 from asyncio import Task
+from collections.abc import Generator, Iterable, Iterator
 from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
-from typing import Generator, Iterable, Iterator, Optional, Set
+from typing import Optional
 
 from apluggy import PluginManager, contextmanager
 
@@ -46,10 +47,10 @@ class FilerByModule:
     '''Accept the first module and modules ever in the cmdloop() context.'''
 
     def __init__(self) -> None:
-        self._modules_to_trace: Set[str] = set()
+        self._modules_to_trace = set[str]()
         self._first_module_added = False
         self._entering_thread: Optional[Thread] = None
-        self._traced_tasks_and_threads: Set[Task | Thread] = set()
+        self._traced_tasks_and_threads = set[Task | Thread]()
         self._logger = getLogger(__name__)
 
     @hookimpl
