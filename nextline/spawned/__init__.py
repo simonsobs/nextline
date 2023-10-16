@@ -1,6 +1,5 @@
 '''Code used in the sub-processes in which the Nextline user code is run.
 '''
-from __future__ import annotations
 
 __all__ = [
     'Command',
@@ -42,8 +41,8 @@ from .events import (
 from .runner import run
 from .types import QueueIn, QueueOut, RunArg, RunResult, Statement
 
-_queue_in: QueueIn | None = None
-_queue_out: QueueOut | None = None
+_queue_in: 'QueueIn | None' = None
+_queue_out: 'QueueOut | None' = None
 
 
 def set_queues(queue_in: QueueIn, queue_out: QueueOut) -> None:

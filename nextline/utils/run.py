@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import os
 import signal
@@ -101,7 +99,7 @@ ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
 
 
 async def run_in_process(
-    func: Callable[[], _T], executor_factory: ExecutorFactory | None = None
+    func: Callable[[], _T], executor_factory: 'ExecutorFactory | None' = None
 ) -> RunningProcess[_T]:
     '''Call a function in a separate process and return an awaitable.
 
