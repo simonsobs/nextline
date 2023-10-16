@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
 from types import CodeType
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from .continuous import Continuous
 from .fsm import Machine
@@ -46,7 +46,7 @@ class Nextline:
 
     def __init__(
         self,
-        statement: Union[str, Path, CodeType, Callable[[], Any]],
+        statement: str | Path | CodeType | Callable[[], Any],
         run_no_start_from: int = 1,
         timeout_on_exit: float = 3,
     ):
@@ -151,7 +151,7 @@ class Nextline:
 
     async def reset(
         self,
-        statement: Union[str, Path, CodeType, Callable[[], Any], None] = None,
+        statement: str | Path | CodeType | Callable[[], Any] | None = None,
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""

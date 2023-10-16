@@ -1,5 +1,5 @@
 import asyncio
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import pytest
 from hypothesis import given
@@ -84,7 +84,7 @@ async def test_last(
     items = tuple(items)
     expected = [pre_items[-1:] + items if last else items] * n_subscriptions
 
-    async with PubSubItem[Union[int, str]]() as obj:
+    async with PubSubItem[int | str]() as obj:
 
         async def receive():
             return tuple([i async for i in obj.subscribe(last=last)])

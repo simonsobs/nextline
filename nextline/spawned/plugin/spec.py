@@ -2,7 +2,7 @@ from asyncio import Task
 from collections.abc import Callable, Collection, Generator
 from threading import Thread
 from types import FrameType
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import apluggy
 
@@ -90,7 +90,7 @@ def on_start_task_or_thread() -> None:
 
 
 @hookspec
-def on_end_task_or_thread(task_or_thread: Union[Task, Thread]):
+def on_end_task_or_thread(task_or_thread: Task | Thread):
     pass
 
 

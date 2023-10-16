@@ -2,7 +2,6 @@ import asyncio
 import logging
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
-from typing import Union
 
 import pytest
 from pytest import LogCaptureFixture
@@ -24,7 +23,7 @@ async def test_close_without_open():
 
 @pytest.mark.parametrize('mp_method', [None, 'spawn', 'fork', 'forkserver'])
 async def test_multiprocessing_logging(
-    mp_method: Union[str, None], caplog: LogCaptureFixture
+    mp_method: str | None, caplog: LogCaptureFixture
 ):
     mp_context = mp.get_context(mp_method) if mp_method else None
 
