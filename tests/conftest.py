@@ -11,9 +11,3 @@ def recover_trace():
     yield
     sys.settrace(trace_org)
     threading.settrace(trace_org)
-
-
-if not sys.version_info >= (3, 9):
-    from nextline.test import suppress_atexit_oserror
-
-    _ = pytest.fixture(scope='session', autouse=True)(suppress_atexit_oserror)
