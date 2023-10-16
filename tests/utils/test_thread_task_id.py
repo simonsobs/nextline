@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import to_thread
 from functools import partial
 
 import pytest
@@ -6,7 +7,6 @@ import pytest
 from nextline.types import TaskNo, ThreadNo, ThreadTaskId
 from nextline.utils import ExcThread
 from nextline.utils import ThreadTaskIdComposer as IdComposer
-from nextline.utils import to_thread
 
 
 def assert_call(obj: IdComposer, expected: ThreadTaskId, has_id: bool = False):

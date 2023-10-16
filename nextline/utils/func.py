@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import functools
 import threading
 from typing import (
     TYPE_CHECKING,
@@ -25,18 +24,6 @@ def current_task_or_thread() -> Task | Thread:
     except RuntimeError:
         task = None
     return task or threading.current_thread()
-
-
-try:
-    from asyncio import to_thread  # type: ignore
-except ImportError:
-    # for Python 3.8
-    # to_thread() is new in Python 3.9
-
-    async def to_thread(func, /, *args, **kwargs):  # type: ignore
-        loop = asyncio.get_running_loop()
-        func_call = functools.partial(func, *args, **kwargs)
-        return await loop.run_in_executor(None, func_call)
 
 
 T = TypeVar("T")

@@ -7,7 +7,6 @@ from apluggy import PluginManager
 from nextline import spawned
 
 from ....spawned import QueueOut
-from ....utils import to_thread
 
 # from rich import print
 
@@ -26,7 +25,7 @@ class Monitor:
         start = time.process_time()
         while not self._queue.empty() and time.process_time() - start < up_to:
             await asyncio.sleep(0)
-        await to_thread(self._queue.put, None)  # type: ignore
+        await asyncio.to_thread(self._queue.put, None)  # type: ignore
         await self._task
 
     async def __aenter__(self):
@@ -38,7 +37,7 @@ class Monitor:
         await self.close()
 
     async def _monitor(self) -> None:
-        while (event := await to_thread(self._queue.get)) is not None:
+        while (event := await asyncio.to_thread(self._queue.get)) is not None:
             await self._on_event(event)
 
     async def _on_event(self, event: spawned.Event) -> None:

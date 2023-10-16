@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import time
-from asyncio import Task, current_task
+from asyncio import Task, current_task, to_thread
 from typing import Any, Callable, List, Optional, Set
-
-from nextline.utils.func import to_thread
 
 
 class TaskDoneCallback:

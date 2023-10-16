@@ -10,8 +10,6 @@ from multiprocessing.context import BaseContext
 from queue import Queue
 from typing import Callable, Optional, cast
 
-from .func import to_thread
-
 __all__ = ['MultiprocessingLogging']
 
 
@@ -93,14 +91,14 @@ class MultiprocessingLogging:
 
     async def _listen(self) -> None:
         '''Receive loggings from other processes and handle them in the main process.'''
-        while (record := await to_thread(self._q.get)) is not None:
+        while (record := await asyncio.to_thread(self._q.get)) is not None:
             logger = getLogger(record.name)
             if logger.getEffectiveLevel() <= record.levelno:
                 logger.handle(record)
 
     async def close(self) -> None:
         if self._task:
-            await to_thread(self._q.put, None)
+            await asyncio.to_thread(self._q.put, None)
             await self._task
             self._task = None
 
