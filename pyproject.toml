@@ -69,7 +69,7 @@ log_cli_level = "INFO"
 
 [tool.black]
 skip-string-normalization = true
-target_version = [ 'py310', 'py311', 'py312']
+target_version = ['py310', 'py311', 'py312']
 
 [tool.isort]
 profile = "black"
