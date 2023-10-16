@@ -1,7 +1,8 @@
 from asyncio import Task
+from collections.abc import Callable, Collection, Generator
 from threading import Thread
 from types import FrameType
-from typing import Any, Callable, Collection, Generator, Optional, Union
+from typing import Any, Optional, Union
 
 import apluggy
 

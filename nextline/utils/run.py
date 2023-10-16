@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
+from collections.abc import Callable, Generator
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass
@@ -10,7 +11,7 @@ from datetime import datetime, timezone
 from functools import partial
 from logging import getLogger
 from multiprocessing import Process
-from typing import Callable, Generator, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from typing_extensions import TypeAlias
 

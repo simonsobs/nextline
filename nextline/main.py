@@ -1,11 +1,12 @@
 import asyncio
 import linecache
 import reprlib
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
 from types import CodeType
-from typing import Any, AsyncIterator, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from .continuous import Continuous
 from .fsm import Machine

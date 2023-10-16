@@ -1,9 +1,10 @@
 import multiprocessing as mp
+from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
-from typing import AsyncIterator, Callable, cast
+from typing import cast
 
 import apluggy
 from tblib import pickling_support

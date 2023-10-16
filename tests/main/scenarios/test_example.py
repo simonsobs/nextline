@@ -4,11 +4,12 @@ import asyncio
 import dataclasses
 import datetime
 from collections import Counter, deque
+from collections.abc import Sequence
 from functools import partial
 from itertools import groupby
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import pytest
 

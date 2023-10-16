@@ -1,5 +1,6 @@
+from collections.abc import AsyncIterator, Callable
 from logging import getLogger
-from typing import Any, AsyncIterator, Callable, Optional
+from typing import Any, Optional
 
 import apluggy
 from tblib import pickling_support

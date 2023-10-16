@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Iterator
 from threading import Thread
-from typing import Iterator, Optional, TextIO
+from typing import Optional, TextIO
 from unittest.mock import Mock
 
 import pytest

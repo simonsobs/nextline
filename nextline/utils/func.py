@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 import threading
 from asyncio import Future, Task
+from collections.abc import AsyncGenerator, AsyncIterator, Iterable
 from threading import Thread
-from typing import AsyncGenerator, AsyncIterator, Iterable, TypeVar
+from typing import TypeVar
 
 
 def current_task_or_thread() -> Task | Thread:

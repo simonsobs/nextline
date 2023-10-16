@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import enum
 from asyncio import Condition, Queue
-from typing import AsyncIterator, Generic, Literal, Optional, TypeVar
+from collections.abc import AsyncIterator
+from typing import Generic, Literal, Optional, TypeVar
 
 
 class _M(enum.Enum):

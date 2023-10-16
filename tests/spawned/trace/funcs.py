@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from itertools import groupby
 from keyword import iskeyword
 from operator import attrgetter, itemgetter
 from types import FrameType
-from typing import Any, Iterable, Iterator, Mapping, Optional, TypedDict
+from typing import Any, Optional, TypedDict
 from unittest.mock import Mock
 
 

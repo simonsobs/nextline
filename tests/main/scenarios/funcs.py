@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Iterable, TypeVar
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance

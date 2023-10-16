@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import AsyncIterator, Generic, Optional, TypeVar
+from collections.abc import AsyncIterator
+from typing import Generic, Optional, TypeVar
 
 from .item import PubSubItem
 

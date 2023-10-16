@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import fnmatch
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def match_any(filename: str | None, patterns: Iterable[str]) -> bool:

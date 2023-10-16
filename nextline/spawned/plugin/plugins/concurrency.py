@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import threading
 from asyncio import Task
+from collections.abc import Iterator
 from logging import getLogger
 from threading import Thread
-from typing import Iterator, Optional
+from typing import Optional
 from weakref import WeakKeyDictionary, WeakSet
 
 from apluggy import PluginManager, contextmanager
