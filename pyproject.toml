@@ -24,7 +24,6 @@ classifiers = [
 dependencies = [
     "apluggy>=0.9",
     "tblib>=1.7",
-    "typing-extensions>=4.4",
     "transitions>=0.9",
 ]
 dynamic = ["version"]
