@@ -11,8 +11,6 @@ from logging import getLogger
 from multiprocessing import Process
 from typing import Generic, TypeVar
 
-from typing_extensions import TypeAlias
-
 _T = TypeVar("_T")
 
 
@@ -95,11 +93,11 @@ class RunningProcess(Generic[_T]):
         )
 
 
-ExecutorFactory: TypeAlias = 'Callable[[], ProcessPoolExecutor]'
+ExecutorFactory = Callable[[], ProcessPoolExecutor]
 
 
 async def run_in_process(
-    func: Callable[[], _T], executor_factory: 'ExecutorFactory | None' = None
+    func: Callable[[], _T], executor_factory: ExecutorFactory | None = None
 ) -> RunningProcess[_T]:
     '''Call a function in a separate process and return an awaitable.
 

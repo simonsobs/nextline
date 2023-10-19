@@ -6,8 +6,6 @@ from queue import Queue
 from types import CodeType, FrameType
 from typing import Any, Callable, Optional
 
-from typing_extensions import TypeAlias
-
 from nextline.types import RunNo
 
 from .commands import Command
@@ -17,14 +15,14 @@ from .events import Event
 #     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401
 
 # NOTE: TraceFunction from sys does not work well.
-TraceFunction: TypeAlias = Callable[[FrameType, str, Any], "TraceFunction | None"]
+TraceFunction = Callable[[FrameType, str, Any], "TraceFunction | None"]
 
-TraceArgs: TypeAlias = tuple[FrameType, str, Any]
+TraceArgs = tuple[FrameType, str, Any]
 
-QueueIn: TypeAlias = 'Queue[Command]'
-QueueOut: TypeAlias = 'Queue[Event]'
+QueueIn = Queue[Command]
+QueueOut = Queue[Event]
 
-Statement: TypeAlias = str | Path | CodeType | Callable[[], Any]
+Statement = str | Path | CodeType | Callable[[], Any]
 
 
 @dataclass

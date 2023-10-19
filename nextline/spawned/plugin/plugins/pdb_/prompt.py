@@ -5,14 +5,13 @@ from queue import Queue
 from typing import TypeVar
 
 from apluggy import PluginManager, contextmanager
-from typing_extensions import TypeAlias
 
 from nextline.spawned.commands import PdbCommand
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import QueueIn
 from nextline.types import PromptNo, TraceNo
 
-QueueMap: TypeAlias = MutableMapping[TraceNo, 'Queue[PdbCommand]']
+QueueMap = MutableMapping[TraceNo, 'Queue[PdbCommand]']
 
 
 class Prompt:
