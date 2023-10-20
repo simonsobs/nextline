@@ -5,8 +5,7 @@ from logging import getLogger
 from apluggy import PluginManager
 
 from nextline import spawned
-
-from ....spawned import QueueOut
+from nextline.spawned import QueueOut
 
 # from rich import print
 
