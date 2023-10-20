@@ -18,7 +18,7 @@ from .monitor import Monitor
 pickling_support.install()
 
 
-def _call_all(*funcs) -> None:
+def _call_all(*funcs: Callable) -> None:
     '''Execute callables and ignore return values.
 
     Used to call multiple initializers in ProcessPoolExecutor.

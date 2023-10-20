@@ -11,7 +11,7 @@ from typing import Callable, Optional, cast
 __all__ = ['MultiprocessingLogging']
 
 
-def example_func():
+def example_func() -> None:
     '''Used in doctest, defined here to be picklable.'''
     logger = logging.getLogger(__name__)
     logger.warning('warning from another process')
@@ -84,7 +84,7 @@ class MultiprocessingLogging:
         '''A callable with no args to be given to ProcessPoolExecutor as initializer.'''
         return self._initializer
 
-    async def open(self):
+    async def open(self) -> None:
         self._task = asyncio.create_task(self._listen())
 
     async def _listen(self) -> None:
@@ -100,11 +100,11 @@ class MultiprocessingLogging:
             await self._task
             self._task = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'MultiprocessingLogging':
         await self.open()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
         await self.close()
 

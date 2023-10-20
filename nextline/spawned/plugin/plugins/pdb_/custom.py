@@ -1,6 +1,6 @@
 from logging import getLogger
 from pdb import Pdb
-from typing import IO, Callable, ContextManager
+from typing import IO, Any, Callable, ContextManager
 
 from nextline.spawned.exc import NotOnTraceCall
 
@@ -43,7 +43,7 @@ class CustomizedPdb(Pdb):
         # super()._cmdloop()
         self.cmdloop()
 
-    def cmdloop(self, intro=None) -> None:
+    def cmdloop(self, intro: Any | None = None) -> None:
         '''Override Cmd.cmdloop() to call it inside a context manager.'''
         try:
             with self._cmdloop_hook():
@@ -52,7 +52,7 @@ class CustomizedPdb(Pdb):
             logger = getLogger(__name__)
             logger.exception('')
 
-    def set_continue(self):
+    def set_continue(self) -> None:
         '''Override Bdb.set_continue() to avoid sys.settrace(None).'''
         # super().set_continue()
-        self._set_stopinfo(self.botframe, None, -1)
+        self._set_stopinfo(self.botframe, None, -1)  # type: ignore

@@ -1,5 +1,6 @@
 import sys
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Optional
 
@@ -7,7 +8,9 @@ from .types import TraceFunction
 
 
 @contextmanager
-def sys_trace(trace_func: TraceFunction, thread: Optional[bool] = True):
+def sys_trace(
+    trace_func: TraceFunction, thread: Optional[bool] = True
+) -> Iterator[None]:
     '''Trace callables in the context and all threads created during the context.
 
     Notes

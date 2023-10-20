@@ -6,7 +6,7 @@ function.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING, AsyncIterator, Set
 
 from nextline.utils.pubsub import PubSubItem
 
@@ -31,15 +31,15 @@ class Continuous:
             await asyncio.gather(*self._tasks)
         await self._pubsub_enabled.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Continuous':
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         await self.close()
 
-    async def _monitor_state(self):
+    async def _monitor_state(self) -> None:
         async for state in self._nextline.subscribe_state():
             if state == 'initialized' and self._tasks:
                 _, pending = await asyncio.wait(
@@ -54,10 +54,10 @@ class Continuous:
         self._tasks.add(task)
         await started.wait()
 
-    async def run_continue_and_wait(self, started: asyncio.Event):
+    async def run_continue_and_wait(self, started: asyncio.Event) -> None:
         await self._run_and_continue(started)
 
-    async def _run_and_continue(self, started: asyncio.Event):
+    async def _run_and_continue(self, started: asyncio.Event) -> None:
         await self._pubsub_enabled.publish(True)
         try:
             async with self._nextline.run_session():
@@ -77,5 +77,5 @@ class Continuous:
     def enabled(self) -> bool:
         return self._pubsub_enabled.latest()
 
-    def subscribe_enabled(self):
+    def subscribe_enabled(self) -> AsyncIterator[bool]:
         return self._pubsub_enabled.subscribe()

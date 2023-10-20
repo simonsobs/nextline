@@ -155,10 +155,10 @@ class PubSubItem(Generic[_T]):
             self._closed = True
             await self._publish(_M.END)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "PubSubItem[_T]":
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
         await self.close()
 

@@ -1,5 +1,5 @@
 import datetime
-from typing import Generator
+from collections.abc import Generator, Iterator
 
 from apluggy import PluginManager, contextmanager
 
@@ -22,12 +22,12 @@ from nextline.types import PromptNo, TraceNo
 
 class Repeater:
     @hookimpl
-    def init(self, hook: PluginManager, queue_out: QueueOut):
+    def init(self, hook: PluginManager, queue_out: QueueOut) -> None:
         self._hook = hook
         self._queue_out = queue_out
 
     @hookimpl
-    def on_start_trace(self, trace_no: TraceNo):
+    def on_start_trace(self, trace_no: TraceNo) -> None:
         assert trace_no == self._hook.hook.current_trace_no()
         started_at = datetime.datetime.utcnow()
         thread_no = self._hook.hook.current_thread_no()
@@ -48,7 +48,7 @@ class Repeater:
 
     @hookimpl
     @contextmanager
-    def on_trace_call(self, trace_args: TraceArgs):
+    def on_trace_call(self, trace_args: TraceArgs) -> Iterator[None]:
         started_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
         frame, call_event, call_arg = trace_args
@@ -115,7 +115,7 @@ class Repeater:
             self._queue_out.put(event_end)
 
     @hookimpl
-    def on_write_stdout(self, trace_no: TraceNo, line: str):
+    def on_write_stdout(self, trace_no: TraceNo, line: str) -> None:
         written_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
         event = OnWriteStdout(

@@ -6,23 +6,23 @@ from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
 _T = TypeVar("_T", bound=int)
 
 
-def RunNoCounter(start=1) -> Callable[[], RunNo]:
+def RunNoCounter(start: int = 1) -> Callable[[], RunNo]:
     return CastedCounter(count(start).__next__, RunNo)
 
 
-def TraceNoCounter(start=1) -> Callable[[], TraceNo]:
+def TraceNoCounter(start: int = 1) -> Callable[[], TraceNo]:
     return CastedCounter(count(start).__next__, TraceNo)
 
 
-def ThreadNoCounter(start=1) -> Callable[[], ThreadNo]:
+def ThreadNoCounter(start: int = 1) -> Callable[[], ThreadNo]:
     return CastedCounter(count(start).__next__, ThreadNo)
 
 
-def TaskNoCounter(start=1) -> Callable[[], TaskNo]:
+def TaskNoCounter(start: int = 1) -> Callable[[], TaskNo]:
     return CastedCounter(count(start).__next__, TaskNo)
 
 
-def PromptNoCounter(start=1) -> Callable[[], PromptNo]:
+def PromptNoCounter(start: int = 1) -> Callable[[], PromptNo]:
     return CastedCounter(count(start).__next__, PromptNo)
 
 

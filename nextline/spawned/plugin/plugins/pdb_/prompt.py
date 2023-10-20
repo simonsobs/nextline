@@ -61,7 +61,7 @@ class Prompt:
 
 
 @contextmanager
-def relay_commands(queue_in: QueueIn, queue_map: QueueMap):
+def relay_commands(queue_in: QueueIn, queue_map: QueueMap) -> Iterator[None]:
     '''Pass the Pdb commands from the main process to the Pdb instances.'''
     logger = getLogger(__name__)
 

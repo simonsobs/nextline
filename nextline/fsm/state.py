@@ -28,9 +28,9 @@ class Machine:
 
         assert self.state  # type: ignore
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # e.g., "<Machine 'running'>"
-        return f'<{self.__class__.__name__} {self.state!r}>'
+        return f'<{self.__class__.__name__} {self.state!r}>'  # type: ignore
 
     async def after_state_change(self, event: EventData) -> None:
         if not (event.transition and event.transition.dest):
@@ -93,10 +93,10 @@ class Machine:
         # TODO: Check the arguments
         await self._hook.ahook.reset(*event.args, **event.kwargs)
 
-    async def __aenter__(self):
-        await self.initialize()
+    async def __aenter__(self) -> 'Machine':
+        await self.initialize()  # type: ignore
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
-        await self.close()
+        await self.close()  # type: ignore

@@ -29,7 +29,7 @@ async def start() -> None:
 
 
 @hookspec
-async def close(exc_type=None, exc_value=None, traceback=None) -> None:
+async def close(exc_type=None, exc_value=None, traceback=None) -> None:  # type: ignore
     pass
 
 
@@ -63,7 +63,7 @@ async def on_initialize_run(run_arg: spawned.RunArg) -> None:
 
 @hookspec
 @apluggy.asynccontextmanager
-async def run():
+async def run():  # type: ignore
     yield
 
 

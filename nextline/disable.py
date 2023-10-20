@@ -1,9 +1,10 @@
 import contextlib
 import sys
+from collections.abc import Iterator
 
 
 @contextlib.contextmanager
-def disable_trace():
+def disable_trace() -> Iterator[None]:
     '''Remove the system trace function temporarily.
 
     Example:

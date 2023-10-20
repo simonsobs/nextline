@@ -39,7 +39,7 @@ class RunningProcess(Generic[_T]):
         self._process_created_at_fmt = self._format_time(self.process_created_at)
         self._log_created()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         ret = (
             f'<{self.__class__.__name__}'
             f' pid={self.process.pid!r}'

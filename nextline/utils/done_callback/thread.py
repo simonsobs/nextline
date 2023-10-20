@@ -63,7 +63,7 @@ class ThreadDoneCallback:
         self._closed = True
         self._t.join()
 
-    def _monitor(self):
+    def _monitor(self) -> None:
         exc = []
         while True:
             if done := {t for t in self._active if not t.is_alive()}:
@@ -82,9 +82,9 @@ class ThreadDoneCallback:
         if exc:
             raise exc[0]
 
-    def __enter__(self):
+    def __enter__(self) -> "ThreadDoneCallback":
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         self.close()

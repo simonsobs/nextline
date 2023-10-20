@@ -17,7 +17,7 @@ class FilterByModuleName:
     '''Skip Python modules with names that match any of the patterns.'''
 
     @hookimpl
-    def init(self, modules_to_skip: Iterable[str]):
+    def init(self, modules_to_skip: Iterable[str]) -> None:
         self._patterns = frozenset(modules_to_skip)
 
         # NOTE: Use lru_cache() as match_any() is slow
@@ -91,7 +91,7 @@ class FilerByModule:
         self._add(trace_args)
         yield
 
-    def _add(self, trace_args: TraceArgs):
+    def _add(self, trace_args: TraceArgs) -> None:
         frame, _, _ = trace_args
         module_name = frame.f_globals.get('__name__')
         if module_name is None:

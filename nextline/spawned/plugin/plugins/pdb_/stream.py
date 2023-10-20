@@ -56,11 +56,11 @@ class StdInOut(TextIOWrapper):
         self._prompt_text += s
         return len(s)
 
-    def flush(self):
+    def flush(self) -> None:
         '''To replace stdout.flush()'''
         pass
 
-    def readline(self):
+    def readline(self) -> str:  # type: ignore
         '''Call the prompt_func() with the text given to write() and return the result.
 
         For example, Pdb calls this method as stdin.readline() for user command.

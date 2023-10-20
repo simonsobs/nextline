@@ -66,7 +66,7 @@ class Nextline:
         self._started = False
         self._closed = False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # e.g., "<Nextline 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
@@ -84,11 +84,11 @@ class Nextline:
         await self._machine.close()  # type: ignore
         await self._continuous.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Nextline':
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
         await asyncio.wait_for(self.close(), timeout=self._timeout_on_exit)
 
@@ -181,7 +181,7 @@ class Nextline:
         return self.subscribe("state_name")
 
     @property
-    def run_no(self):
+    def run_no(self) -> int:
         """The current run number"""
         return self.get("run_no")
 
@@ -198,12 +198,12 @@ class Nextline:
     def subscribe_trace_ids(self) -> AsyncIterator[tuple[int, ...]]:
         return self.subscribe("trace_nos")
 
-    def get_source(self, file_name=None):
+    def get_source(self, file_name: Optional[str] = None) -> list[str]:
         if not file_name or file_name == self._registry.latest("script_file_name"):
             return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
-    def get_source_line(self, line_no, file_name=None):
+    def get_source_line(self, line_no: int, file_name: Optional[str] = None) -> str:
         """
         based on linecache.getline()
         https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
@@ -250,10 +250,10 @@ class Nextline:
             assert isinstance(info, PromptInfo)
             yield info
 
-    def get(self, key) -> Any:
+    def get(self, key: Any) -> Any:
         return self._registry.latest(key)
 
-    def subscribe(self, key, last: Optional[bool] = True) -> AsyncIterator[Any]:
+    def subscribe(self, key: Any, last: Optional[bool] = True) -> AsyncIterator[Any]:
         return self._registry.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:

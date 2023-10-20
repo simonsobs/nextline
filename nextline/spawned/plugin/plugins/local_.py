@@ -1,9 +1,10 @@
 from collections import defaultdict
+from collections.abc import Iterator
 from types import FrameType
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from apluggy import PluginManager, contextmanager
-from exceptiongroup import BaseExceptionGroup, catch
+from exceptiongroup import catch
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import RunResult, TraceArgs, TraceFunction
@@ -28,7 +29,9 @@ class LocalTraceFunc:
         self._map = defaultdict[TraceNo, TraceFunction](factory)
 
     @hookimpl
-    def local_trace_func(self, frame: FrameType, event, arg) -> Optional[TraceFunction]:
+    def local_trace_func(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunction]:
         trace_no = self._hook.hook.current_trace_no()
         local_trace_func = self._map[trace_no]
         return local_trace_func(frame, event, arg)
@@ -53,12 +56,12 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
         trace = hook.hook.create_local_trace_func()
 
         @contextmanager
-        def _context(frame, event, arg):
+        def _context(frame: FrameType, event: str, arg: Any) -> Iterator[None]:
             '''A "with" block in which "trace" is called.'''
 
             keyboard_interrupt_raised = False
 
-            def _keyboard_interrupt(exc: BaseExceptionGroup) -> None:
+            def _keyboard_interrupt(exc: BaseException) -> None:
                 nonlocal keyboard_interrupt_raised
                 keyboard_interrupt_raised = True
 
@@ -97,7 +100,7 @@ class TraceCallHandler:
 
     @hookimpl
     @contextmanager
-    def on_trace_call(self, trace_args: TraceArgs):
+    def on_trace_call(self, trace_args: TraceArgs) -> Iterator[None]:
         trace_no = self._hook.hook.current_trace_no()
         self._traces_on_call.add(trace_no)
         self._trace_args_map[trace_no] = trace_args

@@ -80,7 +80,7 @@ class TaskDoneCallback:
         while self._active:
             time.sleep(interval)
 
-    def _callback(self, task: Task, *_, **__):
+    def _callback(self, task: Task, *_: Any, **__: Any) -> None:
         """This method is given to asyncio.Task.add_done_callback()
 
         When called, this method, in turn, calls the callback function
@@ -101,16 +101,16 @@ class TaskDoneCallback:
         except BaseException as e:
             self._exceptions.append(e)
 
-    def __enter__(self):
+    def __enter__(self) -> "TaskDoneCallback":
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         self.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "TaskDoneCallback":
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         await self.aclose()
