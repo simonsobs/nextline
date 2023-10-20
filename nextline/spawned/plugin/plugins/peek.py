@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable, Iterator
-from typing import Any, TypeVar
+from typing import Any, ContextManager, TypeVar
 
 from apluggy import PluginManager, contextmanager
 
@@ -27,7 +27,7 @@ class PeekStdout:
     def _key_factory(self) -> TraceNo | None:
         return self._hook.hook.current_trace_no()
 
-    def _callback(self, trace_no: TraceNo, line: str):
+    def _callback(self, trace_no: TraceNo, line: str) -> None:
         self._hook.hook.on_write_stdout(trace_no=trace_no, line=line)
 
 
@@ -37,7 +37,7 @@ _T = TypeVar('_T')
 def peek_stdout_by_key(
     key_factory: Callable[[], _T | None],
     callback: Callable[[_T, str], Any],
-):
+) -> ContextManager[Callable[[str], int]]:
     callback_ = ReadLinesByKey(callback)
     assign_key = AssignKey(key_factory=key_factory, callback=callback_)
     return peek_stdout(assign_key)

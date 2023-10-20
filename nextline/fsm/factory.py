@@ -149,7 +149,7 @@ CONFIG = {
 }
 
 
-def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> Machine:
+def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> Machine:  # type: ignore
     MachineClass: Type[Machine]
     if markup:
         MachineClass = MarkupMachine

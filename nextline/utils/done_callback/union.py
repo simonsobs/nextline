@@ -35,16 +35,16 @@ class ThreadTaskDoneCallback:
         await self._task_callback.aclose(interval=interval)
         await to_thread(self._thread_callback.close)
 
-    def __enter__(self):
+    def __enter__(self) -> "ThreadTaskDoneCallback":
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         self.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "ThreadTaskDoneCallback":
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         await self.aclose()

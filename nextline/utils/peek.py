@@ -1,9 +1,10 @@
 import sys
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Callable, TextIO
+from typing import Any, Callable, ContextManager, TextIO
 
 
-def peek_stdout(callback: Callable[[str], Any]):
+def peek_stdout(callback: Callable[[str], Any]) -> ContextManager[Callable[[str], int]]:
     '''A context manager that executes the callback with text written to stdout.
 
     Example:
@@ -34,13 +35,15 @@ def peek_stdout(callback: Callable[[str], Any]):
     return peek_textio(sys.stdout, callback)
 
 
-def peek_stderr(callback: Callable[[str], Any]):
+def peek_stderr(callback: Callable[[str], Any]) -> ContextManager[Callable[[str], int]]:
     '''A context manager that executes the callback with text written to stderr.'''
     return peek_textio(sys.stderr, callback)
 
 
 @contextmanager
-def peek_textio(textio: TextIO, callback: Callable[[str], Any]):
+def peek_textio(
+    textio: TextIO, callback: Callable[[str], Any]
+) -> Iterator[Callable[[str], int]]:
     '''A context manager that executes the callback with text written to the textio.'''
 
     org_write = textio.write

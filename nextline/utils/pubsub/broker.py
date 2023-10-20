@@ -54,9 +54,9 @@ class PubSub(Generic[_KT, _VT]):
             _, q = self._queue.popitem()
             await q.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "PubSub[_KT, _VT]":
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
         await self.close()

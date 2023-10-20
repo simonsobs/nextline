@@ -13,7 +13,9 @@ def WithContext(
     def _create_local_trace() -> TraceFunction:
         next_trace: TraceFunction | None = trace
 
-        def _local_trace(frame, event, arg) -> Optional[TraceFunction]:
+        def _local_trace(
+            frame: FrameType, event: str, arg: Any
+        ) -> Optional[TraceFunction]:
             nonlocal next_trace
             assert next_trace
             with context(frame, event, arg):
@@ -23,7 +25,9 @@ def WithContext(
 
         return _local_trace
 
-    def _global_trace(frame: FrameType, event, arg) -> Optional[TraceFunction]:
+    def _global_trace(
+        frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunction]:
         return _create_local_trace()(frame, event, arg)
 
     return _global_trace

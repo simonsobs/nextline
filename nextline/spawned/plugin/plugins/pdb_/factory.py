@@ -1,4 +1,5 @@
 from logging import getLogger
+from typing import Any, Callable, ContextManager
 
 from apluggy import PluginManager
 
@@ -30,11 +31,11 @@ class PdbInstanceFactory:
         return self._factory()
 
 
-def Factory(hook: PluginManager):
+def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
     cmdloop_hook = CmdloopHook(hook=hook)
     prompt_func = PromptFunc(hook=hook)
 
-    def _factory():
+    def _factory() -> TraceFunction:
         stdio = StdInOut(prompt_func=prompt_func)
         pdb = CustomizedPdb(
             cmdloop_hook=cmdloop_hook,
@@ -47,10 +48,10 @@ def Factory(hook: PluginManager):
     return _factory
 
 
-def CmdloopHook(hook: PluginManager):
+def CmdloopHook(hook: PluginManager) -> Callable[[], ContextManager[Any]]:
     '''Return a context manager in which Pdb.cmdloop() is called.'''
 
-    def cmdloop():
+    def cmdloop() -> ContextManager[Any]:
         if not hook.hook.is_on_trace_call():
             raise NotOnTraceCall
         return hook.with_.on_cmdloop()

@@ -9,15 +9,15 @@ class ExcThread(Thread):
 
     """
 
-    def run(self):
+    def run(self) -> None:
         self.exc = None
         try:
             return super().run()
         except BaseException as e:
             self.exc = e
 
-    def join(self):
-        ret = super().join()
+    def join(self, timeout: float | None = None) -> None:
+        ret = super().join(timeout)
         if self.exc:
             raise self.exc
         return ret

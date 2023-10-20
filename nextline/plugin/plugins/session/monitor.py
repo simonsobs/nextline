@@ -5,8 +5,7 @@ from logging import getLogger
 from apluggy import PluginManager
 
 from nextline import spawned
-
-from ....spawned import QueueOut
+from nextline.spawned import QueueOut
 
 # from rich import print
 
@@ -17,7 +16,7 @@ class Monitor:
         self._queue = queue
         self._logger = getLogger(__name__)
 
-    async def open(self):
+    async def open(self) -> None:
         self._task = asyncio.create_task(self._monitor())
 
     async def close(self) -> None:
@@ -28,11 +27,11 @@ class Monitor:
         await asyncio.to_thread(self._queue.put, None)  # type: ignore
         await self._task
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Monitor':
         await self.open()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):  # type: ignore
         del exc_type, exc_value, traceback
         await self.close()
 

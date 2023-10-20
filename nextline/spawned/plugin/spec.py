@@ -36,7 +36,7 @@ def init(
 
 @hookspec
 @apluggy.contextmanager
-def context():
+def context():  # type: ignore
     pass
 
 
@@ -56,7 +56,9 @@ def finalize_run_result(run_result: RunResult) -> None:
 
 
 @hookspec(firstresult=True)
-def global_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunction]:
+def global_trace_func(
+    frame: FrameType, event: str, arg: Any
+) -> Optional[TraceFunction]:
     pass
 
 
@@ -75,7 +77,7 @@ def filtered(trace_args: TraceArgs) -> None:
 
 
 @hookspec(firstresult=True)
-def local_trace_func(frame: FrameType, event, arg) -> Optional[TraceFunction]:
+def local_trace_func(frame: FrameType, event: str, arg: Any) -> Optional[TraceFunction]:
     pass
 
 
@@ -90,7 +92,7 @@ def on_start_task_or_thread() -> None:
 
 
 @hookspec
-def on_end_task_or_thread(task_or_thread: Task | Thread):
+def on_end_task_or_thread(task_or_thread: Task | Thread) -> None:
     pass
 
 
@@ -121,7 +123,7 @@ def on_end_trace(trace_no: TraceNo) -> None:
 
 @hookspec
 @apluggy.contextmanager
-def on_trace_call(trace_args: TraceArgs):
+def on_trace_call(trace_args: TraceArgs):  # type: ignore
     pass
 
 
@@ -137,7 +139,7 @@ def current_trace_args() -> Optional[TraceArgs]:
 
 @hookspec
 @apluggy.contextmanager
-def on_cmdloop():
+def on_cmdloop():  # type: ignore
     pass
 
 
