@@ -246,6 +246,7 @@ async def control_trace(nextline: Nextline, trace_no):
             assert nextline.get_source(file_name)
         command = 'next'
         if s.event == 'line':
+            assert s.line_no is not None
             line = nextline.get_source_line(
                 line_no=s.line_no,
                 file_name=s.file_name,
