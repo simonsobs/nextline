@@ -5,7 +5,7 @@ from apluggy import PluginManager
 
 from .compose import CallableComposer
 from .concurrency import TaskAndThreadKeeper, TaskOrThreadToTraceMapper
-from .filter import FilerByModule, FilterByModuleName, FilterLambda
+from .filter import FilerByModule, FilterByModuleName, FilterLambda, FilterMainScript
 from .global_ import GlobalTraceFunc, TraceFuncCreator
 from .local_ import LocalTraceFunc, TraceCallHandler
 from .pdb_ import PdbInstanceFactory, Prompt
@@ -22,9 +22,10 @@ def register(hook: PluginManager) -> None:
     hook.register(LocalTraceFunc)
     hook.register(TaskOrThreadToTraceMapper)
     hook.register(TaskAndThreadKeeper)
-    hook.register(FilerByModule)
+    # hook.register(FilerByModule)
     hook.register(FilterLambda)
-    hook.register(FilterByModuleName)
+    # hook.register(FilterByModuleName)
+    hook.register(FilterMainScript)
     hook.register(GlobalTraceFunc)
     hook.register(TraceFuncCreator)
     hook.register(CallableComposer)

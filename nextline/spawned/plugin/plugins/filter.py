@@ -12,6 +12,8 @@ from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import TraceArgs
 from nextline.utils import current_task_or_thread, match_any
 
+from . import _script
+
 
 class FilterByModuleName:
     '''Skip Python modules with names that match any of the patterns.'''
@@ -39,6 +41,18 @@ class FilterLambda:
         frame = trace_args[0]
         func_name = frame.f_code.co_name
         return func_name == '<lambda>' or None
+
+
+class FilterMainScript:
+    '''Skip lambda functions.'''
+
+    @hookimpl
+    def filter(self, trace_args: TraceArgs) -> bool | None:
+        frame = trace_args[0]
+        module_name = frame.f_globals.get('__name__')
+        if _script.__name__ == module_name:
+            return False
+        return True
 
 
 class FilerByModule:
