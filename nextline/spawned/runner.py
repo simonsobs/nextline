@@ -25,7 +25,7 @@ def _compile_and_run(hook: PluginManager) -> RunResult:
         return RunResult(ret=None, exc=exc)
     trace_func = hook.hook.create_trace_func()
     try:
-        with sys_trace(trace_func=trace_func, thread=False):
+        with sys_trace(trace_func=trace_func):
             ret = func()
         return RunResult(ret=ret, exc=None)
     except BaseException as exc:
