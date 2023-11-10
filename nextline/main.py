@@ -1,13 +1,10 @@
 import asyncio
 import linecache
 import reprlib
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import getLogger
-from pathlib import Path
-from types import CodeType
 from typing import Any, Optional
-
 
 from .continuous import Continuous
 from .fsm import Machine
@@ -130,16 +127,9 @@ class Nextline:
         '''Return value of the last run. None unless the statement is a callable.'''
         return self._machine.result()
 
-    async def reset(
-        self,
-        statement: str | Path | CodeType | Callable[[], Any] | None = None,
-        run_no_start_from: Optional[int] = None,
-    ) -> None:
+    async def reset(self, reset_options: Optional[ResetOptions] = None) -> None:
         """Prepare for the next run"""
-        reset_options = ResetOptions(
-            statement=statement,
-            run_no_start_from=run_no_start_from,
-        )
+        reset_options = reset_options or ResetOptions()
         await self._machine.reset(  # type: ignore
             reset_options=reset_options,
         )
