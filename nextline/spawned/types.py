@@ -27,6 +27,7 @@ class RunArg:
     run_no: RunNo
     statement: Statement
     filename: Optional[str] = None
+    trace_threads: bool = True
 
 
 @dataclass

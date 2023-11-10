@@ -22,6 +22,7 @@ class RunArgComposer:
         self._run_no_count = RunNoCounter(init_options.run_no_start_from)
         self._statement = init_options.statement
         self._filename = SCRIPT_FILE_NAME
+        self._trace_threads = init_options.trace_threads
 
     @hookimpl
     async def start(self) -> None:
@@ -43,6 +44,8 @@ class RunArgComposer:
             )
         if (run_no_start_from := reset_options.run_no_start_from) is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
+        if (trace_threads := reset_options.trace_threads) is not None:
+            self._trace_threads = trace_threads
 
     @hookimpl
     def compose_run_arg(self) -> RunArg:
@@ -50,5 +53,6 @@ class RunArgComposer:
             run_no=self._run_no_count(),
             statement=self._statement,
             filename=self._filename,
+            trace_threads=self._trace_threads,
         )
         return run_arg

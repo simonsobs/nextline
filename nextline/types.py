@@ -27,12 +27,14 @@ class InitOptions:
     statement: Statement
     run_no_start_from: int = 1
     timeout_on_exit: float = 3  # in seconds
+    trace_threads: bool = True
 
 
 @dataclasses.dataclass
 class ResetOptions:
     statement: Optional[Statement] = None
     run_no_start_from: Optional[int] = None
+    trace_threads: Optional[bool] = None
 
 
 @dataclasses.dataclass(frozen=True)
