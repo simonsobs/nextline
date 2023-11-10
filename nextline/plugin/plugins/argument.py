@@ -1,4 +1,3 @@
-
 from apluggy import PluginManager
 
 from nextline.count import RunNoCounter
@@ -36,15 +35,13 @@ class RunArgComposer:
         self,
         reset_options: ResetOptions,
     ) -> None:
-        statement = reset_options.statement
-        if statement is not None:
+        if (statement := reset_options.statement) is not None:
             self._statement = statement
             await self._hook.ahook.on_change_script(
                 script=self._statement,
                 filename=self._filename,
             )
-        run_no_start_from = reset_options.run_no_start_from
-        if run_no_start_from is not None:
+        if (run_no_start_from := reset_options.run_no_start_from) is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)
 
     @hookimpl
