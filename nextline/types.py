@@ -28,7 +28,7 @@ class InitOptions:
     run_no_start_from: int = 1
     timeout_on_exit: float = 3  # in seconds
     trace_threads: bool = False
-    trace_modules: bool = True
+    trace_modules: bool = False
 
 
 @dataclasses.dataclass
