@@ -32,40 +32,16 @@ class Nextline:
     Nextline supports concurrency with threading and asyncio. It uses multiple
     instances of Pdb, one for each thread and async task.
 
-
-    Parameters
-    ----------
-    statement : str or Path or CodeType or Callable[[], Any]
-        A Python code as a str, a Path object that points to a Python script,
-        a CodeType object, or a callable with no arguments. It must be
-        picklable.
-    run_no_start_from : int, optional
-        The first run number. The default is 1.
-    timeout_on_exit : float, optional
-        The timeout in seconds to wait for the nextline to exit from the "with"
-        block. The default is 3.
-
     '''
 
-    def __init__(
-        self,
-        statement: str | Path | CodeType | Callable[[], Any],
-        run_no_start_from: int = 1,
-        timeout_on_exit: float = 3,
-    ):
+    def __init__(self, init_options: InitOptions):
         logger = getLogger(__name__)
-        logger.debug(f'statement: {reprlib.repr(statement)}')
-        logger.debug(f"The run number starts from {run_no_start_from}")
+        logger.debug(f'init_options: {reprlib.repr(init_options)}')
 
         self._continuous = Continuous(self)
 
-        init_options = InitOptions(
-            statement=statement,
-            run_no_start_from=run_no_start_from,
-        )
-
         self._machine = Machine(init_options=init_options)
-        self._timeout_on_exit = timeout_on_exit
+        self._timeout_on_exit = init_options.timeout_on_exit
         self._registry = self._machine.registry
 
         self._started = False

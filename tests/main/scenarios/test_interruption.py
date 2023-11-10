@@ -2,11 +2,12 @@ import asyncio
 import dataclasses
 import datetime
 from collections import deque
+from collections.abc import AsyncIterator
 from functools import partial
 
 import pytest
 
-from nextline import Nextline
+from nextline import InitOptions, Nextline, Statement
 from nextline.types import RunInfo, RunNo
 
 from .funcs import replace_with_bool
@@ -98,8 +99,9 @@ async def control(nextline: Nextline):
 
 
 @pytest.fixture
-async def nextline(statement):
-    async with Nextline(statement) as y:
+async def nextline(statement: Statement) -> AsyncIterator[Nextline]:
+    init_options = InitOptions(statement=statement)
+    async with Nextline(init_options=init_options) as y:
         yield y
 
 

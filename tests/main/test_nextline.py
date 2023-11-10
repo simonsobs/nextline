@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from nextline import Nextline
+from nextline import InitOptions, Nextline
 
 SOURCE = """
 import time
@@ -19,12 +19,14 @@ def test_init_sync():
     '''Assert the init without the running loop.'''
     with pytest.raises(RuntimeError):
         asyncio.get_running_loop()
-    nextline = Nextline(SOURCE)
+    init_options = InitOptions(statement=SOURCE)
+    nextline = Nextline(init_options=init_options)
     assert nextline
 
 
-async def test_repr():
-    nextline = Nextline(SOURCE)
+async def test_repr() -> None:
+    init_options = InitOptions(statement=SOURCE)
+    nextline = Nextline(init_options=init_options)
     assert repr(nextline)
     async with nextline:
         assert repr(nextline)
@@ -32,7 +34,8 @@ async def test_repr():
 
 
 async def test_one() -> None:
-    async with Nextline(SOURCE) as nextline:
+    init_options = InitOptions(statement=SOURCE)
+    async with Nextline(init_options=init_options) as nextline:
         async with nextline.run_session():
             async for prompt in nextline.prompts():
                 await nextline.send_pdb_command(
@@ -53,8 +56,9 @@ async def test_timeout(machine: Mock):
         await asyncio.sleep(5)
 
     machine.close.side_effect = close
+    init_options = InitOptions(statement=SOURCE, timeout_on_exit=0.01)
     with pytest.raises(asyncio.TimeoutError):
-        async with Nextline(SOURCE, timeout_on_exit=0.01):
+        async with Nextline(init_options=init_options):
             pass
 
 
