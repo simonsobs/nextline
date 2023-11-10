@@ -26,9 +26,9 @@ A statement can be one of the following types:
 class InitOptions:
     statement: Statement
     run_no_start_from: int = 1
-    timeout_on_exit: float = 3  # in seconds
     trace_threads: bool = False
     trace_modules: bool = False
+    timeout_on_exit: float = 3  # in seconds
 
 
 @dataclasses.dataclass
