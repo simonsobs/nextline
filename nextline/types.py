@@ -1,12 +1,30 @@
 import dataclasses
 import datetime
-from typing import NewType, Optional
+from collections.abc import Callable
+from pathlib import Path
+from types import CodeType
+from typing import Any, NewType, Optional
 
 RunNo = NewType("RunNo", int)
 TraceNo = NewType("TraceNo", int)
 ThreadNo = NewType("ThreadNo", int)
 TaskNo = NewType("TaskNo", int)
 PromptNo = NewType("PromptNo", int)
+
+Statement = str | Path | CodeType | Callable[[], Any]
+
+
+@dataclasses.dataclass
+class InitOptions:
+    statement: Statement
+    run_no_start_from: int = 1
+    timeout_on_exit: float = 3  # in seconds
+
+
+@dataclasses.dataclass
+class ResetOptions:
+    statement: Optional[Statement] = None
+    run_no_start_from: Optional[int] = None
 
 
 @dataclasses.dataclass(frozen=True)

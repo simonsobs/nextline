@@ -8,13 +8,16 @@ from pathlib import Path
 from types import CodeType
 from typing import Any, Optional
 
+
 from .continuous import Continuous
 from .fsm import Machine
 from .spawned import PdbCommand
 from .types import (
+    InitOptions,
     PromptInfo,
     PromptNo,
     PromptNotice,
+    ResetOptions,
     RunInfo,
     StdoutInfo,
     TraceInfo,
@@ -56,10 +59,12 @@ class Nextline:
 
         self._continuous = Continuous(self)
 
-        self._machine = Machine(
-            run_no_start_from=run_no_start_from,
+        init_options = InitOptions(
             statement=statement,
+            run_no_start_from=run_no_start_from,
         )
+
+        self._machine = Machine(init_options=init_options)
         self._timeout_on_exit = timeout_on_exit
         self._registry = self._machine.registry
 
@@ -155,9 +160,12 @@ class Nextline:
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""
-        await self._machine.reset(  # type: ignore
+        reset_options = ResetOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
+        )
+        await self._machine.reset(  # type: ignore
+            reset_options=reset_options,
         )
 
     @property

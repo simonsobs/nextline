@@ -1,10 +1,12 @@
 import asyncio
+from logging import getLogger
 from typing import Any, Optional
 
 from transitions import EventData
 
 from nextline.plugin import build_hook
-from nextline.spawned import Command, Statement
+from nextline.spawned import Command
+from nextline.types import InitOptions, ResetOptions
 from nextline.utils.pubsub.broker import PubSub
 
 from .factory import build_state_machine
@@ -13,14 +15,11 @@ from .factory import build_state_machine
 class Machine:
     '''The finite state machine of the nextline states.'''
 
-    def __init__(self, run_no_start_from: int, statement: Statement):
+    def __init__(self, init_options: InitOptions):
         self.registry = PubSub[Any, Any]()
         self._hook = build_hook()
         self._hook.hook.init(
-            hook=self._hook,
-            registry=self.registry,
-            run_no_start_from=run_no_start_from,
-            statement=statement,
+            hook=self._hook, registry=self.registry, init_options=init_options
         )
 
         self._machine = build_state_machine(model=self)
@@ -90,8 +89,14 @@ class Machine:
         await self._hook.ahook.close()
 
     async def on_reset(self, event: EventData) -> None:
-        # TODO: Check the arguments
-        await self._hook.ahook.reset(*event.args, **event.kwargs)
+        logger = getLogger(__name__)
+        if args := list(event.args):
+            logger.warning(f'Unexpected args: {args!r}')
+        kwargs = event.kwargs
+        reset_options: ResetOptions = kwargs.pop('reset_options')
+        if kwargs:
+            logger.warning(f'Unexpected kwargs: {kwargs!r}')
+        await self._hook.ahook.reset(reset_options=reset_options)
 
     async def __aenter__(self) -> 'Machine':
         await self.initialize()  # type: ignore

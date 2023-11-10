@@ -3,6 +3,7 @@ from typing import Any, Callable, Optional
 import apluggy
 
 from nextline import spawned
+from nextline.types import InitOptions, ResetOptions
 from nextline.utils import ExitedProcess, RunningProcess
 from nextline.utils.pubsub.broker import PubSub
 
@@ -15,10 +16,7 @@ hookimpl = apluggy.HookimplMarker(PROJECT_NAME)
 
 @hookspec
 def init(
-    hook: apluggy.PluginManager,
-    registry: PubSub,
-    run_no_start_from: int,
-    statement: spawned.Statement,
+    hook: apluggy.PluginManager, registry: PubSub, init_options: InitOptions
 ) -> None:
     pass
 
@@ -34,10 +32,7 @@ async def close(exc_type=None, exc_value=None, traceback=None) -> None:  # type:
 
 
 @hookspec
-async def reset(
-    run_no_start_from: Optional[int],
-    statement: Optional[spawned.Statement],
-) -> None:
+async def reset(reset_options: ResetOptions) -> None:
     pass
 
 
