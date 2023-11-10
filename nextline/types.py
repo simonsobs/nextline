@@ -1,12 +1,42 @@
 import dataclasses
 import datetime
-from typing import NewType, Optional
+from collections.abc import Callable
+from pathlib import Path
+from types import CodeType
+from typing import Any, NewType, Optional
 
 RunNo = NewType("RunNo", int)
 TraceNo = NewType("TraceNo", int)
 ThreadNo = NewType("ThreadNo", int)
 TaskNo = NewType("TaskNo", int)
 PromptNo = NewType("PromptNo", int)
+
+Statement = str | Path | CodeType | Callable[[], Any]
+'''Type alias for a statement.
+
+A statement can be one of the following types:
+- str: A string of Python code.
+- Path: A pathlib.Path object representing the location of a Python script.
+- CodeType: A compiled code object.
+- Callable[[], Any]: A no-argument function that returns any type.
+'''
+
+
+@dataclasses.dataclass
+class InitOptions:
+    statement: Statement
+    run_no_start_from: int = 1
+    trace_threads: bool = False
+    trace_modules: bool = False
+    timeout_on_exit: float = 3  # in seconds
+
+
+@dataclasses.dataclass
+class ResetOptions:
+    statement: Optional[Statement] = None
+    run_no_start_from: Optional[int] = None
+    trace_threads: Optional[bool] = None
+    trace_modules: Optional[bool] = None
 
 
 @dataclasses.dataclass(frozen=True)

@@ -1,20 +1,20 @@
 import asyncio
 import linecache
 import reprlib
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import getLogger
-from pathlib import Path
-from types import CodeType
 from typing import Any, Optional
 
 from .continuous import Continuous
 from .fsm import Machine
 from .spawned import PdbCommand
 from .types import (
+    InitOptions,
     PromptInfo,
     PromptNo,
     PromptNotice,
+    ResetOptions,
     RunInfo,
     StdoutInfo,
     TraceInfo,
@@ -29,38 +29,16 @@ class Nextline:
     Nextline supports concurrency with threading and asyncio. It uses multiple
     instances of Pdb, one for each thread and async task.
 
-
-    Parameters
-    ----------
-    statement : str or Path or CodeType or Callable[[], Any]
-        A Python code as a str, a Path object that points to a Python script,
-        a CodeType object, or a callable with no arguments. It must be
-        picklable.
-    run_no_start_from : int, optional
-        The first run number. The default is 1.
-    timeout_on_exit : float, optional
-        The timeout in seconds to wait for the nextline to exit from the "with"
-        block. The default is 3.
-
     '''
 
-    def __init__(
-        self,
-        statement: str | Path | CodeType | Callable[[], Any],
-        run_no_start_from: int = 1,
-        timeout_on_exit: float = 3,
-    ):
+    def __init__(self, init_options: InitOptions):
         logger = getLogger(__name__)
-        logger.debug(f'statement: {reprlib.repr(statement)}')
-        logger.debug(f"The run number starts from {run_no_start_from}")
+        logger.debug(f'init_options: {reprlib.repr(init_options)}')
 
         self._continuous = Continuous(self)
 
-        self._machine = Machine(
-            run_no_start_from=run_no_start_from,
-            statement=statement,
-        )
-        self._timeout_on_exit = timeout_on_exit
+        self._machine = Machine(init_options=init_options)
+        self._timeout_on_exit = init_options.timeout_on_exit
         self._registry = self._machine.registry
 
         self._started = False
@@ -149,15 +127,11 @@ class Nextline:
         '''Return value of the last run. None unless the statement is a callable.'''
         return self._machine.result()
 
-    async def reset(
-        self,
-        statement: str | Path | CodeType | Callable[[], Any] | None = None,
-        run_no_start_from: Optional[int] = None,
-    ) -> None:
+    async def reset(self, reset_options: Optional[ResetOptions] = None) -> None:
         """Prepare for the next run"""
+        reset_options = reset_options or ResetOptions()
         await self._machine.reset(  # type: ignore
-            statement=statement,
-            run_no_start_from=run_no_start_from,
+            reset_options=reset_options,
         )
 
     @property

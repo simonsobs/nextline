@@ -12,12 +12,12 @@ from .types import QueueIn, QueueOut, RunArg, RunResult
 def run(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> RunResult:
     hook = Hook(run_arg=run_arg, queue_in=queue_in, queue_out=queue_out)
     with hook.with_.context():
-        result = _compile_and_run(hook=hook)
+        result = _compile_and_run(hook=hook, run_arg=run_arg)
         hook.hook.finalize_run_result(run_result=result)
         return result
 
 
-def _compile_and_run(hook: PluginManager) -> RunResult:
+def _compile_and_run(hook: PluginManager, run_arg: RunArg) -> RunResult:
     try:
         func = hook.hook.compose_callable()
     except BaseException as exc:
@@ -25,7 +25,7 @@ def _compile_and_run(hook: PluginManager) -> RunResult:
         return RunResult(ret=None, exc=exc)
     trace_func = hook.hook.create_trace_func()
     try:
-        with sys_trace(trace_func=trace_func, thread=False):
+        with sys_trace(trace_func=trace_func, thread=run_arg.trace_threads):
             ret = func()
         return RunResult(ret=ret, exc=None)
     except BaseException as exc:

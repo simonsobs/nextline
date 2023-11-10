@@ -13,7 +13,7 @@ def Hook(run_arg: RunArg, queue_in: QueueIn, queue_out: QueueOut) -> PluginManag
     hook = PluginManager(spec.PROJECT_NAME)
     hook.add_hookspecs(spec)
 
-    plugins.register(hook)
+    plugins.register(hook=hook, run_arg=run_arg)
 
     logger = getLogger(__name__)
 

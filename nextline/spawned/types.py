@@ -1,12 +1,11 @@
 import json
 import traceback
 from dataclasses import dataclass, field
-from pathlib import Path
 from queue import Queue
-from types import CodeType, FrameType
+from types import FrameType
 from typing import Any, Callable, Optional
 
-from nextline.types import RunNo
+from nextline.types import RunNo, Statement
 
 from .commands import Command
 from .events import Event
@@ -22,14 +21,14 @@ TraceArgs = tuple[FrameType, str, Any]
 QueueIn = Queue[Command]
 QueueOut = Queue[Event]
 
-Statement = str | Path | CodeType | Callable[[], Any]
-
 
 @dataclass
 class RunArg:
     run_no: RunNo
     statement: Statement
     filename: Optional[str] = None
+    trace_threads: bool = True
+    trace_modules: bool = True
 
 
 @dataclass
