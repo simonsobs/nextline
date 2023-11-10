@@ -12,6 +12,14 @@ TaskNo = NewType("TaskNo", int)
 PromptNo = NewType("PromptNo", int)
 
 Statement = str | Path | CodeType | Callable[[], Any]
+'''Type alias for a statement.
+
+A statement can be one of the following types:
+- str: A string of Python code.
+- Path: A pathlib.Path object representing the location of a Python script.
+- CodeType: A compiled code object.
+- Callable[[], Any]: A no-argument function that returns any type.
+'''
 
 
 @dataclasses.dataclass
