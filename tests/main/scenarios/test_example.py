@@ -288,7 +288,7 @@ def extract_comment(line: str) -> Optional[str]:
 
 @pytest.fixture
 async def nextline(statement: Statement) -> AsyncIterator[Nextline]:
-    init_options = InitOptions(statement=statement)
+    init_options = InitOptions(statement=statement, trace_threads=True)
     async with Nextline(init_options=init_options) as y:
         yield y
 
