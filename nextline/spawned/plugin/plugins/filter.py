@@ -44,7 +44,7 @@ class FilterLambda:
 
 
 class FilterMainScript:
-    '''Skip lambda functions.'''
+    '''Accept only the main script.'''
 
     @hookimpl
     def filter(self, trace_args: TraceArgs) -> bool | None:
