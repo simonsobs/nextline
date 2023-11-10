@@ -23,6 +23,7 @@ class RunArgComposer:
         self._statement = init_options.statement
         self._filename = SCRIPT_FILE_NAME
         self._trace_threads = init_options.trace_threads
+        self._trace_modules = init_options.trace_modules
 
     @hookimpl
     async def start(self) -> None:
@@ -46,6 +47,8 @@ class RunArgComposer:
             self._run_no_count = RunNoCounter(run_no_start_from)
         if (trace_threads := reset_options.trace_threads) is not None:
             self._trace_threads = trace_threads
+        if (trace_modules := reset_options.trace_modules) is not None:
+            self._trace_modules = trace_modules
 
     @hookimpl
     def compose_run_arg(self) -> RunArg:
@@ -54,5 +57,6 @@ class RunArgComposer:
             statement=self._statement,
             filename=self._filename,
             trace_threads=self._trace_threads,
+            trace_modules=self._trace_modules,
         )
         return run_arg

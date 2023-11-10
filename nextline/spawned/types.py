@@ -28,6 +28,7 @@ class RunArg:
     statement: Statement
     filename: Optional[str] = None
     trace_threads: bool = True
+    trace_modules: bool = True
 
 
 @dataclass
