@@ -2,7 +2,7 @@ import asyncio
 import dataclasses
 import datetime
 from collections import Counter, deque
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import Sequence
 from functools import partial
 from itertools import groupby
 from operator import attrgetter
@@ -11,7 +11,7 @@ from typing import Any, Optional
 
 import pytest
 
-from nextline import InitOptions, Nextline, Statement
+from nextline import Nextline
 from nextline.types import RunInfo, RunNo
 from nextline.utils import agen_with_wait
 
@@ -287,11 +287,8 @@ def extract_comment(line: str) -> Optional[str]:
 
 
 @pytest.fixture
-async def nextline(statement: Statement) -> AsyncIterator[Nextline]:
-    init_options = InitOptions(
-        statement=statement, trace_threads=True, trace_modules=True
-    )
-    async with Nextline(init_options=init_options) as y:
+async def nextline(statement):
+    async with Nextline(statement) as y:
         yield y
 
 

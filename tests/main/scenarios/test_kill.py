@@ -1,9 +1,8 @@
 import asyncio
-from collections.abc import AsyncIterator
 
 import pytest
 
-from nextline import InitOptions, Nextline, Statement
+from nextline import Nextline
 
 STATEMENT = """
 import time
@@ -46,9 +45,8 @@ async def control(nextline: Nextline):
 
 
 @pytest.fixture
-async def nextline(statement: Statement) -> AsyncIterator[Nextline]:
-    init_options = InitOptions(statement=statement)
-    async with Nextline(init_options=init_options) as y:
+async def nextline(statement):
+    async with Nextline(statement) as y:
         yield y
 
 
