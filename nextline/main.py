@@ -1,13 +1,10 @@
 import asyncio
 import linecache
 import reprlib
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import getLogger
-from pathlib import Path
-from types import CodeType
 from typing import Any, Optional
-
 
 from .continuous import Continuous
 from .fsm import Machine
@@ -19,6 +16,7 @@ from .types import (
     PromptNotice,
     ResetOptions,
     RunInfo,
+    Statement,
     StdoutInfo,
     TraceInfo,
     TraceNo,
@@ -49,7 +47,7 @@ class Nextline:
 
     def __init__(
         self,
-        statement: str | Path | CodeType | Callable[[], Any],
+        statement: Statement,
         run_no_start_from: int = 1,
         timeout_on_exit: float = 3,
     ):
@@ -156,7 +154,7 @@ class Nextline:
 
     async def reset(
         self,
-        statement: str | Path | CodeType | Callable[[], Any] | None = None,
+        statement: Optional[Statement] = None,
         run_no_start_from: Optional[int] = None,
     ) -> None:
         """Prepare for the next run"""
