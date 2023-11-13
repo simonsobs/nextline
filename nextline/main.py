@@ -16,6 +16,7 @@ from .types import (
     PromptNotice,
     ResetOptions,
     RunInfo,
+    Statement,
     StdoutInfo,
     TraceInfo,
     TraceNo,
@@ -29,16 +30,49 @@ class Nextline:
     Nextline supports concurrency with threading and asyncio. It uses multiple
     instances of Pdb, one for each thread and async task.
 
+
+    Parameters
+    ----------
+    statement : str or Path or CodeType or Callable[[], Any]
+        A Python code as a str, a Path object that points to a Python script,
+        a CodeType object, or a callable with no arguments. It must be
+        picklable.
+    run_no_start_from : int, optional
+        The first run number. The default is 1.
+    trace_threads : bool, optional
+        The default is False. If False, trace only the main thread. If True,
+        trace all threads.
+    trace_modules : bool, optional
+        The default is False. If False, trace only the statement. If True,
+        trace imported modules as well.
+    timeout_on_exit : float, optional
+        The timeout in seconds to wait for the nextline to exit from the "with"
+        block. The default is 3.
+
     '''
 
-    def __init__(self, init_options: InitOptions):
+    def __init__(
+        self,
+        statement: Statement,
+        run_no_start_from: int = 1,
+        trace_threads: bool = False,
+        trace_modules: bool = False,
+        timeout_on_exit: float = 3,
+    ):
+        self._continuous = Continuous(self)
+
+        init_options = InitOptions(
+            statement=statement,
+            run_no_start_from=run_no_start_from,
+            trace_threads=trace_threads,
+            trace_modules=trace_modules,
+        )
+
         logger = getLogger(__name__)
         logger.debug(f'init_options: {reprlib.repr(init_options)}')
 
-        self._continuous = Continuous(self)
-
         self._machine = Machine(init_options=init_options)
-        self._timeout_on_exit = init_options.timeout_on_exit
+        self._timeout_on_exit = timeout_on_exit
         self._registry = self._machine.registry
 
         self._started = False
@@ -127,9 +161,22 @@ class Nextline:
         '''Return value of the last run. None unless the statement is a callable.'''
         return self._machine.result()
 
-    async def reset(self, reset_options: Optional[ResetOptions] = None) -> None:
+    async def reset(
+        self,
+        statement: Optional[Statement] = None,
+        run_no_start_from: Optional[int] = None,
+        trace_threads: Optional[bool] = None,
+        trace_modules: Optional[bool] = None,
+    ) -> None:
         """Prepare for the next run"""
-        reset_options = reset_options or ResetOptions()
+        reset_options = ResetOptions(
+            statement=statement,
+            run_no_start_from=run_no_start_from,
+            trace_threads=trace_threads,
+            trace_modules=trace_modules,
+        )
+        logger = getLogger(__name__)
+        logger.debug(f'reset_options: {reprlib.repr(reset_options)}')
         await self._machine.reset(  # type: ignore
             reset_options=reset_options,
         )
