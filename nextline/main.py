@@ -39,6 +39,12 @@ class Nextline:
         picklable.
     run_no_start_from : int, optional
         The first run number. The default is 1.
+    trace_threads : bool, optional
+        The default is False. If False, trace only the main thread. If True,
+        trace all threads.
+    trace_modules : bool, optional
+        The default is False. If False, trace only the statement. If True,
+        trace imported modules as well.
     timeout_on_exit : float, optional
         The timeout in seconds to wait for the nextline to exit from the "with"
         block. The default is 3.
@@ -49,18 +55,21 @@ class Nextline:
         self,
         statement: Statement,
         run_no_start_from: int = 1,
+        trace_threads: bool = False,
+        trace_modules: bool = False,
         timeout_on_exit: float = 3,
     ):
-        logger = getLogger(__name__)
-        logger.debug(f'statement: {reprlib.repr(statement)}')
-        logger.debug(f"The run number starts from {run_no_start_from}")
-
         self._continuous = Continuous(self)
 
         init_options = InitOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
+            trace_threads=trace_threads,
+            trace_modules=trace_modules,
         )
+
+        logger = getLogger(__name__)
+        logger.debug(f'init_options: {reprlib.repr(init_options)}')
 
         self._machine = Machine(init_options=init_options)
         self._timeout_on_exit = timeout_on_exit
@@ -156,12 +165,18 @@ class Nextline:
         self,
         statement: Optional[Statement] = None,
         run_no_start_from: Optional[int] = None,
+        trace_threads: Optional[bool] = None,
+        trace_modules: Optional[bool] = None,
     ) -> None:
         """Prepare for the next run"""
         reset_options = ResetOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
+            trace_threads=trace_threads,
+            trace_modules=trace_modules,
         )
+        logger = getLogger(__name__)
+        logger.debug(f'reset_options: {reprlib.repr(reset_options)}')
         await self._machine.reset(  # type: ignore
             reset_options=reset_options,
         )
