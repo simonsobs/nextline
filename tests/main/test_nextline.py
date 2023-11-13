@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from nextline import InitOptions, Nextline, ResetOptions
+from nextline import InitOptions, Nextline
 
 SOURCE = """
 import time
@@ -43,8 +43,7 @@ async def test_one() -> None:
                 )
         nextline.exception()
         await nextline.reset()
-        reset_options = ResetOptions(statement=SOURCE_TWO, run_no_start_from=5)
-        await nextline.reset(reset_options=reset_options)
+        await nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
         async with nextline.run_session():
             async for prompt in nextline.prompts():
                 await nextline.send_pdb_command(
