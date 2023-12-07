@@ -15,11 +15,10 @@ from .factory import build_state_machine
 class Machine:
     '''The finite state machine of the nextline states.'''
 
-    def __init__(self, init_options: InitOptions):
-        self.registry = PubSub[Any, Any]()
+    def __init__(self, init_options: InitOptions, registry: PubSub[Any, Any]):
         self._hook = build_hook()
         self._hook.hook.init(
-            hook=self._hook, registry=self.registry, init_options=init_options
+            hook=self._hook, registry=registry, init_options=init_options
         )
 
         self._machine = build_state_machine(model=self)
@@ -85,7 +84,6 @@ class Machine:
         return self._hook.hook.result()
 
     async def on_enter_closed(self, _: EventData) -> None:
-        await self.registry.close()
         await self._hook.ahook.close()
 
     async def on_reset(self, event: EventData) -> None:

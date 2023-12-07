@@ -21,6 +21,7 @@ from .types import (
     TraceNo,
 )
 from .utils import merge_aiters
+from .utils.pubsub.broker import PubSub
 
 
 class Nextline:
@@ -70,9 +71,11 @@ class Nextline:
         logger = getLogger(__name__)
         logger.debug(f'self._init_options: {self._init_options}')
 
-        self._machine = Machine(init_options=self._init_options)
+        self._registry = PubSub[Any, Any]()
+        self._machine = Machine(
+            init_options=self._init_options, registry=self._registry
+        )
         self._timeout_on_exit = timeout_on_exit
-        self._registry = self._machine.registry
 
         self._started = False
         self._closed = False
@@ -92,6 +95,7 @@ class Nextline:
         if self._closed:
             return
         self._closed = True
+        await self._registry.close()
         await self._machine.close()  # type: ignore
         await self._continuous.close()
 
