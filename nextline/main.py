@@ -59,24 +59,15 @@ class Nextline:
         trace_modules: bool = False,
         timeout_on_exit: float = 3,
     ):
-        self._continuous = Continuous(self)
-
         self._init_options = InitOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
             trace_threads=trace_threads,
             trace_modules=trace_modules,
         )
-
-        logger = getLogger(__name__)
-        logger.debug(f'self._init_options: {self._init_options}')
-
+        self._continuous = Continuous(self)
         self._registry = PubSub[Any, Any]()
-        self._machine = Machine(
-            init_options=self._init_options, registry=self._registry
-        )
         self._timeout_on_exit = timeout_on_exit
-
         self._started = False
         self._closed = False
 
@@ -88,6 +79,11 @@ class Nextline:
         if self._started:
             return
         self._started = True
+        logger = getLogger(__name__)
+        logger.debug(f'self._init_options: {self._init_options}')
+        self._machine = Machine(
+            init_options=self._init_options, registry=self._registry
+        )
         await self._continuous.start()
         await self._machine.initialize()  # type: ignore
 
