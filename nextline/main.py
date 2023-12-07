@@ -1,6 +1,5 @@
 import asyncio
 import linecache
-import reprlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import getLogger
@@ -69,7 +68,7 @@ class Nextline:
         )
 
         logger = getLogger(__name__)
-        logger.debug(f'self._init_options: {reprlib.repr(self._init_options)}')
+        logger.debug(f'self._init_options: {self._init_options}')
 
         self._machine = Machine(init_options=self._init_options)
         self._timeout_on_exit = timeout_on_exit
@@ -176,7 +175,7 @@ class Nextline:
             trace_modules=trace_modules,
         )
         logger = getLogger(__name__)
-        logger.debug(f'reset_options: {reprlib.repr(reset_options)}')
+        logger.debug(f'reset_options: {reset_options}')
         await self._machine.reset(  # type: ignore
             reset_options=reset_options,
         )
