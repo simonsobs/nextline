@@ -61,7 +61,7 @@ class Nextline:
     ):
         self._continuous = Continuous(self)
 
-        init_options = InitOptions(
+        self._init_options = InitOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
             trace_threads=trace_threads,
@@ -69,9 +69,9 @@ class Nextline:
         )
 
         logger = getLogger(__name__)
-        logger.debug(f'init_options: {reprlib.repr(init_options)}')
+        logger.debug(f'self._init_options: {reprlib.repr(self._init_options)}')
 
-        self._machine = Machine(init_options=init_options)
+        self._machine = Machine(init_options=self._init_options)
         self._timeout_on_exit = timeout_on_exit
         self._registry = self._machine.registry
 
