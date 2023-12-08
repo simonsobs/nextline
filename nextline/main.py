@@ -1,6 +1,5 @@
 import asyncio
 import linecache
-import reprlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import getLogger
@@ -22,6 +21,7 @@ from .types import (
     TraceNo,
 )
 from .utils import merge_aiters
+from .utils.pubsub.broker import PubSub
 
 
 class Nextline:
@@ -59,22 +59,15 @@ class Nextline:
         trace_modules: bool = False,
         timeout_on_exit: float = 3,
     ):
-        self._continuous = Continuous(self)
-
-        init_options = InitOptions(
+        self._init_options = InitOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
             trace_threads=trace_threads,
             trace_modules=trace_modules,
         )
-
-        logger = getLogger(__name__)
-        logger.debug(f'init_options: {reprlib.repr(init_options)}')
-
-        self._machine = Machine(init_options=init_options)
+        self._continuous = Continuous(self)
+        self._registry = PubSub[Any, Any]()
         self._timeout_on_exit = timeout_on_exit
-        self._registry = self._machine.registry
-
         self._started = False
         self._closed = False
 
@@ -86,6 +79,11 @@ class Nextline:
         if self._started:
             return
         self._started = True
+        logger = getLogger(__name__)
+        logger.debug(f'self._init_options: {self._init_options}')
+        self._machine = Machine(
+            init_options=self._init_options, registry=self._registry
+        )
         await self._continuous.start()
         await self._machine.initialize()  # type: ignore
 
@@ -93,6 +91,7 @@ class Nextline:
         if self._closed:
             return
         self._closed = True
+        await self._registry.close()
         await self._machine.close()  # type: ignore
         await self._continuous.close()
 
@@ -176,7 +175,7 @@ class Nextline:
             trace_modules=trace_modules,
         )
         logger = getLogger(__name__)
-        logger.debug(f'reset_options: {reprlib.repr(reset_options)}')
+        logger.debug(f'reset_options: {reset_options}')
         await self._machine.reset(  # type: ignore
             reset_options=reset_options,
         )
