@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from .continuous import Continuous
 from .fsm import Machine
+from .plugin import build_hook
 from .spawned import PdbCommand
 from .types import (
     InitOptions,
@@ -70,6 +71,7 @@ class Nextline:
         self._timeout_on_exit = timeout_on_exit
         self._started = False
         self._closed = False
+        self._hook = build_hook()
 
     def __repr__(self) -> str:
         # e.g., "<Nextline 'running'>"
@@ -81,7 +83,10 @@ class Nextline:
         self._started = True
         logger = getLogger(__name__)
         logger.debug(f'self._init_options: {self._init_options}')
-        self._machine = Machine(init_options=self._init_options, registry=self._pubsub)
+        self._hook.hook.init(
+            hook=self._hook, registry=self._pubsub, init_options=self._init_options
+        )
+        self._machine = Machine(hook=self._hook)
         await self._continuous.start()
         await self._machine.initialize()  # type: ignore
 

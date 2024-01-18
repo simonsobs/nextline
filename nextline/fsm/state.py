@@ -2,12 +2,11 @@ import asyncio
 from logging import getLogger
 from typing import Any, Optional
 
+import apluggy
 from transitions import EventData
 
-from nextline.plugin import build_hook
 from nextline.spawned import Command
-from nextline.types import InitOptions, ResetOptions
-from nextline.utils.pubsub.broker import PubSub
+from nextline.types import ResetOptions
 
 from .factory import build_state_machine
 
@@ -15,15 +14,10 @@ from .factory import build_state_machine
 class Machine:
     '''The finite state machine of the nextline states.'''
 
-    def __init__(self, init_options: InitOptions, registry: PubSub[Any, Any]):
-        self._hook = build_hook()
-        self._hook.hook.init(
-            hook=self._hook, registry=registry, init_options=init_options
-        )
-
+    def __init__(self, hook: apluggy.PluginManager) -> None:
+        self._hook = hook
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
-
         assert self.state  # type: ignore
 
     def __repr__(self) -> str:
