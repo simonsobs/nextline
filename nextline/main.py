@@ -77,6 +77,9 @@ class Nextline:
         # e.g., "<Nextline 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
+    def register(self, plugin: Any) -> str | None:
+        return self._hook.register(plugin)
+
     async def start(self) -> None:
         if self._started:
             return
