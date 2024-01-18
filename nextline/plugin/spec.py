@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import apluggy
 
@@ -6,6 +6,9 @@ from nextline import spawned
 from nextline.types import InitOptions, ResetOptions
 from nextline.utils import ExitedProcess, RunningProcess
 from nextline.utils.pubsub.broker import PubSub
+
+if TYPE_CHECKING:
+    from nextline import Nextline
 
 PROJECT_NAME = 'nextline_main'
 
@@ -16,7 +19,10 @@ hookimpl = apluggy.HookimplMarker(PROJECT_NAME)
 
 @hookspec
 def init(
-    hook: apluggy.PluginManager, registry: PubSub, init_options: InitOptions
+    nextline: 'Nextline',
+    hook: apluggy.PluginManager,
+    registry: PubSub,
+    init_options: InitOptions,
 ) -> None:
     pass
 

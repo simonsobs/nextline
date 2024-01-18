@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from .continuous import Continuous
 from .fsm import Machine
+from .plugin import build_hook
 from .spawned import PdbCommand
 from .types import (
     InitOptions,
@@ -66,14 +67,18 @@ class Nextline:
             trace_modules=trace_modules,
         )
         self._continuous = Continuous(self)
-        self._registry = PubSub[Any, Any]()
+        self._pubsub = PubSub[Any, Any]()
         self._timeout_on_exit = timeout_on_exit
         self._started = False
         self._closed = False
+        self._hook = build_hook()
 
     def __repr__(self) -> str:
         # e.g., "<Nextline 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
+
+    def register(self, plugin: Any) -> str | None:
+        return self._hook.register(plugin)
 
     async def start(self) -> None:
         if self._started:
@@ -81,9 +86,13 @@ class Nextline:
         self._started = True
         logger = getLogger(__name__)
         logger.debug(f'self._init_options: {self._init_options}')
-        self._machine = Machine(
-            init_options=self._init_options, registry=self._registry
+        self._hook.hook.init(
+            nextline=self,
+            hook=self._hook,
+            registry=self._pubsub,
+            init_options=self._init_options,
         )
+        self._machine = Machine(hook=self._hook)
         await self._continuous.start()
         await self._machine.initialize()  # type: ignore
 
@@ -91,7 +100,7 @@ class Nextline:
         if self._closed:
             return
         self._closed = True
-        await self._registry.close()
+        await self._pubsub.close()
         await self._machine.close()  # type: ignore
         await self._continuous.close()
 
@@ -219,7 +228,7 @@ class Nextline:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name: Optional[str] = None) -> list[str]:
-        if not file_name or file_name == self._registry.latest("script_file_name"):
+        if not file_name or file_name == self._pubsub.latest("script_file_name"):
             return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
@@ -271,10 +280,10 @@ class Nextline:
             yield info
 
     def get(self, key: Any) -> Any:
-        return self._registry.latest(key)
+        return self._pubsub.latest(key)
 
     def subscribe(self, key: Any, last: Optional[bool] = True) -> AsyncIterator[Any]:
-        return self._registry.subscribe(key, last=last)
+        return self._pubsub.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
         return self.subscribe("stdout", last=False)
