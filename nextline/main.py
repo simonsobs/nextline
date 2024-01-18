@@ -84,7 +84,10 @@ class Nextline:
         logger = getLogger(__name__)
         logger.debug(f'self._init_options: {self._init_options}')
         self._hook.hook.init(
-            hook=self._hook, registry=self._pubsub, init_options=self._init_options
+            nextline=self,
+            hook=self._hook,
+            registry=self._pubsub,
+            init_options=self._init_options,
         )
         self._machine = Machine(hook=self._hook)
         await self._continuous.start()
