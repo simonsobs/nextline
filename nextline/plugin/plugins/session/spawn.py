@@ -6,10 +6,10 @@ from functools import partial
 from logging import getLogger
 from typing import cast
 
-import apluggy
 from tblib import pickling_support
 
 from nextline import spawned
+from nextline.plugin.spec import Context
 from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
 from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
 
@@ -29,13 +29,13 @@ def _call_all(*funcs: Callable) -> None:
 
 @asynccontextmanager
 async def run_session(
-    hook: apluggy.PluginManager, run_arg: RunArg
+    context: Context, run_arg: RunArg
 ) -> AsyncIterator[tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
     mp_context = mp.get_context('spawn')
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
-    monitor = Monitor(hook, queue_out)
+    monitor = Monitor(context, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
         initializer = partial(
             _call_all,

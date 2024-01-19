@@ -5,7 +5,7 @@ from typing import Any, Optional
 import apluggy
 from tblib import pickling_support
 
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, RunArg, RunResult
 from nextline.utils import ExitedProcess, RunningProcess
 
@@ -16,26 +16,24 @@ pickling_support.install()
 
 class RunSession:
     @hookimpl
-    def init(self, hook: apluggy.PluginManager) -> None:
-        self._hook = hook
-
-    @hookimpl
     async def on_initialize_run(self, run_arg: RunArg) -> None:
         self._run_arg = run_arg
 
     @hookimpl
     @apluggy.asynccontextmanager
-    async def run(self) -> AsyncIterator[None]:
-        ahook = self._hook.ahook
-        async with run_session(self._hook, self._run_arg) as (running, send_command):
-            await ahook.on_start_run(running_process=running, send_command=send_command)
+    async def run(self, context: Context) -> AsyncIterator[None]:
+        ahook = context.hook.ahook
+        async with run_session(context, self._run_arg) as (running, send_command):
+            await ahook.on_start_run(
+                context=context, running_process=running, send_command=send_command
+            )
             yield
             exited = await running
         if exited.raised:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
         self._run_result = exited.returned or RunResult(ret=None, exc=None)
-        await ahook.on_end_run(exited_process=exited)
+        await ahook.on_end_run(context=context, exited_process=exited)
 
 
 class Signal:

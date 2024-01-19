@@ -2,10 +2,9 @@ import dataclasses
 import datetime
 from typing import Optional
 
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import OnEndTrace, OnStartTrace, RunArg
 from nextline.types import RunNo, TraceInfo, TraceNo
-from nextline.utils.pubsub.broker import PubSub
 
 
 class TraceInfoRegistrar:
@@ -14,16 +13,12 @@ class TraceInfoRegistrar:
         self._trace_info_map = dict[TraceNo, TraceInfo]()
 
     @hookimpl
-    def init(self, registry: PubSub) -> None:
-        self._registry = registry
-
-    @hookimpl
     async def on_initialize_run(self, run_arg: RunArg) -> None:
         self._run_no = run_arg.run_no
         self._trace_info_map = {}
 
     @hookimpl
-    async def on_end_run(self) -> None:
+    async def on_end_run(self, context: Context) -> None:
         while self._trace_info_map:
             # the process might have been killed.
             _, trace_info = self._trace_info_map.popitem()
@@ -32,11 +27,11 @@ class TraceInfoRegistrar:
                 state='finished',
                 ended_at=datetime.datetime.utcnow(),
             )
-            await self._registry.publish('trace_info', trace_info_end)
+            await context.pubsub.publish('trace_info', trace_info_end)
         self._run_no = None
 
     @hookimpl
-    async def on_start_trace(self, event: OnStartTrace) -> None:
+    async def on_start_trace(self, context: Context, event: OnStartTrace) -> None:
         assert self._run_no is not None
         trace_info = TraceInfo(
             run_no=self._run_no,
@@ -47,10 +42,10 @@ class TraceInfoRegistrar:
             started_at=event.started_at,
         )
         self._trace_info_map[event.trace_no] = trace_info
-        await self._registry.publish('trace_info', trace_info)
+        await context.pubsub.publish('trace_info', trace_info)
 
     @hookimpl
-    async def on_end_trace(self, event: OnEndTrace) -> None:
+    async def on_end_trace(self, context: Context, event: OnEndTrace) -> None:
         trace_info = self._trace_info_map.pop(event.trace_no, None)
         if trace_info is None:
             # on_end_run() might have already been called
@@ -60,4 +55,4 @@ class TraceInfoRegistrar:
             state='finished',
             ended_at=event.ended_at,
         )
-        await self._registry.publish('trace_info', trace_info_end)
+        await context.pubsub.publish('trace_info', trace_info_end)

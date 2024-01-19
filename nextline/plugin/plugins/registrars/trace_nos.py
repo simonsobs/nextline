@@ -1,9 +1,8 @@
 from typing import Optional
 
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import OnEndTrace, OnStartTrace, RunArg
 from nextline.types import RunNo, TraceNo
-from nextline.utils.pubsub.broker import PubSub
 
 
 class TraceNumbersRegistrar:
@@ -12,29 +11,25 @@ class TraceNumbersRegistrar:
         self._trace_nos: tuple[TraceNo, ...] = ()
 
     @hookimpl
-    def init(self, registry: PubSub) -> None:
-        self._registry = registry
-
-    @hookimpl
     async def on_initialize_run(self, run_arg: RunArg) -> None:
         self._run_no = run_arg.run_no
         self._trace_nos = ()
 
     @hookimpl
-    async def on_end_run(self) -> None:
+    async def on_end_run(self, context: Context) -> None:
         self._run_no = None
 
         self._trace_nos = ()
-        await self._registry.publish('trace_nos', self._trace_nos)
+        await context.pubsub.publish('trace_nos', self._trace_nos)
 
     @hookimpl
-    async def on_start_trace(self, event: OnStartTrace) -> None:
+    async def on_start_trace(self, context: Context, event: OnStartTrace) -> None:
         trace_no = event.trace_no
         self._trace_nos = self._trace_nos + (trace_no,)
-        await self._registry.publish('trace_nos', self._trace_nos)
+        await context.pubsub.publish('trace_nos', self._trace_nos)
 
     @hookimpl
-    async def on_end_trace(self, event: OnEndTrace) -> None:
+    async def on_end_trace(self, context: Context, event: OnEndTrace) -> None:
         trace_no = event.trace_no
         nosl = list(self._trace_nos)
         try:
@@ -42,4 +37,4 @@ class TraceNumbersRegistrar:
         except ValueError:
             return
         self._trace_nos = tuple(nosl)
-        await self._registry.publish('trace_nos', self._trace_nos)
+        await context.pubsub.publish('trace_nos', self._trace_nos)

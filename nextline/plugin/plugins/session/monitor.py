@@ -2,17 +2,16 @@ import asyncio
 import time
 from logging import getLogger
 
-from apluggy import PluginManager
-
 from nextline import spawned
+from nextline.plugin.spec import Context
 from nextline.spawned import QueueOut
 
 # from rich import print
 
 
 class Monitor:
-    def __init__(self, hook: PluginManager, queue: QueueOut):
-        self._hook = hook
+    def __init__(self, context: Context, queue: QueueOut):
+        self._context = context
         self._queue = queue
         self._logger = getLogger(__name__)
 
@@ -40,23 +39,25 @@ class Monitor:
             await self._on_event(event)
 
     async def _on_event(self, event: spawned.Event) -> None:
+        context = self._context
+        ahook = context.hook.ahook
         if isinstance(event, spawned.OnStartTrace):
-            await self._hook.ahook.on_start_trace(event=event)
+            await ahook.on_start_trace(context=context, event=event)
         elif isinstance(event, spawned.OnEndTrace):
-            await self._hook.ahook.on_end_trace(event=event)
+            await ahook.on_end_trace(context=context, event=event)
         elif isinstance(event, spawned.OnStartTraceCall):
-            await self._hook.ahook.on_start_trace_call(event=event)
+            await ahook.on_start_trace_call(context=context, event=event)
         elif isinstance(event, spawned.OnEndTraceCall):
-            await self._hook.ahook.on_end_trace_call(event=event)
+            await ahook.on_end_trace_call(context=context, event=event)
         elif isinstance(event, spawned.OnStartCmdloop):
-            await self._hook.ahook.on_start_cmdloop(event=event)
+            await ahook.on_start_cmdloop(context=context, event=event)
         elif isinstance(event, spawned.OnEndCmdloop):
-            await self._hook.ahook.on_end_cmdloop(event=event)
+            await ahook.on_end_cmdloop(context=context, event=event)
         elif isinstance(event, spawned.OnStartPrompt):
-            await self._hook.ahook.on_start_prompt(event=event)
+            await ahook.on_start_prompt(context=context, event=event)
         elif isinstance(event, spawned.OnEndPrompt):
-            await self._hook.ahook.on_end_prompt(event=event)
+            await ahook.on_end_prompt(context=context, event=event)
         elif isinstance(event, spawned.OnWriteStdout):
-            await self._hook.ahook.on_write_stdout(event=event)
+            await ahook.on_write_stdout(context=context, event=event)
         else:
             self._logger.warning(f'Unknown event: {event!r}')

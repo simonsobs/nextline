@@ -1,10 +1,9 @@
 from logging import getLogger
 from typing import Optional
 
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import OnEndTraceCall, OnStartPrompt, OnStartTraceCall, RunArg
 from nextline.types import PromptNotice, RunNo, TraceNo
-from nextline.utils.pubsub.broker import PubSub
 
 
 class PromptNoticeRegistrar:
@@ -14,17 +13,13 @@ class PromptNoticeRegistrar:
         self._logger = getLogger(__name__)
 
     @hookimpl
-    def init(self, registry: PubSub) -> None:
-        self._registry = registry
-
-    @hookimpl
     async def on_initialize_run(self, run_arg: RunArg) -> None:
         self._run_no = run_arg.run_no
         self._trace_call_map.clear()
 
     @hookimpl
-    async def on_end_run(self) -> None:
-        await self._registry.end('prompt_notice')
+    async def on_end_run(self, context: Context) -> None:
+        await context.pubsub.end('prompt_notice')
         self._run_no = None
 
     @hookimpl
@@ -37,7 +32,7 @@ class PromptNoticeRegistrar:
         self._trace_call_map.pop(event.trace_no, None)
 
     @hookimpl
-    async def on_start_prompt(self, event: OnStartPrompt) -> None:
+    async def on_start_prompt(self, context: Context, event: OnStartPrompt) -> None:
         assert self._run_no is not None
         trace_no = event.trace_no
         prompt_no = event.prompt_no
@@ -52,4 +47,4 @@ class PromptNoticeRegistrar:
             file_name=trace_call.file_name,
             line_no=trace_call.line_no,
         )
-        await self._registry.publish('prompt_notice', prompt_notice)
+        await context.pubsub.publish('prompt_notice', prompt_notice)
