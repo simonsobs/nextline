@@ -13,7 +13,7 @@ from nextline.plugin.spec import Context
 from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
 from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
 
-from .monitor import Monitor
+from .monitor import relay_queue
 
 pickling_support.install()
 
@@ -35,7 +35,6 @@ async def run_session(
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
-    monitor = Monitor(context, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
         initializer = partial(
             _call_all,
@@ -49,7 +48,7 @@ async def run_session(
             initializer=initializer,
         )
         func = partial(spawned.main, run_arg)
-        async with monitor:
+        async with relay_queue(context, queue_out):
             running = await run_in_process(func, executor_factory)
             yield running, send_command
 
