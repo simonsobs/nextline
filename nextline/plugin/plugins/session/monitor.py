@@ -41,23 +41,24 @@ class Monitor:
     async def _on_event(self, event: spawned.Event) -> None:
         context = self._context
         ahook = context.hook.ahook
-        if isinstance(event, spawned.OnStartTrace):
-            await ahook.on_start_trace(context=context, event=event)
-        elif isinstance(event, spawned.OnEndTrace):
-            await ahook.on_end_trace(context=context, event=event)
-        elif isinstance(event, spawned.OnStartTraceCall):
-            await ahook.on_start_trace_call(context=context, event=event)
-        elif isinstance(event, spawned.OnEndTraceCall):
-            await ahook.on_end_trace_call(context=context, event=event)
-        elif isinstance(event, spawned.OnStartCmdloop):
-            await ahook.on_start_cmdloop(context=context, event=event)
-        elif isinstance(event, spawned.OnEndCmdloop):
-            await ahook.on_end_cmdloop(context=context, event=event)
-        elif isinstance(event, spawned.OnStartPrompt):
-            await ahook.on_start_prompt(context=context, event=event)
-        elif isinstance(event, spawned.OnEndPrompt):
-            await ahook.on_end_prompt(context=context, event=event)
-        elif isinstance(event, spawned.OnWriteStdout):
-            await ahook.on_write_stdout(context=context, event=event)
-        else:
-            self._logger.warning(f'Unknown event: {event!r}')
+        match event:
+            case spawned.OnStartTrace():
+                await ahook.on_start_trace(context=context, event=event)
+            case spawned.OnEndTrace():
+                await ahook.on_end_trace(context=context, event=event)
+            case spawned.OnStartTraceCall():
+                await ahook.on_start_trace_call(context=context, event=event)
+            case spawned.OnEndTraceCall():
+                await ahook.on_end_trace_call(context=context, event=event)
+            case spawned.OnStartCmdloop():
+                await ahook.on_start_cmdloop(context=context, event=event)
+            case spawned.OnEndCmdloop():
+                await ahook.on_end_cmdloop(context=context, event=event)
+            case spawned.OnStartPrompt():
+                await ahook.on_start_prompt(context=context, event=event)
+            case spawned.OnEndPrompt():
+                await ahook.on_end_prompt(context=context, event=event)
+            case spawned.OnWriteStdout():
+                await ahook.on_write_stdout(context=context, event=event)
+            case _:
+                self._logger.warning(f'Unknown event: {event!r}')
