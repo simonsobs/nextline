@@ -6,14 +6,14 @@ from functools import partial
 from logging import getLogger
 from typing import cast
 
-import apluggy
 from tblib import pickling_support
 
 from nextline import spawned
-from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
+from nextline.plugin.spec import Context
+from nextline.spawned import Command, QueueIn, QueueOut, RunResult
 from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
 
-from .monitor import Monitor
+from .monitor import relay_queue
 
 pickling_support.install()
 
@@ -29,13 +29,13 @@ def _call_all(*funcs: Callable) -> None:
 
 @asynccontextmanager
 async def run_session(
-    hook: apluggy.PluginManager, run_arg: RunArg
+    context: Context,
 ) -> AsyncIterator[tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
+    assert context.run_arg
     mp_context = mp.get_context('spawn')
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
-    monitor = Monitor(hook, queue_out)
     async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
         initializer = partial(
             _call_all,
@@ -48,8 +48,8 @@ async def run_session(
             mp_context=mp_context,
             initializer=initializer,
         )
-        func = partial(spawned.main, run_arg)
-        async with monitor:
+        func = partial(spawned.main, context.run_arg)
+        async with relay_queue(context, queue_out):
             running = await run_in_process(func, executor_factory)
             yield running, send_command
 

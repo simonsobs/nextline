@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from .continuous import Continuous
 from .fsm import Machine
-from .plugin import build_hook
+from .plugin import Context, build_hook
 from .spawned import PdbCommand
 from .types import (
     InitOptions,
@@ -86,13 +86,9 @@ class Nextline:
         self._started = True
         logger = getLogger(__name__)
         logger.debug(f'self._init_options: {self._init_options}')
-        self._hook.hook.init(
-            nextline=self,
-            hook=self._hook,
-            registry=self._pubsub,
-            init_options=self._init_options,
-        )
-        self._machine = Machine(hook=self._hook)
+        context = Context(nextline=self, hook=self._hook, pubsub=self._pubsub)
+        self._hook.hook.init(context=context, init_options=self._init_options)
+        self._machine = Machine(context=context)
         await self._continuous.start()
         await self._machine.initialize()  # type: ignore
 

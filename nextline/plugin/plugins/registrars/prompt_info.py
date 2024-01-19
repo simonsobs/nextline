@@ -1,9 +1,8 @@
 import asyncio
 import dataclasses
 from logging import getLogger
-from typing import Optional
 
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import (
     OnEndPrompt,
     OnEndTrace,
@@ -11,15 +10,12 @@ from nextline.spawned import (
     OnStartPrompt,
     OnStartTrace,
     OnStartTraceCall,
-    RunArg,
 )
-from nextline.types import PromptInfo, PromptNo, RunNo, TraceNo
-from nextline.utils.pubsub.broker import PubSub
+from nextline.types import PromptInfo, PromptNo, TraceNo
 
 
 class PromptInfoRegistrar:
     def __init__(self) -> None:
-        self._run_no: Optional[RunNo] = None
         self._last_prompt_frame_map = dict[TraceNo, int]()
         self._trace_call_map = dict[TraceNo, OnStartTraceCall]()
         self._prompt_info_map = dict[PromptNo, PromptInfo]()
@@ -27,41 +23,34 @@ class PromptInfoRegistrar:
         self._logger = getLogger(__name__)
 
     @hookimpl
-    def init(self, registry: PubSub) -> None:
-        self._registry = registry
-
-    @hookimpl
     async def start(self) -> None:
         self._lock = asyncio.Lock()
         pass
 
     @hookimpl
-    async def on_initialize_run(self, run_arg: RunArg) -> None:
-        self._run_no = run_arg.run_no
+    async def on_initialize_run(self) -> None:
         self._last_prompt_frame_map.clear()
         self._trace_call_map.clear()
         self._prompt_info_map.clear()
         self._keys.clear()
 
     @hookimpl
-    async def on_end_run(self) -> None:
+    async def on_end_run(self, context: Context) -> None:
         async with self._lock:
             while self._keys:
                 # the process might have been killed.
                 key = self._keys.pop()
-                await self._registry.end(key)
-
-        self._run_no = None
+                await context.pubsub.end(key)
 
     @hookimpl
-    async def on_start_trace(self, event: OnStartTrace) -> None:
-        assert self._run_no is not None
+    async def on_start_trace(self, context: Context, event: OnStartTrace) -> None:
+        assert context.run_arg
         trace_no = event.trace_no
 
         # TODO: Putting a prompt info for now because otherwise tests get stuck
         # sometimes for an unknown reason. Need to investigate
         prompt_info = PromptInfo(
-            run_no=self._run_no,
+            run_no=context.run_arg.run_no,
             trace_no=trace_no,
             prompt_no=PromptNo(-1),
             open=False,
@@ -69,24 +58,24 @@ class PromptInfoRegistrar:
         key = f"prompt_info_{trace_no}"
         async with self._lock:
             self._keys.add(key)
-            await self._registry.publish(key, prompt_info)
+            await context.pubsub.publish(key, prompt_info)
 
     @hookimpl
-    async def on_end_trace(self, event: OnEndTrace) -> None:
+    async def on_end_trace(self, context: Context, event: OnEndTrace) -> None:
         trace_no = event.trace_no
         key = f"prompt_info_{trace_no}"
         async with self._lock:
             if key in self._keys:
                 self._keys.remove(key)
-                await self._registry.end(key)
+                await context.pubsub.end(key)
 
     @hookimpl
     async def on_start_trace_call(self, event: OnStartTraceCall) -> None:
         self._trace_call_map[event.trace_no] = event
 
     @hookimpl
-    async def on_end_trace_call(self, event: OnEndTraceCall) -> None:
-        assert self._run_no is not None
+    async def on_end_trace_call(self, context: Context, event: OnEndTraceCall) -> None:
+        assert context.run_arg
         trace_no = event.trace_no
         trace_call = self._trace_call_map.pop(event.trace_no, None)
         if trace_call is None:
@@ -102,7 +91,7 @@ class PromptInfoRegistrar:
             #       prompt info.
 
         prompt_info = PromptInfo(
-            run_no=self._run_no,
+            run_no=context.run_arg.run_no,
             trace_no=trace_no,
             prompt_no=PromptNo(-1),
             open=False,
@@ -111,21 +100,21 @@ class PromptInfoRegistrar:
             line_no=trace_call.line_no,
             trace_call_end=True,
         )
-        await self._registry.publish('prompt_info', prompt_info)
+        await context.pubsub.publish('prompt_info', prompt_info)
 
         key = f"prompt_info_{trace_no}"
         async with self._lock:
             self._keys.add(key)
-            await self._registry.publish(key, prompt_info)
+            await context.pubsub.publish(key, prompt_info)
 
     @hookimpl
-    async def on_start_prompt(self, event: OnStartPrompt) -> None:
-        assert self._run_no is not None
+    async def on_start_prompt(self, context: Context, event: OnStartPrompt) -> None:
+        assert context.run_arg
         trace_no = event.trace_no
         prompt_no = event.prompt_no
         trace_call = self._trace_call_map[trace_no]
         prompt_info = PromptInfo(
-            run_no=self._run_no,
+            run_no=context.run_arg.run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
             open=True,
@@ -138,15 +127,15 @@ class PromptInfoRegistrar:
         self._prompt_info_map[prompt_no] = prompt_info
         self._last_prompt_frame_map[trace_no] = trace_call.frame_object_id
 
-        await self._registry.publish('prompt_info', prompt_info)
+        await context.pubsub.publish('prompt_info', prompt_info)
 
         key = f"prompt_info_{trace_no}"
         async with self._lock:
             self._keys.add(key)
-            await self._registry.publish(key, prompt_info)
+            await context.pubsub.publish(key, prompt_info)
 
     @hookimpl
-    async def on_end_prompt(self, event: OnEndPrompt) -> None:
+    async def on_end_prompt(self, context: Context, event: OnEndPrompt) -> None:
         trace_no = event.trace_no
         prompt_no = event.prompt_no
         prompt_info = self._prompt_info_map.pop(prompt_no)
@@ -157,9 +146,9 @@ class PromptInfoRegistrar:
             ended_at=event.ended_at,
         )
 
-        await self._registry.publish('prompt_info', prompt_info_end)
+        await context.pubsub.publish('prompt_info', prompt_info_end)
 
         key = f"prompt_info_{trace_no}"
         async with self._lock:
             self._keys.add(key)
-            await self._registry.publish(key, prompt_info_end)
+            await context.pubsub.publish(key, prompt_info_end)

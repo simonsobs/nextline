@@ -1,13 +1,10 @@
-from nextline.plugin.spec import hookimpl
-from nextline.utils.pubsub.broker import PubSub
+from nextline.plugin.spec import Context, hookimpl
 
 
 class ScriptRegistrar:
     @hookimpl
-    def init(self, registry: PubSub) -> None:
-        self._registry = registry
-
-    @hookimpl
-    async def on_change_script(self, script: str, filename: str) -> None:
-        await self._registry.publish('statement', script)
-        await self._registry.publish('script_file_name', filename)
+    async def on_change_script(
+        self, context: Context, script: str, filename: str
+    ) -> None:
+        await context.pubsub.publish('statement', script)
+        await context.pubsub.publish('script_file_name', filename)

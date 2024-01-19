@@ -1,24 +1,14 @@
-from apluggy import PluginManager
-
 from nextline.count import RunNoCounter
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import RunArg
 from nextline.types import InitOptions, ResetOptions
-from nextline.utils.pubsub.broker import PubSub
 
 SCRIPT_FILE_NAME = "<string>"
 
 
 class RunArgComposer:
     @hookimpl
-    def init(
-        self,
-        hook: PluginManager,
-        registry: PubSub,
-        init_options: InitOptions,
-    ) -> None:
-        self._hook = hook
-        self._registry = registry
+    def init(self, init_options: InitOptions) -> None:
         self._run_no_count = RunNoCounter(init_options.run_no_start_from)
         self._statement = init_options.statement
         self._filename = SCRIPT_FILE_NAME
@@ -26,22 +16,17 @@ class RunArgComposer:
         self._trace_modules = init_options.trace_modules
 
     @hookimpl
-    async def start(self) -> None:
-        await self._hook.ahook.on_change_script(
-            script=self._statement,
-            filename=self._filename,
+    async def start(self, context: Context) -> None:
+        await context.hook.ahook.on_change_script(
+            context=context, script=self._statement, filename=self._filename
         )
 
     @hookimpl
-    async def reset(
-        self,
-        reset_options: ResetOptions,
-    ) -> None:
+    async def reset(self, context: Context, reset_options: ResetOptions) -> None:
         if (statement := reset_options.statement) is not None:
             self._statement = statement
-            await self._hook.ahook.on_change_script(
-                script=self._statement,
-                filename=self._filename,
+            await context.hook.ahook.on_change_script(
+                context=context, script=self._statement, filename=self._filename
             )
         if (run_no_start_from := reset_options.run_no_start_from) is not None:
             self._run_no_count = RunNoCounter(run_no_start_from)

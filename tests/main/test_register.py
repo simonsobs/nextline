@@ -1,7 +1,7 @@
 import time
 
 from nextline import Nextline
-from nextline.plugin.spec import hookimpl
+from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import OnStartPrompt
 
 
@@ -11,12 +11,8 @@ def func():
 
 class Plugin:
     @hookimpl
-    def init(self, nextline: Nextline) -> None:
-        self._nextline = nextline
-
-    @hookimpl
-    async def on_start_prompt(self, event: OnStartPrompt) -> None:
-        await self._nextline.send_pdb_command('next', event.prompt_no, event.trace_no)
+    async def on_start_prompt(self, context: Context, event: OnStartPrompt) -> None:
+        await context.nextline.send_pdb_command('next', event.prompt_no, event.trace_no)
 
 
 async def test_one() -> None:

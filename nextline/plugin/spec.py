@@ -1,3 +1,4 @@
+import dataclasses
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import apluggy
@@ -17,59 +18,65 @@ hookspec = apluggy.HookspecMarker(PROJECT_NAME)
 hookimpl = apluggy.HookimplMarker(PROJECT_NAME)
 
 
+@dataclasses.dataclass
+class Context:
+    nextline: 'Nextline'
+    hook: apluggy.PluginManager
+    pubsub: PubSub
+    run_arg: spawned.RunArg | None = None
+
+
 @hookspec
-def init(
-    nextline: 'Nextline',
-    hook: apluggy.PluginManager,
-    registry: PubSub,
-    init_options: InitOptions,
+def init(context: Context, init_options: InitOptions) -> None:
+    pass
+
+
+@hookspec
+async def start(context: Context) -> None:
+    pass
+
+
+@hookspec
+async def close(
+    context: Context, exc_type=None, exc_value=None, traceback=None
 ) -> None:
     pass
 
 
 @hookspec
-async def start() -> None:
+async def reset(context: Context, reset_options: ResetOptions) -> None:
     pass
 
 
 @hookspec
-async def close(exc_type=None, exc_value=None, traceback=None) -> None:  # type: ignore
+async def on_change_state(context: Context, state_name: str) -> None:
     pass
 
 
 @hookspec
-async def reset(reset_options: ResetOptions) -> None:
-    pass
-
-
-@hookspec
-async def on_change_state(state_name: str) -> None:
-    pass
-
-
-@hookspec
-async def on_change_script(script: str, filename: str) -> None:
+async def on_change_script(context: Context, script: str, filename: str) -> None:
     pass
 
 
 @hookspec(firstresult=True)
-def compose_run_arg() -> Optional[spawned.RunArg]:
+def compose_run_arg(context: Context) -> Optional[spawned.RunArg]:
     pass
 
 
 @hookspec
-async def on_initialize_run(run_arg: spawned.RunArg) -> None:
+async def on_initialize_run(context: Context) -> None:
     pass
 
 
 @hookspec
 @apluggy.asynccontextmanager
-async def run():  # type: ignore
+async def run(context: Context):  # type: ignore
     yield
 
 
 @hookspec
 async def on_start_run(
+    context: Context,
     running_process: RunningProcess[spawned.RunResult],
     send_command: Callable[[spawned.Command], None],
 ) -> None:
@@ -77,80 +84,84 @@ async def on_start_run(
 
 
 @hookspec
-async def interrupt() -> None:
+async def interrupt(context: Context) -> None:
     pass
 
 
 @hookspec
-async def terminate() -> None:
+async def terminate(context: Context) -> None:
     pass
 
 
 @hookspec
-async def kill() -> None:
+async def kill(context: Context) -> None:
     pass
 
 
 @hookspec
-async def send_command(command: spawned.Command) -> None:
+async def send_command(context: Context, command: spawned.Command) -> None:
     pass
 
 
 @hookspec
-async def on_end_run(exited_process: ExitedProcess[spawned.RunResult]) -> None:
+async def on_end_run(
+    context: Context, exited_process: ExitedProcess[spawned.RunResult]
+) -> None:
     pass
 
 
 @hookspec(firstresult=True)
-def exception() -> Optional[BaseException]:
+def exception(context: Context) -> Optional[BaseException]:
     pass
 
 
 @hookspec(firstresult=True)
-def result() -> Any:
+def result(context: Context) -> Any:
     pass
 
 
 @hookspec
-async def on_start_trace(event: spawned.OnStartTrace) -> None:
+async def on_start_trace(context: Context, event: spawned.OnStartTrace) -> None:
     pass
 
 
 @hookspec
-async def on_end_trace(event: spawned.OnEndTrace) -> None:
+async def on_end_trace(context: Context, event: spawned.OnEndTrace) -> None:
     pass
 
 
 @hookspec
-async def on_start_trace_call(event: spawned.OnStartTraceCall) -> None:
+async def on_start_trace_call(
+    context: Context, event: spawned.OnStartTraceCall
+) -> None:
     pass
 
 
 @hookspec
-async def on_end_trace_call(event: spawned.OnEndTraceCall) -> None:
+async def on_end_trace_call(context: Context, event: spawned.OnEndTraceCall) -> None:
     pass
 
 
 @hookspec
-async def on_start_cmdloop(event: spawned.OnStartCmdloop) -> None:
+async def on_start_cmdloop(context: Context, event: spawned.OnStartCmdloop) -> None:
     pass
 
 
 @hookspec
-async def on_end_cmdloop(event: spawned.OnEndCmdloop) -> None:
+async def on_end_cmdloop(context: Context, event: spawned.OnEndCmdloop) -> None:
     pass
 
 
 @hookspec
-async def on_start_prompt(event: spawned.OnStartPrompt) -> None:
+async def on_start_prompt(context: Context, event: spawned.OnStartPrompt) -> None:
     pass
 
 
 @hookspec
-async def on_end_prompt(event: spawned.OnEndPrompt) -> None:
+async def on_end_prompt(context: Context, event: spawned.OnEndPrompt) -> None:
     pass
 
 
 @hookspec
-async def on_write_stdout(event: spawned.OnWriteStdout) -> None:
+async def on_write_stdout(context: Context, event: spawned.OnWriteStdout) -> None:
     pass
