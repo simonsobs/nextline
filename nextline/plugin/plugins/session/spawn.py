@@ -10,7 +10,7 @@ from tblib import pickling_support
 
 from nextline import spawned
 from nextline.plugin.spec import Context
-from nextline.spawned import Command, QueueIn, QueueOut, RunArg, RunResult
+from nextline.spawned import Command, QueueIn, QueueOut, RunResult
 from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
 
 from .monitor import relay_queue
@@ -29,8 +29,9 @@ def _call_all(*funcs: Callable) -> None:
 
 @asynccontextmanager
 async def run_session(
-    context: Context, run_arg: RunArg
+    context: Context,
 ) -> AsyncIterator[tuple[RunningProcess[RunResult], Callable[[Command], None]]]:
+    assert context.run_arg
     mp_context = mp.get_context('spawn')
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())
@@ -47,7 +48,7 @@ async def run_session(
             mp_context=mp_context,
             initializer=initializer,
         )
-        func = partial(spawned.main, run_arg)
+        func = partial(spawned.main, context.run_arg)
         async with relay_queue(context, queue_out):
             running = await run_in_process(func, executor_factory)
             yield running, send_command

@@ -37,10 +37,8 @@ class Machine:
         await self._hook.ahook.start(context=self._context)
 
     async def on_enter_initialized(self, _: EventData) -> None:
-        self._run_arg = self._hook.hook.compose_run_arg(context=self._context)
-        await self._hook.ahook.on_initialize_run(
-            context=self._context, run_arg=self._run_arg
-        )
+        self._context.run_arg = self._hook.hook.compose_run_arg(context=self._context)
+        await self._hook.ahook.on_initialize_run(context=self._context)
 
     async def on_enter_running(self, _: EventData) -> None:
         self.run_finished = asyncio.Event()
@@ -49,6 +47,7 @@ class Machine:
         async def run() -> None:
             async with self._hook.awith.run(context=self._context):
                 run_started.set()
+            self._context.run_arg = None
             await self.finish()  # type: ignore
             self.run_finished.set()
 

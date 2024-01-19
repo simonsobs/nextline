@@ -2,7 +2,7 @@ from logging import getLogger
 from typing import Optional
 
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import OnEndTraceCall, OnStartPrompt, OnStartTraceCall, RunArg
+from nextline.spawned import OnEndTraceCall, OnStartPrompt, OnStartTraceCall
 from nextline.types import PromptNotice, RunNo, TraceNo
 
 
@@ -13,14 +13,12 @@ class PromptNoticeRegistrar:
         self._logger = getLogger(__name__)
 
     @hookimpl
-    async def on_initialize_run(self, run_arg: RunArg) -> None:
-        self._run_no = run_arg.run_no
+    async def on_initialize_run(self) -> None:
         self._trace_call_map.clear()
 
     @hookimpl
     async def on_end_run(self, context: Context) -> None:
         await context.pubsub.end('prompt_notice')
-        self._run_no = None
 
     @hookimpl
     async def on_start_trace_call(self, event: OnStartTraceCall) -> None:
@@ -28,18 +26,17 @@ class PromptNoticeRegistrar:
 
     @hookimpl
     async def on_end_trace_call(self, event: OnEndTraceCall) -> None:
-        assert self._run_no is not None
         self._trace_call_map.pop(event.trace_no, None)
 
     @hookimpl
     async def on_start_prompt(self, context: Context, event: OnStartPrompt) -> None:
-        assert self._run_no is not None
+        assert context.run_arg
         trace_no = event.trace_no
         prompt_no = event.prompt_no
         trace_call = self._trace_call_map[trace_no]
         prompt_notice = PromptNotice(
             started_at=event.started_at,
-            run_no=self._run_no,
+            run_no=context.run_arg.run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
             prompt_text=event.prompt_text,

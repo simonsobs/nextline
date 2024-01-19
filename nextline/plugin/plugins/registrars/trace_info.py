@@ -1,20 +1,17 @@
 import dataclasses
 import datetime
-from typing import Optional
 
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import OnEndTrace, OnStartTrace, RunArg
-from nextline.types import RunNo, TraceInfo, TraceNo
+from nextline.spawned import OnEndTrace, OnStartTrace
+from nextline.types import TraceInfo, TraceNo
 
 
 class TraceInfoRegistrar:
     def __init__(self) -> None:
-        self._run_no: Optional[RunNo] = None
         self._trace_info_map = dict[TraceNo, TraceInfo]()
 
     @hookimpl
-    async def on_initialize_run(self, run_arg: RunArg) -> None:
-        self._run_no = run_arg.run_no
+    async def on_initialize_run(self) -> None:
         self._trace_info_map = {}
 
     @hookimpl
@@ -28,13 +25,12 @@ class TraceInfoRegistrar:
                 ended_at=datetime.datetime.utcnow(),
             )
             await context.pubsub.publish('trace_info', trace_info_end)
-        self._run_no = None
 
     @hookimpl
     async def on_start_trace(self, context: Context, event: OnStartTrace) -> None:
-        assert self._run_no is not None
+        assert context.run_arg
         trace_info = TraceInfo(
-            run_no=self._run_no,
+            run_no=context.run_arg.run_no,
             trace_no=event.trace_no,
             thread_no=event.thread_no,
             task_no=event.task_no,

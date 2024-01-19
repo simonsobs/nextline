@@ -23,6 +23,7 @@ class Context:
     nextline: 'Nextline'
     hook: apluggy.PluginManager
     pubsub: PubSub
+    run_arg: spawned.RunArg | None = None
 
 
 @hookspec
@@ -63,7 +64,7 @@ def compose_run_arg(context: Context) -> Optional[spawned.RunArg]:
 
 
 @hookspec
-async def on_initialize_run(context: Context, run_arg: spawned.RunArg) -> None:
+async def on_initialize_run(context: Context) -> None:
     pass
 
 

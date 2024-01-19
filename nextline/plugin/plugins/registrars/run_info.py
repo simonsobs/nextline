@@ -4,14 +4,12 @@ from typing import Optional
 
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import RunArg
-from nextline.types import RunInfo, RunNo
+from nextline.types import RunInfo
 from nextline.utils import ExitedProcess
 
 
 class RunInfoRegistrar:
     def __init__(self) -> None:
-        self._run_no: Optional[RunNo] = None
         self._script: Optional[str] = None
         self._run_info: Optional[RunInfo] = None
 
@@ -20,10 +18,10 @@ class RunInfoRegistrar:
         self._script = script
 
     @hookimpl
-    async def on_initialize_run(self, context: Context, run_arg: RunArg) -> None:
-        self._run_no = run_arg.run_no
+    async def on_initialize_run(self, context: Context) -> None:
+        assert context.run_arg
         self._run_info = RunInfo(
-            run_no=run_arg.run_no, state='initialized', script=self._script
+            run_no=context.run_arg.run_no, state='initialized', script=self._script
         )
         await context.pubsub.publish('run_info', self._run_info)
 
@@ -54,4 +52,3 @@ class RunInfoRegistrar:
         await context.pubsub.publish('run_info', self._run_info)
 
         self._run_info = None
-        self._run_no = None
