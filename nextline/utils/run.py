@@ -147,10 +147,10 @@ async def run_in_process(
 
         async with contextlib.AsyncExitStack() as stack:
             if collect_logging:
-                mp_logging = await stack.enter_async_context(
+                logging_initializer = await stack.enter_async_context(
                     MultiprocessingLogging(mp_context=mp_context)
                 )
-                initializer = partial(_call_all, mp_logging.initializer, initializer)
+                initializer = partial(_call_all, logging_initializer, initializer)
 
             with ProcessPoolExecutor(
                 max_workers=1, mp_context=mp_context, initializer=initializer
