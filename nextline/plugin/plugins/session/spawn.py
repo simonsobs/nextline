@@ -1,6 +1,5 @@
 import multiprocessing as mp
 from collections.abc import AsyncIterator, Callable
-from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from logging import getLogger
@@ -42,15 +41,13 @@ async def run_session(
             mp_logging.initializer,
             partial(spawned.set_queues, queue_in, queue_out),
         )
-        executor_factory = partial(
-            ProcessPoolExecutor,
-            max_workers=1,
-            mp_context=mp_context,
-            initializer=initializer,
-        )
         func = partial(spawned.main, context.run_arg)
         async with relay_queue(context, queue_out):
-            running = await run_in_process(func, executor_factory)
+            running = await run_in_process(
+                func,
+                mp_context=mp_context,
+                initializer=initializer,
+            )
             yield running, send_command
 
 

@@ -1,18 +1,15 @@
-from concurrent.futures import ProcessPoolExecutor
-from functools import partial
 from typing import NoReturn
 
-import pytest
 
-from nextline.utils import ExecutorFactory, run_in_process
+from nextline.utils import run_in_process
 
 
 def func_str() -> str:
     return 'foo'
 
 
-async def test_success(executor_factory: ExecutorFactory) -> None:
-    running = await run_in_process(func_str, executor_factory)
+async def test_success() -> None:
+    running = await run_in_process(func_str)
     assert running.process
     assert running.process_created_at
     result = await running
@@ -28,8 +25,8 @@ async def test_default_executor() -> None:
     assert 'foo' == result.returned
 
 
-async def test_repr(executor_factory: ExecutorFactory) -> None:
-    running = await run_in_process(func_str, executor_factory)
+async def test_repr() -> None:
+    running = await run_in_process(func_str)
     repr(running)
     await running
 
@@ -43,14 +40,9 @@ def func_raise() -> NoReturn:
     raise MockError()
 
 
-async def test_error(executor_factory: ExecutorFactory) -> None:
-    running = await run_in_process(func_raise, executor_factory)
+async def test_error() -> None:
+    running = await run_in_process(func_raise)
     result = await running
     assert running.process
     assert running.process.exitcode == 0
     assert isinstance(result.raised, MockError)
-
-
-@pytest.fixture
-def executor_factory() -> ExecutorFactory:
-    return partial(ProcessPoolExecutor, max_workers=1)

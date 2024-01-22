@@ -6,9 +6,9 @@ from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from functools import partial
 from logging import getLogger
 from multiprocessing import Process
+from multiprocessing.context import BaseContext
 from typing import Generic, TypeVar
 
 _T = TypeVar("_T")
@@ -93,11 +93,10 @@ class RunningProcess(Generic[_T]):
         )
 
 
-ExecutorFactory = Callable[[], ProcessPoolExecutor]
-
-
 async def run_in_process(
-    func: Callable[[], _T], executor_factory: ExecutorFactory | None = None
+    func: Callable[[], _T],
+    mp_context: BaseContext | None = None,
+    initializer: Callable[[], None] | None = None,
 ) -> RunningProcess[_T]:
     '''Call a function in a separate process and return an awaitable.
 
@@ -123,16 +122,15 @@ async def run_in_process(
 
     '''
 
-    if executor_factory is None:
-        executor_factory = partial(ProcessPoolExecutor, max_workers=1)
-
     process: Process | None = None
     event = asyncio.Event()
 
     async def _run() -> tuple[_T | None, BaseException | None]:
         nonlocal process
 
-        with executor_factory() as executor:
+        with ProcessPoolExecutor(
+            max_workers=1, mp_context=mp_context, initializer=initializer
+        ) as executor:
             loop = asyncio.get_running_loop()
             future = loop.run_in_executor(executor, func)
             process = list(executor._processes.values())[0]
