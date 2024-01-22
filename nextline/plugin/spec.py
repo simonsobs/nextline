@@ -75,6 +75,11 @@ async def run(context: Context):  # type: ignore
 
 
 @hookspec
+async def on_event_in_process(context: Context, event: spawned.Event) -> None:
+    pass
+
+
+@hookspec
 async def on_start_run(
     context: Context,
     running_process: RunningProcess[spawned.RunResult],
