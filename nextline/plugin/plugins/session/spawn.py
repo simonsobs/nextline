@@ -36,10 +36,10 @@ async def run_session(
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
-    async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
+    async with MultiprocessingLogging(mp_context=mp_context) as logging_initializer:
         initializer = partial(
             _call_all,
-            mp_logging.initializer,
+            logging_initializer,
             partial(spawned.set_queues, queue_in, queue_out),
         )
         executor_factory = partial(

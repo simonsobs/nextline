@@ -31,10 +31,10 @@ class MultiprocessingLogging:
     ...     from concurrent.futures import ProcessPoolExecutor
     ...
     ...     # Start MultiprocessingLogging.
-    ...     async with MultiprocessingLogging() as mp_logging:
+    ...     async with MultiprocessingLogging() as initializer:
     ...
     ...         # The initializer is given to ProcessPoolExecutor.
-    ...         with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
+    ...         with ProcessPoolExecutor(initializer=initializer) as executor:
     ...
     ...             # In another process, execute example_func(), which logs a warning.
     ...             future = executor.submit(example_func)
@@ -100,9 +100,9 @@ class MultiprocessingLogging:
             await self._task
             self._task = None
 
-    async def __aenter__(self) -> 'MultiprocessingLogging':
+    async def __aenter__(self) -> Callable[[], None]:
         await self.open()
-        return self
+        return self.initializer
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
