@@ -33,8 +33,8 @@ class RunArg:
 
 @dataclass
 class RunResult:
-    ret: Optional[Any]
-    exc: Optional[BaseException]
+    ret: Optional[Any] = None
+    exc: Optional[BaseException] = None
     _fmt_ret: Optional[str] = field(init=False, repr=False, default=None)
     _fmt_exc: Optional[str] = field(init=False, repr=False, default=None)
 

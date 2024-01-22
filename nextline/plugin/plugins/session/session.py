@@ -28,7 +28,7 @@ class RunSession:
         if exited.raised:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
-        self._run_result = exited.returned or RunResult(ret=None, exc=None)
+        self._run_result = exited.returned or RunResult()
         await ahook.on_end_run(context=context, exited_process=exited)
 
 
@@ -63,7 +63,7 @@ class CommandSender:
 class Result:
     @hookimpl
     async def on_end_run(self, exited_process: ExitedProcess[RunResult]) -> None:
-        self._run_result = exited_process.returned or RunResult(ret=None, exc=None)
+        self._run_result = exited_process.returned or RunResult()
 
     @hookimpl
     def exception(self) -> Optional[BaseException]:

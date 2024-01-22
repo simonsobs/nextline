@@ -40,7 +40,7 @@ class RunInfoRegistrar:
         self, context: Context, exited_process: ExitedProcess[spawned.RunResult]
     ) -> None:
         assert self._run_info is not None
-        run_result = exited_process.returned or spawned.RunResult(ret=None, exc=None)
+        run_result = exited_process.returned or spawned.RunResult()
 
         self._run_info = dataclasses.replace(
             self._run_info,
