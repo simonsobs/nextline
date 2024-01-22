@@ -1,31 +1,7 @@
-import asyncio
-import time
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from logging import getLogger
 
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import QueueOut
-
-
-@asynccontextmanager
-async def relay_queue(context: Context, queue: QueueOut) -> AsyncIterator[None]:
-    task = asyncio.create_task(_monitor(context, queue))
-    try:
-        yield
-    finally:
-        up_to = 0.05
-        start = time.process_time()
-        while not queue.empty() and time.process_time() - start < up_to:
-            await asyncio.sleep(0)
-        await asyncio.to_thread(queue.put, None)  # type: ignore
-        await task
-
-
-async def _monitor(context: Context, queue: QueueOut) -> None:
-    while (event := await asyncio.to_thread(queue.get)) is not None:
-        await context.hook.ahook.on_event_in_process(context=context, event=event)
 
 
 class OnEvent:
