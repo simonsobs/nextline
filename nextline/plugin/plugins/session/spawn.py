@@ -48,6 +48,7 @@ def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
 
 @asynccontextmanager
 async def relay_events(context: Context, queue: QueueOut) -> AsyncIterator[None]:
+    '''Call the hook `on_event_in_process()` on events emitted in the spawned process.'''
     logger = getLogger(__name__)
 
     async def _monitor() -> None:
