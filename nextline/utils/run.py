@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import os
 import signal
 from collections.abc import Callable, Generator
@@ -6,10 +7,13 @@ from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 from logging import getLogger
 from multiprocessing import Process
 from multiprocessing.context import BaseContext
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
+
+from .multiprocessing_logging import MultiprocessingLogging
 
 _T = TypeVar("_T")
 
@@ -93,10 +97,22 @@ class RunningProcess(Generic[_T]):
         )
 
 
+def _call_all(*funcs: Callable[[], Any] | None) -> None:
+    '''Execute callables and ignore return values.
+
+    Used to call multiple initializers in ProcessPoolExecutor.
+    '''
+    for func in funcs:
+        if func is None:
+            continue
+        func()
+
+
 async def run_in_process(
     func: Callable[[], _T],
     mp_context: BaseContext | None = None,
     initializer: Callable[[], None] | None = None,
+    collect_logging: bool = False,
 ) -> RunningProcess[_T]:
     '''Call a function in a separate process and return an awaitable.
 
@@ -127,25 +143,33 @@ async def run_in_process(
 
     async def _run() -> tuple[_T | None, BaseException | None]:
         nonlocal process
+        nonlocal initializer
 
-        with ProcessPoolExecutor(
-            max_workers=1, mp_context=mp_context, initializer=initializer
-        ) as executor:
-            loop = asyncio.get_running_loop()
-            future = loop.run_in_executor(executor, func)
-            process = list(executor._processes.values())[0]
+        async with contextlib.AsyncExitStack() as stack:
+            if collect_logging:
+                mp_logging = await stack.enter_async_context(
+                    MultiprocessingLogging(mp_context=mp_context)
+                )
+                initializer = partial(_call_all, mp_logging.initializer, initializer)
 
-            event.set()
-            ret = None
-            exc = None
-            try:
-                ret = await future
-            except BrokenProcessPool:
-                # NOTE: Not possible to use "as" for unknown reason.
-                pass
-            except BaseException as e:
-                exc = e
-            return ret, exc
+            with ProcessPoolExecutor(
+                max_workers=1, mp_context=mp_context, initializer=initializer
+            ) as executor:
+                loop = asyncio.get_running_loop()
+                future = loop.run_in_executor(executor, func)
+                process = list(executor._processes.values())[0]
+
+                event.set()
+                ret = None
+                exc = None
+                try:
+                    ret = await future
+                except BrokenProcessPool:
+                    # NOTE: Not possible to use "as" for unknown reason.
+                    pass
+                except BaseException as e:
+                    exc = e
+        return ret, exc
 
     task = asyncio.create_task(_run())
     await event.wait()

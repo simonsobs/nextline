@@ -10,20 +10,11 @@ from tblib import pickling_support
 from nextline import spawned
 from nextline.plugin.spec import Context
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
-from nextline.utils import MultiprocessingLogging, RunningProcess, run_in_process
+from nextline.utils import RunningProcess, run_in_process
 
 from .monitor import relay_queue
 
 pickling_support.install()
-
-
-def _call_all(*funcs: Callable) -> None:
-    '''Execute callables and ignore return values.
-
-    Used to call multiple initializers in ProcessPoolExecutor.
-    '''
-    for func in funcs:
-        func()
 
 
 @asynccontextmanager
@@ -35,20 +26,15 @@ async def run_session(
     queue_in = cast(QueueIn, mp_context.Queue())
     queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
-    async with MultiprocessingLogging(mp_context=mp_context) as mp_logging:
-        initializer = partial(
-            _call_all,
-            mp_logging.initializer,
-            partial(spawned.set_queues, queue_in, queue_out),
+    func = partial(spawned.main, context.run_arg)
+    async with relay_queue(context, queue_out):
+        running = await run_in_process(
+            func,
+            mp_context=mp_context,
+            initializer=partial(spawned.set_queues, queue_in, queue_out),
+            collect_logging=True,
         )
-        func = partial(spawned.main, context.run_arg)
-        async with relay_queue(context, queue_out):
-            running = await run_in_process(
-                func,
-                mp_context=mp_context,
-                initializer=initializer,
-            )
-            yield running, send_command
+        yield running, send_command
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
