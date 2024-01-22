@@ -48,8 +48,11 @@ def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
 
 @asynccontextmanager
 async def relay_events(context: Context, queue: QueueOut) -> AsyncIterator[None]:
+    logger = getLogger(__name__)
+
     async def _monitor() -> None:
         while (event := await asyncio.to_thread(queue.get)) is not None:
+            logger.debug(f'event: {event!r}')
             await context.hook.ahook.on_event_in_process(context=context, event=event)
 
     task = asyncio.create_task(_monitor())
@@ -58,7 +61,10 @@ async def relay_events(context: Context, queue: QueueOut) -> AsyncIterator[None]
     finally:
         up_to = 0.05
         start = time.process_time()
-        while not queue.empty() and time.process_time() - start < up_to:
+        while not queue.empty():
             await asyncio.sleep(0)
+            if time.process_time() - start > up_to:
+                logger.warning(f'Timeout. the queue is not empty: {queue!r}')
+                break
         await asyncio.to_thread(queue.put, None)  # type: ignore
         await task
