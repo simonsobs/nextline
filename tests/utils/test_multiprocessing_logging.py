@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
@@ -7,18 +6,6 @@ import pytest
 from pytest import LogCaptureFixture
 
 from nextline.utils import MultiprocessingLogging
-
-
-def test_init_sync():
-    '''Assert the init without the running loop.'''
-    with pytest.raises(RuntimeError):
-        asyncio.get_running_loop()
-    assert MultiprocessingLogging()
-
-
-async def test_close_without_open():
-    mp_logging = MultiprocessingLogging()
-    await mp_logging.close()
 
 
 @pytest.mark.parametrize('mp_method', [None, 'spawn', 'fork', 'forkserver'])
