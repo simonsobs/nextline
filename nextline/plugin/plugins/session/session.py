@@ -13,7 +13,7 @@ from tblib import pickling_support
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
-from nextline.utils import ExitedProcess, run_in_process
+from nextline.utils import run_in_process
 
 pickling_support.install()
 
@@ -23,6 +23,7 @@ class RunSession:
     @apluggy.asynccontextmanager
     async def run(self, context: Context) -> AsyncIterator[None]:
         assert context.run_arg
+        context.exited_process = None
         mp_context = mp.get_context('spawn')
         queue_in = cast(QueueIn, mp_context.Queue())
         queue_out = cast(QueueOut, mp_context.Queue())
@@ -38,14 +39,12 @@ class RunSession:
             try:
                 yield
             finally:
-                exited = await context.running_process
+                context.exited_process = await context.running_process
                 context.running_process = None
-                if exited.raised:
+                if context.exited_process.raised:
                     logger = getLogger(__name__)
-                    logger.exception(exited.raised)
-                await context.hook.ahook.on_end_run(
-                    context=context, exited_process=exited
-                )
+                    logger.exception(context.exited_process.raised)
+                await context.hook.ahook.on_end_run(context=context)
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
@@ -108,8 +107,9 @@ class CommandSender:
 
 class Result:
     @hookimpl
-    async def on_end_run(self, exited_process: ExitedProcess[RunResult]) -> None:
-        self._run_result = exited_process.returned or RunResult()
+    async def on_end_run(self, context: Context) -> None:
+        assert context.exited_process
+        self._run_result = context.exited_process.returned or RunResult()
 
     @hookimpl
     def exception(self) -> Optional[BaseException]:

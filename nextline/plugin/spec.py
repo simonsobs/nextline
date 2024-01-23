@@ -26,6 +26,7 @@ class Context:
     run_arg: spawned.RunArg | None = None
     send_command: Callable[[spawned.Command], None] | None = None
     running_process: RunningProcess[spawned.RunResult] | None = None
+    exited_process: ExitedProcess[spawned.RunResult] | None = None
 
 
 @hookspec
@@ -107,9 +108,7 @@ async def send_command(context: Context, command: spawned.Command) -> None:
 
 
 @hookspec
-async def on_end_run(
-    context: Context, exited_process: ExitedProcess[spawned.RunResult]
-) -> None:
+async def on_end_run(context: Context) -> None:
     pass
 
 
