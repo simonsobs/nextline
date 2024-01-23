@@ -40,6 +40,8 @@ class RunSession:
                 yield
             finally:
                 context.exited_process = await context.running_process
+                if context.exited_process.returned is None:
+                    context.exited_process.returned = RunResult()
                 context.running_process = None
                 if context.exited_process.raised:
                     logger = getLogger(__name__)
@@ -107,14 +109,17 @@ class CommandSender:
 
 class Result:
     @hookimpl
-    async def on_end_run(self, context: Context) -> None:
-        assert context.exited_process
-        self._run_result = context.exited_process.returned or RunResult()
+    def exception(self, context: Context) -> Optional[BaseException]:
+        if not context.exited_process:
+            return None
+        if not context.exited_process.returned:
+            return None
+        return context.exited_process.returned.exc
 
     @hookimpl
-    def exception(self) -> Optional[BaseException]:
-        return self._run_result.exc
-
-    @hookimpl
-    def result(self) -> Any:
-        return self._run_result.result()
+    def result(self, context: Context) -> Any:
+        if not context.exited_process:
+            return None
+        if not context.exited_process.returned:
+            return None
+        return context.exited_process.returned.result()

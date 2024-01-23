@@ -2,7 +2,6 @@ import dataclasses
 import datetime
 from typing import Optional
 
-from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.types import RunInfo
 
@@ -38,7 +37,8 @@ class RunInfoRegistrar:
     async def on_end_run(self, context: Context) -> None:
         assert self._run_info is not None
         assert context.exited_process
-        run_result = context.exited_process.returned or spawned.RunResult()
+        run_result = context.exited_process.returned
+        assert run_result
 
         self._run_info = dataclasses.replace(
             self._run_info,
