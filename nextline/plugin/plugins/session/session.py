@@ -13,7 +13,7 @@ from tblib import pickling_support
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
-from nextline.utils import ExitedProcess, RunningProcess, run_in_process
+from nextline.utils import ExitedProcess, run_in_process
 
 pickling_support.install()
 
@@ -22,32 +22,26 @@ class RunSession:
     @hookimpl
     @apluggy.asynccontextmanager
     async def run(self, context: Context) -> AsyncIterator[None]:
-        ahook = context.hook.ahook
-        async with run_session(context) as running:
-            await ahook.on_start_run(context=context)
+        assert context.run_arg
+        mp_context = mp.get_context('spawn')
+        queue_in = cast(QueueIn, mp_context.Queue())
+        queue_out = cast(QueueOut, mp_context.Queue())
+        context.send_command = SendCommand(queue_in)
+        async with relay_events(context, queue_out):
+            context.running_process = await run_in_process(
+                func=partial(spawned.main, context.run_arg),
+                mp_context=mp_context,
+                initializer=partial(spawned.set_queues, queue_in, queue_out),
+                collect_logging=True,
+            )
+            await context.hook.ahook.on_start_run(context=context)
             yield
-            exited = await running
+            exited = await context.running_process
         if exited.raised:
             logger = getLogger(__name__)
             logger.exception(exited.raised)
         self._run_result = exited.returned or RunResult()
-        await ahook.on_end_run(context=context, exited_process=exited)
-
-
-@contextlib.asynccontextmanager
-async def run_session(context: Context) -> AsyncIterator[RunningProcess[RunResult]]:
-    assert context.run_arg
-    mp_context = mp.get_context('spawn')
-    queue_in = cast(QueueIn, mp_context.Queue())
-    queue_out = cast(QueueOut, mp_context.Queue())
-    context.send_command = SendCommand(queue_in)
-    func = partial(spawned.main, context.run_arg)
-    initializer = partial(spawned.set_queues, queue_in, queue_out)
-    async with relay_events(context, queue_out):
-        context.running_process = await run_in_process(
-            func, mp_context=mp_context, initializer=initializer, collect_logging=True
-        )
-        yield context.running_process
+        await context.hook.ahook.on_end_run(context=context, exited_process=exited)
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
