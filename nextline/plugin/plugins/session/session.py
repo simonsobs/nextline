@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from logging import getLogger
 from typing import Any, Optional
 
@@ -19,10 +19,8 @@ class RunSession:
     @apluggy.asynccontextmanager
     async def run(self, context: Context) -> AsyncIterator[None]:
         ahook = context.hook.ahook
-        async with run_session(context) as (running, send_command):
-            await ahook.on_start_run(
-                context=context, running_process=running, send_command=send_command
-            )
+        async with run_session(context) as running:
+            await ahook.on_start_run(context=context, running_process=running)
             yield
             exited = await running
         if exited.raised:
@@ -52,12 +50,9 @@ class Signal:
 
 class CommandSender:
     @hookimpl
-    async def on_start_run(self, send_command: Callable[[Command], None]) -> None:
-        self._send_command = send_command
-
-    @hookimpl
-    async def send_command(self, command: Command) -> None:
-        self._send_command(command)
+    async def send_command(self, context: Context, command: Command) -> None:
+        assert context.send_command
+        context.send_command(command)
 
 
 class Result:
