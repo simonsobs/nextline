@@ -27,12 +27,10 @@ async def run_session(
     queue_out = cast(QueueOut, mp_context.Queue())
     send_command = SendCommand(queue_in)
     func = partial(spawned.main, context.run_arg)
+    initializer = partial(spawned.set_queues, queue_in, queue_out)
     async with relay_events(context, queue_out):
         running = await run_in_process(
-            func,
-            mp_context=mp_context,
-            initializer=partial(spawned.set_queues, queue_in, queue_out),
-            collect_logging=True,
+            func, mp_context=mp_context, initializer=initializer, collect_logging=True
         )
         yield running, send_command
 
