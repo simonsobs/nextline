@@ -35,13 +35,17 @@ class RunSession:
                 collect_logging=True,
             )
             await context.hook.ahook.on_start_run(context=context)
-            yield
-            exited = await context.running_process
-        if exited.raised:
-            logger = getLogger(__name__)
-            logger.exception(exited.raised)
-        self._run_result = exited.returned or RunResult()
-        await context.hook.ahook.on_end_run(context=context, exited_process=exited)
+            try:
+                yield
+            finally:
+                exited = await context.running_process
+                context.running_process = None
+                if exited.raised:
+                    logger = getLogger(__name__)
+                    logger.exception(exited.raised)
+                await context.hook.ahook.on_end_run(
+                    context=context, exited_process=exited
+                )
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
