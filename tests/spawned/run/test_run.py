@@ -4,15 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from nextline.spawned import (
-    OnStartPrompt,
-    PdbCommand,
-    QueueIn,
-    QueueOut,
-    RunArg,
-    main,
-    set_queues,
-)
+from nextline.events import OnStartPrompt
+from nextline.spawned import PdbCommand, QueueIn, QueueOut, RunArg, main, set_queues
 from nextline.types import RunNo
 
 

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import apluggy
 
-from nextline import spawned
+from nextline import events, spawned
 from nextline.types import InitOptions, ResetOptions
 from nextline.utils import ExitedProcess, RunningProcess
 from nextline.utils.pubsub.broker import PubSub
@@ -78,7 +78,7 @@ async def run(context: Context):  # type: ignore
 
 
 @hookspec
-async def on_event_in_process(context: Context, event: spawned.Event) -> None:
+async def on_event_in_process(context: Context, event: events.Event) -> None:
     pass
 
 
@@ -123,47 +123,47 @@ def result(context: Context) -> Any:
 
 
 @hookspec
-async def on_start_trace(context: Context, event: spawned.OnStartTrace) -> None:
+async def on_start_trace(context: Context, event: events.OnStartTrace) -> None:
     pass
 
 
 @hookspec
-async def on_end_trace(context: Context, event: spawned.OnEndTrace) -> None:
+async def on_end_trace(context: Context, event: events.OnEndTrace) -> None:
     pass
 
 
 @hookspec
 async def on_start_trace_call(
-    context: Context, event: spawned.OnStartTraceCall
+    context: Context, event: events.OnStartTraceCall
 ) -> None:
     pass
 
 
 @hookspec
-async def on_end_trace_call(context: Context, event: spawned.OnEndTraceCall) -> None:
+async def on_end_trace_call(context: Context, event: events.OnEndTraceCall) -> None:
     pass
 
 
 @hookspec
-async def on_start_cmdloop(context: Context, event: spawned.OnStartCmdloop) -> None:
+async def on_start_cmdloop(context: Context, event: events.OnStartCmdloop) -> None:
     pass
 
 
 @hookspec
-async def on_end_cmdloop(context: Context, event: spawned.OnEndCmdloop) -> None:
+async def on_end_cmdloop(context: Context, event: events.OnEndCmdloop) -> None:
     pass
 
 
 @hookspec
-async def on_start_prompt(context: Context, event: spawned.OnStartPrompt) -> None:
+async def on_start_prompt(context: Context, event: events.OnStartPrompt) -> None:
     pass
 
 
 @hookspec
-async def on_end_prompt(context: Context, event: spawned.OnEndPrompt) -> None:
+async def on_end_prompt(context: Context, event: events.OnEndPrompt) -> None:
     pass
 
 
 @hookspec
-async def on_write_stdout(context: Context, event: spawned.OnWriteStdout) -> None:
+async def on_write_stdout(context: Context, event: events.OnWriteStdout) -> None:
     pass

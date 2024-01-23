@@ -5,10 +5,10 @@ from queue import Queue
 from types import FrameType
 from typing import Any, Callable, Optional
 
+from nextline.events import Event
 from nextline.types import RunNo, Statement
 
 from .commands import Command
-from .events import Event
 
 # if TYPE_CHECKING:
 #     from sys import TraceFunction as TraceFunc  # type: ignore  # noqa: F401

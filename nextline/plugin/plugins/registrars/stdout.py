@@ -1,7 +1,7 @@
 from typing import Optional
 
+from nextline.events import OnWriteStdout
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import OnWriteStdout
 from nextline.types import RunNo, StdoutInfo
 
 

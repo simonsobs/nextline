@@ -3,7 +3,7 @@ from collections.abc import Generator, Iterator
 
 from apluggy import PluginManager, contextmanager
 
-from nextline.spawned.events import (
+from nextline.events import (
     OnEndCmdloop,
     OnEndPrompt,
     OnEndTrace,

@@ -1,31 +1,31 @@
 from logging import getLogger
 
-from nextline import spawned
+from nextline import events
 from nextline.plugin.spec import Context, hookimpl
 
 
 class OnEvent:
     @hookimpl
-    async def on_event_in_process(self, context: Context, event: spawned.Event) -> None:
+    async def on_event_in_process(self, context: Context, event: events.Event) -> None:
         ahook = context.hook.ahook
         match event:
-            case spawned.OnStartTrace():
+            case events.OnStartTrace():
                 await ahook.on_start_trace(context=context, event=event)
-            case spawned.OnEndTrace():
+            case events.OnEndTrace():
                 await ahook.on_end_trace(context=context, event=event)
-            case spawned.OnStartTraceCall():
+            case events.OnStartTraceCall():
                 await ahook.on_start_trace_call(context=context, event=event)
-            case spawned.OnEndTraceCall():
+            case events.OnEndTraceCall():
                 await ahook.on_end_trace_call(context=context, event=event)
-            case spawned.OnStartCmdloop():
+            case events.OnStartCmdloop():
                 await ahook.on_start_cmdloop(context=context, event=event)
-            case spawned.OnEndCmdloop():
+            case events.OnEndCmdloop():
                 await ahook.on_end_cmdloop(context=context, event=event)
-            case spawned.OnStartPrompt():
+            case events.OnStartPrompt():
                 await ahook.on_start_prompt(context=context, event=event)
-            case spawned.OnEndPrompt():
+            case events.OnEndPrompt():
                 await ahook.on_end_prompt(context=context, event=event)
-            case spawned.OnWriteStdout():
+            case events.OnWriteStdout():
                 await ahook.on_write_stdout(context=context, event=event)
             case _:
                 logger = getLogger(__name__)
