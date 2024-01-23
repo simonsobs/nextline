@@ -27,10 +27,10 @@ async def run_session(context: Context) -> AsyncIterator[RunningProcess[RunResul
     func = partial(spawned.main, context.run_arg)
     initializer = partial(spawned.set_queues, queue_in, queue_out)
     async with relay_events(context, queue_out):
-        running = await run_in_process(
+        context.running_process = await run_in_process(
             func, mp_context=mp_context, initializer=initializer, collect_logging=True
         )
-        yield running
+        yield context.running_process
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:

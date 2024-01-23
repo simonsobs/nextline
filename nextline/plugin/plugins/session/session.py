@@ -7,7 +7,7 @@ from tblib import pickling_support
 
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, RunResult
-from nextline.utils import ExitedProcess, RunningProcess
+from nextline.utils import ExitedProcess
 
 from .spawn import run_session
 
@@ -20,7 +20,7 @@ class RunSession:
     async def run(self, context: Context) -> AsyncIterator[None]:
         ahook = context.hook.ahook
         async with run_session(context) as running:
-            await ahook.on_start_run(context=context, running_process=running)
+            await ahook.on_start_run(context=context)
             yield
             exited = await running
         if exited.raised:
@@ -32,20 +32,19 @@ class RunSession:
 
 class Signal:
     @hookimpl
-    async def on_start_run(self, running_process: RunningProcess[RunResult]) -> None:
-        self._running = running_process
+    async def interrupt(self, context: Context) -> None:
+        assert context.running_process
+        context.running_process.interrupt()
 
     @hookimpl
-    async def interrupt(self) -> None:
-        self._running.interrupt()
+    async def terminate(self, context: Context) -> None:
+        assert context.running_process
+        context.running_process.terminate()
 
     @hookimpl
-    async def terminate(self) -> None:
-        self._running.terminate()
-
-    @hookimpl
-    async def kill(self) -> None:
-        self._running.kill()
+    async def kill(self, context: Context) -> None:
+        assert context.running_process
+        context.running_process.kill()
 
 
 class CommandSender:
