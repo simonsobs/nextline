@@ -8,18 +8,17 @@ from nextline.types import RunInfo
 
 class RunInfoRegistrar:
     def __init__(self) -> None:
-        self._script: Optional[str] = None
         self._run_info: Optional[RunInfo] = None
-
-    @hookimpl
-    async def on_change_script(self, script: str) -> None:
-        self._script = script
 
     @hookimpl
     async def on_initialize_run(self, context: Context) -> None:
         assert context.run_arg
+        if isinstance(context.run_arg.statement, str):
+            script = context.run_arg.statement
+        else:
+            script = None
         self._run_info = RunInfo(
-            run_no=context.run_arg.run_no, state='initialized', script=self._script
+            run_no=context.run_arg.run_no, state='initialized', script=script
         )
         await context.pubsub.publish('run_info', self._run_info)
 
