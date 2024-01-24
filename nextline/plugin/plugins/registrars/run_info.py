@@ -1,5 +1,4 @@
 import dataclasses
-import datetime
 from typing import Optional
 
 from nextline.plugin.spec import Context, hookimpl
@@ -25,10 +24,10 @@ class RunInfoRegistrar:
     @hookimpl
     async def on_start_run(self, context: Context) -> None:
         assert self._run_info is not None
+        assert context.running_process
+        started_at = context.running_process.process_created_at.replace(tzinfo=None)
         self._run_info = dataclasses.replace(
-            self._run_info,
-            state='running',
-            started_at=datetime.datetime.utcnow(),
+            self._run_info, state='running', started_at=started_at
         )
         await context.pubsub.publish('run_info', self._run_info)
 
@@ -38,14 +37,14 @@ class RunInfoRegistrar:
         assert context.exited_process
         run_result = context.exited_process.returned
         assert run_result
+        ended_at = context.exited_process.process_exited_at.replace(tzinfo=None)
 
         self._run_info = dataclasses.replace(
             self._run_info,
             state='finished',
             result=run_result.fmt_ret,
             exception=run_result.fmt_exc,
-            ended_at=datetime.datetime.utcnow(),
+            ended_at=ended_at,
         )
         await context.pubsub.publish('run_info', self._run_info)
-
         self._run_info = None
