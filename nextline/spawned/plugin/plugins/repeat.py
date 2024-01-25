@@ -15,15 +15,16 @@ from nextline.events import (
     OnWriteStdout,
 )
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import QueueOut, TraceArgs
+from nextline.spawned.types import QueueOut, RunArg, TraceArgs
 from nextline.spawned.utils import to_canonic_path
 from nextline.types import PromptNo, TraceNo
 
 
 class Repeater:
     @hookimpl
-    def init(self, hook: PluginManager, queue_out: QueueOut) -> None:
+    def init(self, hook: PluginManager, run_arg: RunArg, queue_out: QueueOut) -> None:
         self._hook = hook
+        self._run_no = run_arg.run_no
         self._queue_out = queue_out
 
     @hookimpl
@@ -33,6 +34,7 @@ class Repeater:
         thread_no = self._hook.hook.current_thread_no()
         task_no = self._hook.hook.current_task_no()
         event = OnStartTrace(
+            run_no=self._run_no,
             started_at=started_at,
             trace_no=trace_no,
             thread_no=thread_no,
@@ -43,7 +45,7 @@ class Repeater:
     @hookimpl
     def on_end_trace(self, trace_no: TraceNo) -> None:
         ended_at = datetime.datetime.utcnow()
-        event = OnEndTrace(ended_at=ended_at, trace_no=trace_no)
+        event = OnEndTrace(ended_at=ended_at, run_no=self._run_no, trace_no=trace_no)
         self._queue_out.put(event)
 
     @hookimpl
@@ -56,6 +58,7 @@ class Repeater:
         line_no = frame.f_lineno
         event_start = OnStartTraceCall(
             started_at=started_at,
+            run_no=self._run_no,
             trace_no=trace_no,
             file_name=file_name,
             line_no=line_no,
@@ -68,7 +71,9 @@ class Repeater:
             yield
         finally:
             ended_at = datetime.datetime.utcnow()
-            event_end = OnEndTraceCall(ended_at=ended_at, trace_no=trace_no)
+            event_end = OnEndTraceCall(
+                ended_at=ended_at, run_no=self._run_no, trace_no=trace_no
+            )
             self._queue_out.put(event_end)
 
     @hookimpl
@@ -76,14 +81,18 @@ class Repeater:
     def on_cmdloop(self) -> Generator[None, None, None]:
         started_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
-        event_start = OnStartCmdloop(started_at=started_at, trace_no=trace_no)
+        event_start = OnStartCmdloop(
+            started_at=started_at, run_no=self._run_no, trace_no=trace_no
+        )
         self._queue_out.put(event_start)
 
         try:
             yield
         finally:
             ended_at = datetime.datetime.utcnow()
-            event_end = OnEndCmdloop(ended_at=ended_at, trace_no=trace_no)
+            event_end = OnEndCmdloop(
+                ended_at=ended_at, run_no=self._run_no, trace_no=trace_no
+            )
             self._queue_out.put(event_end)
 
     @hookimpl
@@ -93,6 +102,7 @@ class Repeater:
         trace_no = self._hook.hook.current_trace_no()
         event_start = OnStartPrompt(
             started_at=started_at,
+            run_no=self._run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
             prompt_text=text,
@@ -108,6 +118,7 @@ class Repeater:
             ended_at = datetime.datetime.utcnow()
             event_end = OnEndPrompt(
                 ended_at=ended_at,
+                run_no=self._run_no,
                 trace_no=trace_no,
                 prompt_no=prompt_no,
                 command=command,
@@ -120,6 +131,7 @@ class Repeater:
         trace_no = self._hook.hook.current_trace_no()
         event = OnWriteStdout(
             written_at=written_at,
+            run_no=self._run_no,
             trace_no=trace_no,
             text=line,
         )
