@@ -46,7 +46,7 @@ class RunSession:
                 if context.exited_process.raised:
                     logger = getLogger(__name__)
                     logger.exception(context.exited_process.raised)
-                await context.hook.ahook.on_end_run(context=context)
+        await context.hook.ahook.on_end_run(context=context)
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
