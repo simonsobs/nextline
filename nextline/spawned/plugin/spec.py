@@ -138,6 +138,11 @@ def current_trace_args() -> Optional[TraceArgs]:
     pass
 
 
+@hookspec(firstresult=True)
+def current_trace_call_info() -> Optional[TraceCallInfo]:
+    pass
+
+
 @hookspec
 @apluggy.contextmanager
 def on_cmdloop():  # type: ignore

@@ -125,3 +125,8 @@ class TraceCallHandler:
         if info is None:
             return None
         return info.args
+
+    @hookimpl
+    def current_trace_call_info(self) -> Optional[TraceCallInfo]:
+        trace_no = self._hook.hook.current_trace_no()
+        return self._info_map.get(trace_no)
