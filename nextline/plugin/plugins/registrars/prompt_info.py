@@ -2,8 +2,7 @@ import asyncio
 import dataclasses
 from logging import getLogger
 
-from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import (
+from nextline.events import (
     OnEndPrompt,
     OnEndTrace,
     OnEndTraceCall,
@@ -11,6 +10,7 @@ from nextline.spawned import (
     OnStartTrace,
     OnStartTraceCall,
 )
+from nextline.plugin.spec import Context, hookimpl
 from nextline.types import PromptInfo, PromptNo, TraceNo
 
 
@@ -95,7 +95,7 @@ class PromptInfoRegistrar:
             trace_no=trace_no,
             prompt_no=PromptNo(-1),
             open=False,
-            event=trace_call.call_event,
+            event=trace_call.event,
             file_name=trace_call.file_name,
             line_no=trace_call.line_no,
             trace_call_end=True,
@@ -118,7 +118,7 @@ class PromptInfoRegistrar:
             trace_no=trace_no,
             prompt_no=prompt_no,
             open=True,
-            event=trace_call.call_event,
+            event=trace_call.event,
             file_name=trace_call.file_name,
             line_no=trace_call.line_no,
             stdout=event.prompt_text,

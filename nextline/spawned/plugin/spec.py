@@ -1,5 +1,5 @@
 from asyncio import Task
-from collections.abc import Callable, Collection, Generator
+from collections.abc import Callable, Collection, Generator, Iterator
 from threading import Thread
 from types import FrameType
 from typing import Any, Optional
@@ -12,6 +12,7 @@ from nextline.spawned.types import (
     RunArg,
     RunResult,
     TraceArgs,
+    TraceCallInfo,
     TraceFunction,
 )
 from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
@@ -123,8 +124,8 @@ def on_end_trace(trace_no: TraceNo) -> None:
 
 @hookspec
 @apluggy.contextmanager
-def on_trace_call(trace_args: TraceArgs):  # type: ignore
-    pass
+def on_trace_call(trace_call_info: TraceCallInfo) -> Iterator[None]:
+    yield
 
 
 @hookspec(firstresult=True)
@@ -134,6 +135,11 @@ def is_on_trace_call() -> Optional[bool]:
 
 @hookspec(firstresult=True)
 def current_trace_args() -> Optional[TraceArgs]:
+    pass
+
+
+@hookspec(firstresult=True)
+def current_trace_call_info() -> Optional[TraceCallInfo]:
     pass
 
 

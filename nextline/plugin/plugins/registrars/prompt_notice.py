@@ -1,8 +1,8 @@
 from logging import getLogger
 from typing import Optional
 
+from nextline.events import OnEndTraceCall, OnStartPrompt, OnStartTraceCall
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import OnEndTraceCall, OnStartPrompt, OnStartTraceCall
 from nextline.types import PromptNotice, RunNo, TraceNo
 
 
@@ -40,7 +40,7 @@ class PromptNoticeRegistrar:
             trace_no=trace_no,
             prompt_no=prompt_no,
             prompt_text=event.prompt_text,
-            event=trace_call.call_event,
+            event=trace_call.event,
             file_name=trace_call.file_name,
             line_no=trace_call.line_no,
         )

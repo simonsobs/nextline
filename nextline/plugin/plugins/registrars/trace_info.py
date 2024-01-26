@@ -1,8 +1,8 @@
 import dataclasses
 import datetime
 
+from nextline.events import OnEndTrace, OnStartTrace
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import OnEndTrace, OnStartTrace
 from nextline.types import TraceInfo, TraceNo
 
 

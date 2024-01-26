@@ -1,8 +1,8 @@
 import time
 
 from nextline import Nextline
+from nextline.events import OnStartPrompt
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import OnStartPrompt
 
 
 def func():

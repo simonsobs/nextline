@@ -1,15 +1,19 @@
+import asyncio
+import contextlib
+import multiprocessing as mp
+import time
 from collections.abc import AsyncIterator, Callable
+from functools import partial
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import apluggy
 from tblib import pickling_support
 
+from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
-from nextline.spawned import Command, RunResult
-from nextline.utils import ExitedProcess, RunningProcess
-
-from .spawn import run_session
+from nextline.spawned import Command, QueueIn, QueueOut, RunResult
+from nextline.utils import run_in_process
 
 pickling_support.install()
 
@@ -18,57 +22,104 @@ class RunSession:
     @hookimpl
     @apluggy.asynccontextmanager
     async def run(self, context: Context) -> AsyncIterator[None]:
-        ahook = context.hook.ahook
-        async with run_session(context) as (running, send_command):
-            await ahook.on_start_run(
-                context=context, running_process=running, send_command=send_command
+        assert context.run_arg
+        context.exited_process = None
+        mp_context = mp.get_context('spawn')
+        queue_in = cast(QueueIn, mp_context.Queue())
+        queue_out = cast(QueueOut, mp_context.Queue())
+        context.send_command = SendCommand(queue_in)
+        async with relay_events(context, queue_out):
+            context.running_process = await run_in_process(
+                func=partial(spawned.main, context.run_arg),
+                mp_context=mp_context,
+                initializer=partial(spawned.set_queues, queue_in, queue_out),
+                collect_logging=True,
             )
-            yield
-            exited = await running
-        if exited.raised:
-            logger = getLogger(__name__)
-            logger.exception(exited.raised)
-        self._run_result = exited.returned or RunResult(ret=None, exc=None)
-        await ahook.on_end_run(context=context, exited_process=exited)
+            await context.hook.ahook.on_start_run(context=context)
+            try:
+                yield
+            finally:
+                context.exited_process = await context.running_process
+                if context.exited_process.returned is None:
+                    context.exited_process.returned = RunResult()
+                context.running_process = None
+                if context.exited_process.raised:
+                    logger = getLogger(__name__)
+                    logger.exception(context.exited_process.raised)
+        await context.hook.ahook.on_end_run(context=context)
+
+
+def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:
+    def _send_command(command: Command) -> None:
+        logger = getLogger(__name__)
+        logger.debug(f'send_pdb_command({command!r}')
+        queue_in.put(command)
+
+    return _send_command
+
+
+@contextlib.asynccontextmanager
+async def relay_events(context: Context, queue: QueueOut) -> AsyncIterator[None]:
+    '''Call the hook `on_event_in_process()` on events emitted in the spawned process.'''
+    logger = getLogger(__name__)
+
+    async def _monitor() -> None:
+        while (event := await asyncio.to_thread(queue.get)) is not None:
+            logger.debug(f'event: {event!r}')
+            await context.hook.ahook.on_event_in_process(context=context, event=event)
+
+    task = asyncio.create_task(_monitor())
+    try:
+        yield
+    finally:
+        up_to = 0.05
+        start = time.process_time()
+        while not queue.empty():
+            await asyncio.sleep(0)
+            if time.process_time() - start > up_to:
+                logger.warning(f'Timeout. the queue is not empty: {queue!r}')
+                break
+        await asyncio.to_thread(queue.put, None)  # type: ignore
+        await task
 
 
 class Signal:
     @hookimpl
-    async def on_start_run(self, running_process: RunningProcess[RunResult]) -> None:
-        self._running = running_process
+    async def interrupt(self, context: Context) -> None:
+        assert context.running_process
+        context.running_process.interrupt()
 
     @hookimpl
-    async def interrupt(self) -> None:
-        self._running.interrupt()
+    async def terminate(self, context: Context) -> None:
+        assert context.running_process
+        context.running_process.terminate()
 
     @hookimpl
-    async def terminate(self) -> None:
-        self._running.terminate()
-
-    @hookimpl
-    async def kill(self) -> None:
-        self._running.kill()
+    async def kill(self, context: Context) -> None:
+        assert context.running_process
+        context.running_process.kill()
 
 
 class CommandSender:
     @hookimpl
-    async def on_start_run(self, send_command: Callable[[Command], None]) -> None:
-        self._send_command = send_command
-
-    @hookimpl
-    async def send_command(self, command: Command) -> None:
-        self._send_command(command)
+    async def send_command(self, context: Context, command: Command) -> None:
+        assert context.send_command
+        context.send_command(command)
 
 
 class Result:
     @hookimpl
-    async def on_end_run(self, exited_process: ExitedProcess[RunResult]) -> None:
-        self._run_result = exited_process.returned or RunResult(ret=None, exc=None)
+    def exception(self, context: Context) -> Optional[BaseException]:
+        if not context.exited_process:
+            return None
+        if not context.exited_process.returned:
+            return None
+        return context.exited_process.returned.exc
 
     @hookimpl
-    def exception(self) -> Optional[BaseException]:
-        return self._run_result.exc
-
-    @hookimpl
-    def result(self) -> Any:
-        return self._run_result.result()
+    def result(self, context: Context) -> Any:
+        if not context.exited_process:
+            return None
+        if not context.exited_process.returned:
+            return None
+        return context.exited_process.returned.result()

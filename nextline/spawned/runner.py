@@ -22,15 +22,15 @@ def _compile_and_run(hook: PluginManager, run_arg: RunArg) -> RunResult:
         func = hook.hook.compose_callable()
     except BaseException as exc:
         _remove_frame(exc=exc, frame=inspect.currentframe())
-        return RunResult(ret=None, exc=exc)
+        return RunResult(exc=exc)
     trace_func = hook.hook.create_trace_func()
     try:
         with sys_trace(trace_func=trace_func, thread=run_arg.trace_threads):
             ret = func()
-        return RunResult(ret=ret, exc=None)
+        return RunResult(ret=ret)
     except BaseException as exc:
         _remove_frame(exc=exc, frame=inspect.currentframe())
-        return RunResult(ret=None, exc=exc)
+        return RunResult(exc=exc)
 
 
 def _remove_frame(exc: BaseException, frame: Optional[FrameType]) -> None:

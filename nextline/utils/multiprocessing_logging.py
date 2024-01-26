@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import multiprocessing as mp
 from functools import partial
@@ -6,7 +7,7 @@ from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler
 from multiprocessing.context import BaseContext
 from queue import Queue
-from typing import Callable, Optional, cast
+from typing import Optional, cast
 
 __all__ = ['MultiprocessingLogging']
 
@@ -17,7 +18,8 @@ def example_func() -> None:
     logger.warning('warning from another process')
 
 
-class MultiprocessingLogging:
+@contextlib.asynccontextmanager
+async def MultiprocessingLogging(mp_context: Optional[BaseContext] = None):
     '''Collect logging from other processes in the main process.
 
     Example:
@@ -31,10 +33,10 @@ class MultiprocessingLogging:
     ...     from concurrent.futures import ProcessPoolExecutor
     ...
     ...     # Start MultiprocessingLogging.
-    ...     async with MultiprocessingLogging() as mp_logging:
+    ...     async with MultiprocessingLogging() as initializer:
     ...
     ...         # The initializer is given to ProcessPoolExecutor.
-    ...         with ProcessPoolExecutor(initializer=mp_logging.initializer) as executor:
+    ...         with ProcessPoolExecutor(initializer=initializer) as executor:
     ...
     ...             # In another process, execute example_func(), which logs a warning.
     ...             future = executor.submit(example_func)
@@ -73,40 +75,24 @@ class MultiprocessingLogging:
 
     '''
 
-    def __init__(self, mp_context: Optional[BaseContext] = None) -> None:
-        mp_context = mp_context or mp.get_context()
-        self._q = cast(Queue[LogRecord | None], mp_context.Queue())
-        self._initializer = partial(_initializer, self._q)
-        self._task: asyncio.Task | None = None
+    mp_context = mp_context or mp.get_context()
+    queue = cast(Queue[LogRecord | None], mp_context.Queue())
+    initializer = partial(_initializer, queue)
 
-    @property
-    def initializer(self) -> Callable[[], None]:
-        '''A callable with no args to be given to ProcessPoolExecutor as initializer.'''
-        return self._initializer
-
-    async def open(self) -> None:
-        self._task = asyncio.create_task(self._listen())
-
-    async def _listen(self) -> None:
-        '''Receive loggings from other processes and handle them in the main process.'''
-        while (record := await asyncio.to_thread(self._q.get)) is not None:
+    async def _listen() -> None:
+        '''Receive loggings from other processes and handle them in the current process.'''
+        while (record := await asyncio.to_thread(queue.get)) is not None:
             logger = getLogger(record.name)
             if logger.getEffectiveLevel() <= record.levelno:
                 logger.handle(record)
 
-    async def close(self) -> None:
-        if self._task:
-            await asyncio.to_thread(self._q.put, None)
-            await self._task
-            self._task = None
+    task = asyncio.create_task(_listen())
 
-    async def __aenter__(self) -> 'MultiprocessingLogging':
-        await self.open()
-        return self
-
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
-        del exc_type, exc_value, traceback
-        await self.close()
+    try:
+        yield initializer
+    finally:
+        await asyncio.to_thread(queue.put, None)
+        await task
 
 
 def _initializer(queue: Queue[LogRecord]) -> None:
