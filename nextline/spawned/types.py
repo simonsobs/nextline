@@ -6,6 +6,7 @@ from types import FrameType
 from typing import Any, Callable, Optional
 
 from nextline.events import Event
+from nextline.spawned.path import to_canonic_path
 from nextline.types import RunNo, Statement
 
 from .commands import Command
@@ -64,3 +65,19 @@ class RunResult:
             # TODO: add a test for the exception
             raise self.exc
         return self.ret
+
+
+@dataclass
+class TraceCallInfo:
+    args: TraceArgs
+    file_name: str = field(init=False)
+    line_no: int = field(init=False)
+    frame_object_id: int = field(init=False)
+    event: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        frame, event, _ = self.args
+        self.file_name = to_canonic_path(frame.f_code.co_filename)
+        self.line_no = frame.f_lineno
+        self.frame_object_id = id(frame)
+        self.event = event
