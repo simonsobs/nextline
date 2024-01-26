@@ -95,13 +95,18 @@ class Repeater:
     @contextmanager
     def on_prompt(self, prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
         started_at = datetime.datetime.utcnow()
-        trace_no = self._hook.hook.current_trace_no()
+        trace_no: TraceNo = self._hook.hook.current_trace_no()
+        trace_call_info: TraceCallInfo = self._hook.hook.current_trace_call_info()
         event_start = OnStartPrompt(
             started_at=started_at,
             run_no=self._run_no,
             trace_no=trace_no,
             prompt_no=prompt_no,
             prompt_text=text,
+            file_name=trace_call_info.file_name,
+            line_no=trace_call_info.line_no,
+            frame_object_id=trace_call_info.frame_object_id,
+            event=trace_call_info.event,
         )
         self._queue_out.put(event_start)
 

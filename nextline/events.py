@@ -65,6 +65,10 @@ class OnStartPrompt(Event):
     trace_no: TraceNo
     prompt_no: PromptNo
     prompt_text: str
+    file_name: str
+    line_no: int
+    frame_object_id: int
+    event: str
 
 
 @dataclass
