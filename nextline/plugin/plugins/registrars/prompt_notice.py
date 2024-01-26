@@ -40,7 +40,7 @@ class PromptNoticeRegistrar:
             trace_no=trace_no,
             prompt_no=prompt_no,
             prompt_text=event.prompt_text,
-            event=trace_call.call_event,
+            event=trace_call.event,
             file_name=trace_call.file_name,
             line_no=trace_call.line_no,
         )

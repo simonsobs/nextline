@@ -34,7 +34,7 @@ class OnStartTraceCall(Event):
     file_name: str
     line_no: int
     frame_object_id: int
-    call_event: str
+    event: str
 
 
 @dataclass

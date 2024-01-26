@@ -59,7 +59,7 @@ class Repeater:
             file_name=trace_call_info.file_name,
             line_no=trace_call_info.line_no,
             frame_object_id=trace_call_info.frame_object_id,
-            call_event=trace_call_info.event,
+            event=trace_call_info.event,
         )
         self._queue_out.put(event_start)
 
