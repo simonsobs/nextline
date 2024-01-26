@@ -3,9 +3,9 @@ from pathlib import Path
 from types import CodeType
 from typing import Any, Callable
 
+from nextline.spawned.path import to_canonic_path
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import RunArg, RunResult
-from nextline.spawned.utils import to_canonic_path
 
 from . import _script
 

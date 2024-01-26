@@ -14,9 +14,9 @@ from nextline.events import (
     OnStartTraceCall,
     OnWriteStdout,
 )
+from nextline.spawned.path import to_canonic_path
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import QueueOut, RunArg, TraceArgs
-from nextline.spawned.utils import to_canonic_path
 from nextline.types import PromptNo, TraceNo
 
 
