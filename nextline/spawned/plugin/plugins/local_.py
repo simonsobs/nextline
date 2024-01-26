@@ -7,7 +7,7 @@ from apluggy import PluginManager, contextmanager
 from exceptiongroup import catch
 
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import RunResult, TraceArgs, TraceFunction
+from nextline.spawned.types import RunResult, TraceArgs, TraceCallInfo, TraceFunction
 from nextline.spawned.utils import WithContext
 from nextline.types import TraceNo
 
@@ -65,7 +65,10 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
                 nonlocal keyboard_interrupt_raised
                 keyboard_interrupt_raised = True
 
-            with hook.with_.on_trace_call(trace_args=(frame, event, arg)):
+            trace_args = (frame, event, arg)
+            trace_call_info = TraceCallInfo(args=trace_args)
+
+            with hook.with_.on_trace_call(trace_call_info=trace_call_info):
                 with catch({KeyboardInterrupt: _keyboard_interrupt}):
                     # TODO: Using exceptiongroup.catch() for Python 3.10.
                     #       Rewrite with except* for Python 3.11.
@@ -83,16 +86,16 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
 
 
 class TraceCallHandler:
-    '''A plugin that keeps the trace call arguments during trace calls.
+    '''A plugin that keeps the trace call info during trace calls.
 
-    This plugin collect the trace call arguments when the context manager hook
+    This plugin collect the trace call info when the context manager hook
     `on_trace_call` is entered. It responds to the first result only hooks
-    `is_on_trace_call` and `current_trace_args`.
+    `is_on_trace_call`, `current_trace_args`, and `current_trace_call_info`.
     '''
 
     def __init__(self) -> None:
-        self._trace_args_map = dict[TraceNo, TraceArgs]()
         self._traces_on_call = set[TraceNo]()
+        self._info_map = dict[TraceNo, TraceCallInfo]()
 
     @hookimpl
     def init(self, hook: PluginManager) -> None:
@@ -100,15 +103,15 @@ class TraceCallHandler:
 
     @hookimpl
     @contextmanager
-    def on_trace_call(self, trace_args: TraceArgs) -> Iterator[None]:
+    def on_trace_call(self, trace_call_info: TraceCallInfo) -> Iterator[None]:
         trace_no = self._hook.hook.current_trace_no()
         self._traces_on_call.add(trace_no)
-        self._trace_args_map[trace_no] = trace_args
+        self._info_map[trace_no] = trace_call_info
         try:
             yield
         finally:
             self._traces_on_call.remove(trace_no)
-            del self._trace_args_map[trace_no]
+            del self._info_map[trace_no]
 
     @hookimpl
     def is_on_trace_call(self) -> Optional[bool]:
@@ -118,4 +121,7 @@ class TraceCallHandler:
     @hookimpl
     def current_trace_args(self) -> Optional[TraceArgs]:
         trace_no = self._hook.hook.current_trace_no()
-        return self._trace_args_map.get(trace_no)
+        info = self._info_map.get(trace_no)
+        if info is None:
+            return None
+        return info.args

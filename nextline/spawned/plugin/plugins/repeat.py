@@ -14,9 +14,8 @@ from nextline.events import (
     OnStartTraceCall,
     OnWriteStdout,
 )
-from nextline.spawned.path import to_canonic_path
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import QueueOut, RunArg, TraceArgs
+from nextline.spawned.types import QueueOut, RunArg, TraceCallInfo
 from nextline.types import PromptNo, TraceNo
 
 
@@ -50,20 +49,17 @@ class Repeater:
 
     @hookimpl
     @contextmanager
-    def on_trace_call(self, trace_args: TraceArgs) -> Iterator[None]:
+    def on_trace_call(self, trace_call_info: TraceCallInfo) -> Iterator[None]:
         started_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
-        frame, call_event, call_arg = trace_args
-        file_name = to_canonic_path(frame.f_code.co_filename)
-        line_no = frame.f_lineno
         event_start = OnStartTraceCall(
             started_at=started_at,
             run_no=self._run_no,
             trace_no=trace_no,
-            file_name=file_name,
-            line_no=line_no,
-            frame_object_id=id(frame),
-            call_event=call_event,
+            file_name=trace_call_info.file_name,
+            line_no=trace_call_info.line_no,
+            frame_object_id=trace_call_info.frame_object_id,
+            call_event=trace_call_info.event,
         )
         self._queue_out.put(event_start)
 
