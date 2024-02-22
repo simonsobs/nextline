@@ -18,6 +18,7 @@ __all__ = [
     'run_in_process',
     'ExcThread',
     'ThreadTaskIdComposer',
+    'Timer',
 ]
 
 from .done_callback import TaskDoneCallback, ThreadDoneCallback, ThreadTaskDoneCallback
@@ -30,3 +31,4 @@ from .pubsub import PubSub, PubSubItem
 from .run import ExitedProcess, RunningProcess, run_in_process
 from .thread_exception import ExcThread
 from .thread_task_id import ThreadTaskIdComposer
+from .timer import Timer
