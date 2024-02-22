@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import multiprocessing as mp
-import time
 from collections.abc import AsyncIterator, Callable
 from functools import partial
 from logging import getLogger
@@ -13,7 +12,7 @@ from tblib import pickling_support
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
-from nextline.utils import run_in_process
+from nextline.utils import Timer, run_in_process
 
 pickling_support.install()
 
@@ -63,20 +62,25 @@ async def relay_events(context: Context, queue: QueueOut) -> AsyncIterator[None]
     '''Call the hook `on_event_in_process()` on events emitted in the spawned process.'''
     logger = getLogger(__name__)
 
+    in_finally = False
+    timer = Timer(timeout=1)  # seconds
+
     async def _monitor() -> None:
         while (event := await asyncio.to_thread(queue.get)) is not None:
             logger.debug(f'event: {event!r}')
             await context.hook.ahook.on_event_in_process(context=context, event=event)
+            if in_finally:
+                timer.restart()
 
     task = asyncio.create_task(_monitor())
     try:
         yield
     finally:
-        up_to = 0.05
-        start = time.process_time()
+        in_finally = True
+        timer.restart()
         while not queue.empty():
-            await asyncio.sleep(0)
-            if time.process_time() - start > up_to:
+            await asyncio.sleep(0)  # let _monitor() run
+            if timer.is_timeout():
                 logger.warning(f'Timeout. the queue is not empty: {queue!r}')
                 break
         await asyncio.to_thread(queue.put, None)  # type: ignore
