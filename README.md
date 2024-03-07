@@ -6,15 +6,14 @@
 
 # Nextline
 
-_Nextline_ allows line-by-line execution of concurrent Python scripts by multiple users simultaneously from web browsers. Nextline is being developed as a DAQ sequencer of the [Observatory Control System (OCS)](https://github.com/simonsobs/ocs/).
+_Nextline_ is a DAQ sequencer of the [Observatory Control System
+(OCS)](https://github.com/simonsobs/ocs/). Nextline allows line-by-line
+execution of concurrent Python scripts, which control telescopes, by multiple
+users simultaneously from web browsers.
 
-## Packages
-
-- [**nextline:**](https://github.com/simonsobs/nextline) (Python) this package. the core functionality.
-- [**nextline-graphql:**](https://github.com/simonsobs/nextline-graphql) (Python) the GraphQL API. importing _nextline_
-- [**nextline-web:**](https://github.com/simonsobs/nextline-web) (JavaScript) the client website
-
----
+This package provides the core functionality of Nextline. It is used in
+[_nextline-graphql_](https://github.com/simonsobs/nextline-graphql), the
+plugin-based framework of the backend API server of Nextline.
 
 ## License
 
