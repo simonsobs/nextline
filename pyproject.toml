@@ -23,7 +23,6 @@ classifiers = [
 ]
 dependencies = [
     "apluggy>=0.9",
-    "tblib>=1.7",
     "exceptiongroup>=1.2",
     "transitions>=0.9",
 ]
@@ -79,5 +78,5 @@ exclude = ['script\.py']
 
 
 [[tool.mypy.overrides]]
-module = ["tblib.*", "apluggy.*"]
+module = ["apluggy.*"]
 ignore_missing_imports = true

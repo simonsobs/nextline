@@ -1,6 +1,6 @@
 import json
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from queue import Queue
 from types import FrameType
 from typing import Any, Callable, Optional
@@ -35,35 +35,26 @@ class RunArg:
 @dataclass
 class RunResult:
     ret: Optional[Any] = None
-    exc: Optional[BaseException] = None
-    _fmt_ret: Optional[str] = field(init=False, repr=False, default=None)
-    _fmt_exc: Optional[str] = field(init=False, repr=False, default=None)
+    exc: InitVar[Optional[BaseException]] = None
+    fmt_ret: Optional[str] = field(init=False, repr=False, default=None)
+    fmt_exc: Optional[str] = field(init=False, repr=False, default=None)
 
-    @property
-    def fmt_ret(self) -> str:
-        if self._fmt_ret is None:
-            self._fmt_ret = json.dumps(self.ret)
-        return self._fmt_ret
+    # NOTE: The `exc` is not stored because it is not always picklable, for
+    # example, a dynamically defined exception class.
 
-    @property
-    def fmt_exc(self) -> str:
-        if self._fmt_exc is None:
-            if self.exc is None:
-                self._fmt_exc = ''
-            else:
-                self._fmt_exc = ''.join(
-                    traceback.format_exception(
-                        type(self.exc),
-                        self.exc,
-                        self.exc.__traceback__,
-                    )
-                )
-        return self._fmt_exc
+    def __post_init__(self, exc: Optional[BaseException]) -> None:
+        self.fmt_ret = self._fmt_ret()
+        self.fmt_exc = self._fmt_exc(exc)
+
+    def _fmt_ret(self) -> str:
+        return json.dumps(self.ret)
+
+    def _fmt_exc(self, exc: Optional[BaseException]) -> str:
+        if exc is None:
+            return ''
+        return ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
     def result(self) -> Any:
-        if self.exc is not None:
-            # TODO: add a test for the exception
-            raise self.exc
         return self.ret
 
 

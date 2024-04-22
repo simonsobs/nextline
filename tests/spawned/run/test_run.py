@@ -20,11 +20,10 @@ def test_one(
     result = main(run_arg)
     assert result.ret == expected_ret
     if expected_exc:
-        assert result.exc
-        with pytest.raises(expected_exc):
-            raise result.exc
+        assert result.fmt_exc
+        assert expected_exc in result.fmt_exc
     else:
-        assert result.exc is None
+        assert not result.fmt_exc
 
 
 @pytest.fixture
@@ -80,6 +79,14 @@ SRC_RUNTIME_ERROR = '''
 a
 '''.strip()
 
+SRC_DYNAMIC_EXCEPTION = '''
+class MyException(Exception):
+    pass
+
+raise MyException()
+'''
+
+
 CODE_OBJECT = compile(SRC_ONE, '<string>', 'exec')
 
 
@@ -103,18 +110,23 @@ params = [
     (
         RunArg(run_no=RunNo(1), statement=SRC_COMPILE_ERROR, filename='<string>'),
         None,
-        SyntaxError,
+        'SyntaxError',
     ),
     (
         RunArg(run_no=RunNo(1), statement=SRC_RUNTIME_ERROR, filename='<string>'),
         None,
-        NameError,
+        'NameError',
+    ),
+    (
+        RunArg(run_no=RunNo(1), statement=SRC_DYNAMIC_EXCEPTION, filename='<string>'),
+        None,
+        'MyException',
     ),
     (RunArg(run_no=RunNo(1), statement=CODE_OBJECT), None, None),
     (RunArg(run_no=RunNo(1), statement=func_one), 123, None),
-    (RunArg(run_no=RunNo(1), statement=func_err), None, ZeroDivisionError),
+    (RunArg(run_no=RunNo(1), statement=func_err), None, 'ZeroDivisionError'),
     (RunArg(run_no=RunNo(1), statement=SCRIPT_PATH), None, None),
-    (RunArg(run_no=RunNo(1), statement=ERR_PATH), None, NameError),
+    (RunArg(run_no=RunNo(1), statement=ERR_PATH), None, 'NameError'),
 ]
 
 

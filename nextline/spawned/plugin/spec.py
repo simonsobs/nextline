@@ -10,7 +10,6 @@ from nextline.spawned.types import (
     QueueIn,
     QueueOut,
     RunArg,
-    RunResult,
     TraceArgs,
     TraceCallInfo,
     TraceFunction,
@@ -52,7 +51,7 @@ def create_trace_func() -> Optional[TraceFunction]:
 
 
 @hookspec
-def finalize_run_result(run_result: RunResult) -> None:
+def clean_exception(exc: BaseException) -> None:
     pass
 
 

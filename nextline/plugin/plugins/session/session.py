@@ -7,14 +7,11 @@ from logging import getLogger
 from typing import Any, Optional, cast
 
 import apluggy
-from tblib import pickling_support
 
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
 from nextline.utils import Timer, run_in_process
-
-pickling_support.install()
 
 
 class RunSession:
@@ -113,12 +110,12 @@ class CommandSender:
 
 class Result:
     @hookimpl
-    def exception(self, context: Context) -> Optional[BaseException]:
+    def format_exception(self, context: Context) -> Optional[str]:
         if not context.exited_process:
             return None
         if not context.exited_process.returned:
             return None
-        return context.exited_process.returned.exc
+        return context.exited_process.returned.fmt_exc
 
     @hookimpl
     def result(self, context: Context) -> Any:

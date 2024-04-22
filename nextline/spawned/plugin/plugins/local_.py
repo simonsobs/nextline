@@ -7,7 +7,7 @@ from apluggy import PluginManager, contextmanager
 from exceptiongroup import catch
 
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import RunResult, TraceArgs, TraceCallInfo, TraceFunction
+from nextline.spawned.types import TraceArgs, TraceCallInfo, TraceFunction
 from nextline.spawned.utils import WithContext
 from nextline.types import TraceNo
 
@@ -37,9 +37,8 @@ class LocalTraceFunc:
         return local_trace_func(frame, event, arg)
 
     @hookimpl
-    def finalize_run_result(self, run_result: RunResult) -> None:
-        exc = run_result.exc
-        if exc and exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
+    def clean_exception(self, exc: BaseException) -> None:
+        if exc.__traceback__ and isinstance(exc, KeyboardInterrupt):
             tb = exc.__traceback__
             while tb.tb_next:
                 module = tb.tb_next.tb_frame.f_globals.get('__name__')
