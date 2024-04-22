@@ -1,6 +1,6 @@
 import json
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from queue import Queue
 from types import FrameType
 from typing import Any, Callable, Optional
@@ -35,34 +35,26 @@ class RunArg:
 @dataclass
 class RunResult:
     ret: Optional[Any] = None
-    exc: Optional[BaseException] = None
+    exc: InitVar[Optional[BaseException]] = None
     fmt_ret: Optional[str] = field(init=False, repr=False, default=None)
     fmt_exc: Optional[str] = field(init=False, repr=False, default=None)
 
-    # TODO: Remove exc as this is not always picklable, e.g., a dynamically created class.
+    # NOTE: The `exc` is not stored because it is not always picklable, for
+    # example, a dynamically defined exception class.
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, exc: Optional[BaseException]) -> None:
         self.fmt_ret = self._fmt_ret()
-        self.fmt_exc = self._fmt_exc()
+        self.fmt_exc = self._fmt_exc(exc)
 
     def _fmt_ret(self) -> str:
         return json.dumps(self.ret)
 
-    def _fmt_exc(self) -> str:
-        if self.exc is None:
+    def _fmt_exc(self, exc: Optional[BaseException]) -> str:
+        if exc is None:
             return ''
-        return ''.join(
-            traceback.format_exception(
-                type(self.exc),
-                self.exc,
-                self.exc.__traceback__,
-            )
-        )
+        return ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
     def result(self) -> Any:
-        if self.exc is not None:
-            # TODO: add a test for the exception
-            raise self.exc
         return self.ret
 
 
