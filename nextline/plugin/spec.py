@@ -113,11 +113,6 @@ async def on_end_run(context: Context) -> None:
 
 
 @hookspec(firstresult=True)
-def exception(context: Context) -> Optional[BaseException]:
-    pass
-
-
-@hookspec(firstresult=True)
 def format_exception(context: Context) -> Optional[str]:
     pass
 

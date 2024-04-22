@@ -14,7 +14,7 @@ async def test_one() -> None:
                 await nextline.send_pdb_command(
                     'next', prompt.prompt_no, prompt.trace_no
                 )
-        nextline.exception()
+        assert not nextline.format_exception()
 
 
 async def test_close_while_running() -> None:

@@ -21,4 +21,4 @@ async def test_one() -> None:
     async with nextline:
         async with nextline.run_session():
             pass
-        nextline.exception()
+        assert not nextline.format_exception()

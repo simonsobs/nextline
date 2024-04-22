@@ -75,9 +75,6 @@ class Machine:
     async def on_exit_finished(self, _: EventData) -> None:
         await self._task
 
-    def exception(self) -> Optional[BaseException]:
-        return self._hook.hook.exception(context=self._context)
-
     def format_exception(self) -> Optional[str]:
         return self._hook.hook.format_exception(context=self._context)
 

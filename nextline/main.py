@@ -158,10 +158,6 @@ class Nextline:
     async def kill(self) -> None:
         await self._machine.kill()  # type: ignore
 
-    def exception(self) -> Optional[BaseException]:
-        """Uncaught exception from the last run"""
-        return self._machine.exception()
-
     def format_exception(self) -> Optional[str]:
         '''Formatted uncaught exception from the last run'''
         return self._machine.format_exception()

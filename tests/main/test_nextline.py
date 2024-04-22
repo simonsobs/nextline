@@ -38,7 +38,7 @@ async def test_one() -> None:
                 await nextline.send_pdb_command(
                     'continue', prompt.prompt_no, prompt.trace_no
                 )
-        nextline.exception()
+        assert not nextline.format_exception()
         await nextline.reset()
         await nextline.reset(statement=SOURCE_TWO, run_no_start_from=5)
         async with nextline.run_session():

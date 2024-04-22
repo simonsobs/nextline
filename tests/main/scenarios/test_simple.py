@@ -25,7 +25,7 @@ async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
     async with nextline.run_session():
         pass
-    nextline.exception()
+    assert not nextline.format_exception()
     nextline.result()
     await nextline.close()
 
