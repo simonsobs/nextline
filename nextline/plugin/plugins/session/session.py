@@ -121,6 +121,14 @@ class Result:
         return context.exited_process.returned.exc
 
     @hookimpl
+    def format_exception(self, context: Context) -> Optional[str]:
+        if not context.exited_process:
+            return None
+        if not context.exited_process.returned:
+            return None
+        return context.exited_process.returned.fmt_exc
+
+    @hookimpl
     def result(self, context: Context) -> Any:
         if not context.exited_process:
             return None

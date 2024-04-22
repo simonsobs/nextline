@@ -162,6 +162,10 @@ class Nextline:
         """Uncaught exception from the last run"""
         return self._machine.exception()
 
+    def format_exception(self) -> Optional[str]:
+        '''Formatted uncaught exception from the last run'''
+        return self._machine.format_exception()
+
     def result(self) -> Any:
         '''Return value of the last run. None unless the statement is a callable.'''
         return self._machine.result()

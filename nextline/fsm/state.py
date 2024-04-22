@@ -78,6 +78,9 @@ class Machine:
     def exception(self) -> Optional[BaseException]:
         return self._hook.hook.exception(context=self._context)
 
+    def format_exception(self) -> Optional[str]:
+        return self._hook.hook.format_exception(context=self._context)
+
     def result(self) -> Any:
         return self._hook.hook.result(context=self._context)
 

@@ -118,6 +118,11 @@ def exception(context: Context) -> Optional[BaseException]:
 
 
 @hookspec(firstresult=True)
+def format_exception(context: Context) -> Optional[str]:
+    pass
+
+
+@hookspec(firstresult=True)
 def result(context: Context) -> Any:
     pass
 
