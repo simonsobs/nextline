@@ -10,7 +10,6 @@ from nextline.spawned.types import (
     QueueIn,
     QueueOut,
     RunArg,
-    RunResult,
     TraceArgs,
     TraceCallInfo,
     TraceFunction,
