@@ -7,14 +7,11 @@ from logging import getLogger
 from typing import Any, Optional, cast
 
 import apluggy
-from tblib import pickling_support
 
 from nextline import spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
 from nextline.utils import Timer, run_in_process
-
-pickling_support.install()
 
 
 class RunSession:
