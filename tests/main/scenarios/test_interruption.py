@@ -77,11 +77,9 @@ async def run(nextline: Nextline):
     await asyncio.sleep(0.01)
     async with nextline.run_session():
         pass
-    exc = nextline.exception()
-    assert exc
-    assert exc.__traceback__  # tblib
-    with pytest.raises(KeyboardInterrupt):
-        nextline.result()
+    fmt_exc = nextline.format_exception()
+    assert fmt_exc is not None
+    assert 'KeyboardInterrupt' in fmt_exc
     await nextline.close()
 
 

@@ -12,8 +12,11 @@ from nextline.types import RunInfo, RunNo
 from .funcs import replace_with_bool
 
 STATEMENT = '''
+class MyError(RuntimeError):
+    pass
+
 def f():
-    raise RuntimeError('foo')
+    raise MyError('foo')
 
 
 f()
@@ -60,7 +63,7 @@ async def assert_subscribe_run_info(nextline: Nextline, statement: str):
                 info,
                 state='finished',
                 result='null',
-                exception='RuntimeError',
+                exception='MyError',
                 ended_at=datetime.datetime.utcnow(),
             ),
         ]
@@ -81,7 +84,7 @@ async def run(nextline: Nextline):
         pass
     fmt_exc = nextline.format_exception()
     assert fmt_exc is not None
-    assert 'RuntimeError' in fmt_exc
+    assert 'MyError' in fmt_exc
     await nextline.close()
 
 
