@@ -1,4 +1,3 @@
-from math import exp
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
