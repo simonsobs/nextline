@@ -52,7 +52,7 @@ def create_trace_func() -> Optional[TraceFunction]:
 
 
 @hookspec
-def finalize_run_result(run_result: RunResult) -> None:
+def clean_exception(exc: BaseException) -> None:
     pass
 
 

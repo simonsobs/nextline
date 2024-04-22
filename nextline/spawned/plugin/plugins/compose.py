@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 from nextline.spawned.path import to_canonic_path
 from nextline.spawned.plugin.spec import hookimpl
-from nextline.spawned.types import RunArg, RunResult
+from nextline.spawned.types import RunArg
 
 from . import _script
 
@@ -20,10 +20,7 @@ class CallableComposer:
         return _compose_callable(self._run_arg)
 
     @hookimpl
-    def finalize_run_result(self, run_result: RunResult) -> None:
-        exc = run_result.exc
-        if not exc:
-            return
+    def clean_exception(self, exc: BaseException) -> None:
         if not isinstance(exc, SyntaxError):
             return
         is_compiled_here = False
