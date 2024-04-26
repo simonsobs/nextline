@@ -109,6 +109,13 @@ async def send_command(context: Context, command: spawned.Command) -> None:
 
 @hookspec
 async def on_end_run(context: Context) -> None:
+    '''The run is about to finish. The state is still 'running'.'''
+    pass
+
+
+@hookspec
+async def on_finished(context: Context) -> None:
+    '''The run has finished. The state is 'finished'.'''
     pass
 
 

@@ -71,6 +71,9 @@ class Machine:
 
     async def wait(self) -> None:
         await self.run_finished.wait()
+    
+    async def on_enter_finished(self, _: EventData) -> None:
+        await self._hook.ahook.on_finished(context=self._context)
 
     async def on_exit_finished(self, _: EventData) -> None:
         await self._task
