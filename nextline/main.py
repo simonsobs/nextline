@@ -129,12 +129,15 @@ class Nextline:
         '''
         await self._continuous.run_and_continue()
 
-    async def run_continue_and_wait(self, started: asyncio.Event) -> None:
+    async def run_continue_and_wait(
+        self, started: Optional[asyncio.Event] = None
+    ) -> None:
         '''Start the script execution in the non-interactive mode and wait until end.
 
         Similar to run_and_continue() but returns when the run has finished.
         The event started is set when the run has started.
         '''
+        started = started or asyncio.Event()
         await self._continuous.run_continue_and_wait(started)
 
     async def send_pdb_command(
