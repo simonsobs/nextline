@@ -1,3 +1,5 @@
+# Nextline
+
 [![PyPI - Version](https://img.shields.io/pypi/v/nextline.svg)](https://pypi.org/project/nextline)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nextline.svg)](https://pypi.org/project/nextline)
 
@@ -5,7 +7,7 @@
 [![Test Status](https://github.com/simonsobs/nextline/actions/workflows/type-check.yml/badge.svg)](https://github.com/simonsobs/nextline/actions/workflows/type-check.yml)
 [![codecov](https://codecov.io/gh/simonsobs/nextline/branch/main/graph/badge.svg)](https://codecov.io/gh/simonsobs/nextline)
 
-# Nextline
+---
 
 _Nextline_ is a DAQ sequencer of the [Observatory Control System
 (OCS)](https://github.com/simonsobs/ocs/). Nextline allows line-by-line
