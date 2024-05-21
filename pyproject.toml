@@ -22,7 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "apluggy>=0.9",
+    "apluggy>=1.0",
     "exceptiongroup>=1.2",
     "transitions>=0.9",
 ]
