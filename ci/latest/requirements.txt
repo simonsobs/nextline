@@ -1,0 +1,11 @@
+# The exact requirements of the latest versions of the dependencies. This file
+# is used in a GitHub Actions workflow to test the compatibility with the
+# latest versions of the dependencies. This file is monitored by Dependabot.
+apluggy==1.0.0
+exceptiongroup==1.2.1
+transitions==0.9.1
+pytest-asyncio==0.23.7
+pytest-cov==4.1.0
+pytest-timeout==2.3.0
+pytest==8.2.1
+hypothesis==6.102.4
