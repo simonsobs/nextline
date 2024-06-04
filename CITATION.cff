@@ -1,24 +1,42 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
 cff-version: 1.2.0
-message: "Please cite this software if you use it"
+title: Nextline
+message: >-
+  Nextline consists of multiple packages. Please use the DOI
+  for this package to cite Nextline in general unless you
+  need to refer to a specific package.
+type: software
 authors:
-  - family-names: "Sakuma"
-    given-names: "Tai"
+  - family-names: Sakuma
+    given-names: Tai
     orcid: "https://orcid.org/0000-0003-3225-9861"
-  - family-names: "Guan"
-    given-names: "Yilun"
+  - family-names: Guan
+    given-names: Yilun
     orcid: "https://orcid.org/0000-0002-1697-3080"
-  - family-names: "Hasselfield"
-    given-names: "Matthew"
-  - family-names: "Koopman"
-    given-names: "Brian"
+  - family-names: Hasselfield
+    given-names: Matthew
+  - family-names: Koopman
+    given-names: Brian
     orcid: "https://orcid.org/0000-0003-0744-2808"
-  - family-names: "Newburgh"
-    given-names: "Laura"
+  - family-names: Newburgh
+    given-names: Laura
     orcid: "https://orcid.org/0000-0002-7333-5552"
-  - family-names: "Nguyen"
-    given-names: "David"
-title: "Nextline"
-doi: 10.5281/zenodo.11451619
-date-released: 2020-10-19
-url: "https://github.com/simonsobs/nextline"
+  - family-names: Nguyen
+    given-names: David
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.11451619
+    description: >-
+      This DOI represents all versions, and will always
+      resolve to the latest one.
+repository-code: "https://github.com/simonsobs/nextline"
+abstract: >-
+  Nextline is developed as a DAQ sequencer of the
+  Observatory Control System (OCS) for the Simons
+  Observatory. Nextline allows multiple users to execute
+  concurrent Python scripts, which control telescopes,
+  line-by-line from web browsers simultaneously.
 license: MIT
+date-released: "2020-10-19"
