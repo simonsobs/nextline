@@ -17,3 +17,12 @@ users simultaneously from web browsers.
 This package provides the core functionality of Nextline. It is used in
 [_nextline-graphql_](https://github.com/simonsobs/nextline-graphql), the
 plugin-based framework of the backend API server of Nextline.
+
+## Citation
+
+Please use the following DOI for citing Nextline:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11451619.svg)](https://doi.org/10.5281/zenodo.11451619)
+
+Nextline consists of multiple packages. Please use the above DOI to cite
+Nextline in general unless you need to refer to a specific package.
