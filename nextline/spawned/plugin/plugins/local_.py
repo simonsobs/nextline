@@ -10,7 +10,7 @@ from nextline.count import TraceCallNoCounter
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import TraceArgs, TraceCallInfo, TraceFunction
 from nextline.spawned.utils import WithContext
-from nextline.types import TraceNo
+from nextline.types import TraceCallNo, TraceNo
 
 
 class LocalTraceFunc:
@@ -129,6 +129,12 @@ class TraceCallHandler:
     def is_on_trace_call(self) -> Optional[bool]:
         trace_no = self._current_trace_no()
         return trace_no in self._traces_on_call
+
+    @hookimpl
+    def current_trace_call_no(self) -> Optional[TraceCallNo]:
+        if (info := self._current_trace_call_info()) is None:
+            return None
+        return info.trace_call_no
 
     @hookimpl
     def current_trace_args(self) -> Optional[TraceArgs]:
