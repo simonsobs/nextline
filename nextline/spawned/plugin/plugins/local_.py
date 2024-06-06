@@ -100,10 +100,17 @@ class TraceCallHandler:
     def init(self, hook: PluginManager) -> None:
         self._hook = hook
 
+    def _current_trace_no(self) -> TraceNo:
+        return self._hook.hook.current_trace_no()
+
+    def _current_trace_call_info(self) -> Optional[TraceCallInfo]:
+        trace_no = self._current_trace_no()
+        return self._info_map.get(trace_no)
+
     @hookimpl
     @contextmanager
     def on_trace_call(self, trace_call_info: TraceCallInfo) -> Iterator[None]:
-        trace_no = self._hook.hook.current_trace_no()
+        trace_no = self._current_trace_no()
         self._traces_on_call.add(trace_no)
         self._info_map[trace_no] = trace_call_info
         try:
@@ -114,14 +121,12 @@ class TraceCallHandler:
 
     @hookimpl
     def is_on_trace_call(self) -> Optional[bool]:
-        trace_no = self._hook.hook.current_trace_no()
+        trace_no = self._current_trace_no()
         return trace_no in self._traces_on_call
 
     @hookimpl
     def current_trace_args(self) -> Optional[TraceArgs]:
-        trace_no = self._hook.hook.current_trace_no()
-        info = self._info_map.get(trace_no)
-        if info is None:
+        if (info := self._current_trace_call_info()) is None:
             return None
         return info.args
 
