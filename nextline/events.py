@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass
 from typing import Optional
 
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
 
 
 @dataclass
@@ -31,6 +31,7 @@ class OnStartTraceCall(Event):
     started_at: datetime.datetime
     run_no: RunNo
     trace_no: TraceNo
+    trace_call_no: TraceCallNo
     file_name: str
     line_no: int
     frame_object_id: int
@@ -42,6 +43,7 @@ class OnEndTraceCall(Event):
     ended_at: datetime.datetime
     run_no: RunNo
     trace_no: TraceNo
+    trace_call_no: TraceCallNo
 
 
 @dataclass
@@ -49,6 +51,7 @@ class OnStartCmdloop(Event):
     started_at: datetime.datetime
     run_no: RunNo
     trace_no: TraceNo
+    trace_call_no: TraceCallNo
 
 
 @dataclass
@@ -56,6 +59,7 @@ class OnEndCmdloop(Event):
     ended_at: datetime.datetime
     run_no: RunNo
     trace_no: TraceNo
+    trace_call_no: TraceCallNo
 
 
 @dataclass
@@ -63,6 +67,7 @@ class OnStartPrompt(Event):
     started_at: datetime.datetime
     run_no: RunNo
     trace_no: TraceNo
+    trace_call_no: TraceCallNo
     prompt_no: PromptNo
     prompt_text: str
     file_name: str
@@ -76,6 +81,7 @@ class OnEndPrompt(Event):
     ended_at: datetime.datetime
     run_no: RunNo
     trace_no: TraceNo
+    trace_call_no: TraceCallNo
     prompt_no: PromptNo
     command: str
 

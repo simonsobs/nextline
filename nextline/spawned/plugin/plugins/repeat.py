@@ -52,10 +52,12 @@ class Repeater:
     def on_trace_call(self, trace_call_info: TraceCallInfo) -> Iterator[None]:
         started_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
+        trace_call_no = trace_call_info.trace_call_no
         event_start = OnStartTraceCall(
             started_at=started_at,
             run_no=self._run_no,
             trace_no=trace_no,
+            trace_call_no=trace_call_no,
             file_name=trace_call_info.file_name,
             line_no=trace_call_info.line_no,
             frame_object_id=trace_call_info.frame_object_id,
@@ -68,7 +70,10 @@ class Repeater:
         finally:
             ended_at = datetime.datetime.utcnow()
             event_end = OnEndTraceCall(
-                ended_at=ended_at, run_no=self._run_no, trace_no=trace_no
+                ended_at=ended_at,
+                run_no=self._run_no,
+                trace_no=trace_no,
+                trace_call_no=trace_call_no,
             )
             self._queue_out.put(event_end)
 
@@ -77,8 +82,12 @@ class Repeater:
     def on_cmdloop(self) -> Generator[None, None, None]:
         started_at = datetime.datetime.utcnow()
         trace_no = self._hook.hook.current_trace_no()
+        trace_call_no = self._hook.hook.current_trace_call_no()
         event_start = OnStartCmdloop(
-            started_at=started_at, run_no=self._run_no, trace_no=trace_no
+            started_at=started_at,
+            run_no=self._run_no,
+            trace_no=trace_no,
+            trace_call_no=trace_call_no,
         )
         self._queue_out.put(event_start)
 
@@ -87,7 +96,10 @@ class Repeater:
         finally:
             ended_at = datetime.datetime.utcnow()
             event_end = OnEndCmdloop(
-                ended_at=ended_at, run_no=self._run_no, trace_no=trace_no
+                ended_at=ended_at,
+                run_no=self._run_no,
+                trace_no=trace_no,
+                trace_call_no=trace_call_no,
             )
             self._queue_out.put(event_end)
 
@@ -97,10 +109,12 @@ class Repeater:
         started_at = datetime.datetime.utcnow()
         trace_no: TraceNo = self._hook.hook.current_trace_no()
         trace_call_info: TraceCallInfo = self._hook.hook.current_trace_call_info()
+        trace_call_no = trace_call_info.trace_call_no
         event_start = OnStartPrompt(
             started_at=started_at,
             run_no=self._run_no,
             trace_no=trace_no,
+            trace_call_no=trace_call_no,
             prompt_no=prompt_no,
             prompt_text=text,
             file_name=trace_call_info.file_name,
@@ -121,6 +135,7 @@ class Repeater:
                 ended_at=ended_at,
                 run_no=self._run_no,
                 trace_no=trace_no,
+                trace_call_no=trace_call_no,
                 prompt_no=prompt_no,
                 command=command,
             )
