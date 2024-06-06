@@ -6,6 +6,7 @@ from typing import Any, Callable, Optional
 from apluggy import PluginManager, contextmanager
 from exceptiongroup import catch
 
+from nextline.count import TraceCallNoCounter
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import TraceArgs, TraceCallInfo, TraceFunction
 from nextline.spawned.utils import WithContext
@@ -51,6 +52,8 @@ class LocalTraceFunc:
 def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
     '''Return a function that creates a local trace function.'''
 
+    trace_call_no_counter = TraceCallNoCounter()
+
     def _factory() -> TraceFunction:
         trace = hook.hook.create_local_trace_func()
 
@@ -64,8 +67,11 @@ def Factory(hook: PluginManager) -> Callable[[], TraceFunction]:
                 nonlocal keyboard_interrupt_raised
                 keyboard_interrupt_raised = True
 
+            trace_call_no = trace_call_no_counter()
             trace_args = (frame, event, arg)
-            trace_call_info = TraceCallInfo(args=trace_args)
+            trace_call_info = TraceCallInfo(
+                trace_call_no=trace_call_no, args=trace_args
+            )
 
             with hook.with_.on_trace_call(trace_call_info=trace_call_info):
                 with catch({KeyboardInterrupt: _keyboard_interrupt}):

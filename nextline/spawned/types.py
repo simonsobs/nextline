@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional
 
 from nextline.events import Event
 from nextline.spawned.path import to_canonic_path
-from nextline.types import RunNo, Statement
+from nextline.types import RunNo, Statement, TraceCallNo
 
 from .commands import Command
 
@@ -60,6 +60,7 @@ class RunResult:
 
 @dataclass
 class TraceCallInfo:
+    trace_call_no: TraceCallNo
     args: TraceArgs
     file_name: str = field(init=False)
     line_no: int = field(init=False)
