@@ -9,6 +9,7 @@ RunNo = NewType('RunNo', int)
 TraceNo = NewType('TraceNo', int)
 ThreadNo = NewType('ThreadNo', int)
 TaskNo = NewType('TaskNo', int)
+TraceCallNo = NewType('TraceCallNo', int)
 PromptNo = NewType('PromptNo', int)
 
 Statement = str | Path | CodeType | Callable[[], Any]

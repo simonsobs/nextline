@@ -1,7 +1,7 @@
 from itertools import count
 from typing import Callable, Type, TypeVar
 
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
 
 _T = TypeVar('_T', bound=int)
 
@@ -93,6 +93,28 @@ def TaskNoCounter(start: int = 1) -> Callable[[], TaskNo]:
     True
     '''
     return CastedCounter(count(start).__next__, TaskNo)
+
+
+def TraceCallNoCounter(start: int = 1) -> Callable[[], TraceCallNo]:
+    '''Return a function that returns a new `TraceCallNo` each time it is called.
+
+    >>> counter = TraceCallNoCounter()
+    >>> TraceCallNo(1) == counter()
+    True
+
+    >>> TraceCallNo(2) == counter()
+    True
+
+    You can also specify the starting number.
+
+    >>> counter = TraceCallNoCounter(5)
+    >>> TraceCallNo(5) == counter()
+    True
+
+    >>> TraceCallNo(6) == counter()
+    True
+    '''
+    return CastedCounter(count(start).__next__, TraceCallNo)
 
 
 def PromptNoCounter(start: int = 1) -> Callable[[], PromptNo]:

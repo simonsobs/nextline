@@ -9,9 +9,10 @@ from nextline.count import (
     RunNoCounter,
     TaskNoCounter,
     ThreadNoCounter,
+    TraceCallNoCounter,
     TraceNoCounter,
 )
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
 from tests.test_utils.st import st_none_or
 
 Counter: TypeAlias = Callable[[], int]
@@ -29,6 +30,7 @@ COUNTER_COUNT_PAIRS: list[CounterCountPair] = [
     (TraceNoCounter, TraceNo),
     (ThreadNoCounter, ThreadNo),
     (TaskNoCounter, TaskNo),
+    (TraceCallNoCounter, TraceCallNo),
     (PromptNoCounter, PromptNo),
 ]
 
