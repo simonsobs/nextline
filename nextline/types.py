@@ -5,11 +5,11 @@ from pathlib import Path
 from types import CodeType
 from typing import Any, NewType, Optional
 
-RunNo = NewType("RunNo", int)
-TraceNo = NewType("TraceNo", int)
-ThreadNo = NewType("ThreadNo", int)
-TaskNo = NewType("TaskNo", int)
-PromptNo = NewType("PromptNo", int)
+RunNo = NewType('RunNo', int)
+TraceNo = NewType('TraceNo', int)
+ThreadNo = NewType('ThreadNo', int)
+TaskNo = NewType('TaskNo', int)
+PromptNo = NewType('PromptNo', int)
 
 Statement = str | Path | CodeType | Callable[[], Any]
 '''Type alias for a statement.
