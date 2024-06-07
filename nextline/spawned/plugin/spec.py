@@ -14,7 +14,7 @@ from nextline.spawned.types import (
     TraceCallInfo,
     TraceFunction,
 )
-from nextline.types import PromptNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
 
 PROJECT_NAME = 'nextline_spawned'
 
@@ -129,6 +129,11 @@ def on_trace_call(trace_call_info: TraceCallInfo) -> Iterator[None]:
 
 @hookspec(firstresult=True)
 def is_on_trace_call() -> Optional[bool]:
+    pass
+
+
+@hookspec(firstresult=True)
+def current_trace_call_no() -> Optional[TraceCallNo]:
     pass
 
 

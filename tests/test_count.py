@@ -1,48 +1,51 @@
+from collections.abc import Callable
+from typing import Protocol, TypeAlias
+
+from hypothesis import given
+from hypothesis import strategies as st
+
 from nextline.count import (
     PromptNoCounter,
     RunNoCounter,
     TaskNoCounter,
     ThreadNoCounter,
+    TraceCallNoCounter,
     TraceNoCounter,
 )
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceNo
+from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
+from tests.test_utils.st import st_none_or
+
+Counter: TypeAlias = Callable[[], int]
 
 
-def test_run_no_counter():
-    start = 3
-    counter = RunNoCounter(start)
-    assert RunNo(start) == counter()
-    assert RunNo(start + 1) == counter()
-    assert RunNo(start + 2) == counter()
+class CounterFactory(Protocol):
+    def __call__(self, start: int = 1) -> Counter:
+        ...
 
 
-def test_trace_no_counter():
-    start = 3
-    counter = TraceNoCounter(start)
-    assert TraceNo(start) == counter()
-    assert TraceNo(start + 1) == counter()
-    assert TraceNo(start + 2) == counter()
+CounterCountPair: TypeAlias = tuple[CounterFactory, type[int]]
+
+COUNTER_COUNT_PAIRS: list[CounterCountPair] = [
+    (RunNoCounter, RunNo),
+    (TraceNoCounter, TraceNo),
+    (ThreadNoCounter, ThreadNo),
+    (TaskNoCounter, TaskNo),
+    (TraceCallNoCounter, TraceCallNo),
+    (PromptNoCounter, PromptNo),
+]
 
 
-def test_thread_no_counter():
-    start = 3
-    counter = ThreadNoCounter(start)
-    assert ThreadNo(start) == counter()
-    assert ThreadNo(start + 1) == counter()
-    assert ThreadNo(start + 2) == counter()
-
-
-def test_task_no_counter():
-    start = 3
-    counter = TaskNoCounter(start)
-    assert TaskNo(start) == counter()
-    assert TaskNo(start + 1) == counter()
-    assert TaskNo(start + 2) == counter()
-
-
-def test_prompt_no_counter():
-    start = 3
-    counter = PromptNoCounter(start)
-    assert PromptNo(start) == counter()
-    assert PromptNo(start + 1) == counter()
-    assert PromptNo(start + 2) == counter()
+@given(
+    pair=st.sampled_from(COUNTER_COUNT_PAIRS),
+    start=st_none_or(st.integers()),
+    n=st.integers(min_value=1, max_value=10),
+)
+def test_counter(pair: CounterCountPair, start: int | None, n: int) -> None:
+    counter_factory, count = pair
+    if start is not None:
+        counter = counter_factory(start)
+    else:
+        counter = counter_factory()
+        start = 1
+    for i in range(n):
+        assert count(start + i) == counter()
