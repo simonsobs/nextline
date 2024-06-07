@@ -1,11 +1,9 @@
 name: Upload to PyPI
 
 on:
-  # release:
-  #   types: [created]
-  push:
-    tags:
-      - "v*.*.*"
+  release:
+    types: [released]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
