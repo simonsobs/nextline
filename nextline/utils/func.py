@@ -7,7 +7,7 @@ from typing import TypeVar
 
 
 def current_task_or_thread() -> Task | Thread:
-    """The asyncio task object if in a task, else the thread object"""
+    '''The asyncio task object if in a task, else the thread object'''
     try:
         task = asyncio.current_task()
     except RuntimeError:
@@ -15,13 +15,13 @@ def current_task_or_thread() -> Task | Thread:
     return task or threading.current_thread()
 
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 
 async def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
-    '''Wrap iterable so can be used with "async for"'''
+    '''Wrap iterable so can be used with `async for`'''
     for i in iterable:
-        await asyncio.sleep(0)  # let other tasks run
+        await asyncio.sleep(0)  # Let other tasks run
         yield i
 
 
@@ -30,10 +30,10 @@ async def agen_with_wait(
 ) -> AsyncGenerator[
     T | tuple[tuple[Future, ...], tuple[Future, ...]], Iterable[Future]
 ]:
-    """Yield from the agen while waiting for received tasks
+    '''Yield from the agen while waiting for received tasks
 
     Used to raise an exception from tasks
-    """
+    '''
     done = set[Future]()
     pending = set[Future]()
     anext = asyncio.ensure_future(agen.__anext__())
