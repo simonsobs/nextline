@@ -20,12 +20,8 @@ def wait_until_queue_empty(
         The interval in seconds to check the queue.
 
     '''
-    if timeout is None:
-        while not queue.empty():
-            time.sleep(interval)
-    else:
-        timer = Timer(timeout)
-        while not queue.empty():
-            if timer.is_timeout():
-                raise TimeoutError(f'Timeout. the queue is not empty: {queue!r}')
-            time.sleep(interval)
+    timer = Timer(timeout)
+    while not queue.empty():
+        if timer.is_timeout():
+            raise TimeoutError(f'Timeout. the queue is not empty: {queue!r}')
+        time.sleep(interval)
