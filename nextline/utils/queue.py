@@ -5,6 +5,10 @@ from typing import Optional
 from .timer import Timer
 
 
+class WaitUntilQueueEmptyTimeout(Exception):
+    '''Raised if the queue is not empty within the timeout.'''
+
+
 def wait_until_queue_empty(
     queue: Queue, timeout: Optional[float] = None, interval: float = 0.001
 ) -> None:
@@ -23,5 +27,7 @@ def wait_until_queue_empty(
     timer = Timer(timeout)
     while not queue.empty():
         if timer.is_timeout():
-            raise TimeoutError(f'Timeout. the queue is not empty: {queue!r}')
+            raise WaitUntilQueueEmptyTimeout(
+                f'Timed out after {timeout} seconds. The queue is not empty: {queue!r}'
+            )
         time.sleep(interval)
