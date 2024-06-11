@@ -7,7 +7,7 @@ class Timer:
     Parameters
     ----------
     timeout :
-        The timeout in seconds.
+        The timeout in seconds. If None, it never times out.
 
 
     Examples
@@ -29,10 +29,14 @@ class Timer:
     >>> timer.is_timeout()
     True
 
+    >>> timer = Timer(timeout=None)
+    >>> time.sleep(0.03)
+    >>> timer.is_timeout()
+    False
 
     '''
 
-    def __init__(self, timeout: float) -> None:
+    def __init__(self, timeout: float | None) -> None:
         self._timeout = timeout
         self._start = time.perf_counter()
 
@@ -46,4 +50,6 @@ class Timer:
 
     def is_timeout(self) -> bool:
         '''Return True if the timeout is reached.'''
+        if self._timeout is None:
+            return False
         return self.elapsed() > self._timeout
