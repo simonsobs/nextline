@@ -5,9 +5,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from nextline.utils import PubSubItem
-
-from ..aiterable import aiterable
+from nextline.utils import PubSubItem, aiterable
 
 
 async def test_close():

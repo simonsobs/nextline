@@ -1,9 +1,7 @@
 from itertools import groupby
 from operator import itemgetter
 
-from nextline.utils import merge_aiters
-
-from .aiterable import aiterable
+from nextline.utils import aiterable, merge_aiters
 
 
 async def test_one() -> None:

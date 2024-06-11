@@ -1,4 +1,4 @@
-from .aiterable import aiterable
+from nextline.utils import aiterable
 
 
 async def test_aiterable():

@@ -18,6 +18,13 @@ def current_task_or_thread() -> Task | Thread:
 T = TypeVar("T")
 
 
+async def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
+    '''Wrap iterable so can be used with "async for"'''
+    for i in iterable:
+        await asyncio.sleep(0)  # let other tasks run
+        yield i
+
+
 async def agen_with_wait(
     agen: AsyncIterator[T],
 ) -> AsyncGenerator[
