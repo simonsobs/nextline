@@ -45,11 +45,16 @@ class Machine:
         run_started = asyncio.Event()
 
         async def run() -> None:
-            async with self._hook.awith.run(context=self._context):
-                run_started.set()
-            self._context.run_arg = None
-            await self.finish()  # type: ignore
-            self.run_finished.set()
+            try:
+                async with self._hook.awith.run(context=self._context):
+                    run_started.set()
+            finally:
+                run_started.set()  # Ensure to unblock the await
+                self._context.run_arg = None
+                try:
+                    await self.finish()  # type: ignore
+                finally:
+                    self.run_finished.set()
 
         self._task = asyncio.create_task(run())
         await run_started.wait()
@@ -71,7 +76,7 @@ class Machine:
 
     async def wait(self) -> None:
         await self.run_finished.wait()
-    
+
     async def on_enter_finished(self, _: EventData) -> None:
         await self._hook.ahook.on_finished(context=self._context)
 
