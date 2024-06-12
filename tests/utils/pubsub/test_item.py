@@ -15,8 +15,8 @@ async def test_close() -> None:
 
 async def test_close_multiple_times() -> None:
     async with PubSubItem[str]() as obj:
-        await obj.close()
-        await obj.close()
+        await obj.aclose()
+        await obj.aclose()
 
 
 @given(...)
@@ -42,7 +42,7 @@ async def test_subscribe(items: Sequence[str], n_subscriptions: int) -> None:
         async def send() -> None:
             async for i in aiterable(items):
                 await obj.publish(i)
-            await obj.close()
+            await obj.aclose()
 
         *results, _ = await asyncio.gather(
             *(receive() for _ in range(n_subscriptions)),
@@ -90,7 +90,7 @@ async def test_last(
         async def send() -> None:
             async for i in aiterable(items):
                 await obj.publish(i)
-            await obj.close()
+            await obj.aclose()
 
         for i in pre_items:
             await obj.publish(i)
@@ -159,7 +159,7 @@ async def test_break(data: st.DataObject) -> None:
         async def send() -> None:
             async for i in aiterable(items):
                 await obj.publish(i)
-            await obj.close()
+            await obj.aclose()
 
         results, _ = await asyncio.gather(receive(), send())
     assert results == expected
@@ -194,7 +194,7 @@ async def test_no_missing_or_duplicate(data: st.DataObject) -> None:
             event.set()
             async for i in aiterable(post_items):
                 await obj.publish(i)
-            await obj.close()
+            await obj.aclose()
 
         *results, _ = await asyncio.gather(
             *(receive() for _ in range(n_subscriptions)),
