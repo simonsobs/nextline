@@ -1,7 +1,7 @@
 import enum
 from asyncio import Condition, Queue
 from collections.abc import AsyncIterator
-from typing import Generic, Optional, TypeAlias, TypeVar
+from typing import Any, Generic, Optional, TypeAlias, TypeVar
 
 # Use Enum with one object as sentinel as suggested in
 # https://stackoverflow.com/a/60605919/7309855
@@ -105,7 +105,7 @@ class PubSubItem(Generic[_Item]):
     '''
 
     def __init__(self) -> None:
-        self._qs_out = list[Queue[Enumerated[_Item]]]()
+        self._queues = list[Queue[Enumerated[_Item]]]()
         self._last_enumerated: LastEnumerated[_Item] = (-1, _START)
 
         self._last_item: _Item | _Start = _START
@@ -117,14 +117,14 @@ class PubSubItem(Generic[_Item]):
     @property
     def n_subscriptions(self) -> int:
         '''The number of the subscribers'''
-        return len(self._qs_out)
+        return len(self._queues)
 
     async def publish(self, item: _Item) -> None:
         '''Send data to subscribers'''
         if self._closed:
             raise RuntimeError(f'{self} is closed.')
         self._last_item = item
-        await self._publish(item)
+        await self._enumerate(item)
 
     def latest(self) -> _Item:
         '''Most recent data that have been published'''
@@ -140,7 +140,7 @@ class PubSubItem(Generic[_Item]):
         '''
         q = Queue[Enumerated[_Item]]()
 
-        self._qs_out.append(q)
+        self._queues.append(q)
 
         try:
             last_idx, last_item = self._last_enumerated
@@ -159,7 +159,7 @@ class PubSubItem(Generic[_Item]):
                     yield item
 
         finally:
-            self._qs_out.remove(q)
+            self._queues.remove(q)
 
     async def close(self) -> None:
         '''End gracefully'''
@@ -168,17 +168,16 @@ class PubSubItem(Generic[_Item]):
             if self._closed:
                 return
             self._closed = True
-            await self._publish(_END)
+            await self._enumerate(_END)
 
     async def __aenter__(self) -> 'PubSubItem[_Item]':
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
-        del exc_type, exc_value, traceback
+    async def __aexit__(self, *_: Any, **__: Any) -> None:
         await self.close()
 
-    async def _publish(self, item: _Item | _End) -> None:
+    async def _enumerate(self, item: _Item | _End) -> None:
         self._idx += 1
         self._last_enumerated = (self._idx, item)
-        for q in list(self._qs_out):  # list in case it changes
+        for q in list(self._queues):  # list in case it changes
             await q.put(self._last_enumerated)
