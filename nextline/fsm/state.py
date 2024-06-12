@@ -19,6 +19,7 @@ class Machine:
         self._hook = context.hook
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
+        self._logger = getLogger(__name__)
         assert self.state  # type: ignore
 
     def __repr__(self) -> str:
@@ -48,11 +49,17 @@ class Machine:
             try:
                 async with self._hook.awith.run(context=self._context):
                     run_started.set()
+            except BaseException:
+                self._logger.exception('')
+                raise
             finally:
                 run_started.set()  # Ensure to unblock the await
                 self._context.run_arg = None
                 try:
                     await self.finish()  # type: ignore
+                except BaseException:
+                    self._logger.exception('')
+                    raise
                 finally:
                     self.run_finished.set()
 
@@ -93,13 +100,12 @@ class Machine:
         await self._hook.ahook.close(context=self._context)
 
     async def on_reset(self, event: EventData) -> None:
-        logger = getLogger(__name__)
         if args := list(event.args):
-            logger.warning(f'Unexpected args: {args!r}')
+            self._logger.warning(f'Unexpected args: {args!r}')
         kwargs = event.kwargs
         reset_options: ResetOptions = kwargs.pop('reset_options')
         if kwargs:
-            logger.warning(f'Unexpected kwargs: {kwargs!r}')
+            self._logger.warning(f'Unexpected kwargs: {kwargs!r}')
         await self._hook.ahook.reset(context=self._context, reset_options=reset_options)
 
     async def __aenter__(self) -> 'Machine':
