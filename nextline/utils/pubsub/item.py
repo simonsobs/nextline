@@ -23,7 +23,7 @@ _START = _Start.START
 _END = _End.END
 
 
-_T = TypeVar("_T")
+_T = TypeVar('_T')
 
 
 # TODO: An Enum sentinel ans a generic type don't perfectly work together. For
@@ -112,28 +112,28 @@ class PubSubItem(Generic[_T]):
 
     @property
     def nsubscriptions(self) -> int:
-        """The number of the subscribers"""
+        '''The number of the subscribers'''
         return len(self._qs_out)
 
     async def publish(self, item: _T) -> None:
-        """Send data to subscribers"""
+        '''Send data to subscribers'''
         if self._closed:
-            raise RuntimeError(f"{self} is closed.")
+            raise RuntimeError(f'{self} is closed.')
         self._last_item = item
         await self._publish(item)
 
     def latest(self) -> _T:
-        """Most recent data that have been published"""
+        '''Most recent data that have been published'''
         if self._last_item is _START:
             raise LookupError
         return self._last_item
 
     async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_T]:
-        """Yield data as they are put
+        '''Yield data as they are put
 
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
-        """
+        '''
         q = Queue[tuple[int, _T | _End]]()
 
         self._qs_out.append(q)
@@ -158,7 +158,7 @@ class PubSubItem(Generic[_T]):
             self._qs_out.remove(q)
 
     async def close(self) -> None:
-        """End gracefully"""
+        '''End gracefully'''
         self._lock_close = self._lock_close or Condition()
         async with self._lock_close:
             if self._closed:
@@ -166,7 +166,7 @@ class PubSubItem(Generic[_T]):
             self._closed = True
             await self._publish(_END)
 
-    async def __aenter__(self) -> "PubSubItem[_T]":
+    async def __aenter__(self) -> 'PubSubItem[_T]':
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
