@@ -41,7 +41,7 @@ class PubSub(Generic[_KT, _VT]):
 
         """
         if q := self._queue.pop(key, None):
-            await q.close()
+            await q.aclose()
 
     async def close(self) -> None:
         """End all subscriptions for all keys
@@ -52,7 +52,7 @@ class PubSub(Generic[_KT, _VT]):
         """
         while self._queue:
             _, q = self._queue.popitem()
-            await q.close()
+            await q.aclose()
 
     async def __aenter__(self) -> "PubSub[_KT, _VT]":
         return self

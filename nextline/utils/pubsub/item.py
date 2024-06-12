@@ -69,7 +69,7 @@ class PubSubItem(Generic[_Item]):
     >>> async def distributor_rest(obj):
     ...     for i in items[2:]:
     ...         await obj.publish(i)
-    ...     await obj.close()
+    ...     await obj.aclose()
 
     The second distributor calls the method `close()` to end the subscriptions.
     The method `subscribe()` will return when the method `close()` is called.
@@ -161,7 +161,7 @@ class PubSubItem(Generic[_Item]):
         finally:
             self._queues.remove(q)
 
-    async def close(self) -> None:
+    async def aclose(self) -> None:
         '''End gracefully'''
         self._lock_close = self._lock_close or Condition()
         async with self._lock_close:
@@ -174,7 +174,7 @@ class PubSubItem(Generic[_Item]):
         return self
 
     async def __aexit__(self, *_: Any, **__: Any) -> None:
-        await self.close()
+        await self.aclose()
 
     async def _enumerate(self, item: _Item | _End) -> None:
         self._idx += 1

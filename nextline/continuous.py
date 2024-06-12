@@ -29,7 +29,7 @@ class Continuous:
         await self._task
         if self._tasks:
             await asyncio.gather(*self._tasks)
-        await self._pubsub_enabled.close()
+        await self._pubsub_enabled.aclose()
 
     async def __aenter__(self) -> 'Continuous':
         await self.start()
