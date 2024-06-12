@@ -49,11 +49,11 @@ async def test_subscribe(items: Sequence[str], n_subscriptions: int):
             send(),
         )
     assert results == expected
-    assert obj.nsubscriptions == 0
+    assert obj.n_subscriptions == 0
 
 
 @given(n_subscriptions=st.integers(0, 100))
-async def test_nsubscriptions(n_subscriptions: int):
+async def test_n_subscriptions(n_subscriptions: int):
     async with PubSubItem[str]() as obj:
 
         async def receive():
@@ -61,9 +61,9 @@ async def test_nsubscriptions(n_subscriptions: int):
 
         task = asyncio.gather(*(receive() for _ in range(n_subscriptions)))
         await asyncio.sleep(0)
-        assert obj.nsubscriptions == n_subscriptions
+        assert obj.n_subscriptions == n_subscriptions
     await task
-    assert obj.nsubscriptions == 0
+    assert obj.n_subscriptions == 0
 
 
 @given(
@@ -131,7 +131,7 @@ async def test_subscribe_after_close(items: Sequence[str]):
 
     results = await receive()
     assert results == ()  # empty
-    assert obj.nsubscriptions == 0
+    assert obj.n_subscriptions == 0
 
 
 @given(st.data())
@@ -146,14 +146,14 @@ async def test_break(data: st.DataObject):
 
         async def receive():
             ret = []
-            assert obj.nsubscriptions == 0
+            assert obj.n_subscriptions == 0
             async for i in obj.subscribe():
-                assert obj.nsubscriptions == 1
+                assert obj.n_subscriptions == 1
                 if i == at:
                     break
                 ret.append(i)
             await asyncio.sleep(0.001)
-            assert obj.nsubscriptions == 0  # the queue is closed
+            assert obj.n_subscriptions == 0  # the queue is closed
             return tuple(ret)
 
         async def send():

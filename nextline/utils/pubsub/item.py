@@ -115,7 +115,7 @@ class PubSubItem(Generic[_Item]):
         self._lock_close: Condition | None = None
 
     @property
-    def nsubscriptions(self) -> int:
+    def n_subscriptions(self) -> int:
         '''The number of the subscribers'''
         return len(self._qs_out)
 
