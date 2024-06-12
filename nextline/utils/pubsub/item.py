@@ -1,23 +1,41 @@
 import enum
 from asyncio import Condition, Queue
 from collections.abc import AsyncIterator
-from typing import Generic, Literal, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeAlias, TypeVar
+
+# Use Enum with one object as sentinel as suggested in
+# https://stackoverflow.com/a/60605919/7309855
 
 
-class _M(enum.Enum):
-    # TODO: Using Enum as sentinel for now as suggested in
-    # https://stackoverflow.com/a/60605919/7309855. It still has a problem. For
-    # example, the type of yielded values in subscribe() is not correctly
-    # inferred as _T.
+class _Start(enum.Enum):
+    '''Sentinel to indicate no item has been published yet.'''
 
     START = object()
+
+
+class _End(enum.Enum):
+    '''Sentinel to indicate no more item will be published.'''
+
     END = object()
 
 
-_T = TypeVar("_T")
+_START = _Start.START
+_END = _End.END
 
 
-class PubSubItem(Generic[_T]):
+_Item = TypeVar('_Item')
+
+
+# TODO: An Enum sentinel ans a generic type don't perfectly work together. For
+# example, the type of yielded values in subscribe() is not correctly inferred
+# as _Item.
+
+
+Enumerated: TypeAlias = tuple[int, _Item | _End]
+LastEnumerated: TypeAlias = tuple[int, _Item | _End | _Start]
+
+
+class PubSubItem(Generic[_Item]):
     '''Distribute items to asynchronous subscribers.
 
     Example:
@@ -87,83 +105,79 @@ class PubSubItem(Generic[_T]):
     '''
 
     def __init__(self) -> None:
-        self._qs_out = list[Queue[tuple[int, _T | Literal[_M.END]]]]()
-        self._last_enumerated: tuple[int, _T | Literal[_M.START] | Literal[_M.END]] = (
-            -1,
-            _M.START,
-        )
+        self._queues = list[Queue[Enumerated[_Item]]]()
+        self._last_enumerated: LastEnumerated[_Item] = (-1, _START)
 
-        self._last_item: _T | Literal[_M.START] = _M.START
+        self._last_item: _Item | _Start = _START
         self._idx = -1
 
         self._closed: bool = False
         self._lock_close: Condition | None = None
 
     @property
-    def nsubscriptions(self) -> int:
-        """The number of the subscribers"""
-        return len(self._qs_out)
+    def n_subscriptions(self) -> int:
+        '''The number of the subscribers'''
+        return len(self._queues)
 
-    async def publish(self, item: _T) -> None:
-        """Send data to subscribers"""
+    async def publish(self, item: _Item) -> None:
+        '''Send data to subscribers'''
         if self._closed:
-            raise RuntimeError(f"{self} is closed.")
+            raise RuntimeError(f'{self} is closed.')
         self._last_item = item
-        await self._publish(item)
+        await self._enumerate(item)
 
-    def latest(self) -> _T:
-        """Most recent data that have been published"""
-        if self._last_item is _M.START:
+    def latest(self) -> _Item:
+        '''Most recent data that have been published'''
+        if self._last_item is _START:
             raise LookupError
         return self._last_item
 
-    async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_T]:
-        """Yield data as they are put
+    async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_Item]:
+        '''Yield data as they are put
 
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
-        """
-        q = Queue[tuple[int, _T | Literal[_M.END]]]()
+        '''
+        q = Queue[Enumerated[_Item]]()
 
-        self._qs_out.append(q)
+        self._queues.append(q)
 
         try:
             last_idx, last_item = self._last_enumerated
 
-            if last_item is _M.END:
+            if last_item is _END:
                 return
 
-            if last and last_item is not _M.START:
+            if last and last_item is not _START:
                 yield last_item
 
             while True:
                 idx, item = await q.get()
-                if item is _M.END:
+                if item is _END:
                     break
                 if last_idx < idx:
                     yield item
 
         finally:
-            self._qs_out.remove(q)
+            self._queues.remove(q)
 
     async def close(self) -> None:
-        """End gracefully"""
+        '''End gracefully'''
         self._lock_close = self._lock_close or Condition()
         async with self._lock_close:
             if self._closed:
                 return
             self._closed = True
-            await self._publish(_M.END)
+            await self._enumerate(_END)
 
-    async def __aenter__(self) -> "PubSubItem[_T]":
+    async def __aenter__(self) -> 'PubSubItem[_Item]':
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
-        del exc_type, exc_value, traceback
+    async def __aexit__(self, *_: Any, **__: Any) -> None:
         await self.close()
 
-    async def _publish(self, item: _T | Literal[_M.END]) -> None:
+    async def _enumerate(self, item: _Item | _End) -> None:
         self._idx += 1
         self._last_enumerated = (self._idx, item)
-        for q in list(self._qs_out):  # list in case it changes
+        for q in list(self._queues):  # list in case it changes
             await q.put(self._last_enumerated)
