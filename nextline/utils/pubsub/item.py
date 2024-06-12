@@ -1,20 +1,34 @@
 import enum
 from asyncio import Condition, Queue
 from collections.abc import AsyncIterator
-from typing import Generic, Literal, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
+
+# Use Enum with one object as sentinel as suggested in
+# https://stackoverflow.com/a/60605919/7309855
 
 
-class _M(enum.Enum):
-    # TODO: Using Enum as sentinel for now as suggested in
-    # https://stackoverflow.com/a/60605919/7309855. It still has a problem. For
-    # example, the type of yielded values in subscribe() is not correctly
-    # inferred as _T.
+class _Start(enum.Enum):
+    '''Sentinel to indicate no item has been published yet.'''
 
     START = object()
+
+
+class _End(enum.Enum):
+    '''Sentinel to indicate no more item will be published.'''
+
     END = object()
 
 
+_START = _Start.START
+_END = _End.END
+
+
 _T = TypeVar("_T")
+
+
+# TODO: An Enum sentinel ans a generic type don't perfectly work together. For
+# example, the type of yielded values in subscribe() is not correctly inferred
+# as _T.
 
 
 class PubSubItem(Generic[_T]):
@@ -87,13 +101,10 @@ class PubSubItem(Generic[_T]):
     '''
 
     def __init__(self) -> None:
-        self._qs_out = list[Queue[tuple[int, _T | Literal[_M.END]]]]()
-        self._last_enumerated: tuple[int, _T | Literal[_M.START] | Literal[_M.END]] = (
-            -1,
-            _M.START,
-        )
+        self._qs_out = list[Queue[tuple[int, _T | _End]]]()
+        self._last_enumerated: tuple[int, _T | _Start | _End] = (-1, _START)
 
-        self._last_item: _T | Literal[_M.START] = _M.START
+        self._last_item: _T | _Start = _START
         self._idx = -1
 
         self._closed: bool = False
@@ -113,7 +124,7 @@ class PubSubItem(Generic[_T]):
 
     def latest(self) -> _T:
         """Most recent data that have been published"""
-        if self._last_item is _M.START:
+        if self._last_item is _START:
             raise LookupError
         return self._last_item
 
@@ -123,22 +134,22 @@ class PubSubItem(Generic[_T]):
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
         """
-        q = Queue[tuple[int, _T | Literal[_M.END]]]()
+        q = Queue[tuple[int, _T | _End]]()
 
         self._qs_out.append(q)
 
         try:
             last_idx, last_item = self._last_enumerated
 
-            if last_item is _M.END:
+            if last_item is _END:
                 return
 
-            if last and last_item is not _M.START:
+            if last and last_item is not _START:
                 yield last_item
 
             while True:
                 idx, item = await q.get()
-                if item is _M.END:
+                if item is _END:
                     break
                 if last_idx < idx:
                     yield item
@@ -153,7 +164,7 @@ class PubSubItem(Generic[_T]):
             if self._closed:
                 return
             self._closed = True
-            await self._publish(_M.END)
+            await self._publish(_END)
 
     async def __aenter__(self) -> "PubSubItem[_T]":
         return self
@@ -162,7 +173,7 @@ class PubSubItem(Generic[_T]):
         del exc_type, exc_value, traceback
         await self.close()
 
-    async def _publish(self, item: _T | Literal[_M.END]) -> None:
+    async def _publish(self, item: _T | _End) -> None:
         self._idx += 1
         self._last_enumerated = (self._idx, item)
         for q in list(self._qs_out):  # list in case it changes
