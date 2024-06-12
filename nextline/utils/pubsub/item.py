@@ -1,7 +1,7 @@
 import enum
 from asyncio import Condition, Queue
 from collections.abc import AsyncIterator
-from typing import Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeAlias, TypeVar
 
 # Use Enum with one object as sentinel as suggested in
 # https://stackoverflow.com/a/60605919/7309855
@@ -23,15 +23,19 @@ _START = _Start.START
 _END = _End.END
 
 
-_T = TypeVar('_T')
+_Item = TypeVar('_Item')
 
 
 # TODO: An Enum sentinel ans a generic type don't perfectly work together. For
 # example, the type of yielded values in subscribe() is not correctly inferred
-# as _T.
+# as _Item.
 
 
-class PubSubItem(Generic[_T]):
+Enumerated: TypeAlias = tuple[int, _Item | _End]
+LastEnumerated: TypeAlias = tuple[int, _Item | _End | _Start]
+
+
+class PubSubItem(Generic[_Item]):
     '''Distribute items to asynchronous subscribers.
 
     Example:
@@ -101,10 +105,10 @@ class PubSubItem(Generic[_T]):
     '''
 
     def __init__(self) -> None:
-        self._qs_out = list[Queue[tuple[int, _T | _End]]]()
-        self._last_enumerated: tuple[int, _T | _Start | _End] = (-1, _START)
+        self._qs_out = list[Queue[Enumerated[_Item]]]()
+        self._last_enumerated: LastEnumerated[_Item] = (-1, _START)
 
-        self._last_item: _T | _Start = _START
+        self._last_item: _Item | _Start = _START
         self._idx = -1
 
         self._closed: bool = False
@@ -115,26 +119,26 @@ class PubSubItem(Generic[_T]):
         '''The number of the subscribers'''
         return len(self._qs_out)
 
-    async def publish(self, item: _T) -> None:
+    async def publish(self, item: _Item) -> None:
         '''Send data to subscribers'''
         if self._closed:
             raise RuntimeError(f'{self} is closed.')
         self._last_item = item
         await self._publish(item)
 
-    def latest(self) -> _T:
+    def latest(self) -> _Item:
         '''Most recent data that have been published'''
         if self._last_item is _START:
             raise LookupError
         return self._last_item
 
-    async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_T]:
+    async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_Item]:
         '''Yield data as they are put
 
         If `last` is true, yield immediately the most recent data before
         waiting for new data.
         '''
-        q = Queue[tuple[int, _T | _End]]()
+        q = Queue[Enumerated[_Item]]()
 
         self._qs_out.append(q)
 
@@ -166,14 +170,14 @@ class PubSubItem(Generic[_T]):
             self._closed = True
             await self._publish(_END)
 
-    async def __aenter__(self) -> 'PubSubItem[_T]':
+    async def __aenter__(self) -> 'PubSubItem[_Item]':
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         del exc_type, exc_value, traceback
         await self.close()
 
-    async def _publish(self, item: _T | _End) -> None:
+    async def _publish(self, item: _Item | _End) -> None:
         self._idx += 1
         self._last_enumerated = (self._idx, item)
         for q in list(self._qs_out):  # list in case it changes
