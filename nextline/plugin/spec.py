@@ -83,7 +83,7 @@ async def on_event_in_process(context: Context, event: events.Event) -> None:
 
 
 @hookspec
-async def on_start_run(context: Context) -> None:
+async def on_start_run(context: Context, event: events.OnStartRun) -> None:
     pass
 
 
@@ -108,7 +108,7 @@ async def send_command(context: Context, command: spawned.Command) -> None:
 
 
 @hookspec
-async def on_end_run(context: Context) -> None:
+async def on_end_run(context: Context, event: events.OnEndRun) -> None:
     '''The run is about to finish. The state is still 'running'.'''
     pass
 

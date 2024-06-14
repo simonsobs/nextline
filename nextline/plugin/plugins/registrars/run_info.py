@@ -2,6 +2,7 @@ import dataclasses
 from datetime import timezone
 from typing import Optional
 
+from nextline.events import OnEndRun, OnStartRun
 from nextline.plugin.spec import Context, hookimpl
 from nextline.types import RunInfo
 
@@ -23,30 +24,26 @@ class RunInfoRegistrar:
         await context.pubsub.publish('run_info', self._run_info)
 
     @hookimpl
-    async def on_start_run(self, context: Context) -> None:
+    async def on_start_run(self, context: Context, event: OnStartRun) -> None:
         assert self._run_info is not None
-        assert context.running_process
-        assert context.running_process.process_created_at.tzinfo is timezone.utc
-        started_at = context.running_process.process_created_at.replace(tzinfo=None)
+        assert event.started_at.tzinfo is timezone.utc
+        started_at = event.started_at.replace(tzinfo=None)
         self._run_info = dataclasses.replace(
             self._run_info, state='running', started_at=started_at
         )
         await context.pubsub.publish('run_info', self._run_info)
 
     @hookimpl
-    async def on_end_run(self, context: Context) -> None:
+    async def on_end_run(self, context: Context, event: OnEndRun) -> None:
         assert self._run_info is not None
-        assert context.exited_process
-        run_result = context.exited_process.returned
-        assert run_result
-        assert context.exited_process.process_exited_at.tzinfo is timezone.utc
-        ended_at = context.exited_process.process_exited_at.replace(tzinfo=None)
+        assert event.ended_at.tzinfo is timezone.utc
+        ended_at = event.ended_at.replace(tzinfo=None)
 
         self._run_info = dataclasses.replace(
             self._run_info,
             state='finished',
-            result=run_result.fmt_ret,
-            exception=run_result.fmt_exc,
+            result=event.returned,
+            exception=event.raised,
             ended_at=ended_at,
         )
         await context.pubsub.publish('run_info', self._run_info)

@@ -2,13 +2,42 @@ import datetime
 from dataclasses import dataclass
 from typing import Optional
 
-from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
+from nextline.types import (
+    PromptNo,
+    RunNo,
+    Statement,
+    TaskNo,
+    ThreadNo,
+    TraceCallNo,
+    TraceNo,
+)
 from nextline.utils import is_timezone_aware
 
 
 @dataclass
 class Event:
     pass
+
+
+@dataclass
+class OnStartRun(Event):
+    started_at: datetime.datetime
+    run_no: RunNo
+    statement: Statement
+
+    def __post_init__(self):
+        _assert_aware_datetime(self.started_at)
+
+
+@dataclass
+class OnEndRun(Event):
+    ended_at: datetime.datetime
+    run_no: RunNo
+    returned: str
+    raised: str
+
+    def __post_init__(self):
+        _assert_aware_datetime(self.ended_at)
 
 
 @dataclass
@@ -126,3 +155,7 @@ def _assert_naive_datetime(dt: datetime.datetime):
     if is_timezone_aware(dt):
         raise ValueError(f'Not a timezone-naive object: {dt!r}')
 
+
+def _assert_aware_datetime(dt: datetime.datetime):
+    if not is_timezone_aware(dt):
+        raise ValueError(f'Not a timezone-aware object: {dt!r}')
