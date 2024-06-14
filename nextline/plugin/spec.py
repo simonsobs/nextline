@@ -140,9 +140,7 @@ async def on_end_trace(context: Context, event: events.OnEndTrace) -> None:
 
 
 @hookspec
-async def on_start_trace_call(
-    context: Context, event: events.OnStartTraceCall
-) -> None:
+async def on_start_trace_call(context: Context, event: events.OnStartTraceCall) -> None:
     pass
 
 
