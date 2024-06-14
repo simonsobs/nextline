@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import json
 import multiprocessing as mp
 from collections.abc import AsyncIterator, Callable
 from functools import partial
@@ -8,10 +9,10 @@ from typing import Any, Optional, cast
 
 import apluggy
 
-from nextline import spawned
+from nextline import events, spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
-from nextline.utils import Timer, run_in_process
+from nextline.utils import ExitedProcess, RunningProcess, Timer, run_in_process
 
 
 class RunSession:
@@ -31,7 +32,7 @@ class RunSession:
                 initializer=partial(spawned.set_queues, queue_in, queue_out),
                 collect_logging=True,
             )
-            await context.hook.ahook.on_start_run(context=context)
+            await _on_start_run(context, context.running_process)
             try:
                 yield
             finally:
@@ -42,7 +43,29 @@ class RunSession:
                 if context.exited_process.raised:
                     logger = getLogger(__name__)
                     logger.exception(context.exited_process.raised)
-        await context.hook.ahook.on_end_run(context=context)
+        await _on_end_run(context, context.exited_process)
+
+
+async def _on_start_run(context: Context, process: RunningProcess[RunResult]) -> None:
+    assert (run_arg := context.run_arg) is not None
+    event = events.OnStartRun(
+        started_at=process.process_created_at,
+        run_no=run_arg.run_no,
+        statement=run_arg.statement,
+    )
+    await context.hook.ahook.on_start_run(context=context, event=event)
+
+
+async def _on_end_run(context: Context, process: ExitedProcess[RunResult]) -> None:
+    assert (run_arg := context.run_arg) is not None
+    run_result = process.returned or RunResult()
+    event = events.OnEndRun(
+        ended_at=process.process_exited_at,
+        run_no=run_arg.run_no,
+        returned=run_result.fmt_ret or json.dumps(None),
+        raised=run_result.fmt_exc or '',
+    )
+    await context.hook.ahook.on_end_run(context=context, event=event)
 
 
 def SendCommand(queue_in: QueueIn) -> Callable[[Command], None]:

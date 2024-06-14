@@ -22,6 +22,8 @@ __all__ = [
     'ExcThread',
     'ThreadTaskIdComposer',
     'Timer',
+    'is_timezone_aware',
+    'utc_timestamp',
 ]
 
 from .done_callback import TaskDoneCallback, ThreadDoneCallback, ThreadTaskDoneCallback
@@ -36,3 +38,4 @@ from .run import ExitedProcess, RunningProcess, run_in_process
 from .thread_exception import ExcThread
 from .thread_task_id import ThreadTaskIdComposer
 from .timer import Timer
+from .utc import is_timezone_aware, utc_timestamp
