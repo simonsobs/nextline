@@ -66,6 +66,19 @@ norecursedirs = [
 log_cli = false
 log_cli_level = "INFO"
 
+[tool.coverage.run]
+branch = true
+source = ["nextline", "tests"]
+concurrency = ["multiprocessing"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    'if __name__ == "__main__":',
+    "if TYPE_CHECKING:",
+]
+
+ignore_errors = true
 [tool.black]
 skip-string-normalization = true
 target_version = ['py310', 'py311', 'py312']
