@@ -2,7 +2,7 @@ import asyncio
 import threading
 import warnings
 from asyncio import Future, Task
-from collections.abc import AsyncGenerator, AsyncIterator, Iterable
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Iterable
 from threading import Thread
 from typing import TypeVar
 
@@ -19,11 +19,61 @@ def current_task_or_thread() -> Task | Thread:
 T = TypeVar('T')
 
 
-async def to_aiter(iterable: Iterable[T]) -> AsyncIterator[T]:
-    '''Wrap iterable so can be used with `async for`'''
-    for i in iterable:
+async def to_aiter(
+    iterable: Iterable[T], /, *, thread: bool = True
+) -> AsyncIterator[T]:
+    '''Wrap iterable so can be used with `async for`
+
+    The iteration can be blocking as it is run in a separate thread by default.
+
+    Parameters
+    ----------
+    iterable
+        The iterable to wrap
+    thread
+        Whether to run the iterable in a separate thread
+
+    Examples
+    --------
+    >>> async def main():
+    ...     async for i in to_aiter(range(3)):
+    ...         print(i)
+    >>> asyncio.run(main())
+    0
+    1
+    2
+    '''
+    iterator = iter(iterable)
+
+    class _EndOfIteration(Exception):
+        pass
+
+    def _replace_stop_iteration(f: Callable[[], T]) -> T:
+        '''Raise a custom exception when `StopIteration` is raised.
+
+        This is because coroutines cannot raise `StopIteration` and `to_thread`
+        does not propagate `StopIteration`.
+        '''
+        try:
+            return f()
+        except StopIteration:
+            raise _EndOfIteration
+
+    async def _call_next_in_thread() -> T:
+        return await asyncio.to_thread(_replace_stop_iteration, lambda: next(iterator))
+
+    async def _call_next() -> T:
+        return _replace_stop_iteration(lambda: next(iterator))
+
+    _next = _call_next_in_thread if thread else _call_next
+
+    while True:
+        try:
+            item = await _next()
+        except _EndOfIteration:
+            break
+        yield item
         await asyncio.sleep(0)  # Let other tasks run
-        yield i
 
 
 def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
@@ -33,7 +83,7 @@ def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
         DeprecationWarning,
         stacklevel=2,
     )
-    return to_aiter(iterable)
+    return to_aiter(iterable, thread=False)
 
 
 async def agen_with_wait(

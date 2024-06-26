@@ -1,9 +1,12 @@
+import pytest
+
 from nextline.utils import aiterable, to_aiter
 
 
-async def test_to_aiter():
-    assert list(range(10)) == [i async for i in to_aiter(range(10))]
+@pytest.mark.parametrize('thread', [True, False])
+async def test_to_aiter(thread: bool) -> None:
+    assert list(range(10)) == [i async for i in to_aiter(range(10), thread=thread)]
 
 
-async def test_aiterable():
+async def test_aiterable() -> None:
     assert list(range(10)) == [i async for i in aiterable(range(10))]
