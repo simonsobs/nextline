@@ -251,7 +251,7 @@ class PubSubItem(Generic[_Item]):
     async def subscribe(
         self, last: bool = True, cache: bool = True
     ) -> AsyncIterator[_Item]:
-        '''Yield data as they are put
+        '''Yield data as they are put after yielding, based on the options, old data.
 
         Parameters
         ----------
@@ -302,7 +302,7 @@ class PubSubItem(Generic[_Item]):
             self._queues.remove(q)
 
     async def aclose(self) -> None:
-        '''End gracefully'''
+        '''Return all subscriptions and prevent new subscriptions.'''
         self._lock_close = self._lock_close or asyncio.Condition()
         async with self._lock_close:
             if self._closed:
