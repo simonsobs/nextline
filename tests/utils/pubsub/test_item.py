@@ -79,6 +79,7 @@ async def test_n_subscriptions(n_subscriptions: int) -> None:
     cache_init=st.booleans(),
     last=st.booleans(),
     cache_subscribe=st.booleans(),
+    clear=st.booleans(),
     n_subscriptions=st.integers(0, 20),
 )
 async def test_last_cache(
@@ -87,14 +88,23 @@ async def test_last_cache(
     cache_init: bool,
     last: bool,
     cache_subscribe: bool,
+    clear: bool,
     n_subscriptions: int,
 ) -> None:
     pre_items = tuple(pre_items)
     items = tuple(items)
-    cache = cache_init and cache_subscribe
-    expected = [
-        pre_items[0 if cache else -1 :] + items if last else items
-    ] * n_subscriptions
+
+    def compose_expected() -> list[tuple[int | str, ...]]:
+        if last and not clear:
+            cache = cache_init and cache_subscribe
+            start = 0 if cache else -1
+            from_pre_items = pre_items[start:]
+        else:
+            from_pre_items = tuple()
+        for_one_subscription = [from_pre_items + items]
+        return for_one_subscription * n_subscriptions
+
+    expected = compose_expected()
 
     async with PubSubItem[int | str](cache=cache_init) as obj:
 
@@ -109,6 +119,9 @@ async def test_last_cache(
 
         for i in pre_items:
             await obj.publish(i)
+
+        if clear:
+            await obj.clear()
 
         await asyncio.sleep(0.001)
 
@@ -194,7 +207,7 @@ async def test_no_missing_or_duplicate(data: st.DataObject) -> None:
 
     pre_items = items[:split]
     post_items = items[split:]
-    
+
     last = data.draw(st.booleans())
     cache = data.draw(st.booleans())
 

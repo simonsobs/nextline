@@ -229,6 +229,19 @@ class PubSubItem(Generic[_Item]):
         self._last_item = item
         await self._enumerate(item)
 
+    async def clear(self) -> None:
+        '''Remove the last item and clear the cache if it is enabled'''
+        # TODO: Await until all queues are empty. The following commented code
+        #       can cause a deadlock, for example, if a subscriber is not
+        #       iterating.
+        # while not all(q.empty() for q in self._queues):
+        #     await asyncio.sleep(0)
+        self._last_enumerated = (-1, _START)
+        self._last_item = _START
+        self._idx = -1
+        if self._cache is not None:
+            self._cache.clear()
+
     def latest(self) -> _Item:
         '''Most recent data that have been published'''
         if self._last_item is _START:
