@@ -8,7 +8,14 @@ from hypothesis import strategies as st
 from nextline.utils import PubSubItem, aiterable
 
 
-async def test_close() -> None:
+def test_init_without_asyncio_event_loop() -> None:
+    with pytest.raises(RuntimeError):
+        asyncio.get_running_loop()
+    obj = PubSubItem[str]()
+    assert obj
+
+
+async def test_context() -> None:
     async with PubSubItem[str]() as obj:
         assert obj
 
