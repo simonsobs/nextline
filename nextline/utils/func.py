@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import warnings
 from asyncio import Future, Task
 from collections.abc import AsyncGenerator, AsyncIterator, Iterable
 from threading import Thread
@@ -18,11 +19,21 @@ def current_task_or_thread() -> Task | Thread:
 T = TypeVar('T')
 
 
-async def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
+async def to_aiter(iterable: Iterable[T]) -> AsyncIterator[T]:
     '''Wrap iterable so can be used with `async for`'''
     for i in iterable:
         await asyncio.sleep(0)  # Let other tasks run
         yield i
+
+
+def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
+    '''Wrap iterable so can be used with `async for`'''
+    warnings.warn(
+        'aiterable is deprecated, use to_aiter',
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return to_aiter(iterable)
 
 
 async def agen_with_wait(

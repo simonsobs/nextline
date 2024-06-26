@@ -6,6 +6,7 @@ __all__ = [
     'agen_with_wait',
     'current_task_or_thread',
     'merge_aiters',
+    'to_aiter',
     'MultiprocessingLogging',
     'match_any',
     'peek_stderr',
@@ -27,7 +28,13 @@ __all__ = [
 ]
 
 from .done_callback import TaskDoneCallback, ThreadDoneCallback, ThreadTaskDoneCallback
-from .func import agen_with_wait, aiterable, current_task_or_thread, merge_aiters
+from .func import (
+    agen_with_wait,
+    aiterable,
+    current_task_or_thread,
+    merge_aiters,
+    to_aiter,
+)
 from .multiprocessing_logging import MultiprocessingLogging
 from .path import match_any
 from .peek import peek_stderr, peek_stdout, peek_textio

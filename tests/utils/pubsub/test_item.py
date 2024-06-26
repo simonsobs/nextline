@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from nextline.utils import PubSubItem, aiterable
+from nextline.utils import PubSubItem, to_aiter
 
 
 def test_init_without_asyncio_event_loop() -> None:
@@ -47,7 +47,7 @@ async def test_subscribe(items: Sequence[str], n_subscriptions: int) -> None:
             return tuple([i async for i in obj.subscribe()])
 
         async def send() -> None:
-            async for i in aiterable(items):
+            async for i in to_aiter(items):
                 await obj.publish(i)
             await obj.aclose()
 
@@ -95,7 +95,7 @@ async def test_last(
             return tuple([i async for i in obj.subscribe(last=last)])
 
         async def send() -> None:
-            async for i in aiterable(items):
+            async for i in to_aiter(items):
                 await obj.publish(i)
             await obj.aclose()
 
@@ -164,7 +164,7 @@ async def test_break(data: st.DataObject) -> None:
             return tuple(ret)
 
         async def send() -> None:
-            async for i in aiterable(items):
+            async for i in to_aiter(items):
                 await obj.publish(i)
             await obj.aclose()
 
@@ -196,10 +196,10 @@ async def test_no_missing_or_duplicate(data: st.DataObject) -> None:
             return tuple([i async for i in obj.subscribe()])
 
         async def send() -> None:
-            async for i in aiterable(pre_items):
+            async for i in to_aiter(pre_items):
                 await obj.publish(i)
             event.set()
-            async for i in aiterable(post_items):
+            async for i in to_aiter(post_items):
                 await obj.publish(i)
             await obj.aclose()
 
