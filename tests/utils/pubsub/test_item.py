@@ -76,23 +76,31 @@ async def test_n_subscriptions(n_subscriptions: int) -> None:
 @given(
     pre_items=st.lists(st.text()),
     items=st.lists(st.integers()),
+    cache_init=st.booleans(),
     last=st.booleans(),
+    cache_subscribe=st.booleans(),
     n_subscriptions=st.integers(0, 20),
 )
-async def test_last(
+async def test_last_cache(
     pre_items: Sequence[str],
     items: Sequence[int],
+    cache_init: bool,
     last: bool,
+    cache_subscribe: bool,
     n_subscriptions: int,
 ) -> None:
     pre_items = tuple(pre_items)
     items = tuple(items)
-    expected = [pre_items[-1:] + items if last else items] * n_subscriptions
+    cache = cache_init and cache_subscribe
+    expected = [
+        pre_items[0 if cache else -1 :] + items if last else items
+    ] * n_subscriptions
 
-    async with PubSubItem[int | str]() as obj:
+    async with PubSubItem[int | str](cache=cache_init) as obj:
 
         async def receive() -> tuple[int | str, ...]:
-            return tuple([i async for i in obj.subscribe(last=last)])
+            it = obj.subscribe(last=last, cache=cache_subscribe)
+            return tuple([i async for i in it])
 
         async def send() -> None:
             async for i in to_aiter(items):
@@ -186,14 +194,17 @@ async def test_no_missing_or_duplicate(data: st.DataObject) -> None:
 
     pre_items = items[:split]
     post_items = items[split:]
+    
+    last = data.draw(st.booleans())
+    cache = data.draw(st.booleans())
 
     event = asyncio.Event()
 
-    async with PubSubItem[str]() as obj:
+    async with PubSubItem[str](cache=cache) as obj:
 
         async def receive() -> tuple[str, ...]:
             await event.wait()
-            return tuple([i async for i in obj.subscribe()])
+            return tuple([i async for i in obj.subscribe(last=last)])
 
         async def send() -> None:
             async for i in to_aiter(pre_items):
@@ -211,7 +222,9 @@ async def test_no_missing_or_duplicate(data: st.DataObject) -> None:
     for actual in results:
         if not actual:  # can be empty
             continue
+        if last and cache:
+            assert actual[0] == items[0]
         expected = items[items.index(actual[0]) :]  # no missing or duplicate
         assert actual == expected
-        # print(actual)
-        # print(actual[0] in pre_items)
+        # ic(actual)
+        # ic(actual[0] in pre_items)

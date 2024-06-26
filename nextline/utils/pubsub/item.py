@@ -1,7 +1,7 @@
 import asyncio
 import enum
 from collections.abc import AsyncIterator
-from typing import Any, Generic, Optional, TypeAlias, TypeVar
+from typing import Any, Generic, TypeAlias, TypeVar
 
 # Use Enum with one object as sentinel as suggested in
 # https://stackoverflow.com/a/60605919/7309855
@@ -37,6 +37,13 @@ LastEnumerated: TypeAlias = tuple[int, _Item | _End | _Start]
 
 class PubSubItem(Generic[_Item]):
     '''Distribute items to multiple asynchronous subscribers.
+
+    Parameters
+    ----------
+    cache
+        If `True`, all items are cached and new subscribers receive all items
+        and wait for new items. The default is `False`.
+
 
     Examples
     --------
@@ -105,32 +112,34 @@ class PubSubItem(Generic[_Item]):
 
     >>> obj = PubSubItem()
 
-    Update `receive()` to use the `last` option:
+    Update `receive()` to replace the `obj` argument with an asynchronous iterator:
 
-    >>> async def receive(obj, last):
+    >>> async def receive(it):
     ...     ret = []
-    ...     async for i in obj.subscribe(last=last):
+    ...     async for i in it:
     ...         if i is None:
     ...             break
     ...         ret.append(i)
     ...     return ret
 
-    Distribute the first three items, start two subscribers with the `last`
-    option `True` and `False`, and distribute the rest of the items:
+    Distribute the first three items, start two subscribers without the `last`
+    option (default to `True`) and with the `last` option `False`, and distribute
+    the rest of the items:
+
 
     >>> async def main():
     ...     await send(obj, items[:3])
     ...     return await asyncio.gather(
-    ...         receive(obj, last=True),
-    ...         receive(obj, last=False),
+    ...         receive(obj.subscribe()),
+    ...         receive(obj.subscribe(last=False)),
     ...         send(obj, items[3:]),
     ...     )
 
     >>> t, f, _ = asyncio.run(main())
 
-    The first subscriber with the `last` option `True` received the most recent
-    item ("1") that was distributed before it started as well as the rest of the
-    items ("a" and "b") distributed after it started:
+    The first subscriber without the `last` option received the most recent
+    item ("1") that was distributed before it started as well as the rest of
+    the items ("a" and "b") distributed after it started:
 
     >>> t
     ['1', 'a', 'b']
@@ -141,9 +150,64 @@ class PubSubItem(Generic[_Item]):
     >>> f
     ['a', 'b']
 
+    3. The `cache` option
+
+    The `__init__()` and `subscribe()` methods have an optional argument
+    `cache`. The default values are `False` for `__init__()`, and `True` for
+    `subscribe()`. The `cache` option for `subscribe()` is relevant only if the
+    `last` option is `True` and the `cache` option for `__init__()` is `True`.
+
+    If the `cache` option for `__init__()` is `True`, all items are cached and
+    new subscribers receive all items and wait for new items unless the `last`
+    or `cache` option of `subscribe()` is `False`.
+
+    Items to distribute:
+
+    >>> items = ['3', '2', '1', 'a', 'b', None]
+
+    Create a new instance of the class with the `cache` option `True`:
+
+    >>> obj = PubSubItem(cache=True)
+
+    Distribute the first three items, start three subscribers without options,
+    with the `cache` option `False`, and with the `last` option `False`, and
+    distribute the rest of the items:
+
+    >>> async def main():
+    ...     await send(obj, items[:3])
+    ...     return await asyncio.gather(
+    ...         receive(obj.subscribe()),
+    ...         receive(obj.subscribe(cache=False)),
+    ...         receive(obj.subscribe(last=False)),
+    ...         send(obj, items[3:]),
+    ...     )
+
+    >>> r1, r2, r3, _ = asyncio.run(main())
+
+    With no options to `subscribe()`, the first subscriber received all items:
+
+    >>> r1
+    ['3', '2', '1', 'a', 'b']
+
+    With the `cache` option `False`, the second subscriber received the most
+    recent item ("1") that was distributed before it started and the rest of
+    the items.
+
+    >>> r2
+    ['1', 'a', 'b']
+
+    With the `last` option `False`, the third subscriber received only the
+    items distributed after it started:
+
+    >>> r3
+    ['a', 'b']
+
+
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, *, cache: bool = False) -> None:
+        self._cache = list[Enumerated[_Item]]() if cache else None
+
         self._queues = list[asyncio.Queue[Enumerated[_Item]]]()
         self._last_enumerated: LastEnumerated[_Item] = (-1, _START)
 
@@ -171,14 +235,30 @@ class PubSubItem(Generic[_Item]):
             raise LookupError
         return self._last_item
 
-    async def subscribe(self, last: Optional[bool] = True) -> AsyncIterator[_Item]:
+    async def subscribe(
+        self, last: bool = True, cache: bool = True
+    ) -> AsyncIterator[_Item]:
         '''Yield data as they are put
 
-        If `last` is true, yield immediately the most recent data before
-        waiting for new data.
+        Parameters
+        ----------
+        last
+            If `True`, yield the most recent data before waiting for new data.
+            The default is `True`.
+        cache
+            This option is only relevant if the `last` option is `True` and the
+            `cache` option of the class is `True`. The default is `True`. If
+            `True`, yield all data that have been published so far before
+            waiting for new data.
         '''
-        q = asyncio.Queue[Enumerated[_Item]]()
 
+        if not last:
+            cache = False
+
+        if self._cache is None:
+            cache = False
+
+        q = asyncio.Queue[Enumerated[_Item]]()
         self._queues.append(q)
 
         try:
@@ -187,13 +267,21 @@ class PubSubItem(Generic[_Item]):
             if last_item is _END:
                 return
 
+            if cache and self._cache is not None:
+                for idx, item in self._cache:
+                    if not idx < last_idx:
+                        break
+                    if item is _END:
+                        return
+                    yield item
+
             if last and last_item is not _START:
                 yield last_item
 
             while True:
                 idx, item = await q.get()
                 if item is _END:
-                    break
+                    return
                 if last_idx < idx:
                     yield item
 
@@ -218,5 +306,7 @@ class PubSubItem(Generic[_Item]):
     async def _enumerate(self, item: _Item | _End) -> None:
         self._idx += 1
         self._last_enumerated = (self._idx, item)
+        if self._cache is not None:
+            self._cache.append(self._last_enumerated)
         for q in list(self._queues):  # list in case it changes
             await q.put(self._last_enumerated)
