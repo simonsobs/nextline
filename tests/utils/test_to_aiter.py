@@ -9,4 +9,5 @@ async def test_to_aiter(thread: bool) -> None:
 
 
 async def test_aiterable() -> None:
-    assert list(range(10)) == [i async for i in aiterable(range(10))]
+    with pytest.deprecated_call():
+        assert list(range(10)) == [i async for i in aiterable(range(10))]
