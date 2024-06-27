@@ -246,6 +246,8 @@ class PubSubItem(Generic[_Item]):
         #       iterating.
         # while not all(q.empty() for q in self._queues):
         #     await asyncio.sleep(0)
+        if self._closed:
+            raise RuntimeError(f'{self} is closed.')
         self._idx += 1
         self._last_enumerated = (self._idx, _START)
         self._last_item = _START
