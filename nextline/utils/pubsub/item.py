@@ -236,9 +236,9 @@ class PubSubItem(Generic[_Item]):
         #       iterating.
         # while not all(q.empty() for q in self._queues):
         #     await asyncio.sleep(0)
-        self._last_enumerated = (-1, _START)
+        self._idx += 1
+        self._last_enumerated = (self._idx, _START)
         self._last_item = _START
-        self._idx = -1
         if self._cache is not None:
             self._cache.clear()
 
