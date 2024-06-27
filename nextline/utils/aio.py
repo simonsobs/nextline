@@ -2,7 +2,7 @@ import asyncio
 import threading
 import warnings
 from asyncio import Future, Task
-from collections.abc import AsyncGenerator, AsyncIterator, Callable, Iterable
+from collections.abc import AsyncGenerator, AsyncIterator, Iterable
 from threading import Thread
 from typing import TypeVar
 
@@ -19,9 +19,7 @@ def current_task_or_thread() -> Task | Thread:
 T = TypeVar('T')
 
 
-async def to_aiter(
-    iterable: Iterable[T], /, *, thread: bool = True
-) -> AsyncIterator[T]:
+class to_aiter(AsyncIterator[T]):
     '''Wrap iterable so can be used with `async for`
 
     The iteration can be blocking as it is run in a separate thread by default.
@@ -43,37 +41,38 @@ async def to_aiter(
     1
     2
     '''
-    iterator = iter(iterable)
 
-    class _EndOfIteration(Exception):
-        pass
+    class _StopIteration(Exception):
+        '''A custom exception to replace `StopIteration` in coroutines.'''
 
-    def _replace_stop_iteration(f: Callable[[], T]) -> T:
-        '''Raise a custom exception when `StopIteration` is raised.
+    def __init__(self, iterable: Iterable[T], /, *, thread: bool = True) -> None:
+        self._it = iter(iterable)
+        self._anext = self._to_thread if thread else self._not_to_thread
 
-        This is because coroutines cannot raise `StopIteration` and `to_thread`
-        does not propagate `StopIteration`.
+    async def __anext__(self) -> T:
+        try:
+            return await self._anext()
+        except to_aiter._StopIteration:
+            raise StopAsyncIteration
+
+    async def _to_thread(self) -> T:
+        return await asyncio.to_thread(self._next)
+
+    async def _not_to_thread(self) -> T:
+        return self._next()
+
+    def _next(self) -> T:
+        '''Call next and raise a custom exception at the end.
+
+        It replaces `StopIteration` with a custom exception because coroutines
+        cannot raise `StopIteration` and `to_thread` does not propagate
+        `StopIteration`.
+
         '''
         try:
-            return f()
+            return next(self._it)
         except StopIteration:
-            raise _EndOfIteration
-
-    async def _call_next_in_thread() -> T:
-        return await asyncio.to_thread(_replace_stop_iteration, lambda: next(iterator))
-
-    async def _call_next() -> T:
-        return _replace_stop_iteration(lambda: next(iterator))
-
-    _next = _call_next_in_thread if thread else _call_next
-
-    while True:
-        try:
-            item = await _next()
-        except _EndOfIteration:
-            break
-        yield item
-        await asyncio.sleep(0)  # Let other tasks run
+            raise to_aiter._StopIteration
 
 
 def aiterable(iterable: Iterable[T]) -> AsyncIterator[T]:
