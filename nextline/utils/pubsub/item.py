@@ -221,7 +221,7 @@ class PubSubItem(Generic[_Item]):
     def cache(self) -> bool:
         '''True if the cache is enabled, False otherwise.'''
         return self._cache is not None
-    
+
     @property
     def closed(self) -> bool:
         '''True if the instance is closed, False otherwise.'''
@@ -292,7 +292,7 @@ class PubSubItem(Generic[_Item]):
                     if not idx < last_idx:
                         break
                     if item is _END:
-                        return
+                        return  # pragma: no cover
                     yield item
 
             if last and last_item is not _START:
