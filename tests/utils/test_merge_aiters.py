@@ -1,11 +1,11 @@
 from itertools import groupby
 from operator import itemgetter
 
-from nextline.utils import aiterable, merge_aiters
+from nextline.utils import merge_aiters, to_aiter
 
 
 async def test_one() -> None:
-    obj = merge_aiters(aiterable(range(5)), aiterable([True, False] * 3))
+    obj = merge_aiters(to_aiter(range(5)), to_aiter([True, False] * 3))
     results = [i async for i in obj]
     actual = {
         k: list(map(itemgetter(1), v))
