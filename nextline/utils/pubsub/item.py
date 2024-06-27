@@ -218,6 +218,16 @@ class PubSubItem(Generic[_Item]):
         self._lock_close: asyncio.Condition | None = None
 
     @property
+    def cache(self) -> bool:
+        '''True if the cache is enabled, False otherwise.'''
+        return self._cache is not None
+    
+    @property
+    def closed(self) -> bool:
+        '''True if the instance is closed, False otherwise.'''
+        return self._closed
+
+    @property
     def n_subscriptions(self) -> int:
         '''The number of the subscribers'''
         return len(self._queues)
