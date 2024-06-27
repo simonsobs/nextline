@@ -282,7 +282,7 @@ class Nextline:
     def get(self, key: Any) -> Any:
         return self._pubsub.latest(key)
 
-    def subscribe(self, key: Any, last: Optional[bool] = True) -> AsyncIterator[Any]:
+    def subscribe(self, key: Any, last: bool = True) -> AsyncIterator[Any]:
         return self._pubsub.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
