@@ -272,23 +272,25 @@ class PubSubItem(Generic[_Item]):
             waiting for new data.
         '''
 
+        # Copy these attributes as they can change after `yield` and `await`
+        last_idx, last_item = self._last_enumerated
+        cached = list(self._cache) if self._cache is not None else None
+
         if not last:
             cache = False
 
-        if self._cache is None:
+        if cached is None:
             cache = False
 
         q = asyncio.Queue[Enumerated[_Item]]()
         self._queues.append(q)
 
         try:
-            last_idx, last_item = self._last_enumerated
-
             if last_item is _END:
                 return
 
-            if cache and self._cache is not None:
-                for idx, item in self._cache:
+            if cache and cached is not None:
+                for idx, item in cached:
                     if not idx < last_idx:
                         break
                     if item is _END:
@@ -325,8 +327,8 @@ class PubSubItem(Generic[_Item]):
 
     async def _enumerate(self, item: _Item | _End) -> None:
         self._idx += 1
-        self._last_enumerated = (self._idx, item)
+        self._last_enumerated = enumerated = (self._idx, item)
         if self._cache is not None:
-            self._cache.append(self._last_enumerated)
+            self._cache.append(enumerated)
         for q in list(self._queues):  # list in case it changes
-            await q.put(self._last_enumerated)
+            await q.put(enumerated)
