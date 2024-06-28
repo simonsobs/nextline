@@ -1,6 +1,5 @@
 from typing import NoReturn
 
-
 from nextline.utils import run_in_process
 
 
