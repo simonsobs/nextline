@@ -276,19 +276,17 @@ class PubSubItem(Generic[_Item]):
         last_idx, last_item = self._last_enumerated
         cached = list(self._cache) if self._cache is not None else None
 
-        if not last:
-            cache = False
+        if last_item is _END:
+            return
 
-        if cached is None:
+        if not (last and cached):
             cache = False
 
         q = asyncio.Queue[Enumerated[_Item]]()
         self._queues.append(q)
 
         try:
-            if last_item is _END:
-                return
-
+            # Yield the old data from the first to the one before the most recent
             if cache and cached is not None:
                 for idx, item in cached:
                     if not idx < last_idx:
@@ -297,9 +295,11 @@ class PubSubItem(Generic[_Item]):
                         return  # pragma: no cover
                     yield item
 
+            # Yield the most recent data
             if last and last_item is not _START:
                 yield last_item
 
+            # Yield new data as they arrive
             while True:
                 idx, item = await q.get()
                 if item is _END:
