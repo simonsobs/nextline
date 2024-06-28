@@ -69,7 +69,6 @@ async def test_property(data: st.DataObject) -> None:
                                 obj.latest()
                     case _:  # pragma: no cover
                         raise ValueError(f'Invalid: {(action, closed)!r}')
-                # await sleep(0)
                 yield obj, sent
         yield obj, sent
 
