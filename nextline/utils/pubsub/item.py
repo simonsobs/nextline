@@ -1,6 +1,6 @@
 import asyncio
 import enum
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Any, Generic, TypeAlias, TypeVar
 
 # Use Enum with one object as sentinel as suggested in
@@ -257,7 +257,7 @@ class PubSubItem(Generic[_Item]):
 
     async def subscribe(
         self, last: bool = True, cache: bool = True
-    ) -> AsyncIterator[_Item]:
+    ) -> AsyncGenerator[_Item, None]:
         '''Yield data as they are put after yielding, based on the options, old data.
 
         Parameters
@@ -308,6 +308,9 @@ class PubSubItem(Generic[_Item]):
                     yield item
 
         finally:
+            # This `finally` block might not be executed unless `aclose()` is
+            # explicitly called if the subscriber stops iterating before the
+            # end, for example, by the `break` statement.
             self._queues.remove(q)
 
     async def aclose(self) -> None:
