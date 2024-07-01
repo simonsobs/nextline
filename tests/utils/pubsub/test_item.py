@@ -1,7 +1,7 @@
+import contextlib
 from asyncio import Event, Task, create_task, gather, get_running_loop
-from collections.abc import AsyncIterator
 from string import ascii_lowercase
-from typing import TypeAlias
+from typing import Any
 
 import pytest
 from hypothesis import given, settings
@@ -16,131 +16,145 @@ def test_init_without_asyncio_event_loop() -> None:
     obj = PubSubItem[str]()
     assert obj
 
+
+class StatefulTest:
+    def __init__(self, data: st.DataObject) -> None:
+        self._draw = data.draw
+        self._cache = self._draw(st.booleans(), label='cache_init')
+        self._obj = PubSubItem[str](cache=self._cache)
+        self._closed = False
+        self._subscriptions = list[Task[None]]()
+
+        # A list of item lists, e.g., [['a', 'b'], ['c', 'd']].
+        # It includes at least an empty list, i.e., [[]].
+        # The `put()` method appends an item to the last list.
+        # The `clear()` method appends a new empty list.
+        self._sent = [list[str]()]
+
+    def assert_invariants(self) -> None:
+        assert self._sent
+        if self._sent[-1]:
+            assert self._obj.latest() == self._sent[-1][-1]
+        else:
+            with pytest.raises(LookupError):
+                self._obj.latest()
+        assert self._obj.cache == self._cache
+        assert self._obj.closed == self._closed
+
+    async def put(self) -> None:
+        item = self._draw(st.text(ascii_lowercase, min_size=0))
+        if self._closed:
+            with pytest.raises(RuntimeError):
+                await self._obj.publish(item)
+        else:
+            await self._obj.publish(item)
+            self._sent[-1].append(item)
+
+    async def clear(self) -> None:
+        if self._closed:
+            with pytest.raises(RuntimeError):
+                self._obj.clear()
+        else:
+            self._obj.clear()
+            self._sent.append([])
+
+    async def close(self) -> None:
+        await self._obj.aclose()
+        self._closed = True
+
+    async def subscribe(self) -> None:
+        started = Event()
+        self._subscriptions.append(create_task(self._subscription(started)))
+        await started.wait()
+
+    async def _subscription(self, started: Event) -> None:
+        started.set()
+
+        last = self._draw(st.booleans(), label='last')
+        cache = self._draw(st.booleans(), label='cache_subscribe')
+        received = list[str]()
+
+        it = self._obj.subscribe(last=last, cache=cache)
+        async with contextlib.aclosing(it):  # To ensure that `finally` is executed
+            if self._closed:
+                async for item in it:  # pragma: no cover
+                    received.append(item)
+                assert not received
+                return
+
+            sent = self._sent
+
+            current_list_idx = len(sent) - 1
+            current_list = sent[current_list_idx]
+            current_list_size = len(current_list)
+
+            match current_list_size, last, cache, self._cache:
+                case 0, True, _, _:
+                    next_item_idx = 0
+                    next_item = None
+                case size, True, True, True if size:
+                    next_item_idx = 0
+                    next_item = current_list[next_item_idx]
+                case size, True, _, _ if size:
+                    next_item_idx = size - 1
+                    next_item = current_list[next_item_idx]
+                case size, False, _, _:  # pragma: no branch
+                    next_item_idx = size
+                    next_item = None
+
+            idx = 0
+
+            if next_item is not None:
+                item = await anext(it)
+                assert self._obj.n_subscriptions > 0
+                assert item == next_item
+                received.append(item)
+                idx += 1
+            
+            def flatten() -> list[str]:
+                return sum(sent[current_list_idx:], list[str]())[next_item_idx:]
+
+
+            async for item in it:
+                assert self._obj.n_subscriptions > 0
+                received.append(item)
+                idx += 1
+                expected = flatten()
+                assert received == expected[:idx]
+                break_ = self._draw(st.booleans(), label='break')
+                if break_:
+                    # The `finally` in `subscribe()` will be executed at `aclose()`.
+                    break
+            else:
+                expected = flatten()
+                assert received == expected
+
+    async def __aenter__(self) -> 'StatefulTest':
+        await self._obj.__aenter__()
+        return self
+
+    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+        await self._obj.__aexit__(*args, **kwargs)
+        await gather(*self._subscriptions)
+        assert self._obj.n_subscriptions == 0
+
+
 @settings(max_examples=500)
 @given(data=st.data())
 async def test_property(data: st.DataObject) -> None:
-    Sent: TypeAlias = list[list[str]]
+    test = StatefulTest(data)
 
-    async def send() -> AsyncIterator[tuple[PubSubItem[str], Sent]]:
-        ACTIONS = ['PUT', 'CLEAR', 'CLOSE']
-        cache = data.draw(st.booleans(), label='cache_init')
-        obj = PubSubItem[str](cache=cache)
-        sent: Sent = [[]]
-        assert obj.n_subscriptions == 0
-        yield obj, sent
-        async with obj:
-            assert obj.cache == cache
-            with pytest.raises(LookupError):
-                obj.latest()
-            closed = False
-            actions = data.draw(st.lists(st.sampled_from(ACTIONS)))
-            for action in actions:
-                match action, closed:
-                    case 'PUT', True:
-                        item = data.draw(st.text(ascii_lowercase, min_size=0))
-                        with pytest.raises(RuntimeError):
-                            await obj.publish(item)
-                    case 'PUT', False:
-                        item = data.draw(st.text(ascii_lowercase, min_size=0))
-                        await obj.publish(item)
-                        sent[-1].append(item)
-                        assert obj.latest() == item
-                    case 'CLEAR', True:
-                        with pytest.raises(RuntimeError):
-                            obj.clear()
-                        if sent and sent[-1]:
-                            assert obj.latest() == sent[-1][-1]
-                        else:
-                            with pytest.raises(LookupError):
-                                obj.latest()
-                    case 'CLEAR', False:
-                        obj.clear()
-                        sent.append([])
-                        with pytest.raises(LookupError):
-                            obj.latest()
-                    case 'CLOSE', _:
-                        await obj.aclose()
-                        closed = True
-                        if sent and sent[-1]:
-                            assert obj.latest() == sent[-1][-1]
-                        else:
-                            with pytest.raises(LookupError):
-                                obj.latest()
-                    case _:  # pragma: no cover
-                        raise ValueError(f'Invalid: {(action, closed)!r}')
-                yield obj, sent
-        yield obj, sent
+    METHODS = [
+        test.put,
+        test.clear,
+        test.close,
+        test.subscribe,
+    ]
 
-    async def receive(obj: PubSubItem[str], sent: Sent, event: Event) -> None:
-        event.set()
+    methods = data.draw(st.lists(st.sampled_from(METHODS)))
 
-        last = data.draw(st.booleans(), label='last')
-        cache = data.draw(st.booleans(), label='cache_subscribe')
-        it = obj.subscribe(last=last, cache=cache)
-
-        received = list[str]()
-
-        if obj.closed:
-            async for item in it:  # pragma: no cover
-                received.append(item)
-            assert not received
-            return
-
-        # A list of item lists, e.g., [['a', 'b'], ['c', 'd']]
-        # A new list is appended when the `clear` method is called
-        # At list an empty list should be included, i.e., [[]]
-        assert sent
-
-        current_list_idx = len(sent) - 1
-        current_list = sent[current_list_idx]
-        current_list_size = len(current_list)
-
-        match current_list_size, last, cache, obj.cache:
-            case 0, True, _, _:
-                next_item_idx = 0
-                next_item = None
-            case size, True, True, True if size:
-                next_item_idx = 0
-                next_item = current_list[next_item_idx]
-            case size, True, _, _ if size:
-                next_item_idx = size - 1
-                next_item = current_list[next_item_idx]
-            case size, False, _, _:
-                next_item_idx = size
-                next_item = None
-
-        idx = 0
-
-        if next_item is not None:
-            item = await anext(it)
-            assert obj.n_subscriptions > 0
-            assert item == next_item
-            received.append(item)
-            idx += 1
-
-        async for item in it:
-            assert obj.n_subscriptions > 0
-            expected = sum(sent[current_list_idx:], list[str]())[next_item_idx:]
-            received.append(item)
-            idx += 1
-            assert received == expected[:idx]
-            break_ = data.draw(st.booleans(), label='break')
-            if break_:
-                break
-        else:
-            expected = sum(sent[current_list_idx:], list[str]())[next_item_idx:]
-            assert received == expected
-
-    tasks = list[Task[None]]()
-
-    async for obj, sent in send():
-        n_new_receivers = data.draw(st.integers(0, 5), label='n_new_receivers')
-        for _ in range(n_new_receivers):
-            event = Event()
-            tasks.append(create_task(receive(obj, sent, event)))
-            await event.wait()
-
-    await gather(*tasks)
-
-    # TODO: This test sometimes fails on GitHub Actions
-    # assert obj.n_subscriptions == 0
+    test.assert_invariants()
+    async with test:
+        for method in methods:
+            await method()
+            test.assert_invariants()

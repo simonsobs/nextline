@@ -1,6 +1,6 @@
 import asyncio
 import enum
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Any, Generic, TypeAlias, TypeVar
 
 # Use Enum with one object as sentinel as suggested in
@@ -215,7 +215,6 @@ class PubSubItem(Generic[_Item]):
         self._idx = -1
 
         self._closed: bool = False
-        self._lock_close: asyncio.Condition | None = None
 
     @property
     def cache(self) -> bool:
@@ -257,7 +256,7 @@ class PubSubItem(Generic[_Item]):
 
     async def subscribe(
         self, last: bool = True, cache: bool = True
-    ) -> AsyncIterator[_Item]:
+    ) -> AsyncGenerator[_Item, None]:
         '''Yield data as they are put after yielding, based on the options, old data.
 
         Parameters
@@ -288,7 +287,7 @@ class PubSubItem(Generic[_Item]):
         try:
             # Yield the old data from the first to the one before the most recent
             if cache and cached is not None:
-                for idx, item in cached:
+                for idx, item in cached:  # pragma: no branch
                     if not idx < last_idx:
                         break
                     if item is _END:
@@ -304,20 +303,21 @@ class PubSubItem(Generic[_Item]):
                 idx, item = await q.get()
                 if item is _END:
                     return
-                if last_idx < idx:
+                if last_idx < idx:  # pragma: no branch
                     yield item
 
         finally:
+            # This `finally` block might not be executed unless `aclose()` is
+            # explicitly called if the subscriber stops iterating before the
+            # end, for example, by the `break` statement.
             self._queues.remove(q)
 
     async def aclose(self) -> None:
         '''Return all subscriptions and prevent new subscriptions.'''
-        self._lock_close = self._lock_close or asyncio.Condition()
-        async with self._lock_close:
-            if self._closed:
-                return
-            self._closed = True
-            await self._enumerate(_END)
+        if self._closed:
+            return
+        self._closed = True
+        await self._enumerate(_END)
 
     async def __aenter__(self) -> 'PubSubItem[_Item]':
         return self
@@ -330,5 +330,5 @@ class PubSubItem(Generic[_Item]):
         self._last_enumerated = enumerated = (self._idx, item)
         if self._cache is not None:
             self._cache.append(enumerated)
-        for q in list(self._queues):  # list in case it changes
+        for q in list(self._queues):  # `list` as it can change during iteration
             await q.put(enumerated)
