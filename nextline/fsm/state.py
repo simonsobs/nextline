@@ -126,6 +126,5 @@ class Machine:
         await self.initialize()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
-        del exc_type, exc_value, traceback
+    async def __aexit__(self, *_: Any, **__: Any) -> None:
         await self.close()
