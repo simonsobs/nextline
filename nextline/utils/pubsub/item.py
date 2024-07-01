@@ -215,7 +215,6 @@ class PubSubItem(Generic[_Item]):
         self._idx = -1
 
         self._closed: bool = False
-        self._lock_close: asyncio.Condition | None = None
 
     @property
     def cache(self) -> bool:
@@ -315,12 +314,10 @@ class PubSubItem(Generic[_Item]):
 
     async def aclose(self) -> None:
         '''Return all subscriptions and prevent new subscriptions.'''
-        self._lock_close = self._lock_close or asyncio.Condition()
-        async with self._lock_close:
-            if self._closed:
-                return
-            self._closed = True
-            await self._enumerate(_END)
+        if self._closed:
+            return
+        self._closed = True
+        await self._enumerate(_END)
 
     async def __aenter__(self) -> 'PubSubItem[_Item]':
         return self
