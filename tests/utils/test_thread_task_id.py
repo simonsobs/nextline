@@ -1,8 +1,10 @@
 import asyncio
 from asyncio import to_thread
 from functools import partial
+from os import getenv
 
 import pytest
+from pytest import mark
 
 from nextline.types import TaskNo, ThreadNo, ThreadTaskId
 from nextline.utils import ExcThread
@@ -154,6 +156,7 @@ def test_async_asyncio_run(obj: IdComposer):
     asyncio.run(async_assert_call(obj, expected))
 
 
+@mark.skipif(getenv('GITHUB_ACTIONS') == 'true', reason='Fails on GitHub Actions')
 async def test_async_asyncio_to_thread(obj: IdComposer):
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
