@@ -84,7 +84,7 @@ async def test_transitions(triggers: list[str]) -> None:
         if before := map_.get('before'):
             setattr(machine, before, AsyncMock())
 
-        await getattr(machine, trigger)()
+        assert await getattr(machine, trigger)() is True
         dest = map_['dest']
         assert getattr(machine, f'is_{dest}')()
 
