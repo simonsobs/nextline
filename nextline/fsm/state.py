@@ -1,6 +1,7 @@
 import asyncio
+from collections.abc import Callable, Coroutine
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any, Optional, Protocol, TypeAlias
 
 from transitions import EventData
 
@@ -10,9 +11,22 @@ from nextline.types import ResetOptions
 
 from .factory import build_state_machine
 
+TriggerNoArg: TypeAlias = Callable[[], Coroutine[None, None, bool]]
+
+class Reset(Protocol):
+    def __call__(self, reset_options: ResetOptions) -> Coroutine[None, None, bool]:
+        ...
+
 
 class Machine:
     '''The finite state machine of the nextline states.'''
+
+    state: str
+    initialize: TriggerNoArg
+    run: TriggerNoArg
+    finish: TriggerNoArg
+    reset: Reset
+    close: TriggerNoArg
 
     def __init__(self, context: Context) -> None:
         self._context = context
@@ -20,18 +34,18 @@ class Machine:
         self._machine = build_state_machine(model=self)
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
         self._logger = getLogger(__name__)
-        assert self.state  # type: ignore
+
 
     def __repr__(self) -> str:
         # e.g., "<Machine 'running'>"
-        return f'<{self.__class__.__name__} {self.state!r}>'  # type: ignore
+        return f'<{self.__class__.__name__} {self.state!r}>'
 
     async def after_state_change(self, event: EventData) -> None:
         if not (event.transition and event.transition.dest):
             # internal transition
             return
         await self._hook.ahook.on_change_state(
-            context=self._context, state_name=self.state  # type: ignore
+            context=self._context, state_name=self.state
         )
 
     async def on_exit_created(self, _: EventData) -> None:
@@ -56,7 +70,7 @@ class Machine:
                 run_started.set()  # Ensure to unblock the await
                 self._context.run_arg = None
                 try:
-                    await self.finish()  # type: ignore
+                    await self.finish()
                 except BaseException:
                     self._logger.exception('')
                     raise
@@ -109,9 +123,8 @@ class Machine:
         await self._hook.ahook.reset(context=self._context, reset_options=reset_options)
 
     async def __aenter__(self) -> 'Machine':
-        await self.initialize()  # type: ignore
+        await self.initialize()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
-        del exc_type, exc_value, traceback
-        await self.close()  # type: ignore
+    async def __aexit__(self, *_: Any, **__: Any) -> None:
+        await self.close()

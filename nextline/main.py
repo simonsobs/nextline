@@ -91,32 +91,32 @@ class Nextline:
         self._hook.hook.init(context=context, init_options=self._init_options)
         self._machine = Machine(context=context)
         await self._continuous.start()
-        await self._machine.initialize()  # type: ignore
+        await self._machine.initialize()
 
     async def close(self) -> None:
         if self._closed:
             return
         self._closed = True
         await self._pubsub.close()
-        await self._machine.close()  # type: ignore
+        await self._machine.close()
         await self._continuous.close()
 
     async def __aenter__(self) -> 'Nextline':
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         del exc_type, exc_value, traceback
         await asyncio.wait_for(self.close(), timeout=self._timeout_on_exit)
 
     async def run(self) -> None:
         '''Start the script execution.'''
-        await self._machine.run()  # type: ignore
+        await self._machine.run()
 
     @asynccontextmanager
     async def run_session(self) -> AsyncIterator['Nextline']:
         '''Yield when the script execution is started and exit when it has finished.'''
-        await self._machine.run()  # type: ignore
+        await self._machine.run()
         try:
             yield self
         finally:
@@ -159,7 +159,7 @@ class Nextline:
         await self._machine.terminate()
 
     async def kill(self) -> None:
-        await self._machine.kill()  # type: ignore
+        await self._machine.kill()
 
     def format_exception(self) -> Optional[str]:
         '''Formatted uncaught exception from the last run'''
@@ -185,9 +185,7 @@ class Nextline:
         )
         logger = getLogger(__name__)
         logger.debug(f'reset_options: {reset_options}')
-        await self._machine.reset(  # type: ignore
-            reset_options=reset_options,
-        )
+        await self._machine.reset(reset_options=reset_options)
 
     @property
     def statement(self) -> str:
@@ -202,7 +200,7 @@ class Nextline:
         "closed"
         """
         try:
-            return self._machine.state  # type: ignore
+            return self._machine.state
         except AttributeError:
             return None
 

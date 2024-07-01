@@ -1,9 +1,8 @@
 from copy import deepcopy
-from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from transitions import Machine, MachineError
 from transitions.extensions.markup import MarkupMachine
@@ -44,113 +43,49 @@ def test_graph():
     machine.get_graph().draw('states.png', prog='dot')
 
 
-async def test_invalid_triggers() -> None:
-    machine = build_state_machine(model=Machine.self_literal)
-    await machine.initialize()
-    await machine.run()
-    assert machine.is_running()
+STATE_MAP = {
+    'created': {
+        'initialize': {'dest': 'initialized'},
+        'close': {'dest': 'closed'},
+    },
+    'initialized': {
+        'run': {'dest': 'running'},
+        'reset': {'dest': 'initialized', 'before': 'on_reset'},
+        'close': {'dest': 'closed'},
+    },
+    'running': {
+        'finish': {'dest': 'finished'},
+        'close': {'dest': 'closed', 'before': 'on_close_while_running'},
+    },
+    'finished': {
+        'reset': {'dest': 'initialized', 'before': 'on_reset'},
+        'close': {'dest': 'closed'},
+    },
+    'closed': dict[str, dict[str, str]](),
+}
 
-    # running -- reset() -- invalid
-    with pytest.raises(MachineError):
-        await machine.reset()
-
-    assert machine.is_running()
-
-
-async def test_transitions_manual() -> None:
-    # created -- initialize() --> initialized
-    machine = build_state_machine(model=Machine.self_literal)
-    machine.on_reset = AsyncMock()  # type: ignore
-    assert machine.is_created()
-    await machine.initialize()
-    assert machine.is_initialized()
-
-    # initialized -- reset() --> initialized
-    await machine.reset()
-    assert machine.on_reset.call_count == 1
-    assert machine.on_reset.await_count == 1
-    machine.on_reset.reset_mock()
-    assert machine.is_initialized()
-
-    # initialized -- run() --> running -- finish() --> finished -- close() --> closed
-    await machine.run()
-    assert machine.is_running()
-    await machine.finish()
-    assert machine.is_finished()
-    await machine.close()
-    assert machine.is_closed()
+TRIGGERS = list({trigger for v in STATE_MAP.values() for trigger in v.keys()})
 
 
-@st.composite
-def st_paths(draw: st.DrawFn):
-    max_n_paths = 30
-
-    state_map = {
-        'created': {
-            'initialize': {'dest': 'initialized'},
-            'close': {'dest': 'closed'},
-        },
-        'initialized': {
-            'run': {'dest': 'running'},
-            'reset': {'dest': 'initialized', 'before': 'on_reset'},
-            'close': {'dest': 'closed'},
-        },
-        'running': {
-            'finish': {'dest': 'finished'},
-            'close': {'dest': 'closed', 'before': 'on_close_while_running'},
-        },
-        'finished': {
-            'reset': {'dest': 'initialized', 'before': 'on_reset'},
-            'close': {'dest': 'closed'},
-        },
-    }
-
-    all_triggers = list({trigger for v in state_map.values() for trigger in v.keys()})
-
-    state_map_reduced = {
-        state: {trigger: v2 for trigger, v2 in v.items() if trigger != 'reset'}
-        for state, v in state_map.items()
-    }
-
-    paths = list[tuple[str, dict[str, Any]]]()
-
-    state = 'created'
-    while not state == 'closed' and len(paths) < max_n_paths:
-        trigger_map = state_map[state]
-        triggers = list(trigger_map.keys())
-        trigger = draw(st.sampled_from(all_triggers))
-        if trigger in trigger_map:
-            paths.append((trigger, trigger_map[trigger]))
-            state = trigger_map[trigger]['dest']
-        else:
-            paths.append((trigger, {'error': MachineError}))
-
-    while not state == 'closed':
-        trigger_map = state_map_reduced[state]
-        triggers = list(trigger_map.keys())
-        trigger = draw(st.sampled_from(triggers))
-        paths.append((trigger, trigger_map[trigger]))
-        state = trigger_map[trigger]['dest']
-
-    return paths
-
-
-@given(paths=st_paths())
-async def test_transitions_hypothesis(paths: list[tuple[str, dict[str, Any]]]):
+@settings(max_examples=200)
+@given(triggers=st.lists(st.sampled_from(TRIGGERS)))
+async def test_transitions(triggers: list[str]) -> None:
     machine = build_state_machine(model=Machine.self_literal)
     assert machine.is_created()
 
-    for method, map in paths:
-        if error := map.get('error'):
-            with pytest.raises(error):
-                await getattr(machine, method)()
+    for trigger in triggers:
+        prev = machine.state
+        if (map_ := STATE_MAP[prev].get(trigger)) is None:
+            with pytest.raises(MachineError):
+                await getattr(machine, trigger)()
+            assert machine.state == prev
             continue
 
-        if before := map.get('before'):
+        if before := map_.get('before'):
             setattr(machine, before, AsyncMock())
 
-        await getattr(machine, method)()
-        dest = map['dest']
+        assert await getattr(machine, trigger)() is True
+        dest = map_['dest']
         assert getattr(machine, f'is_{dest}')()
 
         if before:
