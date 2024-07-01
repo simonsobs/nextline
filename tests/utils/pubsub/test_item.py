@@ -98,7 +98,7 @@ class StatefulTest:
                 case size, True, _, _ if size:
                     next_item_idx = size - 1
                     next_item = current_list[next_item_idx]
-                case size, False, _, _:
+                case size, False, _, _:  # pragma: no branch
                     next_item_idx = size
                     next_item = None
 

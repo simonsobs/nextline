@@ -287,7 +287,7 @@ class PubSubItem(Generic[_Item]):
         try:
             # Yield the old data from the first to the one before the most recent
             if cache and cached is not None:
-                for idx, item in cached:
+                for idx, item in cached:  # pragma: no branch
                     if not idx < last_idx:
                         break
                     if item is _END:
@@ -303,7 +303,7 @@ class PubSubItem(Generic[_Item]):
                 idx, item = await q.get()
                 if item is _END:
                     return
-                if last_idx < idx:
+                if last_idx < idx:  # pragma: no branch
                     yield item
 
         finally:

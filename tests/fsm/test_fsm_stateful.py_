@@ -1,0 +1,73 @@
+import asyncio
+from re import M
+from unittest.mock import AsyncMock, Mock
+
+import trio_asyncio
+from hypothesis import note, settings
+from hypothesis.errors import StopTest
+from hypothesis_trio.stateful import (
+    TrioAsyncioRuleBasedStateMachine,
+    initialize,
+    invariant,
+    precondition,
+    rule,
+    run_state_machine_as_test,
+)
+from icecream import ic
+from pytest_asyncio.plugin import wrap_in_sync
+from transitions import EventData, MachineError
+
+from nextline.fsm.factory import build_state_machine
+
+# https://github.com/pytest-dev/pytest-asyncio/blob/main/pytest_asyncio/plugin.py#L768
+
+
+def test_transitions() -> None:
+    # run_state_machine_as_test(FSMTransition, settings=settings(max_examples=1000))
+    run_state_machine_as_test(FSMTransition)
+
+
+class Machine:
+    def __init__(self) -> None:
+        self._machine = build_state_machine(model=self)
+
+    async def on_reset(self, event: EventData) -> None:
+        pass
+
+
+class FSMTransition(TrioAsyncioRuleBasedStateMachine):
+    def __init__(self) -> None:
+        super().__init__()
+        self.machine = Machine()
+        # self.machine.on_reset = AsyncMock()  # type: ignore
+        # self.machine.on_close_while_running = AsyncMock()  # type: ignore
+        assert self.machine.is_created()
+
+    @initialize()
+    async def initialize(self) -> None:
+        assert self.get_asyncio_loop() == asyncio.get_event_loop()
+        await trio_asyncio.aio_as_trio(lambda: asyncio.sleep(0))
+
+    @precondition(lambda self: self.machine.state in ['created'])
+    @rule()
+    async def trigger_initialize(self) -> None:
+        await self.machine.initialize()
+        assert self.machine.is_initialized()
+
+    @precondition(lambda self: self.machine.state in ['initialized', 'finished'])
+    @rule()
+    async def trigger_reset(self) -> None:
+        await self.machine.reset()
+        assert self.machine.is_initialized()
+
+    @precondition(lambda self: self.machine.state not in ['closed'])
+    @rule()
+    async def trigger_close(self) -> None:
+        await self.machine.close()
+        assert self.machine.is_closed()
+
+    @precondition(lambda self: self.machine.state == 'closed')
+    @rule()
+    async def closed(self) -> None:
+        # ic('closed')
+        pass
