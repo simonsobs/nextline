@@ -330,5 +330,5 @@ class PubSubItem(Generic[_Item]):
         self._last_enumerated = enumerated = (self._idx, item)
         if self._cache is not None:
             self._cache.append(enumerated)
-        for q in list(self._queues):  # list in case it changes
+        for q in list(self._queues):  # `list` as it can change during iteration
             await q.put(enumerated)
