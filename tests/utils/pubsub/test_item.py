@@ -110,19 +110,23 @@ class StatefulTest:
                 assert item == next_item
                 received.append(item)
                 idx += 1
+            
+            def flatten() -> list[str]:
+                return sum(sent[current_list_idx:], list[str]())[next_item_idx:]
+
 
             async for item in it:
                 assert self._obj.n_subscriptions > 0
-                expected = sum(sent[current_list_idx:], list[str]())[next_item_idx:]
                 received.append(item)
                 idx += 1
+                expected = flatten()
                 assert received == expected[:idx]
                 break_ = self._draw(st.booleans(), label='break')
                 if break_:
                     # The `finally` in `subscribe()` will be executed at `aclose()`.
                     break
             else:
-                expected = sum(sent[current_list_idx:], list[str]())[next_item_idx:]
+                expected = flatten()
                 assert received == expected
 
     async def __aenter__(self) -> 'StatefulTest':
