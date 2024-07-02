@@ -1,3 +1,4 @@
 __all__ = ['Callback', 'StateMachine']
 
-from .state import Callback, StateMachine
+from .callback import Callback
+from .machine import StateMachine
