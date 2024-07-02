@@ -80,8 +80,11 @@ class Callback:
         await self._hook.ahook.reset(context=self._context, reset_options=reset_options)
 
 
-class Model:
-    '''The model of the transitions AsyncMachine.'''
+class StateMachine:
+    '''The finite state machine.
+
+    This class is the model object of `AsyncMachine` from `transitions`.
+    '''
 
     # Types of objects that will be set by AsyncMachine
     state: str
@@ -104,7 +107,7 @@ class Model:
         assert callable(self.close)
 
     def __repr__(self) -> str:
-        # e.g., "<Model 'running'>"
+        # e.g., "<StateMachine 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
     async def after_state_change(self, event: EventData) -> None:
@@ -144,7 +147,7 @@ class Model:
         assert not event.kwargs
         await self._callback.reset(reset_options=reset_options)
 
-    async def __aenter__(self) -> 'Model':
+    async def __aenter__(self) -> 'StateMachine':
         await self.initialize()
         return self
 
@@ -159,29 +162,29 @@ class Imp:
         self._context = context
         self._hook = context.hook
         self._callback = Callback(context=context, machine=self)
-        self._model = Model(callback=self._callback)
+        self._machine = StateMachine(callback=self._callback)
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} {self._model!r}>'
+        return f'<{self.__class__.__name__} {self._machine!r}>'
 
     @property
     def state(self) -> str:
-        return self._model.state
+        return self._machine.state
 
     async def initialize(self) -> bool:
-        return await self._model.initialize()
+        return await self._machine.initialize()
 
     async def run(self) -> bool:
-        return await self._model.run()
+        return await self._machine.run()
 
     async def finish(self) -> bool:
-        return await self._model.finish()
+        return await self._machine.finish()
 
     async def reset(self, reset_options: ResetOptions) -> bool:
-        return await self._model.reset(reset_options=reset_options)
+        return await self._machine.reset(reset_options=reset_options)
 
     async def close(self) -> bool:
-        return await self._model.close()
+        return await self._machine.close()
 
     async def send_command(self, command: Command) -> None:
         await self._hook.ahook.send_command(context=self._context, command=command)
@@ -196,7 +199,7 @@ class Imp:
         await self._hook.ahook.kill(context=self._context)
 
     async def wait(self) -> None:
-        await self._model.wait()
+        await self._machine.wait()
 
     def format_exception(self) -> Optional[str]:
         return self._hook.hook.format_exception(context=self._context)
@@ -205,8 +208,8 @@ class Imp:
         return self._hook.hook.result(context=self._context)
 
     async def __aenter__(self) -> 'Imp':
-        await self._model.__aenter__()
+        await self._machine.__aenter__()
         return self
 
     async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-        await self._model.__aexit__(*args, **kwargs)
+        await self._machine.__aexit__(*args, **kwargs)
