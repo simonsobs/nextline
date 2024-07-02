@@ -35,23 +35,23 @@ class Callback:
     async def start(self) -> None:
         await self._hook.ahook.start(context=self._context)
 
-    async def on_initialize_run(self) -> None:
+    async def initialize_run(self) -> None:
         self._context.run_arg = self._hook.hook.compose_run_arg(context=self._context)
         await self._hook.ahook.on_initialize_run(context=self._context)
 
-    async def on_enter_running(self, _: EventData) -> None:
-        self.run_finished = asyncio.Event()
-        run_started = asyncio.Event()
+    async def start_run(self) -> None:
+        self._run_finished = asyncio.Event()
+        started = asyncio.Event()
 
         async def _run() -> None:
             try:
                 async with self._hook.awith.run(context=self._context):
-                    run_started.set()
+                    started.set()
             except BaseException:
                 self._logger.exception('')
                 raise
             finally:
-                run_started.set()  # Ensure to unblock the await
+                started.set()  # Ensure to unblock the await
                 self._context.run_arg = None
                 try:
                     await self._machine.finish()
@@ -59,18 +59,15 @@ class Callback:
                     self._logger.exception('')
                     raise
                 finally:
-                    self.run_finished.set()
+                    self._run_finished.set()
 
         self._task_run = asyncio.create_task(_run())
-        await run_started.wait()
+        await started.wait()
 
-    async def on_close_while_running(self, _: EventData) -> None:
-        await self.run_finished.wait()
+    async def wait_for_run_finish(self) -> None:
+        await self._run_finished.wait()
 
-    async def wait(self) -> None:
-        await self.run_finished.wait()
-
-    async def on_finished(self) -> None:
+    async def finish(self) -> None:
         await self._hook.ahook.on_finished(context=self._context)
 
     async def on_exit_finished(self) -> None:
@@ -120,19 +117,19 @@ class Model:
         await self._callback.start()
 
     async def on_enter_initialized(self, _: EventData) -> None:
-        await self._callback.on_initialize_run()
+        await self._callback.initialize_run()
 
     async def on_enter_running(self, _: EventData) -> None:
-        await self._callback.on_enter_running(_)
+        await self._callback.start_run()
 
     async def on_close_while_running(self, _: EventData) -> None:
-        await self._callback.on_close_while_running(_)
+        await self._callback.wait_for_run_finish()
 
     async def wait(self) -> None:
-        await self._callback.wait()
+        await self._callback.wait_for_run_finish()
 
     async def on_enter_finished(self, _: EventData) -> None:
-        await self._callback.on_finished()
+        await self._callback.finish()
 
     async def on_exit_finished(self, _: EventData) -> None:
         await self._callback.on_exit_finished()
