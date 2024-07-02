@@ -23,9 +23,6 @@ class Imp:
     def state(self) -> str:
         return self._machine.state
 
-    async def initialize(self) -> bool:
-        return await self._machine.initialize()
-
     async def run(self) -> bool:
         return await self._machine.run()
 
@@ -34,9 +31,6 @@ class Imp:
 
     async def reset(self, reset_options: ResetOptions) -> bool:
         return await self._machine.reset(reset_options=reset_options)
-
-    async def close(self) -> bool:
-        return await self._machine.close()
 
     async def send_command(self, command: Command) -> None:
         await self._hook.ahook.send_command(context=self._context, command=command)

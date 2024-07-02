@@ -52,7 +52,7 @@ async def test_timeout(machine: Mock):
     async def close():
         await asyncio.sleep(5)
 
-    machine.close.side_effect = close
+    machine.aclose.side_effect = close
     with pytest.raises(asyncio.TimeoutError):
         async with Nextline(SOURCE, timeout_on_exit=0.01):
             pass

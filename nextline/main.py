@@ -91,14 +91,14 @@ class Nextline:
         self._hook.hook.init(context=context, init_options=self._init_options)
         self._imp = Imp(context=context)
         await self._continuous.start()
-        await self._imp.initialize()
+        await self._imp.aopen()
 
     async def close(self) -> None:
         if self._closed:
             return
         self._closed = True
         await self._pubsub.close()
-        await self._imp.close()
+        await self._imp.aclose()
         await self._continuous.close()
 
     async def __aenter__(self) -> 'Nextline':
