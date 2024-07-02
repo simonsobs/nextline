@@ -23,6 +23,7 @@ class Reset(Protocol):
 class Model:
     '''The model of the transitions AsyncMachine.'''
 
+    # Types of objects that will be set by AsyncMachine
     state: str
     initialize: TriggerNoArg
     run: TriggerNoArg
@@ -36,6 +37,13 @@ class Model:
         self._machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
         self._logger = getLogger(__name__)
+
+        assert self.state
+        assert callable(self.initialize)
+        assert callable(self.run)
+        assert callable(self.finish)
+        assert callable(self.reset)
+        assert callable(self.close)
 
     def __repr__(self) -> str:
         # e.g., "<Model 'running'>"
@@ -100,7 +108,8 @@ class Model:
         if args := list(event.args):
             self._logger.warning(f'Unexpected args: {args!r}')
         kwargs = event.kwargs
-        reset_options: ResetOptions = kwargs.pop('reset_options')
+        reset_options = kwargs.pop('reset_options')
+        assert isinstance(reset_options, ResetOptions)
         if kwargs:
             self._logger.warning(f'Unexpected kwargs: {kwargs!r}')
         await self._hook.ahook.reset(context=self._context, reset_options=reset_options)
