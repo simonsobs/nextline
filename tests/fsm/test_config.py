@@ -69,7 +69,9 @@ STATE_MAP = {
         'reset': {'dest': 'initialized', 'before': 'on_reset'},
         'close': {'dest': 'closed'},
     },
-    'closed': dict[str, dict[str, str]](),
+    'closed': {
+        'close': {'dest': 'closed'},
+    },
 }
 
 TRIGGERS = list({trigger for v in STATE_MAP.values() for trigger in v.keys()})
