@@ -41,8 +41,6 @@ def test_restore_from_markup() -> None:
     rebuild = MarkupMachine(model=None, **markup)
     assert rebuild.markup == machine.markup
 
-    machine = AsyncGraphMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
-
 
 @pytest.mark.skip
 def test_graph(tmp_path: Path):
