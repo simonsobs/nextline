@@ -4,14 +4,16 @@ from logging import getLogger
 from typing import Any, Optional, Protocol, TypeAlias
 
 from transitions import EventData
+from transitions.extensions.asyncio import AsyncMachine
 
 from nextline.plugin import Context
 from nextline.spawned import Command
 from nextline.types import ResetOptions
 
-from .factory import build_state_machine
+from .factory import CONFIG
 
 TriggerNoArg: TypeAlias = Callable[[], Coroutine[None, None, bool]]
+
 
 class Reset(Protocol):
     def __call__(self, reset_options: ResetOptions) -> Coroutine[None, None, bool]:
@@ -31,10 +33,9 @@ class Machine:
     def __init__(self, context: Context) -> None:
         self._context = context
         self._hook = context.hook
-        self._machine = build_state_machine(model=self)
+        self._machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
         self._logger = getLogger(__name__)
-
 
     def __repr__(self) -> str:
         # e.g., "<Machine 'running'>"

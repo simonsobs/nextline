@@ -6,30 +6,34 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from transitions import Machine, MachineError
+from transitions.extensions import AsyncGraphMachine
+from transitions.extensions.asyncio import AsyncMachine
 from transitions.extensions.markup import MarkupMachine
 
-from nextline.fsm.factory import build_state_machine
+from nextline.fsm.factory import CONFIG
+
+SELF_LITERAL = Machine.self_literal
 
 
-def test_model_default():
-    machine = build_state_machine()
+def test_model_default() -> None:
+    machine = AsyncMachine(model=None, **CONFIG)  # type: ignore
     assert not machine.models
 
 
-def test_model_self_literal():
-    machine = build_state_machine(model=Machine.self_literal)
+def test_model_self_literal() -> None:
+    machine = AsyncMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
     assert machine.models[0] is machine
     assert len(machine.models) == 1
 
 
-def test_restore_from_markup():
-    machine = build_state_machine(model=None, markup=True)
+def test_restore_from_markup() -> None:
+    machine = MarkupMachine(model=None, **CONFIG)  # type: ignore
     assert isinstance(machine.markup, dict)
     markup = deepcopy(machine.markup)
 
-    del markup['models']
+    del markup['models']  # type: ignore
 
-    # add missing 'dest' for internal transitions
+    # Add missing 'dest' for internal transitions
     for transition in markup['transitions']:
         if 'dest' not in transition:
             transition['dest'] = None
@@ -37,12 +41,14 @@ def test_restore_from_markup():
     rebuild = MarkupMachine(model=None, **markup)
     assert rebuild.markup == machine.markup
 
+    machine = AsyncGraphMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
+
 
 def test_graph(tmp_path: Path):
     FILE_NAME = 'states.png'
     path = tmp_path / FILE_NAME
     # print(f'Saving the state diagram to {path}...')
-    machine = build_state_machine(model=Machine.self_literal, graph=True)
+    machine = AsyncGraphMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
     machine.get_graph().draw(path, prog='dot')
 
 
@@ -73,7 +79,8 @@ TRIGGERS = list({trigger for v in STATE_MAP.values() for trigger in v.keys()})
 @settings(max_examples=200)
 @given(triggers=st.lists(st.sampled_from(TRIGGERS)))
 async def test_transitions(triggers: list[str]) -> None:
-    machine = build_state_machine(model=Machine.self_literal)
+    # machine = build_state_machine(model=Machine.self_literal)
+    machine = AsyncMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
     assert machine.is_created()
 
     for trigger in triggers:
