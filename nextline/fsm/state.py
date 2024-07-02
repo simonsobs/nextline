@@ -16,8 +16,71 @@ TriggerNoArg: TypeAlias = Callable[[], Coroutine[None, None, bool]]
 
 
 class Reset(Protocol):
-    def __call__(self, reset_options: ResetOptions) -> Coroutine[None, None, bool]:
+    def __call__(self, *, reset_options: ResetOptions) -> Coroutine[None, None, bool]:
         ...
+
+
+class Callback:
+    def __init__(self, context: Context, machine: 'Machine') -> None:
+        self._context = context
+        self._hook = context.hook
+        self._machine = machine
+        self._logger = getLogger(__name__)
+
+    async def on_change_state(self, state_name: str) -> None:
+        await self._hook.ahook.on_change_state(
+            context=self._context, state_name=state_name
+        )
+
+    async def start(self) -> None:
+        await self._hook.ahook.start(context=self._context)
+
+    async def on_initialize_run(self) -> None:
+        self._context.run_arg = self._hook.hook.compose_run_arg(context=self._context)
+        await self._hook.ahook.on_initialize_run(context=self._context)
+
+    async def on_enter_running(self, _: EventData) -> None:
+        self.run_finished = asyncio.Event()
+        run_started = asyncio.Event()
+
+        async def _run() -> None:
+            try:
+                async with self._hook.awith.run(context=self._context):
+                    run_started.set()
+            except BaseException:
+                self._logger.exception('')
+                raise
+            finally:
+                run_started.set()  # Ensure to unblock the await
+                self._context.run_arg = None
+                try:
+                    await self._machine.finish()
+                except BaseException:
+                    self._logger.exception('')
+                    raise
+                finally:
+                    self.run_finished.set()
+
+        self._task_run = asyncio.create_task(_run())
+        await run_started.wait()
+
+    async def on_close_while_running(self, _: EventData) -> None:
+        await self.run_finished.wait()
+
+    async def wait(self) -> None:
+        await self.run_finished.wait()
+
+    async def on_finished(self) -> None:
+        await self._hook.ahook.on_finished(context=self._context)
+
+    async def on_exit_finished(self) -> None:
+        await self._task_run
+
+    async def close(self) -> None:
+        await self._hook.ahook.close(context=self._context)
+
+    async def reset(self, reset_options: ResetOptions) -> None:
+        await self._hook.ahook.reset(context=self._context, reset_options=reset_options)
 
 
 class Model:
@@ -31,9 +94,8 @@ class Model:
     reset: Reset
     close: TriggerNoArg
 
-    def __init__(self, context: Context) -> None:
-        self._context = context
-        self._hook = context.hook
+    def __init__(self, callback: Callback) -> None:
+        self._callback = callback
         self._machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
         self._logger = getLogger(__name__)
@@ -53,66 +115,45 @@ class Model:
         if not (event.transition and event.transition.dest):
             # Internal transition
             return
-        await self._hook.ahook.on_change_state(
-            context=self._context, state_name=self.state
-        )
+        await self._callback.on_change_state(self.state)
 
     async def on_exit_created(self, _: EventData) -> None:
-        await self._hook.ahook.start(context=self._context)
+        await self._callback.start()
 
     async def on_enter_initialized(self, _: EventData) -> None:
-        self._context.run_arg = self._hook.hook.compose_run_arg(context=self._context)
-        await self._hook.ahook.on_initialize_run(context=self._context)
+        await self._callback.on_initialize_run()
 
     async def on_enter_running(self, _: EventData) -> None:
-        self.run_finished = asyncio.Event()
-        run_started = asyncio.Event()
-
-        async def run() -> None:
-            try:
-                async with self._hook.awith.run(context=self._context):
-                    run_started.set()
-            except BaseException:
-                self._logger.exception('')
-                raise
-            finally:
-                run_started.set()  # Ensure to unblock the await
-                self._context.run_arg = None
-                try:
-                    await self.finish()
-                except BaseException:
-                    self._logger.exception('')
-                    raise
-                finally:
-                    self.run_finished.set()
-
-        self._task = asyncio.create_task(run())
-        await run_started.wait()
+        await self._callback.on_enter_running(_)
 
     async def on_close_while_running(self, _: EventData) -> None:
-        await self.run_finished.wait()
+        await self._callback.on_close_while_running(_)
 
     async def wait(self) -> None:
-        await self.run_finished.wait()
+        await self._callback.wait()
 
     async def on_enter_finished(self, _: EventData) -> None:
-        await self._hook.ahook.on_finished(context=self._context)
+        await self._callback.on_finished()
 
     async def on_exit_finished(self, _: EventData) -> None:
-        await self._task
+        await self._callback.on_exit_finished()
 
     async def on_enter_closed(self, _: EventData) -> None:
-        await self._hook.ahook.close(context=self._context)
+        await self._callback.close()
 
     async def on_reset(self, event: EventData) -> None:
-        if args := list(event.args):
-            self._logger.warning(f'Unexpected args: {args!r}')
-        kwargs = event.kwargs
-        reset_options = kwargs.pop('reset_options')
-        assert isinstance(reset_options, ResetOptions)
-        if kwargs:
-            self._logger.warning(f'Unexpected kwargs: {kwargs!r}')
-        await self._hook.ahook.reset(context=self._context, reset_options=reset_options)
+        def _extract_kwarg() -> ResetOptions:
+            if args := list(event.args):
+                self._logger.warning(f'Unexpected args: {args!r}')
+            kwargs = event.kwargs
+            ret = kwargs.pop('reset_options')
+            if kwargs:
+                self._logger.warning(f'Unexpected kwargs: {kwargs!r}')
+            assert isinstance(ret, ResetOptions)
+            return ret
+
+        reset_options = _extract_kwarg()
+        await self._callback.reset(reset_options=reset_options)
 
     async def __aenter__(self) -> 'Model':
         await self.initialize()
@@ -128,7 +169,8 @@ class Machine:
     def __init__(self, context: Context) -> None:
         self._context = context
         self._hook = context.hook
-        self._model = Model(context=context)
+        self._callback = Callback(context=context, machine=self)
+        self._model = Model(callback=self._callback)
 
     def __repr__(self) -> str:
         return f'<{self.__class__.__name__} {self._model!r}>'
