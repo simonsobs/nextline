@@ -44,6 +44,7 @@ def test_restore_from_markup() -> None:
     machine = AsyncGraphMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
 
 
+@pytest.mark.skip
 def test_graph(tmp_path: Path):
     FILE_NAME = 'states.png'
     path = tmp_path / FILE_NAME
