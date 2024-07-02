@@ -98,7 +98,6 @@ class Model:
         self._callback = callback
         self._machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
         self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
-        self._logger = getLogger(__name__)
 
         assert self.state
         assert callable(self.initialize)
@@ -142,17 +141,10 @@ class Model:
         await self._callback.close()
 
     async def on_reset(self, event: EventData) -> None:
-        def _extract_kwarg() -> ResetOptions:
-            if args := list(event.args):
-                self._logger.warning(f'Unexpected args: {args!r}')
-            kwargs = event.kwargs
-            ret = kwargs.pop('reset_options')
-            if kwargs:
-                self._logger.warning(f'Unexpected kwargs: {kwargs!r}')
-            assert isinstance(ret, ResetOptions)
-            return ret
-
-        reset_options = _extract_kwarg()
+        reset_options = event.kwargs.pop('reset_options')
+        assert isinstance(reset_options, ResetOptions)
+        assert not list(event.args)
+        assert not event.kwargs
         await self._callback.reset(reset_options=reset_options)
 
     async def __aenter__(self) -> 'Model':
