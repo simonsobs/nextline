@@ -31,35 +31,41 @@ class Callback:
     async def start_run(self) -> None:
         self._run_finished = asyncio.Event()
         started = asyncio.Event()
-
-        async def _run() -> None:
-            try:
-                async with self._hook.awith.run(context=self._context):
-                    started.set()
-            except BaseException:
-                self._logger.exception('')
-                raise
-            finally:
-                started.set()  # Ensure to unblock the await
-                self._context.run_arg = None
-                try:
-                    await self._machine.finish()
-                except BaseException:
-                    self._logger.exception('')
-                    raise
-                finally:
-                    self._run_finished.set()
-
-        self._task_run = asyncio.create_task(_run())
+        self._task_run = asyncio.create_task(self._run(started=started))
         await started.wait()
+
+    async def _run(self, started: asyncio.Event) -> None:
+        try:
+            async with self._hook.awith.run(context=self._context):
+                started.set()
+        except BaseException:
+            self._logger.exception('')
+            raise
+        finally:
+            started.set()  # Ensure to unblock the await
+            await self._finish()
+
+    async def _finish(self) -> None:
+        self._context.run_arg = None
+        try:
+            await self._machine.finish()
+        except BaseException:
+            self._logger.exception('')
+            raise
+        finally:
+            self._run_finished.set()
+
+    async def finish(self) -> None:
+        # The state is already `finished`. The `on_change_state()` method will
+        # be called after this method completes.
+        await self._hook.ahook.on_finished(context=self._context)
 
     async def wait_for_run_finish(self) -> None:
         await self._run_finished.wait()
 
-    async def finish(self) -> None:
-        await self._hook.ahook.on_finished(context=self._context)
-
     async def on_exit_finished(self) -> None:
+        # This task is awaited here rather than in `finish()` because
+        # the task ends after `finish()` completes.
         await self._task_run
 
     async def close(self) -> None:
