@@ -10,7 +10,7 @@ from transitions.extensions import AsyncGraphMachine
 from transitions.extensions.asyncio import AsyncMachine
 from transitions.extensions.markup import MarkupMachine
 
-from nextline.fsm.factory import CONFIG
+from nextline.fsm.config import CONFIG
 
 SELF_LITERAL = Machine.self_literal
 
@@ -79,7 +79,6 @@ TRIGGERS = list({trigger for v in STATE_MAP.values() for trigger in v.keys()})
 @settings(max_examples=200)
 @given(triggers=st.lists(st.sampled_from(TRIGGERS)))
 async def test_transitions(triggers: list[str]) -> None:
-    # machine = build_state_machine(model=Machine.self_literal)
     machine = AsyncMachine(model=SELF_LITERAL, **CONFIG)  # type: ignore
     assert machine.is_created()
 

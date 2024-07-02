@@ -10,7 +10,7 @@ from nextline.plugin import Context
 from nextline.spawned import Command
 from nextline.types import ResetOptions
 
-from .factory import CONFIG
+from .config import CONFIG
 
 TriggerNoArg: TypeAlias = Callable[[], Coroutine[None, None, bool]]
 

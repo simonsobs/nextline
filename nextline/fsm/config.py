@@ -114,13 +114,7 @@ enter the closed state
 
 CONFIG = {
     'name': 'nextline',
-    'states': [
-        'created',
-        'initialized',
-        'running',
-        'finished',
-        'closed',
-    ],
+    'states': ['created', 'initialized', 'running', 'finished', 'closed'],
     'transitions': [
         ['initialize', 'created', 'initialized'],
         ['run', 'initialized', 'running'],
