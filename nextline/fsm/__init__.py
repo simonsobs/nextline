@@ -1,3 +1,3 @@
-__all__ = ['Imp']
+__all__ = ['Callback', 'StateMachine']
 
-from .imp import Imp
+from .state import Callback, StateMachine

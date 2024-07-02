@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, Optional
 
 from .continuous import Continuous
-from .fsm import Imp
+from .imp import Imp
 from .plugin import Context, build_hook, log_loaded_plugins
 from .spawned import PdbCommand
 from .types import (

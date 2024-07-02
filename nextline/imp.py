@@ -4,7 +4,7 @@ from nextline.plugin import Context
 from nextline.spawned import Command
 from nextline.types import ResetOptions
 
-from .state import Callback, StateMachine
+from .fsm import Callback, StateMachine
 
 
 class Imp:

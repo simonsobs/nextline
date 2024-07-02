@@ -12,7 +12,7 @@ from nextline.types import ResetOptions
 from .config import CONFIG
 
 if TYPE_CHECKING:
-    from .imp import Imp
+    from nextline.imp import Imp
 
 TriggerNoArg: TypeAlias = Callable[[], Coroutine[None, None, bool]]
 
