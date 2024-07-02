@@ -40,9 +40,7 @@ async def start(context: Context) -> None:
 
 
 @hookspec
-async def close(
-    context: Context, exc_type=None, exc_value=None, traceback=None
-) -> None:
+async def close(context: Context) -> None:
     pass
 
 
