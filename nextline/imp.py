@@ -56,9 +56,15 @@ class Imp:
     def result(self) -> Any:
         return self._hook.hook.result(context=self._context)
 
+    async def aopen(self) -> None:
+        await self._machine.aopen()
+
+    async def aclose(self) -> None:
+        await self._machine.aclose()
+
     async def __aenter__(self) -> 'Imp':
-        await self._machine.__aenter__()
+        await self.aopen()
         return self
 
-    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-        await self._machine.__aexit__(*args, **kwargs)
+    async def __aexit__(self, *_: Any, **__: Any) -> None:
+        await self.aclose()

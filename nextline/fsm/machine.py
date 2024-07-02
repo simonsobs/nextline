@@ -82,9 +82,15 @@ class StateMachine:
         assert not event.kwargs
         await self._callback.reset(reset_options=reset_options)
 
-    async def __aenter__(self) -> 'StateMachine':
+    async def aopen(self) -> None:
         await self.initialize()
+
+    async def aclose(self) -> None:
+        await self.close()
+
+    async def __aenter__(self) -> 'StateMachine':
+        await self.aopen()
         return self
 
     async def __aexit__(self, *_: Any, **__: Any) -> None:
-        await self.close()
+        await self.aclose()
