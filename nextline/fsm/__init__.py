@@ -1,3 +1,3 @@
-__all__ = ['Machine']
+__all__ = ['Imp']
 
-from .state import Machine
+from .state import Imp

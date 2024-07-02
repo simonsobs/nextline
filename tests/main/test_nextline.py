@@ -66,7 +66,7 @@ async def machine(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     instance = AsyncMock()
     instance.exception = Mock()
     class_ = Mock(return_value=instance)
-    monkeypatch.setattr(main, 'Machine', class_)
+    monkeypatch.setattr(main, 'Imp', class_)
     return instance
 
 

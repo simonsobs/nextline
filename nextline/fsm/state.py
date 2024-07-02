@@ -21,7 +21,7 @@ class Reset(Protocol):
 
 
 class Callback:
-    def __init__(self, context: Context, machine: 'Machine') -> None:
+    def __init__(self, context: Context, machine: 'Imp') -> None:
         self._context = context
         self._hook = context.hook
         self._machine = machine
@@ -152,8 +152,8 @@ class Model:
         await self.close()
 
 
-class Machine:
-    '''The interface to the finite state machine.'''
+class Imp:
+    '''The interface to the finite state machine and the plugin hook.'''
 
     def __init__(self, context: Context) -> None:
         self._context = context
@@ -204,7 +204,7 @@ class Machine:
     def result(self) -> Any:
         return self._hook.hook.result(context=self._context)
 
-    async def __aenter__(self) -> 'Machine':
+    async def __aenter__(self) -> 'Imp':
         await self._model.__aenter__()
         return self
 
