@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -37,10 +38,12 @@ def test_restore_from_markup():
     assert rebuild.markup == machine.markup
 
 
-@pytest.mark.skip
-def test_graph():
+def test_graph(tmp_path: Path):
+    FILE_NAME = 'states.png'
+    path = tmp_path / FILE_NAME
+    # print(f'Saving the state diagram to {path}...')
     machine = build_state_machine(model=Machine.self_literal, graph=True)
-    machine.get_graph().draw('states.png', prog='dot')
+    machine.get_graph().draw(path, prog='dot')
 
 
 STATE_MAP = {
