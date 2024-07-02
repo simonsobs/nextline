@@ -33,6 +33,7 @@ class StateMachine:
 
     def __init__(self, callback: Callback) -> None:
         self._callback = callback
+        self._callback._machine = self
         machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
         machine.after_state_change = self.after_state_change.__name__  # type: ignore
 

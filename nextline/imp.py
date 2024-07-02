@@ -13,7 +13,7 @@ class Imp:
     def __init__(self, context: Context) -> None:
         self._context = context
         self._hook = context.hook
-        self._callback = Callback(context=context, machine=self)
+        self._callback = Callback(context=context)
         self._machine = StateMachine(callback=self._callback)
 
     def __repr__(self) -> str:
@@ -29,8 +29,8 @@ class Imp:
     async def run(self) -> bool:
         return await self._machine.run()
 
-    async def finish(self) -> bool:
-        return await self._machine.finish()
+    async def wait(self) -> None:
+        await self._callback.wait_for_run_finish()
 
     async def reset(self, reset_options: ResetOptions) -> bool:
         return await self._machine.reset(reset_options=reset_options)
@@ -49,9 +49,6 @@ class Imp:
 
     async def kill(self) -> None:
         await self._hook.ahook.kill(context=self._context)
-
-    async def wait(self) -> None:
-        await self._callback.wait_for_run_finish()
 
     def format_exception(self) -> Optional[str]:
         return self._hook.hook.format_exception(context=self._context)

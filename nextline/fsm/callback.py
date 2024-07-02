@@ -6,14 +6,14 @@ from nextline.plugin import Context
 from nextline.types import ResetOptions
 
 if TYPE_CHECKING:
-    from nextline.imp import Imp
+    from .machine import StateMachine
 
 
 class Callback:
-    def __init__(self, context: Context, machine: 'Imp') -> None:
+    def __init__(self, context: Context) -> None:
         self._context = context
         self._hook = context.hook
-        self._machine = machine
+        self._machine: 'StateMachine'  # To be set by StateMachine
         self._logger = getLogger(__name__)
 
     async def on_change_state(self, state_name: str) -> None:
