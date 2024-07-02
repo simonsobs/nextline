@@ -48,18 +48,18 @@ async def test_one() -> None:
                 )
 
 
-async def test_timeout(machine: Mock):
+async def test_timeout(imp: Mock):
     async def close():
         await asyncio.sleep(5)
 
-    machine.aclose.side_effect = close
+    imp.aclose.side_effect = close
     with pytest.raises(asyncio.TimeoutError):
         async with Nextline(SOURCE, timeout_on_exit=0.01):
             pass
 
 
 @pytest.fixture
-async def machine(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+async def imp(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     from nextline import main
 
     # instance = AsyncMock(spec=Model)
