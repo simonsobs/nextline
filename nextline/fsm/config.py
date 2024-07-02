@@ -1,4 +1,4 @@
-'''A function that builds a finite state machine of the nextline states.
+'''The configuration of the finite state machine of the nextline states.
 
 The package "transitions" is used: https://github.com/pytransitions/transitions
 
@@ -59,8 +59,10 @@ Define a model class with callbacks:
 
 Create a state machine with a model:
 
+>>> from transitions import Machine
+
 >>> model = Model()
->>> machine = build_state_machine(model=model, asyncio=False)
+>>> machine = Machine(model, **CONFIG)
 
 The model is in the "created" state.
 
@@ -109,21 +111,10 @@ enter the closed state
 
 '''
 
-from typing import Type
-
-from transitions import Machine
-from transitions.extensions import MachineFactory
-from transitions.extensions.markup import MarkupMachine
 
 CONFIG = {
     'name': 'nextline',
-    'states': [
-        'created',
-        'initialized',
-        'running',
-        'finished',
-        'closed',
-    ],
+    'states': ['created', 'initialized', 'running', 'finished', 'closed'],
     'transitions': [
         ['initialize', 'created', 'initialized'],
         ['run', 'initialized', 'running'],
@@ -147,14 +138,3 @@ CONFIG = {
     'send_event': True,
     # 'ignore_invalid_triggers': True,
 }
-
-
-def build_state_machine(model=None, graph=False, asyncio=True, markup=False) -> Machine:  # type: ignore
-    MachineClass: Type[Machine]
-    if markup:
-        MachineClass = MarkupMachine
-    else:
-        MachineClass = MachineFactory.get_predefined(graph=graph, asyncio=asyncio)
-
-    machine = MachineClass(model=model, **CONFIG)  # type: ignore
-    return machine

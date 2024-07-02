@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, Optional
 
 from .continuous import Continuous
-from .fsm import Machine
+from .imp import Imp
 from .plugin import Context, build_hook, log_loaded_plugins
 from .spawned import PdbCommand
 from .types import (
@@ -89,16 +89,16 @@ class Nextline:
         log_loaded_plugins(hook=self._hook)
         context = Context(nextline=self, hook=self._hook, pubsub=self._pubsub)
         self._hook.hook.init(context=context, init_options=self._init_options)
-        self._machine = Machine(context=context)
+        self._imp = Imp(context=context)
         await self._continuous.start()
-        await self._machine.initialize()
+        await self._imp.initialize()
 
     async def close(self) -> None:
         if self._closed:
             return
         self._closed = True
         await self._pubsub.close()
-        await self._machine.close()
+        await self._imp.close()
         await self._continuous.close()
 
     async def __aenter__(self) -> 'Nextline':
@@ -111,16 +111,16 @@ class Nextline:
 
     async def run(self) -> None:
         '''Start the script execution.'''
-        await self._machine.run()
+        await self._imp.run()
 
     @asynccontextmanager
     async def run_session(self) -> AsyncIterator['Nextline']:
         '''Yield when the script execution is started and exit when it has finished.'''
-        await self._machine.run()
+        await self._imp.run()
         try:
             yield self
         finally:
-            await self._machine.wait()
+            await self._imp.wait()
 
     async def run_and_continue(self) -> None:
         '''Start the script execution in the non-interactive mode.
@@ -150,24 +150,24 @@ class Nextline:
             prompt_no=PromptNo(prompt_no),
             command=command,
         )
-        await self._machine.send_command(item)
+        await self._imp.send_command(item)
 
     async def interrupt(self) -> None:
-        await self._machine.interrupt()
+        await self._imp.interrupt()
 
     async def terminate(self) -> None:
-        await self._machine.terminate()
+        await self._imp.terminate()
 
     async def kill(self) -> None:
-        await self._machine.kill()
+        await self._imp.kill()
 
     def format_exception(self) -> Optional[str]:
         '''Formatted uncaught exception from the last run'''
-        return self._machine.format_exception()
+        return self._imp.format_exception()
 
     def result(self) -> Any:
         '''Return value of the last run. None unless the statement is a callable.'''
-        return self._machine.result()
+        return self._imp.result()
 
     async def reset(
         self,
@@ -185,7 +185,7 @@ class Nextline:
         )
         logger = getLogger(__name__)
         logger.debug(f'reset_options: {reset_options}')
-        await self._machine.reset(reset_options=reset_options)
+        await self._imp.reset(reset_options=reset_options)
 
     @property
     def statement(self) -> str:
@@ -200,7 +200,7 @@ class Nextline:
         "closed"
         """
         try:
-            return self._machine.state
+            return self._imp.state
         except AttributeError:
             return None
 
