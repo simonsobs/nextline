@@ -33,8 +33,8 @@ class StateMachine:
 
     def __init__(self, callback: Callback) -> None:
         self._callback = callback
-        self._machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
-        self._machine.after_state_change = self.after_state_change.__name__  # type: ignore
+        machine = AsyncMachine(model=self, **CONFIG)  # type: ignore
+        machine.after_state_change = self.after_state_change.__name__  # type: ignore
 
         assert self.state
         assert callable(self.initialize)
@@ -63,9 +63,6 @@ class StateMachine:
         await self._callback.start_run()
 
     async def on_close_while_running(self, _: EventData) -> None:
-        await self._callback.wait_for_run_finish()
-
-    async def wait(self) -> None:
         await self._callback.wait_for_run_finish()
 
     async def on_enter_finished(self, _: EventData) -> None:

@@ -51,7 +51,7 @@ class Imp:
         await self._hook.ahook.kill(context=self._context)
 
     async def wait(self) -> None:
-        await self._machine.wait()
+        await self._callback.wait_for_run_finish()
 
     def format_exception(self) -> Optional[str]:
         return self._hook.hook.format_exception(context=self._context)
