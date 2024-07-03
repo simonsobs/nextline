@@ -173,7 +173,7 @@ class Nextline:
         trace_threads: Optional[bool] = None,
         trace_modules: Optional[bool] = None,
     ) -> None:
-        """Prepare for the next run"""
+        '''Prepare for the next run'''
         reset_options = ResetOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
@@ -186,72 +186,72 @@ class Nextline:
 
     @property
     def statement(self) -> str:
-        """The script"""
-        return self.get("statement")
+        '''The script'''
+        return self.get('statement')
 
     @property
     def state(self) -> Optional[str]:
-        """The current condition of the script execution.
+        '''The current condition of the script execution.
 
-        The possible values are "initialized", "running", "finished",
-        "closed"
-        """
+        The possible values are 'initialized', 'running', 'finished',
+        'closed'
+        '''
         try:
             return self._imp.state
         except AttributeError:
             return None
 
     def subscribe_state(self) -> AsyncIterator[str]:
-        return self.subscribe("state_name")
+        return self.subscribe('state_name')
 
     @property
     def run_no(self) -> int:
-        """The current run number"""
-        return self.get("run_no")
+        '''The current run number'''
+        return self.get('run_no')
 
     def subscribe_run_no(self) -> AsyncIterator[int]:
-        return self.subscribe("run_no")
+        return self.subscribe('run_no')
 
     @property
     def trace_ids(self) -> tuple[int, ...]:
         try:
-            return self.get("trace_nos")
+            return self.get('trace_nos')
         except (KeyError, LookupError):
             return ()
 
     def subscribe_trace_ids(self) -> AsyncIterator[tuple[int, ...]]:
-        return self.subscribe("trace_nos")
+        return self.subscribe('trace_nos')
 
     def get_source(self, file_name: Optional[str] = None) -> list[str]:
-        if not file_name or file_name == self._imp.pubsub.latest("script_file_name"):
-            return self.get("statement").split("\n")
+        if not file_name or file_name == self._imp.pubsub.latest('script_file_name'):
+            return self.get('statement').split('\n')
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
     def get_source_line(self, line_no: int, file_name: Optional[str] = None) -> str:
-        """
+        '''
         based on linecache.getline()
         https://github.com/python/cpython/blob/v3.9.5/Lib/linecache.py#L26
-        """
+        '''
         lines = self.get_source(file_name)
         if 1 <= line_no <= len(lines):
             return lines[line_no - 1]
-        return ""
+        return ''
 
     def subscribe_run_info(self) -> AsyncIterator[RunInfo]:
-        return self.subscribe("run_info")
+        return self.subscribe('run_info')
 
     def subscribe_trace_info(self) -> AsyncIterator[TraceInfo]:
-        return self.subscribe("trace_info")
+        return self.subscribe('trace_info')
 
     def prompts(self) -> AsyncIterator[PromptNotice]:
         '''Yield for each prompt. Return when the run ends.'''
         return self.subscribe('prompt_notice')
 
     def subscribe_prompt_info(self) -> AsyncIterator[PromptInfo]:
-        return self.subscribe("prompt_info")
+        return self.subscribe('prompt_info')
 
     def subscribe_prompt_info_for(self, trace_no: int) -> AsyncIterator[PromptInfo]:
-        return self.subscribe(f"prompt_info_{trace_no}")
+        return self.subscribe(f'prompt_info_{trace_no}')
 
         # Alternative implementation under development
         # return self._subscribe_prompt_info_for(trace_no)
@@ -268,7 +268,7 @@ class Nextline:
                 continue
             if isinstance(info, TraceInfo):
                 if info.trace_no == trace_no:
-                    if info.state == "finished":
+                    if info.state == 'finished':
                         break
                 continue
             assert isinstance(info, PromptInfo)
@@ -281,7 +281,7 @@ class Nextline:
         return self._imp.pubsub.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
-        return self.subscribe("stdout", last=False)
+        return self.subscribe('stdout', last=False)
 
     @property
     def continuous_enabled(self) -> bool:
