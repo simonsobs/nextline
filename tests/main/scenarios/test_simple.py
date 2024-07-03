@@ -1,50 +1,46 @@
-import asyncio
+from nextline import Nextline, events
+from nextline.plugin.spec import Context, hookimpl
 
-import pytest
-
-from nextline import Nextline
-
-STATEMENT = """
+STATEMENT = '''
 import time
 
 time.sleep(0.01)
-""".lstrip()
+'''.lstrip()
 
 
-async def test_run(nextline: Nextline):
-    assert nextline.state == "initialized"
+async def test_run() -> None:
+    nextline = Nextline(STATEMENT)
+    nextline.register(plugin=Plugin())
+    async with nextline:
+        await run(nextline=nextline)
 
-    await asyncio.gather(
-        control(nextline),
-        run(nextline),
-    )
-    assert nextline.state == "closed"
+
+class Plugin:
+    def __init__(self) -> None:
+        self._events = list[events.Event]()
+
+    @hookimpl
+    async def on_start_prompt(
+        self, context: Context, event: events.OnStartPrompt
+    ) -> None:
+        nextline = context.nextline
+        await nextline.send_pdb_command(
+            command='next', prompt_no=event.prompt_no, trace_no=event.trace_no
+        )
+
+    @hookimpl
+    async def on_end_run(self, event: events.OnEndRun) -> None:
+        assert not event.raised
+
+    @hookimpl
+    async def on_finished(self, context: Context) -> None:
+        assert (exited_process := context.exited_process) is not None
+        assert exited_process.process.exitcode == 0
 
 
 async def run(nextline: Nextline):
-    await asyncio.sleep(0.01)
     async with nextline.run_session():
         pass
     assert not nextline.format_exception()
-    nextline.result()
-    await nextline.close()
-
-
-async def control(nextline: Nextline):
-    async for prompt_info in nextline.subscribe_prompt_info():
-        if not prompt_info.open:
-            continue
-        await nextline.send_pdb_command(
-            "next", prompt_info.prompt_no, prompt_info.trace_no
-        )
-
-
-@pytest.fixture
-async def nextline(statement):
-    async with Nextline(statement) as y:
-        yield y
-
-
-@pytest.fixture
-def statement():
-    return STATEMENT
+    ret = nextline.result()
+    assert ret is None

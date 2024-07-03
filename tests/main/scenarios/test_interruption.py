@@ -1,15 +1,7 @@
 import asyncio
-import dataclasses
-import datetime
-from collections import deque
-from functools import partial
 
-import pytest
-
-from nextline import Nextline
-from nextline.types import RunInfo, RunNo
-
-from .funcs import replace_with_bool
+from nextline import Nextline, events
+from nextline.plugin.spec import Context, hookimpl
 
 STATEMENT = '''
 import time
@@ -18,89 +10,46 @@ time.sleep(100)
 '''.lstrip()
 
 
-async def test_run(nextline: Nextline, statement: str):
-    assert nextline.state == 'initialized'
-
-    await asyncio.gather(
-        assert_subscriptions(nextline, statement),
-        control(nextline),
-        run(nextline),
-    )
-    assert nextline.state == 'closed'
+async def test_run() -> None:
+    nextline = Nextline(STATEMENT)
+    nextline.register(plugin=Plugin())
+    async with nextline:
+        await run(nextline=nextline)
 
 
-async def assert_subscriptions(nextline: Nextline, statement: str):
-    await asyncio.gather(
-        assert_subscribe_run_info(nextline, statement),
-    )
+class Plugin:
+    def __init__(self) -> None:
+        self._events = list[events.Event]()
 
+    @hookimpl
+    async def on_start_prompt(
+        self, context: Context, event: events.OnStartPrompt
+    ) -> None:
+        nextline = context.nextline
+        await nextline.send_pdb_command(
+            command='next', prompt_no=event.prompt_no, trace_no=event.trace_no
+        )
+        if event.event == 'line' and event.line_no == 3:  # sleep()
+            line = nextline.get_source_line(event.line_no, event.file_name)
+            assert 'time.sleep(100)' in line
+            await asyncio.sleep(0.005)
+            await nextline.interrupt()
 
-async def assert_subscribe_run_info(nextline: Nextline, statement: str):
-    replace: partial[RunInfo] = partial(
-        replace_with_bool, fields=('exception', 'started_at', 'ended_at')
-    )
+    @hookimpl
+    async def on_end_run(self, event: events.OnEndRun) -> None:
+        assert 'KeyboardInterrupt' in event.raised
 
-    expected_list = deque(
-        [
-            info := RunInfo(
-                run_no=RunNo(1),
-                state='initialized',
-                script=statement,
-                result=None,
-                exception=None,
-            ),
-            info := dataclasses.replace(
-                info,
-                state='running',
-                started_at=datetime.datetime.utcnow(),
-            ),
-            dataclasses.replace(
-                info,
-                state='finished',
-                result='null',
-                exception='KeyboardInterrupt',
-                ended_at=datetime.datetime.utcnow(),
-            ),
-        ]
-    )
-
-    async for info in nextline.subscribe_run_info():
-        expected = expected_list.popleft()
-        if expected.exception:
-            assert info.exception
-            assert expected.exception in info.exception
-        assert replace(expected) == replace(info)
-    assert not expected_list
+    @hookimpl
+    async def on_finished(self, context: Context) -> None:
+        assert (exited_process := context.exited_process) is not None
+        assert (returned := exited_process.returned) is not None
+        assert (fmt_exc := returned.fmt_exc) is not None
+        assert 'KeyboardInterrupt' in fmt_exc
 
 
 async def run(nextline: Nextline):
-    await asyncio.sleep(0.01)
     async with nextline.run_session():
         pass
     fmt_exc = nextline.format_exception()
     assert fmt_exc is not None
     assert 'KeyboardInterrupt' in fmt_exc
-    await nextline.close()
-
-
-async def control(nextline: Nextline):
-    async for prompt_info in nextline.subscribe_prompt_info():
-        if not prompt_info.open:
-            continue
-        await nextline.send_pdb_command(
-            'next', prompt_info.prompt_no, prompt_info.trace_no
-        )
-        if prompt_info.event == 'line' and prompt_info.line_no == 3:  # sleep()
-            await asyncio.sleep(0.005)
-            await nextline.interrupt()
-
-
-@pytest.fixture
-async def nextline(statement):
-    async with Nextline(statement) as y:
-        yield y
-
-
-@pytest.fixture
-def statement():
-    return STATEMENT
