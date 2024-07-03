@@ -15,7 +15,7 @@ from nextline import Nextline
 from nextline.types import RunInfo, RunNo
 from nextline.utils import agen_with_wait
 
-from .funcs import replace_with_bool
+from .funcs import extract_comment, replace_with_bool
 
 
 async def test_run(nextline: Nextline, statement: str):
@@ -269,28 +269,6 @@ def find_command(line: str) -> Optional[str]:
     match = regex.search(comment)
     if match:
         return match.group(1)
-    return None
-
-
-def extract_comment(line: str) -> Optional[str]:
-    '''Return the comment in a line of Python code if any else None
-    
-    >>> extract_comment('func()  # step')
-    '# step'
-
-    >>> extract_comment('func()') is None
-    True
-    '''
-    import io
-    import tokenize
-
-    comments = [
-        val
-        for type, val, *_ in tokenize.generate_tokens(io.StringIO(line).readline)
-        if type == tokenize.COMMENT
-    ]
-    if comments:
-        return comments[0]
     return None
 
 

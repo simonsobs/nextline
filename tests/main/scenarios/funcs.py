@@ -1,6 +1,6 @@
 import dataclasses
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Optional, TypeVar
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
@@ -15,7 +15,6 @@ def replace_with_bool(obj: '_T', fields: Iterable[str]) -> '_T':
 
 
     >>> import datetime
-    >>> from typing import Optional
 
     >>> @dataclasses.dataclass
     ... class Foo:
@@ -29,3 +28,25 @@ def replace_with_bool(obj: '_T', fields: Iterable[str]) -> '_T':
     '''
     changes = {f: not not getattr(obj, f) for f in fields}
     return dataclasses.replace(obj, **changes)  # type: ignore
+
+
+def extract_comment(line: str) -> Optional[str]:
+    '''Return the comment in a line of Python code if any else None
+
+    >>> extract_comment('func()  # step')
+    '# step'
+
+    >>> extract_comment('func()') is None
+    True
+    '''
+    import io
+    import tokenize
+
+    comments = [
+        val
+        for type, val, *_ in tokenize.generate_tokens(io.StringIO(line).readline)
+        if type == tokenize.COMMENT
+    ]
+    if comments:
+        return comments[0]
+    return None
