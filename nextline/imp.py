@@ -30,12 +30,25 @@ class Imp:
         return f'<{self.__class__.__name__} {self._machine!r}>'
 
     def register(self, plugin: Plugin) -> str | None:
-        return self._hook.register(plugin)
+        if (name := self._hook.register(plugin)) is not None:
+            msg = f'Plugin {name!r} registered to {self._hook.project_name!r} project'
+            self._logger.info(msg)
+        else:
+            msg = f'Plugin {plugin!r} failed to register to {self._hook.project_name!r} project'
+            self._logger.error(msg)
+        return name
 
     def unregister(
         self, plugin: Plugin | None = None, name: str | None = None
     ) -> Any | None:
-        return self._hook.unregister(plugin=plugin, name=name)
+        if (p := self._hook.unregister(plugin=plugin, name=name)) is not None:
+            msg = f'Plugin {p!r} unregistered from {self._hook.project_name!r} project'
+            self._logger.info(msg)
+        else:
+            f = plugin if plugin is not None else name
+            msg = f'Plugin {f!r} failed to unregister from {self._hook.project_name!r} project'
+            self._logger.error(msg)
+        return p
 
     @property
     def state(self) -> str:
