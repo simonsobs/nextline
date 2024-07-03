@@ -32,19 +32,19 @@ class Nextline:
 
     Parameters
     ----------
-    statement : str or Path or CodeType or Callable[[], Any]
+    statement
         A Python code as a str, a Path object that points to a Python script,
         a CodeType object, or a callable with no arguments. It must be
         picklable.
-    run_no_start_from : int, optional
+    run_no_start_from
         The first run number. The default is 1.
-    trace_threads : bool, optional
+    trace_threads
         The default is False. If False, trace only the main thread. If True,
         trace all threads.
-    trace_modules : bool, optional
+    trace_modules
         The default is False. If False, trace only the statement. If True,
         trace imported modules as well.
-    timeout_on_exit : float, optional
+    timeout_on_exit
         The timeout in seconds to wait for the nextline to exit from the "with"
         block. The default is 3.
 
