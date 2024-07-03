@@ -259,7 +259,8 @@ async def control_trace(nextline: Nextline, trace_no):
 def find_command(line: str) -> Optional[str]:
     '''The Pdb command indicated in a comment
 
-    For example, returns 'step' for the line 'func()  # step'
+    >>> find_command('func()  # step')
+    'step'
     '''
     import re
 
