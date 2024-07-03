@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, Optional
 
 from .continuous import Continuous
-from .imp import Imp
+from .imp import Imp, Plugin
 from .spawned import PdbCommand
 from .types import (
     InitOptions,
@@ -76,8 +76,13 @@ class Nextline:
         # e.g., "<Nextline 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
-    def register(self, plugin: Any) -> str | None:
+    def register(self, plugin: Plugin) -> str | None:
         return self._imp.register(plugin)
+
+    def unregister(
+        self, plugin: Plugin | None = None, name: str | None = None
+    ) -> Any | None:
+        return self._imp.unregister(plugin=plugin, name=name)
 
     async def start(self) -> None:
         if self._started:

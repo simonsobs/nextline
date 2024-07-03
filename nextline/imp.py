@@ -11,6 +11,8 @@ from .fsm import Callback, StateMachine
 if TYPE_CHECKING:
     from .main import Nextline
 
+Plugin = object
+
 
 class Imp:
     '''The interface to the finite state machine and the plugin hook.'''
@@ -27,8 +29,26 @@ class Imp:
     def __repr__(self) -> str:
         return f'<{self.__class__.__name__} {self._machine!r}>'
 
-    def register(self, plugin: Any) -> str | None:
-        return self._hook.register(plugin)
+    def register(self, plugin: Plugin) -> str | None:
+        if (name := self._hook.register(plugin)) is not None:
+            msg = f'Plugin {name!r} registered to {self._hook.project_name!r} project'
+            self._logger.info(msg)
+        else:
+            msg = f'Plugin {plugin!r} failed to register to {self._hook.project_name!r} project'
+            self._logger.error(msg)
+        return name
+
+    def unregister(
+        self, plugin: Plugin | None = None, name: str | None = None
+    ) -> Any | None:
+        if (p := self._hook.unregister(plugin=plugin, name=name)) is not None:
+            msg = f'Plugin {p!r} unregistered from {self._hook.project_name!r} project'
+            self._logger.info(msg)
+        else:
+            f = plugin if plugin is not None else name
+            msg = f'Plugin {f!r} failed to unregister from {self._hook.project_name!r} project'
+            self._logger.error(msg)
+        return p
 
     @property
     def state(self) -> str:
