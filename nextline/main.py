@@ -7,7 +7,6 @@ from typing import Any, Optional
 
 from .continuous import Continuous
 from .imp import Imp
-from .plugin import Context, build_hook, log_loaded_plugins
 from .spawned import PdbCommand
 from .types import (
     InitOptions,
@@ -22,7 +21,6 @@ from .types import (
     TraceNo,
 )
 from .utils import merge_aiters
-from .utils.pubsub.broker import PubSub
 
 
 class Nextline:
@@ -34,19 +32,19 @@ class Nextline:
 
     Parameters
     ----------
-    statement : str or Path or CodeType or Callable[[], Any]
+    statement
         A Python code as a str, a Path object that points to a Python script,
         a CodeType object, or a callable with no arguments. It must be
         picklable.
-    run_no_start_from : int, optional
+    run_no_start_from
         The first run number. The default is 1.
-    trace_threads : bool, optional
+    trace_threads
         The default is False. If False, trace only the main thread. If True,
         trace all threads.
-    trace_modules : bool, optional
+    trace_modules
         The default is False. If False, trace only the statement. If True,
         trace imported modules as well.
-    timeout_on_exit : float, optional
+    timeout_on_exit
         The timeout in seconds to wait for the nextline to exit from the "with"
         block. The default is 3.
 
@@ -60,6 +58,7 @@ class Nextline:
         trace_modules: bool = False,
         timeout_on_exit: float = 3,
     ):
+        # TODO: _init_options is accessed by nextline-rdb
         self._init_options = InitOptions(
             statement=statement,
             run_no_start_from=run_no_start_from,
@@ -67,38 +66,31 @@ class Nextline:
             trace_modules=trace_modules,
         )
         self._continuous = Continuous(self)
-        self._pubsub = PubSub[Any, Any]()
         self._timeout_on_exit = timeout_on_exit
         self._started = False
         self._closed = False
-        self._hook = build_hook()
+
+        self._imp = Imp(nextline=self, init_options=self._init_options)
 
     def __repr__(self) -> str:
         # e.g., "<Nextline 'running'>"
         return f'<{self.__class__.__name__} {self.state!r}>'
 
     def register(self, plugin: Any) -> str | None:
-        return self._hook.register(plugin)
+        return self._imp.register(plugin)
 
     async def start(self) -> None:
         if self._started:
             return
         self._started = True
-        logger = getLogger(__name__)
-        logger.debug(f'self._init_options: {self._init_options}')
-        log_loaded_plugins(hook=self._hook)
-        context = Context(nextline=self, hook=self._hook, pubsub=self._pubsub)
-        self._hook.hook.init(context=context, init_options=self._init_options)
-        self._imp = Imp(context=context)
         await self._continuous.start()
-        await self._imp.initialize()
+        await self._imp.aopen()
 
     async def close(self) -> None:
         if self._closed:
             return
         self._closed = True
-        await self._pubsub.close()
-        await self._imp.close()
+        await self._imp.aclose()
         await self._continuous.close()
 
     async def __aenter__(self) -> 'Nextline':
@@ -226,7 +218,7 @@ class Nextline:
         return self.subscribe("trace_nos")
 
     def get_source(self, file_name: Optional[str] = None) -> list[str]:
-        if not file_name or file_name == self._pubsub.latest("script_file_name"):
+        if not file_name or file_name == self._imp.pubsub.latest("script_file_name"):
             return self.get("statement").split("\n")
         return [e.rstrip() for e in linecache.getlines(file_name)]
 
@@ -278,10 +270,10 @@ class Nextline:
             yield info
 
     def get(self, key: Any) -> Any:
-        return self._pubsub.latest(key)
+        return self._imp.pubsub.latest(key)
 
     def subscribe(self, key: Any, last: bool = True) -> AsyncIterator[Any]:
-        return self._pubsub.subscribe(key, last=last)
+        return self._imp.pubsub.subscribe(key, last=last)
 
     def subscribe_stdout(self) -> AsyncIterator[StdoutInfo]:
         return self.subscribe("stdout", last=False)

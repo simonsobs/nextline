@@ -20,8 +20,8 @@ reset() |    '-------------'   |
         |    |   Running   |---.
         |    '-------------'   |
         |          | finish()  |
-        |          |           |
-        |          V           |
+        |          |           |-----------------.
+        |          V           |                 |
         |    .-------------.   |  close()  .-------------.
         '----|  Finished   |-------------->|   Closed    |
              '-------------'               '-------------'
@@ -119,7 +119,7 @@ CONFIG = {
         ['initialize', 'created', 'initialized'],
         ['run', 'initialized', 'running'],
         ['finish', 'running', 'finished'],
-        ['close', ['created', 'initialized', 'finished'], 'closed'],
+        ['close', ['created', 'initialized', 'finished', 'closed'], 'closed'],
         {
             'trigger': 'close',
             'source': ['running'],
