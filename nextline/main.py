@@ -20,7 +20,6 @@ from .types import (
     TraceInfo,
     TraceNo,
 )
-from .utils import merge_aiters
 
 
 class Nextline:
@@ -252,27 +251,6 @@ class Nextline:
 
     def subscribe_prompt_info_for(self, trace_no: int) -> AsyncIterator[PromptInfo]:
         return self.subscribe(f'prompt_info_{trace_no}')
-
-        # Alternative implementation under development
-        # return self._subscribe_prompt_info_for(trace_no)
-
-    async def _subscribe_prompt_info_for(
-        self, trace_no: int
-    ) -> AsyncIterator[PromptInfo]:
-        merged = merge_aiters(
-            self.subscribe_prompt_info(),
-            self.subscribe_trace_info(),
-        )
-        async for _, info in merged:
-            if not info.trace_no == trace_no:  # type: ignore
-                continue
-            if isinstance(info, TraceInfo):
-                if info.trace_no == trace_no:
-                    if info.state == 'finished':
-                        break
-                continue
-            assert isinstance(info, PromptInfo)
-            yield info
 
     def get(self, key: Any) -> Any:
         return self._imp.pubsub.latest(key)
