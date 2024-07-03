@@ -273,6 +273,14 @@ def find_command(line: str) -> Optional[str]:
 
 
 def extract_comment(line: str) -> Optional[str]:
+    '''Return the comment in a line of Python code if any else None
+    
+    >>> extract_comment('func()  # step')
+    '# step'
+
+    >>> extract_comment('func()') is None
+    True
+    '''
     import io
     import tokenize
 
