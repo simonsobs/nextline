@@ -1,211 +1,29 @@
-import asyncio
-import dataclasses
-import datetime
-from collections import Counter, deque
-from collections.abc import Sequence
-from functools import partial
-from itertools import groupby
-from operator import attrgetter
+from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import pytest
 
-from nextline import Nextline
-from nextline.types import RunInfo, RunNo
-from nextline.utils import agen_with_wait
+from nextline import Nextline, events
+from nextline.plugin.spec import Context, hookimpl
 
-from .funcs import replace_with_bool
+from .funcs import extract_comment
 
 
-async def test_run(nextline: Nextline, statement: str):
-    assert nextline.state == 'initialized'
-
-    await asyncio.gather(
-        assert_subscriptions(nextline, statement),
-        control_execution(nextline),
-        run(nextline),
-    )
+async def test_run(statement: str):
+    nextline = Nextline(statement, trace_threads=True, trace_modules=True)
+    assert nextline.state == 'created'
+    plugin = Plugin()
+    nextline.register(plugin=plugin)
+    async with nextline:
+        assert nextline.state == 'initialized'
+        await run(nextline)
 
     assert nextline.state == 'closed'
+    plugin.assert_events()
 
 
-async def assert_subscriptions(nextline: Nextline, statement: str):
-    await asyncio.gather(
-        assert_subscribe_state(nextline),
-        assert_subscribe_run_no(nextline),
-        assert_subscribe_run_info(nextline, statement),
-        assert_subscribe_trace_info(nextline),
-        assert_subscribe_prompt_info(nextline),
-        # assert_subscribe_stdout(nextline),
-    )
-
-
-async def assert_subscribe_state(nextline: Nextline):
-    expected = [
-        'initialized',
-        'running',
-        'finished',
-        'initialized',
-        'running',
-        'finished',
-    ]
-    actual = [s async for s in nextline.subscribe_state()]
-    assert actual == expected
-
-
-async def assert_subscribe_run_no(nextline: Nextline):
-    expected = [1, 2]
-    actual = [s async for s in nextline.subscribe_run_no()]
-    assert actual == expected
-
-
-async def assert_subscribe_run_info(nextline: Nextline, statement: str):
-    replace: partial[RunInfo] = partial(
-        replace_with_bool, fields=('started_at', 'ended_at')
-    )
-
-    expected_list = deque(
-        [
-            info := RunInfo(
-                run_no=RunNo(1),
-                state='initialized',
-                script=statement,
-                result=None,
-                exception=None,
-            ),
-            info := dataclasses.replace(
-                info,
-                state='running',
-                started_at=datetime.datetime.utcnow(),
-            ),
-            dataclasses.replace(
-                info,
-                state='finished',
-                result='null',
-                exception='',
-                ended_at=datetime.datetime.utcnow(),
-            ),
-            info := RunInfo(
-                run_no=RunNo(2),
-                state='initialized',
-                script=statement,
-                result=None,
-                exception=None,
-            ),
-            info := dataclasses.replace(
-                info,
-                state='running',
-                started_at=datetime.datetime.utcnow(),
-            ),
-            dataclasses.replace(
-                info,
-                state='finished',
-                result='null',
-                exception='',
-                ended_at=datetime.datetime.utcnow(),
-            ),
-        ]
-    )
-
-    async for info in nextline.subscribe_run_info():
-        expected = expected_list.popleft()
-        expected = replace(expected)
-        assert expected == replace(info)
-    assert not expected_list
-
-
-async def assert_subscribe_trace_info(nextline: Nextline):
-    results = [s async for s in nextline.subscribe_trace_info()]
-    assert {1, 2} == {r.run_no for r in results}
-    assert {'running': 10, 'finished': 10} == Counter(r.state for r in results)
-
-    groupby_state_ = groupby(
-        sorted(results, key=attrgetter('state')),
-        attrgetter('state'),
-    )
-    groupby_state = {k: list(v) for k, v in groupby_state_}
-    running = groupby_state['running']
-    finished = groupby_state['finished']
-
-    assert {1, 2, 3, 4, 5} == {r.trace_no for r in running}
-    assert {1, 2, 3, 4, 5} == {r.trace_no for r in finished}
-
-    expected = {(1, None), (2, None), (3, None), (1, 1), (1, 2)}
-    assert expected == {(r.thread_no, r.task_no) for r in running}
-    assert expected == {(r.thread_no, r.task_no) for r in finished}
-
-    assert all([r.started_at for r in running])
-    assert not any([r.ended_at for r in running])
-
-    assert all([r.started_at for r in finished])
-    assert all([r.ended_at for r in finished])
-
-
-async def assert_subscribe_prompt_info(nextline: Nextline):
-    results = [s async for s in nextline.subscribe_prompt_info()]
-    assert {1, 2} == {r.run_no for r in results}
-
-    assert 382 == len(results)
-
-    expected: dict[Any, int]
-    actual: Counter[Any]
-
-    expected = {1: 144, 2: 78, 3: 78, 4: 50, 5: 32}
-    actual = Counter(r.trace_no for r in results)
-    assert actual == expected
-
-    assert [r.prompt_no for r in results]
-
-    expected = {True: 116, False: 266}
-    actual = Counter(r.open for r in results)
-    assert actual == expected
-
-    expected = {'line': 306, 'return': 44, 'call': 22, 'exception': 10}
-    actual = Counter(r.event for r in results)
-    assert actual == expected
-
-    expected = {True: 382}
-    actual = Counter(r.file_name is not None for r in results)
-    assert actual == expected
-
-    expected = {True: 382}
-    actual = Counter(r.line_no is not None for r in results)
-    assert actual == expected
-
-    expected = {True: 232, False: 150}
-    actual = Counter(r.stdout is not None for r in results)
-    assert actual == expected
-
-    expected = {None: 266, 'next': 112, 'step': 4}
-    actual = Counter(r.command for r in results)
-    assert actual == expected
-
-    expected = {True: 232, False: 150}
-    actual = Counter(r.started_at is not None for r in results)
-    assert actual == expected
-
-    expected = {True: 116, False: 266}
-    actual = Counter(r.ended_at is not None for r in results)
-    assert actual == expected
-
-
-async def assert_subscribe_stdout(nextline: Nextline):
-    # doesn't work without the `-s` option
-    run_no = 1
-    results = [s async for s in nextline.subscribe_stdout()]
-    assert {run_no} == {r.run_no for r in results}
-
-    assert 1 == len(results)
-
-    r0 = results[0]
-    assert 1 == r0.trace_no
-    assert 'here!\n' == r0.text
-    assert r0.written_at
-
-
-async def run(nextline: Nextline):
-    await asyncio.sleep(0.01)
+async def run(nextline: Nextline) -> None:
     async with nextline.run_session():
         pass
     assert not nextline.format_exception()
@@ -215,51 +33,91 @@ async def run(nextline: Nextline):
         pass
     assert not nextline.format_exception()
     nextline.result()
-    await nextline.close()
 
 
-async def control_execution(nextline: Nextline):
-    prev_ids = set[int]()
-    agen = agen_with_wait(nextline.subscribe_trace_ids())
-    pending: Sequence[asyncio.Future] = ()
-    async for ids_ in agen:
-        ids = set(ids_)
-        new_ids, prev_ids = ids - prev_ids, ids  # type: ignore
+class Plugin:
+    def __init__(self) -> None:
+        self._events = defaultdict[type[events.Event], list[events.Event]](list)
 
-        tasks = {asyncio.create_task(control_trace(nextline, id_)) for id_ in new_ids}
-        _, pending = await agen.asend(tasks)  # type: ignore
+    @hookimpl
+    async def on_start_run(self, event: events.OnStartRun) -> None:
+        self._events[event.__class__].append(event)
 
-    await asyncio.gather(*pending)
+    @hookimpl
+    async def on_end_run(self, event: events.OnEndRun) -> None:
+        self._events[event.__class__].append(event)
 
+    @hookimpl
+    async def on_start_trace(self, event: events.OnStartTrace) -> None:
+        self._events[event.__class__].append(event)
 
-async def control_trace(nextline: Nextline, trace_no):
-    # print(f'control_trace({trace_no})')
-    file_name = ''
-    async for s in nextline.subscribe_prompt_info_for(trace_no):
-        # await asyncio.sleep(0.01)
-        if not s.open:
-            continue
-        # print(s)
-        if not file_name == s.file_name:
-            assert s.file_name
-            file_name = s.file_name
-            assert nextline.get_source(file_name)
+    @hookimpl
+    async def on_end_trace(self, event: events.OnEndTrace) -> None:
+        self._events[event.__class__].append(event)
+
+    @hookimpl
+    async def on_start_trace_call(self, event: events.OnStartTraceCall) -> None:
+        self._events[event.__class__].append(event)
+
+    @hookimpl
+    async def on_end_trace_call(self, event: events.OnEndTraceCall) -> None:
+        self._events[event.__class__].append(event)
+
+    @hookimpl
+    async def on_start_cmdloop(self, event: events.OnStartCmdloop) -> None:
+        self._events[event.__class__].append(event)
+
+    @hookimpl
+    async def on_end_cmdloop(self, event: events.OnEndCmdloop) -> None:
+        self._events[event.__class__].append(event)
+
+    @hookimpl
+    async def on_start_prompt(
+        self, context: Context, event: events.OnStartPrompt
+    ) -> None:
+        self._events[event.__class__].append(event)
+        nextline = context.nextline
         command = 'next'
-        if s.event == 'line':
-            assert s.line_no is not None
+        if event.event == 'line':
             line = nextline.get_source_line(
-                line_no=s.line_no,
-                file_name=s.file_name,
+                line_no=event.line_no, file_name=event.file_name
             )
             command = find_command(line) or command
-        await nextline.send_pdb_command(command, s.prompt_no, trace_no)
-        # await asyncio.sleep(0.01)
+        await nextline.send_pdb_command(
+            command=command,
+            prompt_no=event.prompt_no,
+            trace_no=event.trace_no,
+        )
+
+    @hookimpl
+    async def on_end_prompt(self, context: Context, event: events.OnEndPrompt) -> None:
+        self._events[event.__class__].append(event)
+
+    @hookimpl
+    async def on_write_stdout(self, event: events.OnWriteStdout) -> None:
+        self._events[event.__class__].append(event)
+        assert 'here' in event.text
+
+    def assert_events(self) -> None:
+        # Assert only the number of events
+        assert len(self._events[events.OnStartRun]) == 2
+        assert len(self._events[events.OnEndRun]) == 2
+        assert len(self._events[events.OnStartTrace]) == 10
+        assert len(self._events[events.OnEndTrace]) == 10
+        assert len(self._events[events.OnStartTraceCall]) >= 356
+        assert len(self._events[events.OnEndTraceCall]) >= 356
+        assert len(self._events[events.OnStartCmdloop]) == 116
+        assert len(self._events[events.OnEndCmdloop]) == 116
+        assert len(self._events[events.OnStartPrompt]) == 116
+        assert len(self._events[events.OnEndPrompt]) == 116
+        assert len(self._events[events.OnWriteStdout]) == 2
 
 
 def find_command(line: str) -> Optional[str]:
     '''The Pdb command indicated in a comment
 
-    For example, returns 'step' for the line 'func()  # step'
+    >>> find_command('func()  # step')
+    'step'
     '''
     import re
 
@@ -272,38 +130,17 @@ def find_command(line: str) -> Optional[str]:
     return None
 
 
-def extract_comment(line: str) -> Optional[str]:
-    import io
-    import tokenize
-
-    comments = [
-        val
-        for type, val, *_ in tokenize.generate_tokens(io.StringIO(line).readline)
-        if type == tokenize.COMMENT
-    ]
-    if comments:
-        return comments[0]
-    return None
-
-
 @pytest.fixture
-async def nextline(statement):
-    async with Nextline(statement, trace_threads=True, trace_modules=True) as y:
-        yield y
-
-
-@pytest.fixture
-def statement(script_dir, monkey_patch_syspath):
+def statement(script_dir, monkey_patch_syspath) -> str:
     del monkey_patch_syspath
     return (Path(script_dir) / 'script.py').read_text()
 
 
 @pytest.fixture
-def monkey_patch_syspath(monkeypatch, script_dir):
+def monkey_patch_syspath(monkeypatch: pytest.MonkeyPatch, script_dir: str) -> None:
     monkeypatch.syspath_prepend(script_dir)
-    yield
 
 
 @pytest.fixture
-def script_dir():
+def script_dir() -> str:
     return str(Path(__file__).resolve().parent / 'example')
