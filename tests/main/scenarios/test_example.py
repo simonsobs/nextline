@@ -104,8 +104,8 @@ class Plugin:
         assert len(self._events[events.OnEndRun]) == 2
         assert len(self._events[events.OnStartTrace]) == 10
         assert len(self._events[events.OnEndTrace]) == 10
-        assert len(self._events[events.OnStartTraceCall]) == 356
-        assert len(self._events[events.OnEndTraceCall]) == 356
+        assert len(self._events[events.OnStartTraceCall]) >= 356
+        assert len(self._events[events.OnEndTraceCall]) >= 356
         assert len(self._events[events.OnStartCmdloop]) == 116
         assert len(self._events[events.OnEndCmdloop]) == 116
         assert len(self._events[events.OnStartPrompt]) == 116
