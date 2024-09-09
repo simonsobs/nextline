@@ -38,7 +38,7 @@ def test_restore_from_markup() -> None:
         if 'dest' not in transition:
             transition['dest'] = None
 
-    rebuild = MarkupMachine(model=None, **markup)
+    rebuild = MarkupMachine(model=None, **markup)  # type: ignore
     assert rebuild.markup == machine.markup
 
 
