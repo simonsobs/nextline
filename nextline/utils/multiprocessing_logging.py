@@ -95,7 +95,7 @@ async def MultiprocessingLogging(mp_context: Optional[BaseContext] = None):
         await task
 
 
-def _initializer(queue: Queue[LogRecord]) -> None:
+def _initializer(queue: Queue[LogRecord | None]) -> None:
     '''An initializer of ProcessPoolExecutor.'''
     handler = QueueHandler(queue)
     logger = getLogger()
