@@ -101,3 +101,5 @@ async def test_transitions(triggers: list[str]) -> None:
         if before:
             assert getattr(machine, before).call_count == 1
             assert getattr(machine, before).await_count == 1
+
+    # TODO: Test internal transitions

@@ -119,7 +119,8 @@ CONFIG = {
         ['initialize', 'created', 'initialized'],
         ['run', 'initialized', 'running'],
         ['finish', 'running', 'finished'],
-        ['close', ['created', 'initialized', 'finished', 'closed'], 'closed'],
+        ['close', ['created', 'initialized', 'finished'], 'closed'],
+        ['close', ['closed'], None],  # Internal transition
         {
             'trigger': 'close',
             'source': ['running'],
