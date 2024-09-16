@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import AsyncIterator, Callable
 import contextlib
 import logging
 import multiprocessing as mp
@@ -19,7 +20,9 @@ def example_func() -> None:
 
 
 @contextlib.asynccontextmanager
-async def MultiprocessingLogging(mp_context: Optional[BaseContext] = None):
+async def MultiprocessingLogging(
+    mp_context: Optional[BaseContext] = None,
+) -> AsyncIterator[Callable[[], None]]:
     '''Collect logging from other processes in the main process.
 
     Example:

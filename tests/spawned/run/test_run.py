@@ -1,6 +1,8 @@
 import queue
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any, TypeAlias
 
 import pytest
 
@@ -8,14 +10,16 @@ from nextline.events import OnStartPrompt
 from nextline.spawned import PdbCommand, QueueIn, QueueOut, RunArg, main, set_queues
 from nextline.types import RunNo
 
+RunArgParams: TypeAlias = tuple[RunArg, Any, str | None]
+
 
 def test_one(
     run_arg: RunArg,
-    expected_exc,
-    expected_ret,
-    call_set_queues,
-    task_send_commands,
-):
+    expected_exc : str | None,
+    expected_ret : Any,
+    call_set_queues : None,
+    task_send_commands: None,
+) -> None:
     del call_set_queues, task_send_commands
     result = main(run_arg)
     assert result.ret == expected_ret
@@ -27,13 +31,12 @@ def test_one(
 
 
 @pytest.fixture
-def call_set_queues(queue_in: QueueIn, queue_out: QueueOut):
+def call_set_queues(queue_in: QueueIn, queue_out: QueueOut) -> None:
     set_queues(queue_in, queue_out)
-    yield
 
 
 @pytest.fixture
-def task_send_commands(queue_in: QueueIn, queue_out: QueueOut):
+def task_send_commands(queue_in: QueueIn, queue_out: QueueOut) -> Iterator[None]:
     with ThreadPoolExecutor(max_workers=1) as executor:
         fut = executor.submit(respond_prompt, queue_in, queue_out)
         yield
@@ -41,7 +44,7 @@ def task_send_commands(queue_in: QueueIn, queue_out: QueueOut):
         fut.result()
 
 
-def respond_prompt(queue_in: QueueIn, queue_out: QueueOut):
+def respond_prompt(queue_in: QueueIn, queue_out: QueueOut) -> None:
     while (event := queue_out.get()) is not None:
         if not isinstance(event, OnStartPrompt):
             continue
@@ -52,17 +55,17 @@ def respond_prompt(queue_in: QueueIn, queue_out: QueueOut):
 
 
 @pytest.fixture
-def run_arg(run_arg_params) -> RunArg:
+def run_arg(run_arg_params: RunArgParams) -> RunArg:
     return run_arg_params[0]
 
 
 @pytest.fixture
-def expected_ret(run_arg_params):
+def expected_ret(run_arg_params: RunArgParams) -> Any:
     return run_arg_params[1]
 
 
 @pytest.fixture
-def expected_exc(run_arg_params):
+def expected_exc(run_arg_params: RunArgParams) -> str | None:
     return run_arg_params[2]
 
 
@@ -90,11 +93,11 @@ raise MyException()
 CODE_OBJECT = compile(SRC_ONE, '<string>', 'exec')
 
 
-def func_one():
+def func_one() -> int:
     return 123
 
 
-def func_err():
+def func_err() -> None:
     1 / 0
 
 
@@ -105,7 +108,7 @@ assert SCRIPT_PATH.is_file()
 ERR_PATH = SCRIPT_DIR / 'err.py'
 assert ERR_PATH.is_file()
 
-params = [
+params: list[RunArgParams] = [
     (RunArg(run_no=RunNo(1), statement=SRC_ONE, filename='<string>'), None, None),
     (
         RunArg(run_no=RunNo(1), statement=SRC_COMPILE_ERROR, filename='<string>'),
@@ -131,7 +134,7 @@ params = [
 
 
 @pytest.fixture(params=params)
-def run_arg_params(request) -> tuple[RunArg, type[BaseException] | None]:
+def run_arg_params(request: pytest.FixtureRequest) -> RunArgParams:
     return request.param
 
 

@@ -25,7 +25,7 @@ class OnStartRun(Event):
     run_no: RunNo
     statement: Statement
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_aware_datetime(self.started_at)
 
 
@@ -36,7 +36,7 @@ class OnEndRun(Event):
     returned: str
     raised: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_aware_datetime(self.ended_at)
 
 
@@ -48,7 +48,7 @@ class OnStartTrace(Event):
     thread_no: ThreadNo
     task_no: Optional[TaskNo]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.started_at)
 
 
@@ -58,7 +58,7 @@ class OnEndTrace(Event):
     run_no: RunNo
     trace_no: TraceNo
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.ended_at)
 
 
@@ -73,7 +73,7 @@ class OnStartTraceCall(Event):
     frame_object_id: int
     event: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.started_at)
 
 
@@ -84,7 +84,7 @@ class OnEndTraceCall(Event):
     trace_no: TraceNo
     trace_call_no: TraceCallNo
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.ended_at)
 
 
@@ -95,7 +95,7 @@ class OnStartCmdloop(Event):
     trace_no: TraceNo
     trace_call_no: TraceCallNo
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.started_at)
 
 
@@ -106,7 +106,7 @@ class OnEndCmdloop(Event):
     trace_no: TraceNo
     trace_call_no: TraceCallNo
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.ended_at)
 
 
@@ -123,7 +123,7 @@ class OnStartPrompt(Event):
     frame_object_id: int
     event: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.started_at)
 
 
@@ -136,7 +136,7 @@ class OnEndPrompt(Event):
     prompt_no: PromptNo
     command: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.ended_at)
 
 
@@ -147,15 +147,15 @@ class OnWriteStdout(Event):
     trace_no: TraceNo
     text: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         _assert_naive_datetime(self.written_at)
 
 
-def _assert_naive_datetime(dt: datetime.datetime):
+def _assert_naive_datetime(dt: datetime.datetime) -> None:
     if is_timezone_aware(dt):
         raise ValueError(f'Not a timezone-naive object: {dt!r}')
 
 
-def _assert_aware_datetime(dt: datetime.datetime):
+def _assert_aware_datetime(dt: datetime.datetime) -> None:
     if not is_timezone_aware(dt):
         raise ValueError(f'Not a timezone-aware object: {dt!r}')

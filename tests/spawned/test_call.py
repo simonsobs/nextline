@@ -16,7 +16,7 @@ def trace() -> Mock:
     return f
 
 
-def test_simple(trace: Mock):
+def test_simple(trace: Mock) -> None:
     def func() -> int:
         x = 123
         return x
@@ -33,7 +33,7 @@ class MockError(Exception):
     pass
 
 
-def test_raise(trace: Mock):
+def test_raise(trace: Mock) -> None:
     def func() -> NoReturn:
         raise MockError()
 
@@ -66,7 +66,7 @@ def test_raise(trace: Mock):
 
 
 @pytest.mark.parametrize("thread", [True, False])
-def test_threading(trace: Mock, thread: bool):
+def test_threading(trace: Mock, thread: bool) -> None:
     def f1() -> None:
         return
 

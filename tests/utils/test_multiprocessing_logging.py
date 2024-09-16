@@ -11,7 +11,7 @@ from nextline.utils import MultiprocessingLogging
 @pytest.mark.parametrize('mp_method', [None, 'spawn', 'fork', 'forkserver'])
 async def test_multiprocessing_logging(
     mp_method: str | None, caplog: LogCaptureFixture
-):
+) -> None:
     mp_context = mp.get_context(mp_method) if mp_method else None
 
     with caplog.at_level(logging.DEBUG):
@@ -28,7 +28,7 @@ async def test_multiprocessing_logging(
     assert caplog.records[0].name == __name__
 
 
-def fn():
+def fn() -> str:
     logger = logging.getLogger(__name__)
     logger.debug('bar')
     return 'foo'

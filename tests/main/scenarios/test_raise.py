@@ -42,7 +42,7 @@ class Plugin:
         assert 'RuntimeError' in fmt_exc
 
 
-async def run(nextline: Nextline):
+async def run(nextline: Nextline) -> None:
     async with nextline.run_session():
         pass
     fmt_exc = nextline.format_exception()

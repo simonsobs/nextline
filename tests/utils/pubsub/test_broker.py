@@ -9,14 +9,14 @@ from hypothesis import strategies as st
 from nextline.utils import PubSub
 
 
-async def test_end():
+async def test_end() -> None:
     key = 'foo'
     async with PubSub[str, str]() as obj:
 
-        async def subscribe():
+        async def subscribe() -> tuple[str, ...]:
             return tuple([y async for y in obj.subscribe(key)])
 
-        async def put():
+        async def put() -> None:
             await asyncio.sleep(0.001)
             await obj.end(key)
 
@@ -24,23 +24,23 @@ async def test_end():
     assert result == ()
 
 
-async def test_end_without_subscription():
+async def test_end_without_subscription() -> None:
     key = 'foo'
     async with PubSub[str, str]() as obj:
         await obj.end(key)
 
 
 @given(items=st.lists(st.text()))
-async def test_close(items: Sequence[str]):
+async def test_close(items: Sequence[str]) -> None:
     items = tuple(items)
     key = 'foo'
 
     async with PubSub[str, str]() as obj:
 
-        async def subscribe():
+        async def subscribe() -> tuple[str, ...]:
             return tuple([y async for y in obj.subscribe(key)])
 
-        async def put():
+        async def put() -> None:
             await asyncio.sleep(0.001)
             for item in items:
                 await obj.publish(key, item)
@@ -63,7 +63,7 @@ async def test_last(
     pre_items: Sequence[str],
     items: Sequence[str],
     last: bool,
-):
+) -> None:
     key = 'foo'
     pre_items = tuple(pre_items)
     items = tuple(items)
@@ -75,10 +75,10 @@ async def test_last(
 
         await asyncio.sleep(0.001)
 
-        async def subscribe():
+        async def subscribe() -> tuple[str, ...]:
             return tuple([y async for y in obj.subscribe(key, last=last)])
 
-        async def put():
+        async def put() -> None:
             await asyncio.sleep(0.001)
             for item in items:
                 await obj.publish(key, item)
@@ -97,17 +97,17 @@ async def test_matrix(
     keys: Sequence[str],
     n_items: int,
     n_subscribers: int,
-):
+) -> None:
     keys = tuple(keys)
     n_keys = len(keys)
     items = {k: tuple(f"{k}-{i+1}" for i in range(n_items)) for k in keys}
 
     async with PubSub[str, str]() as obj:
 
-        async def subscribe(key):
+        async def subscribe(key: str) -> tuple[str, ...]:
             return tuple([y async for y in obj.subscribe(key)])
 
-        async def put(key):
+        async def put(key: str) -> None:
             time.sleep(0.01)
             for item in items[key]:
                 await obj.publish(key, item)

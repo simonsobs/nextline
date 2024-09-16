@@ -88,8 +88,11 @@ target_version = ['py310', 'py311', 'py312']
 profile = "black"
 
 [tool.mypy]
-# disallow_untyped_defs = true
-exclude = ['script\.py']
+disallow_untyped_defs = true
+exclude = '''(?x)(
+    example/.*\.py$
+    | test_script\.py$
+)'''
 
 
 [[tool.mypy.overrides]]

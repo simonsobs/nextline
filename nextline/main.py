@@ -101,8 +101,7 @@ class Nextline:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        del exc_type, exc_value, traceback
+    async def __aexit__(self, *_: Any, **__: Any) -> None:
         await asyncio.wait_for(self.close(), timeout=self._timeout_on_exit)
 
     async def run(self) -> None:

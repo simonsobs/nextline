@@ -1,4 +1,5 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -13,7 +14,7 @@ from .funcs import TraceSummary, summarize_trace_calls
 def target(
     wrap_target_trace_func: Mock,
     modules_in_summary: set[str] | None,
-    run_target,
+    run_target: None,
 ) -> TraceSummary:
     '''Summary of the calls to the target trace function.
 
@@ -29,7 +30,7 @@ def target(
 def probe(
     probe_trace_func: Mock,
     modules_in_summary: set[str] | None,
-    run_target,
+    run_target: None,
 ) -> TraceSummary:
     '''Summary of the calls to the probe trace function.
 
@@ -45,7 +46,7 @@ def probe(
 def ref(
     ref_trace_func: Mock,
     modules_in_summary: set[str] | None,
-    run_ref,
+    run_ref: None,
 ) -> TraceSummary:
     '''Summary of the calls to the reference trace function.
 
@@ -97,7 +98,7 @@ def wrap_target_trace_func(target_trace_func: TraceFunction) -> Mock:
     '''A mock object wrapping the trace function under test to collect trace calls.'''
     wrap = Mock(wraps=target_trace_func)
 
-    def side_effect(*a, **k):
+    def side_effect(*a: Any, **k: Any) -> TraceFunction | None:
         # Wrap again if the target returns itself.
         local_trace_func = target_trace_func(*a, **k)
         if local_trace_func is target_trace_func:
@@ -109,7 +110,7 @@ def wrap_target_trace_func(target_trace_func: TraceFunction) -> Mock:
 
 
 @pytest.fixture()
-def target_trace_func(probe_trace_func: Mock):
+def target_trace_func(probe_trace_func: Mock) -> TraceFunction | None:
     '''The trace function under test. This fixture is to be overridden by the test.'''
     del probe_trace_func
     raise RuntimeError('This fixture must be overridden by the test')

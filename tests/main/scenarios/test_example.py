@@ -10,7 +10,7 @@ from nextline.plugin.spec import Context, hookimpl
 from .funcs import extract_comment
 
 
-async def test_run(statement: str):
+async def test_run(statement: str) -> None:
     nextline = Nextline(statement, trace_threads=True, trace_modules=True)
     assert nextline.state == 'created'
     plugin = Plugin()
@@ -131,7 +131,7 @@ def find_command(line: str) -> Optional[str]:
 
 
 @pytest.fixture
-def statement(script_dir, monkey_patch_syspath) -> str:
+def statement(script_dir : str, monkey_patch_syspath: None) -> str:
     del monkey_patch_syspath
     return (Path(script_dir) / 'script.py').read_text()
 

@@ -5,7 +5,7 @@ from nextline.events import OnStartPrompt
 from nextline.plugin.spec import Context, hookimpl
 
 
-def func():
+def func() -> None:
     time.sleep(0.001)
 
 
