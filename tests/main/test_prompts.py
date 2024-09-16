@@ -3,7 +3,7 @@ import time
 from nextline import Nextline
 
 
-def func():
+def func() -> None:
     time.sleep(0.001)
 
 

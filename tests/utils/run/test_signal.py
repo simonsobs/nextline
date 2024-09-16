@@ -96,7 +96,7 @@ class Handled(Exception):
     pass
 
 
-def handler(signum: signal._SIGNUM, frame: FrameType):
+def handler(signum: signal._SIGNUM, frame: FrameType) -> NoReturn:
     raise Handled
 
 

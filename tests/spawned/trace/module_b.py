@@ -1,2 +1,2 @@
-def func_b():
+def func_b() -> None:
     pass

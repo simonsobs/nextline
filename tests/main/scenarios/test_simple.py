@@ -38,7 +38,7 @@ class Plugin:
         assert exited_process.process.exitcode == 0
 
 
-async def run(nextline: Nextline):
+async def run(nextline: Nextline) -> None:
     async with nextline.run_session():
         pass
     assert not nextline.format_exception()

@@ -3,8 +3,8 @@ import re
 from nextline.utils import profile_func
 
 
-def test_one():
-    def func():
+def test_one() -> None:
+    def func() -> int:
         re.compile("foo|bar")
         return 123
 

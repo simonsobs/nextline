@@ -21,7 +21,7 @@ def test_print(
     post_msg: str,
     errs: list[str],
     post_err: str,
-):
+) -> None:
     capsys.readouterr()  # clear
 
     callback_out = Mock()
@@ -60,7 +60,7 @@ def test_yield(
     capsys: pytest.CaptureFixture,
     msgs: list[str],
     errs: list[str],
-):
+) -> None:
     capsys.readouterr()  # clear
 
     callback_out = Mock()
@@ -84,7 +84,7 @@ def test_yield(
     assert ''.join(errs) == captured.err
 
 
-def test_raise(capsys: pytest.CaptureFixture):
+def test_raise(capsys: pytest.CaptureFixture) -> None:
     callback = Mock(side_effect=MockError)
 
     with peek_stdout(callback):

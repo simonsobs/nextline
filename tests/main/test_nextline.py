@@ -15,7 +15,7 @@ x = 2
 """.strip()
 
 
-def test_init_sync():
+def test_init_sync() -> None:
     '''Assert the init without the running loop.'''
     with pytest.raises(RuntimeError):
         asyncio.get_running_loop()
@@ -23,7 +23,7 @@ def test_init_sync():
     assert nextline
 
 
-async def test_repr():
+async def test_repr() -> None:
     nextline = Nextline(SOURCE)
     assert repr(nextline)
     async with nextline:
@@ -48,8 +48,8 @@ async def test_one() -> None:
                 )
 
 
-async def test_timeout(imp: Mock):
-    async def close():
+async def test_timeout(imp: Mock) -> None:
+    async def close() -> None:
         await asyncio.sleep(5)
 
     imp.aclose.side_effect = close

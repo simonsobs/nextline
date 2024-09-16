@@ -1,3 +1,3 @@
-def g():
+def g() -> None:
     print('here!')
     pass

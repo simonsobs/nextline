@@ -9,7 +9,7 @@ from nextline.spawned.plugin.skip import MODULES_TO_SKIP
 from nextline.utils import profile_func
 
 
-def test_timeit(plugin: FilterByModuleName):
+def test_timeit(plugin: FilterByModuleName) -> None:
     n_calls = 200_000
 
     thread_id = threading.current_thread().ident
@@ -24,7 +24,7 @@ def test_timeit(plugin: FilterByModuleName):
     assert sec < 1
 
 
-def test_profile(plugin: FilterByModuleName):
+def test_profile(plugin: FilterByModuleName) -> None:
     '''Used to print the profile.'''
 
     n_calls = 20_000
@@ -34,7 +34,7 @@ def test_profile(plugin: FilterByModuleName):
 
     frame = sys._current_frames()[thread_id]
 
-    def func():
+    def func() -> None:
         for _ in range(n_calls):
             plugin.filter((frame, "line", None))
 
@@ -44,7 +44,7 @@ def test_profile(plugin: FilterByModuleName):
 
 
 @pytest.fixture()
-def plugin():
+def plugin() -> FilterByModuleName:
     p = FilterByModuleName()
     p.init(modules_to_skip=MODULES_TO_SKIP)
     return p

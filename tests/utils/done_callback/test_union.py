@@ -8,34 +8,34 @@ import pytest
 from nextline.utils import ThreadTaskDoneCallback, current_task_or_thread
 
 
-def target(obj: ThreadTaskDoneCallback):
+def target(obj: ThreadTaskDoneCallback) -> None:
     """To run in a thread or task"""
     assert current_task_or_thread() == obj.register()
     delay = random.random() * 0.01
     time.sleep(delay)
 
 
-async def atarget(obj: ThreadTaskDoneCallback):
+async def atarget(obj: ThreadTaskDoneCallback) -> None:
     target(obj)
 
 
 class Done:
     """A callback function"""
 
-    def __init__(self):
-        self.args = set()
+    def __init__(self) -> None:
+        self.args = set[Thread | asyncio.Task]()
 
-    def __call__(self, arg):
+    def __call__(self, arg: Thread | asyncio.Task) -> None:
         self.args.add(arg)
 
 
 @pytest.fixture()
-def done():
+def done() -> Done:
     """A callback function"""
-    yield Done()
+    return Done()
 
 
-def test_thread(done: Done):
+def test_thread(done: Done) -> None:
     obj = ThreadTaskDoneCallback(done=done)
     t = Thread(target=target, args=(obj,))
     t.start()
@@ -45,7 +45,7 @@ def test_thread(done: Done):
     t.join()
 
 
-async def test_task(done: Done):
+async def test_task(done: Done) -> None:
     obj = ThreadTaskDoneCallback(done=done)
     t = asyncio.create_task(atarget(obj))
     await t
@@ -53,7 +53,7 @@ async def test_task(done: Done):
     assert {t} == done.args
 
 
-def test_with_thread(done: Done):
+def test_with_thread(done: Done) -> None:
     with ThreadTaskDoneCallback(done=done) as obj:
         t = Thread(target=target, args=(obj,))
         t.start()
@@ -62,14 +62,14 @@ def test_with_thread(done: Done):
     t.join()
 
 
-async def test_with_task(done: Done):
+async def test_with_task(done: Done) -> None:
     async with ThreadTaskDoneCallback(done=done) as obj:
         t = asyncio.create_task(atarget(obj))
         await t
     assert {t} == done.args
 
 
-def test_done_none_thread():
+def test_done_none_thread() -> None:
     with ThreadTaskDoneCallback() as obj:
         t = Thread(target=target, args=(obj,))
         t.start()
@@ -78,7 +78,7 @@ def test_done_none_thread():
     t.join()
 
 
-async def test_done_none_task():
+async def test_done_none_task() -> None:
     async with ThreadTaskDoneCallback() as obj:
         t = asyncio.create_task(atarget(obj))
         await asyncio.sleep(0)  # let the task be registered

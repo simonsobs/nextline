@@ -11,7 +11,7 @@ from nextline.utils import ExcThread
 from nextline.utils import ThreadTaskIdComposer as IdComposer
 
 
-def assert_call(obj: IdComposer, expected: ThreadTaskId, has_id: bool = False):
+def assert_call(obj: IdComposer, expected: ThreadTaskId, has_id: bool = False) -> None:
     assert obj.has_id() is has_id
     assert obj.has_id() is has_id
     assert expected == obj()
@@ -21,7 +21,7 @@ def assert_call(obj: IdComposer, expected: ThreadTaskId, has_id: bool = False):
 
 async def async_assert_call(
     obj: IdComposer, expected: ThreadTaskId, has_id: bool = False
-):
+) -> None:
     assert obj.has_id() is has_id
     assert obj.has_id() is has_id
     await asyncio.sleep(0)
@@ -32,12 +32,12 @@ async def async_assert_call(
 
 
 @pytest.fixture()
-def obj():
+def obj() -> IdComposer:
     y = IdComposer()
-    yield y
+    return y
 
 
-def test_compose(obj: IdComposer):
+def test_compose(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), None)
     assert_call(obj, expected)
 
@@ -46,7 +46,7 @@ def test_compose(obj: IdComposer):
     assert_call(obj, expected, True)
 
 
-def test_threads(obj: IdComposer):
+def test_threads(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), None)
     assert_call(obj, expected)
 
@@ -76,7 +76,7 @@ def test_threads(obj: IdComposer):
     t.join()
 
 
-async def test_async_coroutine(obj: IdComposer):
+async def test_async_coroutine(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
 
@@ -90,7 +90,7 @@ async def test_async_coroutine(obj: IdComposer):
     await async_assert_call(obj, expected, True)
 
 
-async def test_async_tasks(obj: IdComposer):
+async def test_async_tasks(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
 
@@ -116,7 +116,7 @@ async def test_async_tasks(obj: IdComposer):
     await t
 
 
-async def test_async_tasks_gather(obj: IdComposer):
+async def test_async_tasks_gather(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
 
@@ -140,7 +140,7 @@ async def test_async_tasks_gather(obj: IdComposer):
     await asyncio.gather(*aws)
 
 
-def test_async_asyncio_run(obj: IdComposer):
+def test_async_asyncio_run(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), None)
     assert_call(obj, expected)
 
@@ -157,7 +157,7 @@ def test_async_asyncio_run(obj: IdComposer):
 
 
 @mark.skipif(getenv('GITHUB_ACTIONS') == 'true', reason='Fails on GitHub Actions')
-async def test_async_asyncio_to_thread(obj: IdComposer):
+async def test_async_asyncio_to_thread(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), TaskNo(1))
     assert_call(obj, expected)
 
@@ -179,7 +179,7 @@ async def test_async_asyncio_to_thread(obj: IdComposer):
     await to_thread(partial(assert_call, obj, expected, True))
 
 
-async def async_nested(obj: IdComposer, expected_thread_id):
+async def async_nested(obj: IdComposer, expected_thread_id: ThreadNo) -> None:
     expected1 = ThreadTaskId(expected_thread_id, TaskNo(1))
     assert_call(obj, expected1)
     await async_assert_call(obj, expected1, True)
@@ -192,14 +192,14 @@ async def async_nested(obj: IdComposer, expected_thread_id):
     await asyncio.gather(*aws)
 
 
-def nested(obj: IdComposer, expected_thread_id):
+def nested(obj: IdComposer, expected_thread_id: ThreadNo) -> None:
     expected = ThreadTaskId(expected_thread_id, None)
     assert_call(obj, expected)
 
     asyncio.run(async_nested(obj, expected_thread_id))
 
 
-def test_nested(obj: IdComposer):
+def test_nested(obj: IdComposer) -> None:
     expected = ThreadTaskId(ThreadNo(1), None)
     assert_call(obj, expected)
 
