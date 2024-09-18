@@ -48,9 +48,9 @@ def _compose_callable(run_arg: RunArg) -> Callable[[], Any]:
         return _from_path(statement)
     elif isinstance(statement, CodeType):
         return _script.compose(statement)
-    elif callable(statement):
+    elif callable(statement):  # pragma: no branch
         return statement
-    else:
+    else:  # pragma: no cover
         raise TypeError(f'statement: {statement!r}')
 
 
