@@ -69,7 +69,7 @@ log_cli_level = "INFO"
 [tool.coverage.run]
 branch = true
 source = ["nextline", "tests"]
-concurrency = ["multiprocessing"]
+concurrency = ["multiprocessing", "thread"]
 
 [tool.coverage.report]
 exclude_lines = [
