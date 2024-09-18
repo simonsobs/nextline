@@ -88,7 +88,7 @@ def run_ref(
 
 
 @pytest.fixture()
-def func() -> Callable[[], Any]:
+def func() -> Callable[[], Any]:  # pragma: no cover
     '''The function to be traced. This fixture is to be overridden by the test.'''
     raise RuntimeError('This fixture must be overridden by the test')
 
@@ -110,7 +110,9 @@ def wrap_target_trace_func(target_trace_func: TraceFunction) -> Mock:
 
 
 @pytest.fixture()
-def target_trace_func(probe_trace_func: Mock) -> TraceFunction | None:
+def target_trace_func(
+    probe_trace_func: Mock,
+) -> TraceFunction | None:  # pragma: no cover
     '''The trace function under test. This fixture is to be overridden by the test.'''
     del probe_trace_func
     raise RuntimeError('This fixture must be overridden by the test')

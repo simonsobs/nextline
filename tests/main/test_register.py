@@ -5,7 +5,7 @@ from nextline.events import OnStartPrompt
 from nextline.plugin.spec import Context, hookimpl
 
 
-def func() -> None:
+def func() -> None:  # pragma: no cover
     time.sleep(0.001)
 
 
