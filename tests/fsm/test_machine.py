@@ -12,7 +12,7 @@ from nextline.types import ResetOptions
 
 
 class StatefulTest:
-    def __init__(self, data: st.DataObject) -> None:
+    def __init__(self) -> None:
         self._callback = AsyncMock(spec=Callback)
         self._machine = StateMachine(callback=self._callback)
         pass
@@ -28,8 +28,9 @@ class StatefulTest:
         repr(self._machine)
 
     async def initialize(self) -> None:
+        # Always raise MachineError as already initialized by __aenter__.
         await self._machine.initialize()
-        self.assert_after_initialize()
+        # self.assert_after_initialize()
 
     def assert_after_initialize(self) -> None:
         assert self._callback.mock_calls == [
@@ -122,9 +123,9 @@ class StatefulTest:
 @settings(max_examples=200)
 @given(data=st.data())
 async def test_property(data: st.DataObject) -> None:
-    test = StatefulTest(data)
+    test = StatefulTest()
 
-    TRIGGERS = [
+    METHODS = [
         test.initialize,
         test.run,
         test.finish,
@@ -132,9 +133,9 @@ async def test_property(data: st.DataObject) -> None:
         test.close,
     ]
 
-    triggers = data.draw(st.lists(st.sampled_from(TRIGGERS)))
+    methods = data.draw(st.lists(st.sampled_from(METHODS)))
 
     async with test:
-        for trigger in triggers:
+        for method in methods:
             async with test.context():
-                await trigger()
+                await method()
