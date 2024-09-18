@@ -43,7 +43,7 @@ def test_restore_from_markup() -> None:
 
 
 @pytest.mark.skip
-def test_graph(tmp_path: Path) -> None:
+def test_graph(tmp_path: Path) -> None:  # pragma: no cover
     FILE_NAME = 'states.png'
     path = tmp_path / FILE_NAME
     # print(f'Saving the state diagram to {path}...')

@@ -3,7 +3,7 @@ import time
 from nextline import Nextline
 
 
-def func() -> None:
+def func() -> None:  # pragma: no cover
     time.sleep(0.001)
 
 

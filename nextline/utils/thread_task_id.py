@@ -79,7 +79,7 @@ class ThreadTaskIdComposer:
             return ThreadTaskId(thread_no=thread_no, task_no=None)
 
         task_no = self._task_no_map.get(task)
-        if not task_no:
+        if not task_no:  # pragma: no branch
             task_no = self._task_no_counter_map[thread_no]()
             self._task_no_map[task] = task_no
 

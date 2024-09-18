@@ -79,7 +79,7 @@ def test_threading(trace: Mock, thread: bool) -> None:  # pragma: no cover
     trace_org_threading = threading.gettrace()
     trace_org_sys = sys.gettrace()
 
-    with sys_trace(trace):
+    with sys_trace(trace, thread=thread):
         func()
 
     assert trace_org_sys == sys.gettrace()
@@ -94,6 +94,6 @@ def test_threading(trace: Mock, thread: bool) -> None:  # pragma: no cover
     assert (func.__module__, func.__name__) in traced
 
     if thread:
-        (f1.__module__, f1.__name__) in traced
+        assert (f1.__module__, f1.__name__) in traced
     else:
-        (f1.__module__, f1.__name__) not in traced
+        assert (f1.__module__, f1.__name__) not in traced

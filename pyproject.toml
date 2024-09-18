@@ -70,6 +70,7 @@ log_cli_level = "INFO"
 branch = true
 source = ["nextline", "tests"]
 concurrency = ["multiprocessing", "thread"]
+omit = ["nextline/disable.py"]
 
 [tool.coverage.report]
 exclude_lines = [

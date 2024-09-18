@@ -31,7 +31,7 @@ def func_sleep() -> NoReturn:
     assert _event
     _event.set()
     time.sleep(10)
-    raise RuntimeError("to be terminated by here")
+    raise RuntimeError("to be terminated by here")  # pragma: no cover
 
 
 async def test_interrupt(event: _EventType) -> None:
@@ -74,7 +74,7 @@ def func_catch_interrupt() -> str:
         time.sleep(10)
     except KeyboardInterrupt:
         return "foo"
-    return "bar"
+    return "bar"  # pragma: no cover
 
 
 async def test_interrupt_catch(event: _EventType) -> None:
@@ -108,7 +108,7 @@ def func_handle_terminate() -> str:
         time.sleep(10)
     except Handled:
         return "foo"
-    return "bar"
+    return "bar"  # pragma: no cover
 
 
 async def test_terminate_handle(event: _EventType) -> None:
