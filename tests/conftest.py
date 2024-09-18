@@ -8,7 +8,8 @@ import pytest
 @pytest.fixture(autouse=True)
 def recover_trace() -> Iterator[None]:
     """Set the original trace function back after each test"""
-    trace_org = sys.gettrace()
+    org_threading = threading.gettrace()
+    org_sys = sys.gettrace()
     yield
-    sys.settrace(trace_org)
-    threading.settrace(trace_org)  # type: ignore
+    sys.settrace(org_sys)
+    threading.settrace(org_threading)  # type: ignore

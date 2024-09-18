@@ -55,7 +55,8 @@ def sys_trace(
     the finally clause.
 
     '''
-    trace_func_org = sys.gettrace()
+    org_threading = threading.gettrace()
+    org_sys = sys.gettrace()
 
     if thread:
         threading.settrace(trace_func)
@@ -65,6 +66,6 @@ def sys_trace(
     try:
         yield
     finally:
-        sys.settrace(trace_func_org)
+        sys.settrace(org_sys)
         if thread:
-            threading.settrace(trace_func_org)  # type: ignore
+            threading.settrace(org_threading)  # type: ignore
