@@ -65,7 +65,7 @@ def sys_trace(
 
     try:
         yield
-    finally:
+    finally:  # pragma: no cover
         sys.settrace(org_sys)
         if thread:
             threading.settrace(org_threading)  # type: ignore
