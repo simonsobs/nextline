@@ -1,4 +1,5 @@
 import sys
+import threading
 import traceback
 from threading import Thread
 from typing import NoReturn
@@ -16,7 +17,7 @@ def trace() -> Mock:
     return f
 
 
-def test_simple(trace: Mock) -> None:
+def test_simple(trace: Mock) -> None:  # pragma: no cover
     def func() -> int:
         x = 123
         return x
@@ -33,7 +34,7 @@ class MockError(Exception):
     pass
 
 
-def test_raise(trace: Mock) -> None:
+def test_raise(trace: Mock) -> None:  # pragma: no cover
     def func() -> NoReturn:
         raise MockError()
 
@@ -66,7 +67,7 @@ def test_raise(trace: Mock) -> None:
 
 
 @pytest.mark.parametrize("thread", [True, False])
-def test_threading(trace: Mock, thread: bool) -> None:
+def test_threading(trace: Mock, thread: bool) -> None:  # pragma: no cover
     def f1() -> None:
         return
 
@@ -75,12 +76,14 @@ def test_threading(trace: Mock, thread: bool) -> None:
         t1.start()
         t1.join()
 
-    trace_org = sys.gettrace()
+    trace_org_threading = threading.gettrace()
+    trace_org_sys = sys.gettrace()
 
     with sys_trace(trace, thread=thread):
         func()
 
-    assert trace_org == sys.gettrace()
+    assert trace_org_sys == sys.gettrace()
+    assert trace_org_threading == threading.gettrace()
 
     traced = {
         (c.args[0].f_globals.get("__name__"), c.args[0].f_code.co_name)
