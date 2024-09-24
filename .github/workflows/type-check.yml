@@ -33,6 +33,7 @@ jobs:
           pip install --upgrade pip
           pip install -e '.[tests]'
           pip install --upgrade mypy
+          pip list
 
       - name: Run mypy
         run: mypy --show-traceback nextline/ tests/
