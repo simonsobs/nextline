@@ -36,7 +36,7 @@ tests = [
     "pytest-cov>=3.0",
     "pytest-timeout>=2.1",
     "pytest>=7.0",
-    "hypothesis>=6.65",
+    "hypothesis>=6.88",
 ]
 
 [project.urls]
