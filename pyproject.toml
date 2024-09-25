@@ -10,33 +10,29 @@ requires-python = ">=3.10"
 license = "MIT"
 keywords = []
 authors = [
-    { name = "Simons Observatory", email = "so_software@simonsobservatory.org" },
+  { name = "Simons Observatory", email = "so_software@simonsobservatory.org" },
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
-dependencies = [
-    "apluggy>=1.0",
-    "exceptiongroup>=1.2",
-    "transitions>=0.9.0",
-]
+dependencies = ["apluggy>=1.0", "exceptiongroup>=1.2", "transitions>=0.9.0"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = ["mypy", "tox", "twine"]
 tests = [
-    "nextline-test-utils>=0.1",
-    "pytest-asyncio>=0.18",
-    "pytest-cov>=3.0",
-    "pytest-timeout>=2.1",
-    "pytest>=7.0",
-    "hypothesis>=6.88",
+  "nextline-test-utils>=0.1",
+  "pytest-asyncio>=0.18",
+  "pytest-cov>=3.0",
+  "pytest-timeout>=2.1",
+  "pytest>=7.0",
+  "hypothesis>=6.88",
 ]
 
 [project.urls]
@@ -60,9 +56,9 @@ addopts = "--doctest-modules"
 doctest_optionflags = ["ELLIPSIS"]
 filterwarnings = ["ignore::hypothesis.errors.NonInteractiveExampleWarning"]
 norecursedirs = [
-    "build",
-    "tests/main/scenarios/example",
-    "tests/spawned/run/example",
+  "build",
+  "tests/main/scenarios/example",
+  "tests/spawned/run/example",
 ]
 log_cli = false
 log_cli_level = "INFO"
@@ -75,10 +71,10 @@ omit = ["nextline/disable.py"]
 
 [tool.coverage.report]
 exclude_lines = [
-    "pragma: no cover",
-    'if __name__ == "__main__":',
-    "if TYPE_CHECKING:",
-    "^ *\\.\\.\\.$",
+  "pragma: no cover",
+  'if __name__ == "__main__":',
+  "if TYPE_CHECKING:",
+  "^ *\\.\\.\\.$",
 ]
 ignore_errors = true
 
@@ -113,10 +109,9 @@ known-first-party = ["nextline_test_utils"]
 [tool.mypy]
 disallow_untyped_defs = true
 exclude = '''(?x)(
-    example/.*\.py$
-    | test_script\.py$
+  example/.*\.py$
+  | test_script\.py$
 )'''
-
 
 [[tool.mypy.overrides]]
 module = ["apluggy.*"]
