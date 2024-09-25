@@ -31,11 +31,12 @@ dynamic = ["version"]
 [project.optional-dependencies]
 dev = ["black", "isort", "flake8", "mypy", "tox", "twine"]
 tests = [
+    "nextline-test-utils>=0.1",
     "pytest-asyncio>=0.18",
     "pytest-cov>=3.0",
     "pytest-timeout>=2.1",
     "pytest>=7.0",
-    "hypothesis>=6.65",
+    "hypothesis>=6.88",
 ]
 
 [project.urls]

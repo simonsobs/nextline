@@ -13,7 +13,7 @@ from nextline.count import (
     TraceNoCounter,
 )
 from nextline.types import PromptNo, RunNo, TaskNo, ThreadNo, TraceCallNo, TraceNo
-from tests.test_utils.st import st_none_or
+from nextline_test_utils.strategies import st_none_or
 
 Counter: TypeAlias = Callable[[], int]
 
