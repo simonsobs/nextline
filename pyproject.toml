@@ -29,7 +29,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["black", "isort", "flake8", "mypy", "tox", "twine"]
+dev = ["mypy", "tox", "twine"]
 tests = [
     "nextline-test-utils>=0.1",
     "pytest-asyncio>=0.18",
@@ -80,14 +80,35 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "^ *\\.\\.\\.$",
 ]
-
 ignore_errors = true
-[tool.black]
-skip-string-normalization = true
-target_version = ['py310', 'py311', 'py312']
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+line-length = 88
+extend-exclude = ["tests/spawned/run/example/err.py"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.ruff.lint]
+select = [
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings
+  "F", # pyflakes
+  "I", # isort
+]
+ignore = [
+  "E203", # Whitespace before '{symbol}'
+  "E265", # Block comment should start with #
+  "E266", # Too many leading # before block comment
+  "E501", # Line too long ({width} > {limit})
+  "E741", # Ambiguous variable name '{name}'
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
+
+[tool.ruff.lint.isort]
+known-first-party = ["nextline_test_utils"]
 
 [tool.mypy]
 disallow_untyped_defs = true
