@@ -37,7 +37,7 @@ async def test_raise() -> None:
     async def agen() -> AsyncIterator[int]:
         yield 0
         await asyncio.sleep(0.1)
-        
+
         # The line shouldn't be reached
         assert False  # pragma: no cover
 

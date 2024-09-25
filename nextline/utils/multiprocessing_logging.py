@@ -1,8 +1,8 @@
 import asyncio
-from collections.abc import AsyncIterator, Callable
 import contextlib
 import logging
 import multiprocessing as mp
+from collections.abc import AsyncIterator, Callable
 from functools import partial
 from logging import DEBUG, LogRecord, getLogger
 from logging.handlers import QueueHandler

@@ -110,7 +110,7 @@ class StatefulTest:
                 assert item == next_item
                 received.append(item)
                 idx += 1
-            
+
             def flatten() -> list[str]:
                 return sum(sent[current_list_idx:], list[str]())[next_item_idx:]
 

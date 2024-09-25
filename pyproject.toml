@@ -84,6 +84,7 @@ ignore_errors = true
 
 [tool.ruff]
 line-length = 88
+extend-exclude = ["tests/spawned/run/example/err.py"]
 
 [tool.ruff.format]
 quote-style = "preserve"
