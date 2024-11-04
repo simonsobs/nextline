@@ -38,9 +38,6 @@ class Callback:
         try:
             async with self._hook.awith.run(context=self._context):
                 started.set()
-        except BaseException:
-            self._logger.exception('')
-            raise
         finally:
             started.set()  # Ensure to unblock the await
             await self._finish()
@@ -49,9 +46,6 @@ class Callback:
         self._context.run_arg = None
         try:
             await self._machine.finish()
-        except BaseException:
-            self._logger.exception('')
-            raise
         finally:
             self._run_finished.set()
 
@@ -66,7 +60,10 @@ class Callback:
     async def on_exit_finished(self) -> None:
         # This task is awaited here rather than in `finish()` because
         # the task ends after `finish()` completes.
-        await self._task_run
+        try:
+            await self._task_run
+        except BaseException:
+            self._logger.exception('')
 
     async def close(self) -> None:
         await self._hook.ahook.close(context=self._context)
