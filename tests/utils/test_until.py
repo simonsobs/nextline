@@ -6,7 +6,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from nextline.utils import UntilNotNoneTimeout, aiterable, until_not_none
+from nextline.utils import UntilNotNoneTimeout, to_aiter, until_not_none
 
 
 @given(st.data())
@@ -14,7 +14,7 @@ async def test_return(data: st.DataObject) -> None:
     val = data.draw(st.text())
     nones = data.draw(st.lists(st.none(), max_size=10))
     ret = nones + [val]
-    func = aiterable(ret).__anext__
+    func = to_aiter(ret).__anext__
     assert (await until_not_none(func)) == val
 
 
