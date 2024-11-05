@@ -23,6 +23,8 @@ __all__ = [
     'ExcThread',
     'ThreadTaskIdComposer',
     'Timer',
+    'UntilNotNoneTimeout',
+    'until_not_none',
     'is_timezone_aware',
     'utc_timestamp',
 ]
@@ -45,4 +47,5 @@ from .run import ExitedProcess, RunningProcess, run_in_process
 from .thread_exception import ExcThread
 from .thread_task_id import ThreadTaskIdComposer
 from .timer import Timer
+from .until import UntilNotNoneTimeout, until_not_none
 from .utc import is_timezone_aware, utc_timestamp
