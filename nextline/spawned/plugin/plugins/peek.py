@@ -1,8 +1,9 @@
 from collections import defaultdict
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from typing import Any, ContextManager, TypeVar
 
-from apluggy import PluginManager, contextmanager
+from apluggy import PluginManager
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.types import TraceNo

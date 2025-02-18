@@ -1,7 +1,8 @@
 import datetime
 from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 
-from apluggy import PluginManager, contextmanager
+from apluggy import PluginManager
 
 from nextline.events import (
     OnEndCmdloop,

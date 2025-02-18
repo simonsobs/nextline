@@ -1,5 +1,6 @@
 import dataclasses
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import apluggy
@@ -70,8 +71,8 @@ async def on_initialize_run(context: Context) -> None:
     ''''''
 
 
-@hookspec
-@apluggy.asynccontextmanager
+@hookspec  # type: ignore
+@asynccontextmanager  # type: ignore
 async def run(context: Context) -> AsyncIterator[None]:  # type: ignore
     ''''''
 

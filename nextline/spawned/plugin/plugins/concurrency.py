@@ -1,12 +1,13 @@
 import threading
 from asyncio import Task
 from collections.abc import Iterator
+from contextlib import contextmanager
 from logging import getLogger
 from threading import Thread
 from typing import Optional
 from weakref import WeakKeyDictionary, WeakSet
 
-from apluggy import PluginManager, contextmanager
+from apluggy import PluginManager
 
 from nextline.count import TraceNoCounter
 from nextline.spawned.plugin.spec import hookimpl
