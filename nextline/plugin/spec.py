@@ -71,8 +71,8 @@ async def on_initialize_run(context: Context) -> None:
     ''''''
 
 
-@hookspec
-@asynccontextmanager
+@hookspec  # type: ignore
+@asynccontextmanager  # type: ignore
 async def run(context: Context) -> AsyncIterator[None]:  # type: ignore
     ''''''
 
