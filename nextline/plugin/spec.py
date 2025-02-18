@@ -71,10 +71,10 @@ async def on_initialize_run(context: Context) -> None:
     ''''''
 
 
-@hookspec  # type: ignore
-@asynccontextmanager  # type: ignore
-async def run(context: Context) -> AsyncIterator[None]:  # type: ignore
-    ''''''
+@hookspec
+@asynccontextmanager
+async def run(context: Context) -> AsyncIterator[None]:
+    yield  # pragma: no cover
 
 
 @hookspec
