@@ -2,8 +2,9 @@
 # is used in a GitHub Actions workflow to test the compatibility with the
 # latest versions of the dependencies. This file is monitored by Dependabot.
 apluggy==1.0.3
-exceptiongroup==1.2.2
+typing-extensions==4.12.2
 transitions==0.9.2
+exceptiongroup==1.2.2
 nextline-test-utils==0.1.2
 pytest-asyncio==0.24.0
 pytest-cov==6.0.0
