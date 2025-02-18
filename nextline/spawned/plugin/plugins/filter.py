@@ -1,12 +1,13 @@
 import threading
 from asyncio import Task
 from collections.abc import Generator, Iterable, Iterator
+from contextlib import contextmanager
 from functools import lru_cache, partial
 from logging import getLogger
 from threading import Thread
 from typing import Optional
 
-from apluggy import PluginManager, contextmanager
+from apluggy import PluginManager
 
 from nextline.spawned.plugin.spec import hookimpl
 from nextline.spawned.types import TraceArgs

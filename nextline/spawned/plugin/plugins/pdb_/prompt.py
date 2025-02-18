@@ -1,10 +1,11 @@
 from collections.abc import Callable, Iterator, MutableMapping
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from logging import getLogger
 from queue import Queue
 from typing import TypeVar
 
-from apluggy import PluginManager, contextmanager
+from apluggy import PluginManager
 
 from nextline.spawned.commands import PdbCommand
 from nextline.spawned.plugin.spec import hookimpl

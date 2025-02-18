@@ -7,8 +7,6 @@ from functools import partial
 from logging import getLogger
 from typing import Any, Optional, cast
 
-import apluggy
-
 from nextline import events, spawned
 from nextline.plugin.spec import Context, hookimpl
 from nextline.spawned import Command, QueueIn, QueueOut, RunResult
@@ -17,7 +15,7 @@ from nextline.utils import ExitedProcess, RunningProcess, Timer, run_in_process
 
 class RunSession:
     @hookimpl
-    @apluggy.asynccontextmanager
+    @contextlib.asynccontextmanager
     async def run(self, context: Context) -> AsyncIterator[None]:
         assert context.run_arg
         context.exited_process = None

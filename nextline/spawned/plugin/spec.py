@@ -1,5 +1,6 @@
 from asyncio import Task
 from collections.abc import Callable, Collection, Generator, Iterator
+from contextlib import contextmanager
 from threading import Thread
 from types import FrameType
 from typing import Any, Optional
@@ -35,7 +36,7 @@ def init(
 
 
 @hookspec
-@apluggy.contextmanager
+@contextmanager
 def context():  # type: ignore
     pass
 
@@ -122,7 +123,7 @@ def on_end_trace(trace_no: TraceNo) -> None:
 
 
 @hookspec
-@apluggy.contextmanager
+@contextmanager
 def on_trace_call(trace_call_info: TraceCallInfo) -> Iterator[None]:
     yield
 
@@ -148,13 +149,13 @@ def current_trace_call_info() -> Optional[TraceCallInfo]:
 
 
 @hookspec
-@apluggy.contextmanager
+@contextmanager
 def on_cmdloop():  # type: ignore
     pass
 
 
 @hookspec
-@apluggy.contextmanager
+@contextmanager
 def on_prompt(prompt_no: PromptNo, text: str) -> Generator[None, str, None]:
     # Receive the command by gen.send().
     command = yield  # noqa: F841

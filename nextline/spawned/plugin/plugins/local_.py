@@ -1,9 +1,10 @@
 from collections import defaultdict
 from collections.abc import Iterator
+from contextlib import contextmanager
 from types import FrameType
 from typing import Any, Callable, Optional
 
-from apluggy import PluginManager, contextmanager
+from apluggy import PluginManager
 from exceptiongroup import catch
 
 from nextline.count import TraceCallNoCounter
