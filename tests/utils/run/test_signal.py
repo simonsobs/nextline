@@ -3,7 +3,7 @@ from __future__ import annotations
 import signal
 import time
 from functools import partial
-from multiprocessing import Event
+from multiprocessing import Event, get_context
 from types import FrameType
 from typing import TYPE_CHECKING, NoReturn, Optional
 
@@ -14,7 +14,7 @@ from nextline.utils import run_in_process
 if TYPE_CHECKING:
     from multiprocessing.synchronize import Event as _EventType
 
-#
+mp_context = get_context('spawn')
 
 _event: Optional[_EventType] = None
 
@@ -22,9 +22,6 @@ _event: Optional[_EventType] = None
 def initializer(event: _EventType) -> None:
     global _event
     _event = event
-
-
-#
 
 
 def func_sleep() -> NoReturn:
@@ -35,7 +32,11 @@ def func_sleep() -> NoReturn:
 
 
 async def test_interrupt(event: _EventType) -> None:
-    running = await run_in_process(func_sleep, initializer=partial(initializer, event))
+    running = await run_in_process(
+        func_sleep,
+        mp_context=mp_context,
+        initializer=partial(initializer, event),
+    )
     event.wait()
     running.interrupt()
     result = await running
@@ -45,7 +46,11 @@ async def test_interrupt(event: _EventType) -> None:
 
 
 async def test_terminate(event: _EventType) -> None:
-    running = await run_in_process(func_sleep, initializer=partial(initializer, event))
+    running = await run_in_process(
+        func_sleep,
+        mp_context=mp_context,
+        initializer=partial(initializer, event),
+    )
     event.wait()
     running.terminate()
     result = await running
@@ -55,7 +60,11 @@ async def test_terminate(event: _EventType) -> None:
 
 
 async def test_kill(event: _EventType) -> None:
-    running = await run_in_process(func_sleep, initializer=partial(initializer, event))
+    running = await run_in_process(
+        func_sleep,
+        mp_context=mp_context,
+        initializer=partial(initializer, event),
+    )
     event.wait()
     running.kill()
     result = await running
@@ -79,7 +88,9 @@ def func_catch_interrupt() -> str:
 
 async def test_interrupt_catch(event: _EventType) -> None:
     running = await run_in_process(
-        func_catch_interrupt, initializer=partial(initializer, event)
+        func_catch_interrupt,
+        mp_context=mp_context,
+        initializer=partial(initializer, event),
     )
     event.wait()
     running.interrupt()
@@ -113,7 +124,9 @@ def func_handle_terminate() -> str:
 
 async def test_terminate_handle(event: _EventType) -> None:
     running = await run_in_process(
-        func_handle_terminate, initializer=partial(initializer, event)
+        func_handle_terminate,
+        mp_context=mp_context,
+        initializer=partial(initializer, event),
     )
     event.wait()
     running.terminate()
@@ -125,4 +138,4 @@ async def test_terminate_handle(event: _EventType) -> None:
 
 @pytest.fixture
 def event() -> _EventType:
-    return Event()
+    return mp_context.Event()
