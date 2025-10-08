@@ -1,7 +1,7 @@
 # The exact requirements of the latest versions of the dependencies. This file
 # is used in a GitHub Actions workflow to test the compatibility with the
 # latest versions of the dependencies. This file is monitored by Dependabot.
-apluggy==1.1.0
+apluggy==1.1.1
 exceptiongroup==1.3.0
 transitions==0.9.3
 nextline-test-utils==0.1.2
