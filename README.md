@@ -15,11 +15,5 @@ codecov reports.
 
 ---
 
-_Nextline_ is a DAQ sequencer of the [Observatory Control System
-(OCS)](https://github.com/simonsobs/ocs/). Nextline allows line-by-line
-execution of concurrent Python scripts, which control telescopes, by multiple
-users simultaneously from web browsers.
-
-This package provides the core functionality of Nextline. It is used in
-[_nextline-graphql_](https://github.com/simonsobs/nextline-graphql), the
-plugin-based framework of the backend API server of Nextline.
+This library executes Python scripts under control with trace functions. It
+calls callback functions at various events during the execution of the scripts.
