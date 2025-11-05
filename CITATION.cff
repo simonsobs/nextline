@@ -3,10 +3,6 @@
 
 cff-version: 1.2.0
 title: Nextline
-message: >-
-  Nextline consists of multiple packages. Please use the DOI
-  for this package to cite Nextline in general unless you
-  need to refer to a specific package.
 type: software
 authors:
   - family-names: Sakuma
