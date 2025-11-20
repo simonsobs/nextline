@@ -31,7 +31,7 @@ def compose(code: CodeType | str) -> Callable[[], None]:
     # module name of the returned function. The module name is used in
     # Trace.
     #
-    # [*] https://github.com/simonsobs/nextline/issues/7
+    # [*] https://github.com/nextline-dev/nextline/issues/7
 
     func = partial(exec, code, globals_)
     return func

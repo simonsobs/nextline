@@ -6,7 +6,7 @@ class NotOnTraceCall(RuntimeError):
 
     This can happen, for example, when the user sends the Pdb command "step" at
     the very last line of the script.
-    https://github.com/simonsobs/nextline/issues/1
+    https://github.com/nextline-dev/nextline/issues/1
     '''
 
     pass
