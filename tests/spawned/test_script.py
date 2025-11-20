@@ -45,7 +45,7 @@ f()
 
 def test_import():
     """Assert that the issue is resolved
-    https://github.com/simonsobs/nextline/issues/7
+    https://github.com/nextline-dev/nextline/issues/7
     """
     code = compile(SOURCE_IMPORT, "<string>", "exec")
     func = _script.compose(code)
@@ -54,7 +54,7 @@ def test_import():
 
 def test_import_error_demonstration():
     """Show the issue
-    https://github.com/simonsobs/nextline/issues/7
+    https://github.com/nextline-dev/nextline/issues/7
 
     The NameError occurs if the second arg (globals) is not given to
     exec(). An empty dict resolves the issue. Read the doc for the
