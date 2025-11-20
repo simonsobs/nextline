@@ -4,11 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nextline"
-description = "A Python library for controlling Python scripts execution"
+dynamic = ["version"]
+description = "Execute Python scripts under control with callbacks"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-keywords = []
+license-files = ["LICENSE"]
 authors = [{ name = "Tai Sakuma" }]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -21,8 +22,8 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
+keywords = ["nextline", "trace", "callbacks"]
 dependencies = ["apluggy>=1.0", "exceptiongroup>=1.2", "transitions>=0.9.0"]
-dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = ["mypy", "tox", "twine"]
@@ -43,10 +44,8 @@ Source = "https://github.com/nextline-dev/nextline"
 [tool.hatch.version]
 source = "regex_commit"
 path = "nextline/__about__.py"
+check_dirty = false
 tag_sign = false
-
-[tool.hatch.build.targets.sdist]
-include = ["/nextline"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
