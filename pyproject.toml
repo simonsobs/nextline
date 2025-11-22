@@ -45,7 +45,7 @@ print = ["icecream>=2.1"]
 
 [tool.hatch.version]
 source = "regex_commit"
-path = "nextline/__about__.py"
+path = "src/nextline/__about__.py"
 check_dirty = false
 tag_sign = false
 
@@ -71,7 +71,7 @@ log_cli_level = "INFO"
 branch = true
 source = ["nextline", "tests"]
 concurrency = ["multiprocessing", "thread"]
-omit = ["nextline/disable.py"]
+omit = ["src/nextline/disable.py"]
 
 [tool.coverage.report]
 exclude_lines = [
