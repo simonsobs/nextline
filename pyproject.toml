@@ -33,10 +33,10 @@ Source = "https://github.com/nextline-dev/nextline"
 [dependency-groups]
 tests = [
   "nextline-test-utils>=0.1",
-  "pytest-asyncio>=0.18",
+  "pytest-asyncio>=1.3",
   "pytest-cov>=4.0",
   "pytest-timeout>=2.1",
-  "pytest>=8.0",
+  "pytest>=9.0",
   "hypothesis>=6.117",
 ]
 type-check = ["mypy>=1.0"]
@@ -49,11 +49,12 @@ path = "nextline/__about__.py"
 check_dirty = false
 tag_sign = false
 
-[tool.pytest.ini_options]
+
+[tool.pytest]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-timeout = 60
-addopts = "--doctest-modules"
+timeout = "60"
+addopts = ["--doctest-modules"]
 # doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE",]
 doctest_optionflags = ["ELLIPSIS"]
 filterwarnings = ["ignore::hypothesis.errors.NonInteractiveExampleWarning"]
