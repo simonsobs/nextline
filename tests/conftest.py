@@ -4,6 +4,13 @@ from collections.abc import Iterator
 
 import pytest
 
+try:
+    import icecream
+
+    icecream.install()
+except ImportError:
+    pass
+
 
 @pytest.fixture(autouse=True)
 def recover_trace() -> Iterator[None]:
